@@ -363,6 +363,17 @@ impl<'a> Stream<'a> {
     //         }
     //     }
     // }
+
+    /// Decode as a packed bitset
+    pub fn decode_packed_bitset(self) -> Result<PackedBitset<'a>, MltError> {
+        match self.data {
+            StreamData::Raw(data) => Ok(PackedBitset::new(data.data)),
+            StreamData::VarInt(_) => Err(MltError::InvalidStreamData {
+                expected: "Raw bytes for present bitset",
+                got: format!("{:?}", self.data),
+            }),
+        }
+    }
 }
 
 impl PhysicalStreamType {
@@ -464,6 +475,49 @@ impl LogicalTechnique {
 impl PhysicalDecoder {
     pub fn parse(value: u8) -> Result<Self, MltError> {
         Self::try_from(value).or(Err(MltError::ParsingPhysicalDecoder(value)))
+    }
+}
+
+/// A packed bitset where each bit is stored efficiently in bytes
+#[borrowme]
+#[derive(Debug, Clone, PartialEq)]
+pub struct PackedBitset<'a> {
+    #[borrowme(borrow_with = Vec::as_slice)]
+    data: &'a [u8],
+}
+
+impl<'a> PackedBitset<'a> {
+    /// Create a new packed bitset from raw bytes
+    #[must_use]
+    pub fn new(data: &'a [u8]) -> Self {
+        Self { data }
+    }
+
+    /// Test if a specific bit is set
+    ///
+    /// # Panics
+    ///
+    /// If the bit index is out of bounds
+    #[must_use]
+    pub fn test_bit(&self, index: usize) -> bool {
+        debug_assert!(
+            index / 8 < self.data.len(),
+            "PackedBitset tried to access a bit at an out of bounds index"
+        );
+
+        let byte = self.data[index / 8];
+        let bit_index = index % 8;
+        (byte & (1 << bit_index)) != 0
+    }
+
+    /// Count the total number of set bits in the bitset
+    #[must_use]
+    pub fn count_set_bits(&self) -> u32 {
+        let mut counter = 0_u32;
+        for byte in self.data {
+            counter = counter.saturating_add(byte.count_ones());
+        }
+        counter
     }
 }
 
@@ -707,5 +761,41 @@ mod tests {
                 );
             }
         }
+    }
+    #[test]
+    fn test_bit_single_byte() {
+        let bitset = PackedBitset::new(&[0xf0]);
+        assert!(!bitset.test_bit(0));
+        assert!(!bitset.test_bit(1));
+        assert!(!bitset.test_bit(2));
+        assert!(!bitset.test_bit(3));
+        assert!(bitset.test_bit(4));
+        assert!(bitset.test_bit(5));
+        assert!(bitset.test_bit(6));
+        assert!(bitset.test_bit(7));
+    }
+
+    #[test]
+    fn test_bit_multiple_bytes() {
+        let bitset = PackedBitset::new(&[0xf0, 0x01]);
+        assert!(bitset.test_bit(7));
+        assert!(bitset.test_bit(8));
+        assert!(!bitset.test_bit(9));
+    }
+
+    #[rstest::rstest]
+    #[case(&[], 0)]
+    #[case(&[0], 0)]
+    #[case(&[0,0], 0)]
+    #[case(&[0b0000_0001], 1)]
+    #[case(&[0b0000_0011], 2)]
+    #[case(&[0b0000_0001], 1)]
+    #[case(&[0b0010_0011], 3)]
+    #[case(&[0b1010_1010], 4)]
+    #[case(&[0b0101_0101], 4)]
+    #[case(&[0xff], 8)]
+    #[case(&[0b0101_0101, 0b0101_0101], 8)]
+    fn count_set_bits(#[case] input: &[u8], #[case] expected: u32) {
+        assert_eq!(PackedBitset::new(input).count_set_bits(), expected);
     }
 }
