@@ -59,26 +59,6 @@ jobs:
         with: { toolchain: msrv }
       - run: just -v rust::ci-test-msrv
 
-  coverage:
-    name: Code Coverage
-    if: github.event_name != 'release' && github.repository_owner == 'maplibre'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: ./.github/actions/mlt-setup-java  # generate MLT test files
-      - uses: ./.github/actions/mlt-setup-rust
-      - uses: taiki-e/install-action@v2
-        with: { tool: 'cargo-llvm-cov' }
-      - name: Generate code coverage
-        run: just -v rust::ci-coverage
-      - name: Upload coverage to Codecov
-        if: github.repository_owner == 'maplibre'
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: rust/target/llvm-cov/codecov.info
-      - run: just -v assert-git-is-clean
-
   test-publish:
     name: Test workspace publishing using --dry-run
     runs-on: ubuntu-latest
