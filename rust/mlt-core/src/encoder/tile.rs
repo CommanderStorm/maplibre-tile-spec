@@ -1,14 +1,8 @@
-//! Row-oriented "source form" for the optimizer.
+//! Row-to-columnar conversion for the encoding pipeline.
 //!
-//! [`TileLayer01`] holds one [`TileFeature`] per map feature, each owning
-//! its geometry as a [`geo_types::Geometry<i32>`] and its property values as a
-//! plain `Vec<PropValue>`.  This is the working form used throughout the
-//! optimizer and sorting pipeline: it is cheap to clone, trivially sortable,
-//! and free from any encoded/decoded duality.
-//!
-//! Conversion from [`TileLayer01`] to `StagedLayer01` is done via
-//! `StagedLayer01::from_tile` (pre-computed [`StringGroup`] pairings produced by
-//! [`group_string_properties`](crate::encoder::group_string_properties)) or the blanket [`From`] impl (no grouping).
+//! [`TileLayer01`] holds one [`TileFeature`] per map feature (row-oriented).
+//! The methods here convert it into [`StagedLayer01`] (column-oriented) for
+//! encoding.
 
 use std::collections::HashMap;
 
@@ -16,26 +10,48 @@ use crate::decoder::{GeometryValues, IdValues, PropValue, TileFeature, TileLayer
 use crate::encoder::model::StagedLayer01;
 use crate::encoder::{SortStrategy, StagedProperty, StagedSharedDict, StringGroup};
 
-impl StagedLayer01 {
-    /// Construct a [`StagedLayer01`] from a row-oriented [`TileLayer01`], applying
-    /// pre-computed [`StringGroup`] pairings to merge similar string columns into
-    /// shared dictionaries.
+impl TileLayer01 {
+    /// Sort features by `sort`, then stage the tile for encoding.
     ///
-    /// `groups` should be the output of [`group_string_properties`](crate::encoder::group_string_properties) called on the
-    /// same [`TileLayer01`] source.  Because unique-value membership is
-    /// row-order-independent, the same groups can be reused across sort trials.
+    /// Convenience wrapper around [`stage_permuted`](Self::stage_permuted)
+    /// for callers that don't need permutation-level control.
     #[must_use]
     #[hotpath::measure]
-    pub fn from_tile(mut source: TileLayer01, sort: SortStrategy, groups: &[StringGroup]) -> Self {
-        assert!(!source.features.is_empty(), "empty tile");
-        source.sort(sort);
+    pub fn stage(mut self, sort: SortStrategy, groups: &[StringGroup]) -> StagedLayer01 {
+        assert!(!self.features.is_empty(), "empty tile");
+        self.sort(sort);
+        let perm: Vec<usize> = (0..self.features.len()).collect();
+        self.stage_permuted(&perm, groups, &HashMap::new())
+    }
+
+    /// Convert this tile into a [`StagedLayer01`] by reading features in the
+    /// order given by `perm`.
+    ///
+    /// `perm` is a permutation array (as returned by [`compute_permutation`](crate::encoder::compute_permutation)):
+    /// `perm[0]` is the index of the first feature in the output, etc.
+    ///
+    /// `invariant_cols` maps column indices to pre-built [`StagedProperty`]
+    /// values for columns that are sort-invariant (all values identical).
+    /// Those columns are cloned from the cache rather than rebuilt.
+    #[must_use]
+    #[hotpath::measure]
+    pub fn stage_permuted(
+        &self,
+        perm: &[usize],
+        groups: &[StringGroup],
+        invariant_cols: &HashMap<usize, StagedProperty>,
+    ) -> StagedLayer01 {
+        assert!(!self.features.is_empty(), "empty tile");
+
         let mut geometry = GeometryValues::default();
-        for f in &source.features {
-            geometry.push_geom(&f.geometry);
+        for &i in perm {
+            geometry.push_geom(&self.features[i].geometry);
         }
 
-        let id = if source.features.iter().any(|f| f.id.is_some()) {
-            Some(IdValues(source.features.iter().map(|f| f.id).collect()))
+        let id = if self.features.iter().any(|f| f.id.is_some()) {
+            Some(IdValues(
+                perm.iter().map(|&i| self.features[i].id).collect(),
+            ))
         } else {
             None
         };
@@ -45,21 +61,27 @@ impl StagedLayer01 {
             .flat_map(|g| g.columns.iter().map(move |(_, i)| (*i, g)))
             .collect();
 
-        // first col_idx of each group → the group (emit the SharedDict here)
         let mut group_start: HashMap<_, _> = groups.iter().map(|g| (g.columns[0].1, g)).collect();
 
-        let mut properties = Vec::with_capacity(source.property_names.len());
-        for (col_idx, name) in source.property_names.into_iter().enumerate() {
-            if let Some(g) = group_start.remove(&col_idx) {
-                properties.push(build_shared_dict(g, &mut source.features));
+        let mut properties = Vec::with_capacity(self.property_names.len());
+        for (col_idx, name) in self.property_names.iter().enumerate() {
+            if let Some(cached) = invariant_cols.get(&col_idx) {
+                properties.push(cached.clone());
+            } else if let Some(g) = group_start.remove(&col_idx) {
+                properties.push(build_shared_dict_permuted(g, &self.features, perm));
             } else if !col_to_group.contains_key(&col_idx) {
-                properties.push(build_scalar_column(name, col_idx, &mut source.features));
-            } // else this column is part of a group we already consumed
+                properties.push(build_column_permuted(
+                    name.clone(),
+                    col_idx,
+                    &self.features,
+                    perm,
+                ));
+            }
         }
 
-        Self {
-            name: source.name,
-            extent: source.extent,
+        StagedLayer01 {
+            name: self.name.clone(),
+            extent: self.extent,
             id,
             geometry,
             properties,
@@ -67,21 +89,20 @@ impl StagedLayer01 {
     }
 }
 
-fn build_scalar_column(name: String, col: usize, features: &mut [TileFeature]) -> StagedProperty {
-    // Determine the variant by peeking at the first feature value.
-    // Typed nulls (e.g. `PropValue::Bool(None)`) already carry the column type,
-    // so no filtering is needed; only a fully-absent column returns `None` here.
-    // Fall back to `Str` if every feature has no value for this column.
-    let first_val = features.iter().find_map(|f| f.properties.get(col));
+pub(crate) fn build_column_permuted(
+    name: String,
+    col: usize,
+    features: &[TileFeature],
+    perm: &[usize],
+) -> StagedProperty {
+    let first_val = perm.iter().find_map(|&i| features[i].properties.get(col));
 
-    // Collect optional values and check whether any are null. When no nulls
-    // exist, use the non-optional staged variant (no presence stream written).
     macro_rules! scalar_col {
         ($opt_ctor:ident, $non_opt_ctor:ident, $ty:ty, $sv:ident) => {{
-            let opt_values: Vec<Option<$ty>> = features
+            let opt_values: Vec<Option<$ty>> = perm
                 .iter()
-                .map(|f| {
-                    if let Some(PropValue::$sv(v)) = f.properties.get(col) {
+                .map(|&i| {
+                    if let Some(PropValue::$sv(v)) = features[i].properties.get(col) {
                         *v
                     } else {
                         None
@@ -107,10 +128,10 @@ fn build_scalar_column(name: String, col: usize, features: &mut [TileFeature]) -
         Some(PropValue::F32(_)) => scalar_col!(opt_f32, f32, f32, F32),
         Some(PropValue::F64(_)) => scalar_col!(opt_f64, f64, f64, F64),
         Some(PropValue::Str(_)) | None => {
-            let opt_values: Vec<Option<String>> = features
-                .iter_mut()
-                .map(|f| match f.properties.get_mut(col) {
-                    Some(PropValue::Str(v)) => v.take(),
+            let opt_values: Vec<Option<String>> = perm
+                .iter()
+                .map(|&i| match features[i].properties.get(col) {
+                    Some(PropValue::Str(v)) => v.clone(),
                     _ => None,
                 })
                 .collect();
@@ -123,16 +144,20 @@ fn build_scalar_column(name: String, col: usize, features: &mut [TileFeature]) -
     }
 }
 
-fn build_shared_dict(group: &StringGroup, features: &mut [TileFeature]) -> StagedProperty {
+fn build_shared_dict_permuted(
+    group: &StringGroup,
+    features: &[TileFeature],
+    perm: &[usize],
+) -> StagedProperty {
     let mut order: Vec<usize> = (0..group.columns.len()).collect();
     order.sort_by_key(|&i| group.columns[i].1);
 
     let columns = order.into_iter().map(|i| {
         let (suffix, col_idx) = &group.columns[i];
-        let values: Vec<Option<String>> = features
-            .iter_mut()
-            .map(|f| match f.properties.get_mut(*col_idx) {
-                Some(PropValue::Str(s)) => s.take(),
+        let values: Vec<Option<String>> = perm
+            .iter()
+            .map(|&fi| match features[fi].properties.get(*col_idx) {
+                Some(PropValue::Str(s)) => s.clone(),
                 _ => None,
             })
             .collect();

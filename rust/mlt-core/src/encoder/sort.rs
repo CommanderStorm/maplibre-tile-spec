@@ -46,26 +46,62 @@ impl TileLayer01 {
         match strategy {
             SortStrategy::SpatialMorton | SortStrategy::SpatialHilbert => {
                 let params = curve_params_from_features(&self.features);
-                let curve_key = if let SortStrategy::SpatialMorton = strategy {
-                    morton_sort_key
-                } else {
-                    hilbert_sort_key
-                };
                 self.features.sort_by_cached_key(|f| {
-                    first_vertex(&f.geometry).map_or(u64::MAX, |(x, y)| {
-                        u64::from(curve_key(x, y, params.shift, params.num_bits))
-                    })
+                    feature_spatial_key(f, strategy, &params)
                 });
             }
             SortStrategy::Id => {
                 self.features
-                    .sort_by_cached_key(|f| f.id.map_or(0, |v| v.saturating_add(1)));
+                    .sort_by_cached_key(feature_id_key);
             }
-            SortStrategy::Unsorted => {
-                // do nothing
-            }
+            SortStrategy::Unsorted => {}
         }
     }
+}
+
+/// Return a permutation array `perm` such that reading `features[perm[0]],
+/// features[perm[1]], …` yields the features in the order specified by
+/// `strategy`.
+///
+/// For [`SortStrategy::Unsorted`] the identity permutation `[0, 1, …, n-1]`
+/// is returned.
+#[must_use]
+pub fn compute_permutation(features: &[TileFeature], strategy: SortStrategy) -> Vec<usize> {
+    let mut perm: Vec<usize> = (0..features.len()).collect();
+
+    match strategy {
+        SortStrategy::SpatialMorton | SortStrategy::SpatialHilbert => {
+            let params = curve_params_from_features(features);
+            let keys: Vec<u64> = features
+                .iter()
+                .map(|f| feature_spatial_key(f, strategy, &params))
+                .collect();
+            perm.sort_by_key(|&i| keys[i]);
+        }
+        SortStrategy::Id => {
+            let keys: Vec<u64> = features.iter().map(feature_id_key).collect();
+            perm.sort_by_key(|&i| keys[i]);
+        }
+        SortStrategy::Unsorted => {}
+    }
+
+    perm
+}
+
+/// Spatial sort key for a feature (Morton or Hilbert curve index of first vertex).
+fn feature_spatial_key(f: &TileFeature, strategy: SortStrategy, params: &CurveParams) -> u64 {
+    let curve_key = if matches!(strategy, SortStrategy::SpatialMorton) {
+        morton_sort_key
+    } else {
+        hilbert_sort_key
+    };
+    first_vertex(&f.geometry)
+        .map_or(u64::MAX, |(x, y)| u64::from(curve_key(x, y, params.shift, params.num_bits)))
+}
+
+/// ID sort key for a feature (0 for null, id+1 for present).
+fn feature_id_key(f: &TileFeature) -> u64 {
+    f.id.map_or(0, |v| v.saturating_add(1))
 }
 
 /// Parameters derived from the vertex set of a feature collection, used to
@@ -150,12 +186,14 @@ pub(crate) fn spatial_sort_likely_to_help(layer: &TileLayer01) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use geo_types::{Coord, Geometry as GeoGeom, LineString, Point, Polygon};
+    use strum::IntoEnumIterator as _;
 
     use crate::decoder::{GeometryType, GeometryValues, RawGeometry, TileFeature, TileLayer01};
-    use crate::encoder::{
-        Encoder, ExplicitEncoder, IdWidth, IntEncoder, SortStrategy, StagedLayer01,
-    };
+    use crate::encoder::sort::compute_permutation;
+    use crate::encoder::{Encoder, ExplicitEncoder, IdWidth, IntEncoder, SortStrategy};
     use crate::geojson::Geom32;
     use crate::test_helpers::{assert_empty, dec, into_layer01, parser};
     use crate::{Layer, LazyParsed};
@@ -395,7 +433,8 @@ mod tests {
             Encoder::default().cfg,
             ExplicitEncoder::for_id(IntEncoder::varint(), IdWidth::Id32),
         );
-        let enc = StagedLayer01::from_tile(tile, sort, &[])
+        let enc = tile
+            .stage(sort, &[])
             .encode_into(enc)
             .expect("encode failed");
 
@@ -488,5 +527,54 @@ mod tests {
         let verts = vertices_from_source(&source);
         // Expected vertices: LS(0,0,0,5), P2(1,0), P1(2,0)
         assert_eq!(verts, vec![0, 0, 0, 5, 1, 0, 2, 0]);
+    }
+
+    /// `stage_permuted` with a computed permutation must produce byte-for-byte
+    /// identical output to `stage` with the equivalent sort applied, for every
+    /// `SortStrategy`.
+    #[test]
+    fn stage_permuted_matches_stage() {
+        let tile = build_tile_layer(
+            &[
+                pt(2, 0),
+                ls(&[(0, 0), (0, 5)]),
+                pt(1, 0),
+                poly_square(10, 10, 5),
+                pt(5, 5),
+            ],
+            &[Some(3), Some(1), Some(5), Some(2), Some(4)],
+        );
+
+        let make_enc = || {
+            Encoder::with_explicit(
+                Encoder::default().cfg,
+                ExplicitEncoder::for_id(IntEncoder::varint(), IdWidth::Id32),
+            )
+        };
+
+        for sort in SortStrategy::iter() {
+            // Path A: stage applies sort + staging in one step.
+            let bytes_a = tile
+                .clone()
+                .stage(sort, &[])
+                .encode_into(make_enc())
+                .expect("encode (stage) failed")
+                .into_layer_bytes()
+                .expect("into_layer_bytes (stage) failed");
+
+            // Path B: compute_permutation then stage_permuted.
+            let perm = compute_permutation(&tile.features, sort);
+            let bytes_b = tile
+                .stage_permuted(&perm, &[], &HashMap::new())
+                .encode_into(make_enc())
+                .expect("encode (stage_permuted) failed")
+                .into_layer_bytes()
+                .expect("into_layer_bytes (stage_permuted) failed");
+
+            assert_eq!(
+                bytes_a, bytes_b,
+                "encoded bytes differ for SortStrategy::{sort:?}",
+            );
+        }
     }
 }

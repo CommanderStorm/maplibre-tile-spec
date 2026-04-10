@@ -1,4 +1,4 @@
-use std::{io, mem};
+use std::io;
 
 use fastpfor::FastPFor256;
 use integer_encoding::VarIntWriter as _;
@@ -165,30 +165,6 @@ impl Encoder {
             cfg,
             explicit: Some(explicit),
             ..Self::default()
-        }
-    }
-
-    /// Ensure this encoder is in the good state, and moves results to a new instance.
-    /// This allows current instance to be reused for other experiment, avoiding repeat of some operations.
-    #[must_use]
-    pub(crate) fn preserve_results(&mut self) -> Self {
-        assert_eq!(self.alt_stack.len(), 0, "Alternatives stack is not empty");
-        Self {
-            cfg: EncoderConfig::default(),
-            explicit: None,
-            hdr: mem::take(&mut self.hdr),
-            meta: mem::take(&mut self.meta),
-            data: mem::take(&mut self.data),
-            layer_column_count: mem::take(&mut self.layer_column_count),
-            vertex_buffer_type_cache: None,
-            morton_meta_cache: None,
-            alt_stack: vec![],
-            tmp_u32: vec![],
-            tmp_u32_b: vec![],
-            tmp_u64: vec![],
-            tmp_u8: vec![],
-            tmp_u8_b: vec![],
-            fastpfor: FastPFor256::default(),
         }
     }
 

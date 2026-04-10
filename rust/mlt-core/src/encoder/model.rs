@@ -156,17 +156,17 @@ pub struct ExplicitEncoder {
     /// Vertex buffer layout for geometry streams.
     pub vertex_buffer_type: VertexBufferType,
     /// Per-stream override for the skip-empty-stream rule used by `write_geo_u32_stream`.
-    pub force_stream: Box<dyn for<'a> Fn(&'a StreamCtx<'a>) -> bool>,
+    pub force_stream: Box<dyn for<'a> Fn(&'a StreamCtx<'a>) -> bool + Send + Sync>,
     /// Return the [`IntEncoder`] for a stream identified by [`StreamCtx`].
-    pub get_int_encoder: Box<dyn for<'a> Fn(&'a StreamCtx<'a>) -> IntEncoder>,
+    pub get_int_encoder: Box<dyn for<'a> Fn(&'a StreamCtx<'a>) -> IntEncoder + Send + Sync>,
     /// Return the string encoding strategy for a string property column.
-    pub get_str_encoding: Box<dyn Fn(&str) -> StrEncoding>,
+    pub get_str_encoding: Box<dyn Fn(&str) -> StrEncoding + Send + Sync>,
     /// Override the auto-detected [`IdWidth`].
     /// Arguments: auto-detected `IdWidth`. Return the width to use.
-    pub override_id_width: Box<dyn Fn(IdWidth) -> IdWidth>,
+    pub override_id_width: Box<dyn Fn(IdWidth) -> IdWidth + Send + Sync>,
     /// Override whether a presence stream is written for an all-present column,
     /// or if the column is written at all if all values are null.
-    pub override_presence: Box<dyn for<'a> Fn(&'a StreamCtx<'a>) -> bool>,
+    pub override_presence: Box<dyn for<'a> Fn(&'a StreamCtx<'a>) -> bool + Send + Sync>,
 }
 
 impl fmt::Debug for ExplicitEncoder {

@@ -38,8 +38,9 @@ required-features = ["__private"]
 
 [features]
 # Workaround until new WASM-compatible geo is released
-default = ["tessellate"]
-tessellate = ["geo/earcutr", "geo/multithreading"]
+default = ["tessellate", "rayon"]
+tessellate = ["geo/earcutr"]
+rayon = ["dep:rayon", "geo/multithreading"]
 arbitrary = ["dep:arbitrary", "geo-types/arbitrary"]
 # Used internally for testing and benchmarking, not intended for public use
 __private = []
@@ -58,6 +59,7 @@ hotpath.workspace = true
 integer-encoding.workspace = true
 mvt-reader.workspace = true
 num-traits.workspace = true
+rayon = { workspace = true, optional = true }
 num_enum.workspace = true
 probabilistic-collections.workspace = true
 serde.workspace = true

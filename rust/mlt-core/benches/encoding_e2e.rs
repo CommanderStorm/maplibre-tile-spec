@@ -10,7 +10,7 @@ use strum::IntoEnumIterator as _;
 mod bench_utils;
 use bench_utils::{BENCHMARKED_ZOOM_LEVELS, load_mlt_tiles};
 use mlt_core::encoder::{
-    Encoder, ExplicitEncoder, IntEncoder, PhysicalEncoder, StagedLayer, StagedLayer01,
+    Encoder, ExplicitEncoder, IntEncoder, PhysicalEncoder, StagedLayer,
 };
 
 fn limit<T>(values: impl Iterator<Item = T>) -> impl Iterator<Item = T> {
@@ -38,11 +38,7 @@ fn decode_to_owned(tiles: &[(String, Vec<u8>)]) -> Vec<StagedLayer> {
                         return None;
                     };
                     let tile = layer01.into_tile(&mut d).ok()?;
-                    Some(StagedLayer::Tag01(StagedLayer01::from_tile(
-                        tile,
-                        SortStrategy::Unsorted,
-                        &[],
-                    )))
+                    Some(StagedLayer::Tag01(tile.stage(SortStrategy::Unsorted, &[])))
                 })
                 .collect::<Vec<_>>()
         })

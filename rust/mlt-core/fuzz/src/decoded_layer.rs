@@ -24,14 +24,10 @@ impl DecodedLayerInput {
 
         // Canonical roundtrip per CONTRIBUTING.md:
         // Tile → Staged → bytes → Tile
-        let tile2 = encode_decode(StagedLayer01::from_tile(tile1, SortStrategy::Unsorted, &[]));
+        let tile2 = encode_decode(tile1.stage(SortStrategy::Unsorted, &[]));
 
         // Same roundtrip again — must be a fixpoint.
-        let tile3 = encode_decode(StagedLayer01::from_tile(
-            tile2.clone(),
-            SortStrategy::Unsorted,
-            &[],
-        ));
+        let tile3 = encode_decode(tile2.clone().stage(SortStrategy::Unsorted, &[]));
 
         assert_eq!(tile2, tile3, "canonical roundtrip is not idempotent");
     }
