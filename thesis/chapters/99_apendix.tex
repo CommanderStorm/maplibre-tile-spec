@@ -1,0 +1,169 @@
+\chapter{Appendix}\label{ch_appendix}
+
+\section{Expression Rewrite Rules}\label{app_rewrite_rules}
+
+\cref{tab:all_rewrite_rules} lists the complete set of 47 expression rewrite rules implemented in the optimiser, grouped by pass.
+Each rule is characterised by its pass assignment, scope (filter-only or both filters and paint/layout properties), type (pure, MIR-aware, or stats-driven), and a brief description of the pattern it matches and the rewrite it produces.
+
+\clearpage
+\begin{longtblr}[
+  caption = {Complete list of expression rewrite rules},
+  label = {tab:all_rewrite_rules},
+]{
+  colspec = {r l l l X},
+  row{1} = {font=\bfseries},
+  rowhead = 1,
+}
+\toprule
+\# & Pass & Scope & Type & Description \\
+\midrule
+% Expression Kind
+1 & Expr.\ kind & both & MIR & Negate comparison: \texttt{["!",["op",a,b]]} $\to$ \texttt{[neg(op),a,b]} when negated operator exists \\
+\midrule
+% Constant Fold
+2 & Const.\ fold & both & pure & Boolean algebra: fold \texttt{any}/\texttt{all} with literal operands; absorb \texttt{true} from \texttt{all}, \texttt{false} from \texttt{any} \\
+3 & Const.\ fold & both & pure & Fold negation: \texttt{["!", true]} $\to$ \texttt{false} \\
+4 & Const.\ fold & both & pure & Fold comparisons (\texttt{==}, \texttt{!=}, \texttt{<}, etc.) with two literal operands \\
+5 & Const.\ fold & both & MIR & Evaluate pure operators when all arguments are literals \\
+6 & Const.\ fold & both & pure & Algebraic identity: \texttt{x \^{} 0} $\to$ \texttt{1} \\
+7 & Const.\ fold & both & pure & Strip redundant \texttt{typeof} guards from migrated filters \\
+8 & Const.\ fold & both & pure & Resolve \texttt{case} arms with known boolean conditions \\
+9 & Const.\ fold & both & pure & Resolve \texttt{match} when input is a known literal \\
+10 & Const.\ fold & both & pure & \acs{SCCP}: substitute equality bindings into \texttt{case} arm bodies \\
+11 & Const.\ fold & both & pure & \acs{SCCP}: substitute equality bindings into \texttt{match} arm bodies \\
+12 & Const.\ fold & both & pure & Detect contradictory \texttt{==}/\texttt{!=} predicates in \texttt{all} $\to$ \texttt{false} \\
+13 & Const.\ fold & both & pure & Substitute equality bindings into sibling predicates in \texttt{all} \\
+14 & Const.\ fold & both & pure & Subsume weaker range bounds: keep tighter of two bounds on same variable \\
+15 & Const.\ fold & both & pure & Remove \texttt{has} subsumed by comparison on the same property \\
+16 & Const.\ fold & both & pure & Boolean absorption: \texttt{["all",A,["any",A,\ldots]]} $\to$ \texttt{["all",A]} \\
+17 & Const.\ fold & both & pure & Remove redundant type coercions on already-typed values \\
+18 & Const.\ fold & both & pure & Strip explicit \texttt{["properties"]} argument from \texttt{get}/\texttt{has} \\
+\midrule
+% Constant Fold Stats
+19 & Fold (stats) & filter & stats & Fold \texttt{["has",p]} $\to$ true/false when stats confirm property presence \\
+20 & Fold (stats) & both & stats & Fold \texttt{["get",p]} to literal when property has a single value \\
+21 & Fold (stats) & filter & stats & Fold geometry-type comparison from observed types in tile statistics \\
+22 & Fold (stats) & both & stats & Fold comparison to true/false when value distribution proves constant result \\
+23 & Fold (stats) & both & stats & Prune impossible labels from \texttt{in} expression using value statistics \\
+24 & Fold (stats) & both & stats & Prune \texttt{match} arms whose labels never appear in property value counts \\
+25 & Fold (stats) & both & stats & Reorder \texttt{match} arms by descending value frequency \\
+26 & Fold (stats) & both & stats & Fold \texttt{coalesce} when \texttt{get} arm is always or never present \\
+27 & Fold (stats) & both & stats & Prune unreachable \texttt{interpolate}/\texttt{step} stops outside observed data range \\
+\midrule
+% Simplify Expressions
+28 & Simplify & both & pure & Factor common operands: \texttt{["any",["all",A,B],["all",A,C]]} $\to$ \texttt{["all",A,["any",B,C]]} \\
+29 & Simplify & both & pure & Canonicalise \texttt{["exponential",1]} $\to$ \texttt{["linear"]} in interpolate curves \\
+30 & Simplify & both & pure & Collapse \texttt{interpolate}/\texttt{step} when all output values are structurally equal \\
+31 & Simplify & both & pure & Merge \texttt{match} arms with identical outputs; drop arms that equal the fallback \\
+32 & Simplify & both & pure & Strip \texttt{coalesce} wrapper from comparison when default fails anyway \\
+33 & Simplify & both & pure & Strip \texttt{coalesce} from \texttt{match} input when default not in any label \\
+34 & Simplify & both & pure & Strip \texttt{coalesce} from \texttt{in} needle when default not in haystack \\
+35 & Simplify & both & pure & Rewrite single-arm boolean \texttt{match} to \texttt{in}/\texttt{==}/\texttt{!=} \\
+36 & Simplify & both & pure & Rewrite \texttt{["any",["==",x,a],\ldots]} $\to$ \texttt{["in",x,[\ldots]]} \\
+37 & Simplify & both & pure & Flatten nested \texttt{case}: inline the fallback's arms \\
+38 & Simplify & both & pure & Remove trailing \texttt{case} arms whose output equals the fallback \\
+39 & Simplify & both & pure & Rewrite \texttt{case} to \texttt{match} for $O(1)$ dispatch when all arms test equality on the same expression \\
+40 & Simplify & both & pure & Simplify \texttt{coalesce}: remove null literals, truncate after first non-null literal \\
+41 & Simplify & both & pure & Flatten nested \texttt{coalesce} expressions \\
+42 & Simplify & both & pure & Flatten nested \texttt{all}/\texttt{any} operators \\
+43 & Simplify & both & pure & De Morgan's laws: \texttt{["!",["any",A,B]]} $\to$ \texttt{["all",["!",A],["!",B]]} \\
+44 & Simplify & both & pure & Single-element \texttt{in} $\to$ \texttt{==} \\
+45 & Simplify & both & pure & Merge adjacent \texttt{in} expressions on the same variable inside \texttt{any} \\
+46 & Simplify & both & pure & Inline single-use \texttt{let}/\texttt{var} bindings \\
+\midrule
+% Selectivity
+47 & Selectivity & both & stats & Reorder \texttt{any}/\texttt{all} operands by estimated selectivity for short-circuit evaluation \\
+\bottomrule
+\end{longtblr}
+
+
+\section{Per-Style Ablation Results}\label{app_per_style}
+
+This section provides the full per-style, per-ablation-step results for each of the benchmark styles.
+For each style, the table reports style size (raw bytes, gzip at level~9, Brotli at maximum quality), median load time across scenarios, median FPS, and layer count at each cumulative ablation step.
+Performance metrics are medians across all scenario--animation combinations.
+Steps 16--19 (selectivity reorder, tile shaving, tile rewrite) require tile statistics and are only available for fiord and liberty, which were benchmarked with an \texttt{.mbtiles} source.
+Americana is excluded from the per-style tables due to incomplete benchmark data (only 3 of 20 ablation steps completed).
+
+\perstyleablation{liberty}{Liberty}
+\perstyleablation{bright}{Bright}
+\perstyleablation{positron}{Positron}
+\perstyleablation{fiord}{Fiord}
+\perstyleablation{dark_matter}{Dark Matter}
+\perstyleablation{osm_bright}{OSM Bright}
+\perstyleablation{klokan_basic}{Klokan Basic}
+\perstyleablation{toner}{Toner}
+\perstyleablation{osm_liberty}{OSM Liberty}
+\perstyleablation{basemap_col}{BasemapDE Colour}
+\perstyleablation{basemap_top}{BasemapDE Topo}
+\perstyleablation{icgc_fosc}{ICGC Fosc}
+\perstyleablation{icgc_gris}{ICGC Gris}
+\perstyleablation{stadia_outdoors}{Stadia Outdoors}
+
+
+\section{Per-Zoom Tile Size Breakdown}\label{app_tile_sizes}
+
+\cref{tab:tile_sizes_per_zoom} shows the per-zoom-level tile size (gzip) for the Germany OpenMapTiles tileset across four encoding configurations: the \ac{MVT} baseline, the Tremmel \& Zink \ac{MLT}-Java encoder, the \ac{MLT}-Rust encoder (without shaving), and the full pipeline (style optimizations + tile shaving + \ac{MLT}-Rust encoding).
+The shaved configuration uses the advisory generated from the fiord style; other styles would produce slightly different shaving results depending on their property and layer references.
+
+\begin{table}[htbp]
+\centering \small
+\csvreader[
+  tabular=r r r r r r r,
+  table head={\toprule
+    \textbf{Zoom} & \textbf{Tiles} & \textbf{MVT} &
+    \textbf{MLT-Java} & \textbf{MLT-Rust} &
+    \textbf{MLT-Rust} & \textbf{$\Delta$\%} \\
+     & & & & & \textbf{(shaved)} & \textbf{vs.\ MVT} \\
+    \midrule},
+  table foot=\bottomrule,
+  head to column names,
+  before first line=,
+]{scripts/data/tile_sizes_per_zoom.csv}{}%
+{\ifnum\isTotal=1\midrule\textbf{\zoom}\else\zoom\fi &
+ \ifnum\isTotal=1\num{\tiles}\else\num{\tiles}\fi &
+ \fmtbytes{\mvtBytes} & \fmtbytes{\mltJavaBytes} &
+ \fmtbytes{\mltRustBytes} & \fmtbytes{\mltShavedBytes} &
+ \fmtdelta{\deltaPct}}%
+\caption{Per-zoom tile size (gzip) for the Germany OpenMapTiles
+tileset across four encoding configurations.  The $\Delta$\% column
+shows the reduction of the full pipeline (style optimizations + tile
+shaving + MLT encoding) relative to the MVT baseline}
+\label{tab:tile_sizes_per_zoom}
+\end{table}
+
+
+\section{Maputnik Generalisation Corpus}\label{app_maputnik}
+
+\cref{tab:maputnik_full} lists the 13 styles from the Maputnik editor catalogue used in the cross-style generalisation study (\cref{sec_exp_cross_style}), together with per-style metrics.
+Two catalogue entries were unavailable at the time of measurement (HTTP~403).
+The optimiser was run with all static passes enabled (no tile statistics).
+
+\begin{table}[htbp]
+\centering
+\begin{tblr}{
+  colspec = {l r r r r r},
+  rows = {font=\small},
+  row{1} = {font=\small\bfseries},
+}
+\toprule
+Style & Layers & Baseline (B) & Optimised (B) & $\Delta$ Raw (\%) & $\Delta$ Brotli (\%) \\
+\midrule
+Empty Style          &   0 &        197 &        153 & \num{-22.3} & \num{-12.0} \\
+Americana            & 353 & \num{1155702} &    \num{504865} & \num{-56.3} &  \num{-2.5} \\
+AWS Hybrid           & 125 &    \num{122022} &    \num{109088} & \num{-10.6} &  \num{-3.6} \\
+AWS Standard         & 160 &    \num{143294} &    \num{128055} & \num{-10.6} &  \num{-3.1} \\
+Dark Matter          &  47 &     \num{29642} &     \num{16455} & \num{-44.5} & \num{-27.2} \\
+LocationIQ Streets   & 119 &    \num{127889} &     \num{36788} & \num{-71.2} & \num{-27.5} \\
+MapTiler Basic       &  48 &     \num{23277} &     \num{11918} & \num{-48.8} & \num{-28.7} \\
+Toner                &  37 &     \num{31608} &     \num{11401} & \num{-63.9} & \num{-29.8} \\
+OSM Bright           & 128 &     \num{74188} &     \num{40431} & \num{-45.5} & \num{-29.5} \\
+OSM Liberty          & 105 &     \num{48300} &     \num{28328} & \num{-41.3} & \num{-22.8} \\
+Positron             &  50 &     \num{32736} &     \num{17794} & \num{-45.6} & \num{-29.9} \\
+Stadia Outdoors      & 110 &     \num{43208} &     \num{35372} & \num{-18.1} & \num{-20.7} \\
+Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \num{-18.1} \\
+\bottomrule
+\end{tblr}
+\caption{Complete Maputnik generalisation corpus with per-style size metrics}
+\label{tab:maputnik_full}
+\end{table}

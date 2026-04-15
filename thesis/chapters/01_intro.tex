@@ -1,0 +1,52 @@
+\chapter{Introduction}\label{ch_introduction}
+
+Interactive web maps have become a ubiquitous interface for geographic information, powering applications from navigation and logistics to urban planning and journalism.
+Modern map renderers such as MapLibre GL~JS and Mapbox GL~JS deliver rich, client-side rendered vector maps by streaming tiled geometry data to the browser, where a client side style specification drives a WebGL- or WebGPU-based rendering pipeline.
+This architecture enables smooth panning, zooming, and rotation, but it also places competing demands on the network (tile fetching), the CPU (decoding, style expression evaluation), and the GPU (draw calls)- all within a single frame budget.
+
+As map deployments scale - from personal projects to platforms serving millions of daily users - the cost of suboptimal performance compounds.
+Larger tiles increase transfer time and bandwidth cost; redundant style layers waste rendering cycles; unnecessary properties inflate decoding overhead.
+On mobile devices, these inefficiencies translate directly into battery drain and thermal throttling.
+On unstable network connections, such as on trains or aeroplanes, these translate to degraded user experiences.
+Despite this, the map rendering community has largely treated style authoring and data preparation as independent concerns:
+styles are hand-tuned for visual appearance,
+tiles are encoded with general-purpose compression
+
+The interaction between the two is left unexploited.
+
+\section{Research Goals}\label{sec_research_goals}
+
+This thesis investigates automatic, style- and data-driven co-optimisation for MapLibre-based map rendering pipelines.
+Three research questions guide the work:
+
+\begin{enumerate}[label=\textbf{R\arabic*}]
+    \item To what extent can automatic data and style co-optimisation reduce map tile size and improve rendering performance?
+    \item Which techniques - such as expression simplification, dead layer elimination, layer merging, tile shaving, and columnar re-encoding - are most effective, and how do they interact?
+    \item How expensive are these optimizations in terms of preprocessing time, and what are the tradeoffs between transfer size, decoding latency, and rendering throughput?\footnote{Decoding latency is reported as part of load time (\texttt{loadMs}) rather than isolated, because the benchmark harness cannot separate decoder time from the surrounding fetch and first-paint work without renderer-internal instrumentation. Energy consumption is discussed qualitatively in \cref{sub_combined_discussion} based on the transfer-size and frame-rate results, but is not directly measured, because the benchmark host is a desktop workstation rather than a battery-constrained device. \cref{sec_exp_pareto} reports a post-hoc Pareto analysis over a narrower size-vs-cost frontier; its noise-floor subsection quantifies why the rendering-performance axes cannot support a per-step frontier on the existing data and identifies this as future work.}
+\end{enumerate}
+
+To answer these questions, the thesis designs and implements a standalone optimiser that consumes a MapLibre style JSON document and, optionally, tile-level statistics, and produces a semantically equivalent style whose rendering performance is measurably improved - together with optimised tile data.
+All transformations are visually lossless: the optimised output must produce pixel-identical rendering for every tile at every zoom level.
+
+\section{Contributions}\label{sec_contributions}
+
+The main contributions of this thesis are:
+
+\begin{enumerate}
+    \item A \textbf{two-phase style optimization pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering) and structural passes (dead layer elimination, metadata refinement, layer merging), modeled on peephole optimisers and query planners from the compiler and database literature.
+
+    \item \textbf{Style-driven tile shaving} that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data - creating a cascade where style optimisation makes data optimization more effective.
+
+    \item An \textbf{automatic encoding strategy selection} for the MapLibre Tiles (MLT) columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies.
+
+    \item An \textbf{empirical evaluation} across 15 styles, 18 scenarios, and 17 cumulative ablation steps, demonstrating measurable improvements in tile volume, load time, and rendering stability.
+\end{enumerate}
+
+\section{Outline}\label{sec_outline}
+
+The remainder of this thesis is structured as follows.
+\cref{ch_related_work} surveys related work on tile data optimisation, tile encoding, style optimisation, and rendering benchmarking, and positions this thesis relative to the state of the art.
+\cref{ch_theoretical_background} introduces the theoretical background: the map rendering architecture, multi-objective optimisation, and benchmarking methodology.
+\cref{ch_methods} presents the design and implementation of the optimiser, covering the two-phase pipeline, individual optimisation passes, data-level techniques, and the evaluation methodology.
+\cref{ch_experiments} evaluates the optimiser through three experiments - expression-level, structural, and data-level - followed by a cross-style generalisation study and a combined analysis of the full pipeline.
+\cref{ch_conclusion} summarises the findings, discusses limitations, and identifies directions for future work.

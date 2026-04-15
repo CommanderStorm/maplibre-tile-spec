@@ -1,0 +1,943 @@
+@article{amiraghdamLOCALISLocallyadaptiveLine2019,
+  title = {{{LOCALIS}}: {{Locally-adaptive Line Simplification}} for {{GPU-based Geographic Vector Data Visualization}}},
+  shorttitle = {{{LOCALIS}}},
+  author = {Amiraghdam, Alireza and Diehl, Alexandra and Pajarola, Renato},
+  date = {2019},
+  publisher = {arXiv},
+  doi = {10.48550/ARXIV.1909.05511},
+  url = {https://arxiv.org/abs/1909.05511},
+  urldate = {2025-10-20},
+  abstract = {Visualization of large vector line data is a core task in geographic and cartographic systems. Vector maps are often displayed at different cartographic generalization levels, traditionally by using several discrete levels-of-detail (LODs). This limits the generalization levels to a fixed and predefined set of LODs, and generally does not support smooth LOD transitions. However, fast GPUs and novel line rendering techniques can be exploited to integrate dynamic vector map LOD management into GPU-based algorithms for locally-adaptive line simplification and real-time rendering. We propose a new technique that interactively visualizes large line vector datasets at variable LODs. It is based on the Douglas-Peucker line simplification principle, generating an exhaustive set of line segments whose specific subsets represent the lines at any variable LOD. At run time, an appropriate and view-dependent error metric supports screen-space adaptive LOD levels and the display of the correct subset of line segments accordingly. Our implementation shows that we can simplify and display large line datasets interactively. We can successfully apply line style patterns, dynamic LOD selection lenses, and anti-aliasing techniques to our line rendering.},
+  version = {2},
+  keywords = {FOS: Computer and information sciences,Graphics (cs.GR),I.3,I.3.3,I.3.5,I.3.6,I.3.7},
+  annotation = {amiraghdamLOCALISLocallyadaptiveLine2019},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/EKJLJE74/Amiraghdam et al. - 2019 - LOCALIS Locally-adaptive Line Simplification for GPU-based Geographic Vector Data Visualization.pdf}
+}
+
+@article{ballaVectorDataRendering2025,
+  title = {Vector {{Data Rendering Performance Analysis}} of {{Open-Source Web Mapping Libraries}}},
+  author = {Balla, Dániel and Gede, Mátyás},
+  date = {2025-08-30},
+  journaltitle = {IJGI},
+  volume = {14},
+  number = {9},
+  pages = {336},
+  issn = {2220-9964},
+  doi = {10.3390/ijgi14090336},
+  url = {https://www.mdpi.com/2220-9964/14/9/336},
+  urldate = {2025-10-24},
+  abstract = {Nowadays, various technologies exist with differing rendering performance for interactive web maps. These maps are consumed on devices with varying capabilities; therefore, choosing the best-performing library for a dataset is emphasized. Unlike existing research, this study presents a comparative analysis on libraries’ native performance for rendering large amounts of GeoJSON vector data, partially extracted from OpenStreetMap (OSM). Four libraries were analyzed. Results showed that regardless of feature types, Leaflet and OpenLayers excelled for features up to 10,000. Up to 5000 points, these two were the fastest, above which the libraries’ performance converged. For 50,000 or more, Mapbox GL JS rendered them the quickest, followed by OpenLayers, MapLibre GL JS and Leaflet. For up to 50,000 lines and 10,000 polygons, Leaflet and OpenLayers were the fastest in all scenarios. For 100,000 lines, OpenLayers was almost twice as fast as the others, while Mapbox rendered 50,000 polygons the quickest. The performance of Leaflet and OpenLayers scales with the increasing feature quantities, yet for Mapbox and MapLibre, any performance impact is offset to 1000 features and beyond. Slow initalization of map elements makes Mapbox and MapLibre less suitable for rapid rendering of small feature quantities. Other behavioural differences affecting user experience are also explored.},
+  langid = {english},
+  annotation = {ballaVectorDataRendering2025},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/96VW6KL8/Balla and Gede - 2025 - Vector Data Rendering Performance Analysis of Open-Source Web Mapping Libraries.pdf}
+}
+
+@online{BestPracticesMap,
+  title = {Best Practices for Map Tile Caching},
+  url = {https://www.here.com/docs/bundle/raster-tile-api-developer-guide/page/topics/cache-maps.html},
+  urldate = {2026-03-16},
+  annotation = {BestPracticesMap},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/RRAQMHYD/cache-maps.html}
+}
+
+@unpublished{chawanjiVectorTileCache,
+  title = {Vector Tile Cache Connecting Effective Spatial Communication and Geospatial {{AI}}},
+  author = {Chawanji, Sharon},
+  langid = {english},
+  howpublished = {Unpublished manuscript},
+  annotation = {chawanjiVectorTileCache},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/BFRIKFP7/Chawanji - Vector tile cache connecting effective spatial communication and geospatial AI.pdf}
+}
+
+@article{chenSMAPGANGenerativeAdversarial2021,
+  title = {{{SMAPGAN}}: {{Generative Adversarial Network Based Semi-Supervised Styled Map Tiles Generating Method}}},
+  shorttitle = {{{SMAPGAN}}},
+  author = {Chen, X. and Chen, S. and Xu, T. and Yin, B. and Mei, X. and Peng, J. and Li, H.},
+  date = {2021-05},
+  journaltitle = {IEEE Trans. Geosci. Remote Sensing},
+  volume = {59},
+  number = {5},
+  eprint = {2001.07712},
+  eprinttype = {arXiv},
+  eprintclass = {eess},
+  pages = {4388--4406},
+  issn = {0196-2892, 1558-0644},
+  doi = {10.1109/TGRS.2020.3021819},
+  url = {http://arxiv.org/abs/2001.07712},
+  urldate = {2025-10-20},
+  abstract = {Traditional online map tiles, which are widely used on the Internet, such as by Google Maps and Baidu Maps, are rendered from vector data. The timely updating of online map tiles from vector data, for which generation is time consuming, is a difficult mission. Generating map tiles over time from remote sensing images is relatively simple and can be performed quickly without vector data. However, this approach used to be challenging or even impossible. Inspired by image-to-image translation (img2img) techniques based on generative adversarial networks (GANs), we proposed a semi-supervised generation of styled map tiles based on GANs (SMAPGAN) model to generate styled map tiles directly from remote sensing images. In this model, we designed a semi-supervised learning strategy to pretrain SMAPGAN on rich unpaired samples and fine-tune it on limited paired samples in reality. We also designed the image gradient L1 loss and the image gradient structure loss to generate a styled map tile with global topological relationships and detailed edge curves for objects, which are important in cartography. Moreover, we proposed the edge structural similarity index (ESSI) as a metric to evaluate the quality of the topological consistency between the generated map tiles and ground truth. The experimental results show that SMAPGAN outperforms stateof-the-art (SOTA) works according to the mean squared error, the structural similarity index, and the ESSI. Also, SMAPGAN gained higher approval than SOTA in a human perceptual test on the visual realism of cartography. Our work shows that SMAPGAN is a new tool with excellent potential for producing styled map tiles. Our implementation of SMAPGAN is available at https://github.com/imcsq/SMAPGAN.},
+  langid = {english},
+  keywords = {Computer Science - Machine Learning,Electrical Engineering and Systems Science - Image and Video Processing,Statistics - Machine Learning},
+  annotation = {chenSMAPGANGenerativeAdversarial2021},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/HWNWT7HL/Chen et al. - 2021 - SMAPGAN Generative Adversarial Network Based Semi-Supervised Styled Map Tiles Generating Method.pdf}
+}
+
+@article{christopheExpressiveMapDesign2018,
+  title = {Expressive Map Design: {{OGC SLD}}/{{SE}}++ Extension for Expressive Map Styles},
+  shorttitle = {Expressive Map Design},
+  author = {Christophe, Sidonie and Duménieu, Bertrand and Masse, Antoine and Hoarau, Charlotte and Ory, Jérémie and Brédif, Mathieu and Lecordix, François and Mellado, Nicolas and Turbet, Jérémie and Loi, Hugo and Hurtut, Thomas and Vanderhaeghe, David and Vergne, Romain and Thollot, Joëlle},
+  date = {2018-05-16},
+  journaltitle = {Proc. Int. Cartogr. Assoc.},
+  volume = {1},
+  pages = {1--3},
+  issn = {2570-2092},
+  doi = {10.5194/ica-proc-1-21-2018},
+  url = {https://ica-proc.copernicus.org/articles/1/21/2018/},
+  urldate = {2025-10-20},
+  abstract = {Abstract. In the context of custom map design, handling more artistic and expressive tools has been identified as a carto-graphic need, in order to design stylized and expressive maps. Based on previous works on style formalization, an approach for specifying the map style has been proposed and experimented for particular use cases. A first step deals with the analysis of inspiration sources, in order to extract ‘what does make the style of the source’, i.e. the salient visual characteristics to be automatically reproduced (textures, spatial arrangements, linear stylization, etc.). In a second step, in order to mimic and generate those visual characteristics, existing and innovative rendering techniques have been implemented in our GIS engine, thus extending the capabilities to generate expressive renderings. Therefore, an extension of the existing cartographic pipeline has been proposed based on the following aspects: 1- extension of the symbolization specifications OGC SLD/SE in order to provide a formalism to specify and reference expressive rendering methods; 2- separate the specification of each rendering method and its parameterization, as metadata. The main contribution has been described in (Christophe et al. 2016). In this paper, we focus firstly on the extension of the cartographic pipeline (SLD++ and metadata) and secondly on map design capabilities which have been experimented on various topographic styles: old cartographic styles (Cassini), artistic styles (watercolor, impressionism, Japanese print), hybrid topographic styles (ortho-imagery \&amp; vector data) and finally abstract and photo-realist styles for the geovisualization of costal area. The genericity and interoperability of our approach are promising and have already been tested for 3D visualization.},
+  langid = {english},
+  annotation = {christopheExpressiveMapDesign2018},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/3C4XWWC6/Christophe et al. - 2018 - Expressive map design OGC SLDSE++ extension for expressive map styles.pdf}
+}
+
+@online{ComplexTextPlugin,
+  title = {Complex {{Text Plugin}} | Oliverwipfli.Ch},
+  url = {https://oliverwipfli.ch/complex-text-plugin-2025-05-30/},
+  urldate = {2026-03-16},
+  annotation = {ComplexTextPlugin},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/PYRZDEK5/complex-text-plugin-2025-05-30.html}
+}
+
+@article{debFastElitistMultiobjective2002,
+  title = {A Fast and Elitist Multiobjective Genetic Algorithm: {{NSGA-II}}},
+  shorttitle = {A Fast and Elitist Multiobjective Genetic Algorithm},
+  author = {Deb, K. and Pratap, A. and Agarwal, S. and Meyarivan, T.},
+  date = {2002-04},
+  journaltitle = {IEEE Trans. Evol. Computat.},
+  volume = {6},
+  number = {2},
+  pages = {182--197},
+  issn = {1089778X},
+  doi = {10.1109/4235.996017},
+  url = {http://ieeexplore.ieee.org/document/996017/},
+  urldate = {2026-03-16},
+  langid = {english},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/9PIWMUAL/Deb et al. - 2002 - A fast and elitist multiobjective genetic algorithm NSGA-II.pdf}
+}
+
+@online{DirectXSpecs,
+  title = {{{DirectX-Specs}}},
+  url = {https://microsoft.github.io/DirectX-Specs/},
+  urldate = {2026-03-16},
+  abstract = {Engineering specs for DirectX features.},
+  langid = {american},
+  organization = {DirectX-Specs},
+  annotation = {DirectXSpecs},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/EFCZZYQN/DirectX-Specs.html}
+}
+
+@article{fujimuraDESIGNDEVELOPMENTVECTOR2019,
+  title = {{{UN}} Vector Tile Toolkit},
+  author = {Fujimura, H. and Martin Sanchez, O. and Gonzalez Ferreiro, D. and Kayama, Y. and Hayashi, H. and Iwasaki, N. and Mugambi, F. and Obukhov, T. and Motojima, Y. and Sato, T.},
+  date = {2019-08-23},
+  journaltitle = {Int. Arch. Photogramm. Remote Sens. Spatial Inf. Sci.},
+  volume = {XLII-4/W14},
+  pages = {57--62},
+  issn = {2194-9034},
+  doi = {10.5194/isprs-archives-XLII-4-W14-57-2019},
+  url = {https://isprs-archives.copernicus.org/articles/XLII-4-W14/57/2019/},
+  urldate = {2025-10-20},
+  abstract = {Abstract. The UN Vector Tile Toolkit (https://github.com/un-vector-tile-toolkit/) is a package of open source tools designed under the UN Open GIS Initiative to enable public basemap providers, such as the UN geospatial information services or mapping organizations of governments, among others, to deliver their basemap vector tiles leveraging the latest web map technologies. The toolkit provides a set of Node.js open source scripts designed for developers to use with existing and proven open-source software such as Tippecanoe, Maputnik and Vector Tile optimizer. The toolkit will help organizations to produce, host, style, and optimize fast and interoperable basemap vector tiles, making them available with various application frameworks. The talk will cover automatic and continuous updates of basemap vector tiles using a continuously updated PostGIS database which stores both the UN mission-specific basemap data and global OpenStreetMap data. The talk also focuses on how the project ensured interoperability with different existing enterprise geospatial software frameworks that use less-advanced web map libraries. The project aims to build a sustainable community of developers that support the provision of fast and interoperable basemap vector tiles.},
+  langid = {english},
+  annotation = {fujimuraDESIGNDEVELOPMENTVECTOR2019},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/53XI39PJ/Fujimura et al. - 2019 - DESIGN AND DEVELOPMENT OF THE UN VECTOR TILE TOOLKIT.pdf}
+}
+
+@online{Getwebglorg,
+  title = {Get.Webgl.Org},
+  url = {https://get.webgl.org/},
+  urldate = {2026-03-16},
+  annotation = {Getwebglorg},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/J3U53Z8V/get.webgl.org.html}
+}
+
+@article{gienieczkoAnyBloxFrameworkSelfDecoding2025,
+  title = {{{AnyBlox}}: {{A Framework}} for {{Self-Decoding Datasets}}},
+  shorttitle = {{{AnyBlox}}},
+  author = {Gienieczko, Mateusz and Kuschewski, Maximilian and Neumann, Thomas and Leis, Viktor and Giceva, Jana},
+  date = {2025-07},
+  journaltitle = {Proc. VLDB Endow.},
+  volume = {18},
+  number = {11},
+  pages = {4017--4031},
+  issn = {2150-8097},
+  doi = {10.14778/3749646.3749672},
+  url = {https://dl.acm.org/doi/10.14778/3749646.3749672},
+  urldate = {2025-10-20},
+  abstract = {Research advancements in storage formats continuously produce more e昀케cient encodings and be琀琀er compression rates. Despite this, new formats are not adopted due to high implementation cost and existing formats cannot evolve because they need to maintain compatibility across systems. Can this problem be solved by introducing a new abstraction? We answer a昀케rmatively with AnyBlox, a framework for reading arbitrary datasets using lightweight WebAssembly decoders bundled with the data. By decoupling decoders from both systems and 昀椀le format speci昀椀cations, AnyBlox allows transparent format evolution, instance-optimized encodings, and enables mainstream adoption of research advancements. It integrates seamlessly with modern systems like DuckDB, Spark, and Umbra, while delivering solid performance and security guarantees.},
+  langid = {english},
+  annotation = {gienieczkoAnyBloxFrameworkSelfDecoding2025},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/G8CEZAZZ/Gienieczko et al. - 2025 - AnyBlox A Framework for Self-Decoding Datasets.pdf}
+}
+
+@inproceedings{greenImprovedAlphatestedMagnification2007,
+  title = {Improved Alpha-Tested Magnification for Vector Textures and Special Effects},
+  booktitle = {{{ACM SIGGRAPH}} 2007 Courses},
+  author = {Green, Chris},
+  date = {2007-08-05},
+  pages = {9--18},
+  publisher = {ACM},
+  location = {San Diego California},
+  doi = {10.1145/1281500.1281665},
+  url = {https://dl.acm.org/doi/10.1145/1281500.1281665},
+  urldate = {2026-03-16},
+  abstract = {A simple and efficient method is presented which allows improved rendering of glyphs composed of curved and linear elements. A distance field is generated from a high resolution image, and then stored into a channel of a lower-resolution texture. In the simplest case, this texture can then be rendered simply by using the alphatesting and alpha-thresholding feature of modern GPUs, without a custom shader. This allows the technique to be used on even the lowest-end 3D graphics hardware.},
+  eventtitle = {{{SIGGRAPH07}}: {{Special Interest Group}} on {{Computer Graphics}} and {{Interactive Techniques Conference}}},
+  isbn = {978-1-4503-1823-5},
+  langid = {english},
+  annotation = {greenImprovedAlphatestedMagnification2007},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/BVDVGYKB/Green - 2007 - Improved alpha-tested magnification for vector textures and special effects.pdf}
+}
+
+@article{heEfficientSpatialAntiAliasing2019,
+  title = {Efficient {{Spatial Anti-Aliasing Rendering}} for {{Line Joins}} on {{Vector Maps}}},
+  author = {He, Chaoyang and Li, Ming},
+  date = {2019},
+  doi = {10.48550/ARXIV.1906.11999},
+  url = {https://arxiv.org/abs/1906.11999},
+  urldate = {2025-10-20},
+  abstract = {The spatial anti-aliasing technique for line joins (intersections of the road segments) on vector maps is exclusively crucial to visual experience and system performance. Due to limitations of OpenGL API, one common practice to achieve the anti-aliased effect is splicing multiple triangles at varying scale levels to approximate the fan-shaped line joins. However, this approximation inevitably produces some unreality, and the system rendering performance is not optimal. To circumvent these drawbacks, in this paper, we propose a simple but efficient algorithm which uses only two triangles to substitute the multiple triangles approximation and then renders a realistic fan-shaped curve with alpha operation based on geometrical relation computing. Our experiment shows it has advantages of a realistic anti-aliasing effect, less memory cost, higher frame rate, and drawing line joins without overlapping rendering. Our proposed spatial anti-aliasing technique has been widely used in Internet Maps such as Tencent Mobile Maps and Tencent Automotive Maps.},
+  version = {1},
+  keywords = {Computational Geometry (cs.CG),FOS: Computer and information sciences,Graphics (cs.GR)},
+  annotation = {heEfficientSpatialAntiAliasing2019},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/AYYCQ9E2/He and Li - 2019 - Efficient Spatial Anti-Aliasing Rendering for Line Joins on Vector Maps.pdf}
+}
+
+@online{HERETechnologiesWorlds,
+  title = {{{HERE Technologies}} | {{The}} World's \#1 Location Platform},
+  url = {https://www.here.com},
+  urldate = {2026-03-16},
+  abstract = {HERE is a PaaS for building, deploying and scaling location solutions. Create custom maps, visualize location datasets, gather insights and buy and sell location assets.},
+  langid = {english},
+  annotation = {HERETechnologiesWorlds},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/RLY2CD8R/www.here.com.html}
+}
+
+@online{HomeDeckgl,
+  title = {Home | Deck.Gl},
+  url = {https://deck.gl/},
+  urldate = {2026-03-16},
+  abstract = {deck.gl},
+  langid = {english},
+  annotation = {HomeDeckgl},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/UJYJKMJR/deck.gl.html}
+}
+
+@online{HomeVulkanCross,
+  title = {Home | {{Vulkan}} | {{Cross}} Platform {{3D Graphics}}},
+  url = {https://www.vulkan.org/},
+  urldate = {2026-03-16},
+  annotation = {HomeVulkanCross},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/Y7T34RBU/www.vulkan.org.html}
+}
+
+@article{ignizioReviewGoalProgramming1978,
+  title = {A {{Review}} of {{Goal Programming}}: {{A Tool}} for {{Multiobjective Analysis}}},
+  shorttitle = {A {{Review}} of {{Goal Programming}}},
+  author = {Ignizio, James P.},
+  date = {1978-11},
+  journaltitle = {Journal of the Operational Research Society},
+  volume = {29},
+  number = {11},
+  pages = {1109--1119},
+  issn = {0160-5682, 1476-9360},
+  doi = {10.1057/jors.1978.243},
+  url = {https://www.tandfonline.com/doi/full/10.1057/jors.1978.243},
+  urldate = {2026-03-16},
+  langid = {english}
+}
+
+@article{ijgi11040234,
+  title = {A Vector Data Model for Efficiently Rendering Large Vector Maps on Global {{3D}} Terrain Surfaces},
+  author = {Wang, Ganlin and Chen, Jing},
+  date = {2022},
+  journaltitle = {ISPRS International Journal of Geo-Information},
+  volume = {11},
+  number = {234},
+  issn = {2220-9964},
+  doi = {10.3390/ijgi11040234},
+  url = {https://www.mdpi.com/2220-9964/11/4/234},
+  abstract = {Visualizing vector data on 3D terrain surfaces is a basic and essential function in 3D GIS. However, due to the complexity of vector data structures, efficient and effective organization of the vector data is a key issue for the efficient display of vector data in 3D. In this paper, we present a new Vector Tiled Pyramid Model to organize and manage vector data so that they can be visualized on 3D terrain surfaces more effectively. In the Vector Tiled Pyramid Model, vector data at different scales within the same geographical extent are stored as separate levels. Each vector level in our proposed model is divided into vector tiles of fixed sizes organized in a grid index. This improves the efficiency of visualizing vector data on 3D terrain surfaces. Preliminary experimental results suggest that the proposed Vector tiled Pyramid Model, compared with the traditional vector database scheme, can help us to visualize vector data on 3D terrain surfaces more efficiently. In addition, this advantage is more evident when a vector tile at a lower level (large-scale) is requested and visualized on 3D terrain surfaces.},
+  issue = {4},
+  annotation = {ijgi11040234},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/GX4DURQR/Wang and Chen - 2022 - A vector data model for efficiently rendering large vector maps on global 3D terrain surfaces.pdf}
+}
+
+@online{incMetalOverview,
+  title = {Metal {{Overview}}},
+  author = {Inc, Apple},
+  url = {https://developer.apple.com/metal/},
+  urldate = {2026-03-16},
+  abstract = {Metal powers hardware-accelerated graphics on Apple platforms by providing a low-overhead API, rich shading language, tight integration between graphics and compute, and an unparalleled suite of GPU profiling and debugging tools.},
+  langid = {english},
+  organization = {Apple Developer},
+  annotation = {incMetalOverview},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/68XCBTMD/metal.html}
+}
+
+@article{kangTransferringMultiscaleMap2019,
+  title = {Transferring {{Multiscale Map Styles Using Generative Adversarial Networks}}},
+  author = {Kang, Yuhao and Gao, Song and Roth, Robert E.},
+  date = {2019},
+  publisher = {arXiv},
+  doi = {10.48550/ARXIV.1905.02200},
+  url = {https://arxiv.org/abs/1905.02200},
+  urldate = {2025-10-20},
+  abstract = {The advancement of the Artificial Intelligence (AI) technologies makes it possible to learn stylistic design criteria from existing maps or other visual art and transfer these styles to make new digital maps. In this paper, we propose a novel framework using AI for map style transfer applicable across multiple map scales. Specifically, we identify and transfer the stylistic elements from a target group of visual examples, including Google Maps, OpenStreetMap, and artistic paintings, to unstylized GIS vector data through two generative adversarial network (GAN) models. We then train a binary classifier based on a deep convolutional neural network to evaluate whether the transfer styled map images preserve the original map design characteristics. Our experiment results show that GANs have a great potential for multiscale map style transferring, but many challenges remain requiring future research.},
+  version = {2},
+  keywords = {Computer Vision and Pattern Recognition (cs.CV),FOS: Computer and information sciences,FOS: Electrical engineering electronic engineering information engineering,I.2.1,I.4.9,Image and Video Processing (eess.IV),Machine Learning (cs.LG)},
+  annotation = {kangTransferringMultiscaleMap2019},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/BZVZYN9I/Kang et al. - 2019 - Transferring Multiscale Map Styles Using Generative Adversarial Networks.pdf}
+}
+
+@incollection{kobbenMappingWeb2020,
+  title = {Mapping, {{Web}}},
+  booktitle = {International {{Encyclopedia}} of {{Human Geography}}},
+  author = {Köbben, B.J. and Kraak, Menno-Jan.},
+  date = {2020},
+  pages = {333--337},
+  publisher = {Elsevier},
+  doi = {10.1016/B978-0-08-102295-5.10565-7},
+  url = {https://linkinghub.elsevier.com/retrieve/pii/B9780081022955105657},
+  urldate = {2025-10-24},
+  isbn = {978-0-08-102296-2},
+  langid = {english},
+  annotation = {kobbenMappingWeb2020},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/RYAICDNE/Köbben and Kraak - 2020 - Mapping, Web.pdf}
+}
+
+@article{kuschewskiBtrBlocksEfficientColumnar2023,
+  title = {{{BtrBlocks}}: {{Efficient Columnar Compression}} for {{Data Lakes}}},
+  shorttitle = {{{BtrBlocks}}},
+  author = {Kuschewski, Maximilian and Sauerwein, David and Alhomssi, Adnan and Leis, Viktor},
+  date = {2023-06-13},
+  journaltitle = {Proc. ACM Manag. Data},
+  volume = {1},
+  number = {2},
+  pages = {1--26},
+  issn = {2836-6573},
+  doi = {10.1145/3589263},
+  url = {https://dl.acm.org/doi/10.1145/3589263},
+  urldate = {2025-10-20},
+  abstract = {Analytics is moving to the cloud and data is moving into data lakes. These reside on blob storage services like S3 and enable seamless data sharing and system interoperability. To support this, many systems build on open storage formats like Apache Parquet. However, these formats are not optimized for remotely-accessed data lakes and today’s high-throughput networks. Inefficient decompression makes scans CPU-bound and thus increases query time and cost. With this work we present BtrBlocks, an open columnar storage format designed for data lakes. BtrBlocks uses a set of lightweight encoding schemes, achieving fast and efficient decompression and high compression ratios.},
+  langid = {english},
+  annotation = {kuschewskiBtrBlocksEfficientColumnar2023},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/6CFPQJLA/Kuschewski et al. - 2023 - BtrBlocks Efficient Columnar Compression for Data Lakes.pdf}
+}
+
+@online{LeafletOpensourceJavaScript,
+  title = {Leaflet — an Open-Source {{JavaScript}} Library for Interactive Maps},
+  url = {https://leafletjs.com/},
+  urldate = {2026-03-16},
+  abstract = {Leaflet is a modern, lightweight open-source JavaScript library for mobile-friendly interactive maps.},
+  langid = {english},
+  annotation = {LeafletOpensourceJavaScript},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/EHWB9S78/leafletjs.com.html}
+}
+
+@article{liAdaptivesizeVectorTile2024,
+  title = {An Adaptive-Size Vector Tile Pyramid Construction Method Considering Spatial Data Distribution Density Characteristics},
+  author = {Li, Guowen and Li, Jingzhong},
+  date = {2024-02},
+  journaltitle = {Computers \& Geosciences},
+  volume = {184},
+  pages = {105537},
+  issn = {00983004},
+  doi = {10.1016/j.cageo.2024.105537},
+  url = {https://linkinghub.elsevier.com/retrieve/pii/S0098300424000207},
+  urldate = {2025-10-20},
+  langid = {english},
+  annotation = {liAdaptivesizeVectorTile2024},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/S8B2AAFW/Li and Li - 2024 - An adaptive-size vector tile pyramid construction method considering spatial data distribution densi.pdf}
+}
+
+@article{liHighperformanceCrossplatformMap2019,
+  title = {A {{High-performance Cross-platform Map Rendering Engine}} for {{Mobile Geographic Information System}} ({{GIS}})},
+  author = {Li, Shaojie and Wang, Shaohua and Guan, Yong and Xie, Zhiyan and Huang, Kejia and Wen, Ming and Zhou, Lixin},
+  date = {2019-09-20},
+  journaltitle = {IJGI},
+  volume = {8},
+  number = {10},
+  pages = {427},
+  issn = {2220-9964},
+  doi = {10.3390/ijgi8100427},
+  url = {https://www.mdpi.com/2220-9964/8/10/427},
+  urldate = {2025-10-24},
+  abstract = {With the diversification of terminal equipment and operating systems, higher requirements are placed on the rendering performance of maps. The traditional map rendering engine relies on the corresponding operating system graphics library, and there are problems such as the inability to cross the operating system, low rendering performance, and inconsistent rendering style. With the development of hardware, graphics processing unit (GPU) appears in various platforms. How to use GPU hardware to improve map rendering performance has become a critical challenge. In order to address the above problems, this study proposes a cross-platform and high-performance map rendering (Graphics Library engine, GL engine), which uses mask drawing technology and texture dictionary text rendering technology. It can be used on different hardware platforms and different operating systems based on the OpenGL graphics library. The high-performance map rendering engine maintains a consistent map rendering style on different platforms. The results of the benchmark experiments show that the performance of GL engine is 1.75 times and 1.54 times better than the general map rendering engine in the iOS system and in the Android system, respectively, and the rendering performance for vector tiles is 11.89 times and 9.52 times better than rendering in the Mapbox in the iOS system and in the Android system, respectively.},
+  langid = {english},
+  annotation = {liHighperformanceCrossplatformMap2019},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/2ISACM2H/Li et al. - 2019 - A High-performance Cross-platform Map Rendering Engine for Mobile Geographic Information System (GIS.pdf}
+}
+
+@article{maHiVisionRapidVisualization2021,
+  title = {{{HiVision}}: {{Rapid}} Visualization of Large-Scale Spatial Vector Data},
+  shorttitle = {{{HiVision}}},
+  author = {Ma, Mengyu and Wu, Ye and Ouyang, Xue and Chen, Luo and Li, Jun and Jing, Ning},
+  date = {2021-02},
+  journaltitle = {Computers \& Geosciences},
+  volume = {147},
+  pages = {104665},
+  issn = {00983004},
+  doi = {10.1016/j.cageo.2020.104665},
+  url = {https://linkinghub.elsevier.com/retrieve/pii/S0098300420306373},
+  urldate = {2025-10-20},
+  langid = {english},
+  annotation = {maHiVisionRapidVisualization2021},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/HE74LV4G/Ma et al. - 2021 - HiVision Rapid visualization of large-scale spatial vector data.pdf}
+}
+
+@online{MapboxMapsNavigation,
+  title = {Mapbox | {{Maps}}, {{Navigation}}, {{Search}}, and {{Data}}},
+  url = {https://www.mapbox.com/},
+  urldate = {2026-03-16},
+  annotation = {MapboxMapsNavigation},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/FLKJDWRF/www.mapbox.com.html}
+}
+
+@software{mapboxVtshaverTileShaving2018,
+  title = {Vtshaver: {{Tile}} Shaving and Simplification Tool},
+  author = {{Mapbox}},
+  date = {2018},
+  origdate = {2018-08-21T16:41:47Z},
+  url = {https://github.com/mapbox/vtshaver},
+  urldate = {2025-10-20},
+  abstract = {Remove unneeded vector tile layers, features, and properties based on particular style},
+  organization = {Mapbox},
+  keywords = {cpp,filter,mapbox-gl,node,style-optimized,vector-tiles},
+  annotation = {mapboxVtshaverTileShaving2018}
+}
+
+@online{maplibreMapLibre,
+  title = {{{MapLibre}}},
+  author = {MapLibre},
+  url = {https://maplibre.org/},
+  urldate = {2026-03-16},
+  abstract = {The MapLibre Organization is an umbrella for open-source mapping libraries.},
+  langid = {english},
+  organization = {MapLibre},
+  annotation = {maplibreMapLibre},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/JDZBMXLJ/maplibre.org.html}
+}
+
+@online{MapLibreStyleSpec,
+  title = {{{MapLibre Style Spec}}},
+  url = {https://www.maplibre.org/maplibre-style-spec/},
+  urldate = {2025-10-24},
+  abstract = {Documentation for the MapLibre Style Specification},
+  langid = {english},
+  annotation = {MapLibreStyleSpec},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/DYEGTWUE/maplibre-style-spec.html}
+}
+
+@book{miettinenNonlinearMultiobjectiveOptimization1998,
+  title = {Nonlinear {{Multiobjective Optimization}}},
+  author = {Miettinen, Kaisa},
+  editor = {Hillier, Frederick S.},
+  editortype = {redactor},
+  date = {1998},
+  series = {International {{Series}} in {{Operations Research}} \& {{Management Science}}},
+  volume = {12},
+  publisher = {Springer US},
+  location = {Boston, MA},
+  doi = {10.1007/978-1-4615-5563-6},
+  url = {http://link.springer.com/10.1007/978-1-4615-5563-6},
+  urldate = {2025-10-24},
+  isbn = {978-1-4613-7544-9 978-1-4615-5563-6},
+  annotation = {miettinenNonlinearMultiobjectiveOptimization1998},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/JTAB23CN/Miettinen - 1998 - Nonlinear Multiobjective Optimization.pdf}
+}
+
+@book{MulticriteriaOptimization2005,
+  title = {Multicriteria {{Optimization}}},
+  date = {2005},
+  publisher = {Springer-Verlag},
+  location = {Berlin/Heidelberg},
+  doi = {10.1007/3-540-27659-9},
+  url = {http://link.springer.com/10.1007/3-540-27659-9},
+  urldate = {2025-10-24},
+  isbn = {978-3-540-21398-7},
+  langid = {english},
+  annotation = {MulticriteriaOptimization2005}
+}
+
+@article{netekPerformanceTestingVector2020,
+  title = {Performance {{Testing}} on {{Vector}} vs. {{Raster Map Tiles}}—{{Comparative Study}} on {{Load Metrics}}},
+  author = {Netek, Rostislav and Masopust, Jan and Pavlicek, Frantisek and Pechanec, Vilem},
+  date = {2020-02-06},
+  journaltitle = {IJGI},
+  volume = {9},
+  number = {2},
+  pages = {101},
+  issn = {2220-9964},
+  doi = {10.3390/ijgi9020101},
+  url = {https://www.mdpi.com/2220-9964/9/2/101},
+  urldate = {2025-10-20},
+  abstract = {Recent developments in web map applications have widely affected how background maps are rendered. Raster tiles are currently considered as a regular solution, while the use of vector tiles is becoming more widespread. This article describes an experiment to test both raster and vector tile methods. The concept behind raster tiles is based on pre-generating an original dataset including a customized symbology and style. All tiles are generated according to a standardized scheme. This method has a few disadvantages: if any change in the dataset is required, the entire tile-generating process must be redone. Vector tiles manipulate vector objects. Only vector geometry is stored on the server, while symbology, rendering, and defining zoom levels run on the client-side. This method simplifies changing symbology or topology. Based on eight pilot studies, performance testing on loading time, data size, and the number of requests were performed. The observed results provide a comprehensive comparison according to specific interactions. More data, but only one or two tiles, were downloaded for vector tiles in zoom and move interactions, while 40 tiles were downloaded for raster tiles for the same interactions. Generally, the WebP format downloaded about three times fewer data than Portable Network Graphics (PNG).},
+  langid = {english},
+  annotation = {netekPerformanceTestingVector2020},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/XDGDKTP3/Netek et al. - 2020 - Performance Testing on Vector vs. Raster Map Tiles—Comparative Study on Load Metrics.pdf}
+}
+
+@online{OpenGL4Reference,
+  title = {{{OpenGL}} 4 {{Reference Pages}}},
+  url = {https://registry.khronos.org/OpenGL-Refpages/gl4/},
+  urldate = {2026-03-16},
+  annotation = {OpenGL4Reference},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/C48SGWJF/gl4.html}
+}
+
+@software{OpenstreetmapID2026,
+  title = {Openstreetmap/{{iD}}},
+  date = {2026-03-16T12:34:07Z},
+  origdate = {2012-07-11T13:20:04Z},
+  url = {https://github.com/openstreetmap/iD},
+  urldate = {2026-03-16},
+  abstract = {🆔 The easy-to-use OpenStreetMap editor in JavaScript.},
+  organization = {OpenStreetMap on GitHub},
+  keywords = {d3,editor,mapping,openstreetmap},
+  annotation = {OpenstreetmapID2026}
+}
+
+@online{ortegaGleoWebGLMap,
+  title = {Gleo - {{WebGL}} Map Display Library},
+  author = {Ortega, Iván Sánchez},
+  url = {https://ivansanchez.gitlab.io/gleo/},
+  urldate = {2026-03-16},
+  abstract = {Gleo is a Javascript+WebGL map display library.},
+  annotation = {ortegaGleoWebGLMap},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/E422VN9C/gleo.html}
+}
+
+@book{pareto1896cours,
+  title = {Cours d'{{Economie}} Politique Professe a l'{{Universite}} de Lausanne},
+  author = {Pareto, V.},
+  date = {1896},
+  number = {Bd. 1},
+  publisher = {F. Rouge},
+  url = {https://books.google.de/books?id=KjnhnQAACAAJ},
+  isbn = {978-0-608-37391-1},
+  lccn = {10000049}
+}
+
+@article{qingfuzhangMOEAMultiobjectiveEvolutionary2007,
+  title = {{{MOEA}}/{{D}}: {{A Multiobjective Evolutionary Algorithm Based}} on {{Decomposition}}},
+  shorttitle = {{{MOEA}}/{{D}}},
+  author = {{Qingfu Zhang} and {Hui Li}},
+  date = {2007-12},
+  journaltitle = {IEEE Trans. Evol. Computat.},
+  volume = {11},
+  number = {6},
+  pages = {712--731},
+  issn = {1941-0026, 1089-778X},
+  doi = {10.1109/TEVC.2007.892759},
+  url = {http://ieeexplore.ieee.org/document/4358754/},
+  urldate = {2026-03-16},
+  abstract = {Decomposition is a basic strategy in traditional multiobjective optimization. However, it has not yet been widely used in multiobjective evolutionary optimization. This paper proposes a multiobjective evolutionary algorithm based on decomposition (MOEA/D). It decomposes a multiobjective optimization problem into a number of scalar optimization subproblems and optimizes them simultaneously. Each subproblem is optimized by only using information from its several neighboring subproblems, which makes MOEA/D have lower computational complexity at each generation than MOGLS and nondominated sorting genetic algorithm II (NSGA-II). Experimental results have demonstrated that MOEA/D with simple decomposition methods outperforms or performs similarly to MOGLS and NSGA-II on multiobjective 0–1 knapsack problems and continuous multiobjective optimization problems. It has been shown that MOEA/D using objective normalization can deal with disparately-scaled objectives, and MOEA/D with an advanced decomposition method can generate a set of very evenly distributed solutions for 3-objective test instances. The ability of MOEA/D with small population, the scalability and sensitivity of MOEA/D have also been experimentally investigated in this paper.},
+  langid = {english},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/SRQ5LK7U/Qingfu Zhang and Hui Li - 2007 - MOEAD A Multiobjective Evolutionary Algorithm Based on Decomposition.pdf}
+}
+
+@misc{rechsteinerPerformancevergleichOpenSourceVectorTilesServerloesungenZur2024,
+  title = {Performancevergleich von Open-SourceVector-Tiles-Serverlösungen zur Bereitstellung von Geodaten aus PostGIS-Datenbanken},
+  author = {Rechsteiner, Fabian},
+  date = {2024-05-24},
+  url = {https://unigis.at/files/Mastertheses/Full/107112.pdf},
+  langid = {german},
+  organization = {Paris Lodron Universität Salzburg},
+  annotation = {rechsteinerPerformancevergleichOpenSourceVectorTilesServerloesungenZur2024},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/73M9ZDVF/Rechsteiner - 2024 - Performancevergleich von Open-SourceVector-Tiles-Serverlösungen zur Bereitstellung von Geodaten aus.pdf}
+}
+
+@online{taskerOptimizeStreamingMap,
+  type = {Oracle Blog / White Paper},
+  title = {Optimize {{Streaming Map Data}} with {{Vector Tile Cache}} in {{Oracle Spatial}}},
+  author = {Tasker, Rahul},
+  url = {https://blogs.oracle.com/database/post/optimize-streaming-map-data-with-vector-tile-cache-in-oracle-spatial},
+  urldate = {2025-10-20},
+  annotation = {taskerOptimizeStreamingMap},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/D3YE7SIS/optimize-streaming-map-data-with-vector-tile-cache-in-oracle-spatial.html}
+}
+
+@online{TileSourcesMartin,
+  title = {Tile Sources - {{Martin Tile Server Documentation}}},
+  url = {https://maplibre.org/martin/sources-tiles.html},
+  urldate = {2025-10-24},
+  annotation = {TileSourcesMartin},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/J28SFWMI/sources-tiles.html}
+}
+
+@article{tremmelMapLibreTileNext2025,
+  title = {{{MapLibre Tile}}: {{A Next Generation Vector Tile Format}}},
+  shorttitle = {{{MapLibre Tile}}},
+  author = {Tremmel, Markus and Zink, Roland},
+  date = {2025},
+  doi = {10.48550/ARXIV.2508.10791},
+  url = {https://arxiv.org/abs/2508.10791},
+  urldate = {2025-10-20},
+  abstract = {The Mapbox Vector Tile (MVT) format is widely considered the leading open standard for large-scale map visualization, as evidenced by its widespread adoption by major technology companies such as AWS, Meta, and Microsoft for their products and services. However, MVT was developed nearly a decade ago and, consequently, does not fully align with the capabilities of new geospatial data sources that are characterized by rapidly increasing data volumes due to advancements in geospatial sensors and automated detection through artificial intelligence. In this paper, we introduce the MapLibre Tile (MLT) format, a novel vector tile specification designed from the ground up to address the limitations of MVT. Our experiments, simulating user sessions on widely used basemap datasets, demonstrate that MLT achieves up to three times better compression ratios compared to MVT on encoded tilesets, with over six times better on certain large tiles. Additionally, MLT offers decoding speeds that are up to three times faster and significantly enhances processing performance. MLT also introduces new functionalities and is specifically designed to lay the foundation for the next generation of map renderers, which we expect to entirely offload processing to the GPU, thereby overcoming the stagnation of Moore`s law.},
+  version = {1},
+  keywords = {FOS: Computer and information sciences,Information Theory (cs.IT)},
+  annotation = {tremmelMapLibreTileNext2025},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/B3UEASQU/Tremmel and Zink - 2025 - MapLibre Tile A Next Generation Vector Tile Format.pdf}
+}
+
+@online{VectorTilesAre2025,
+  title = {Vector {{Tiles}} Are Deployed on {{OpenStreetMap}}.Org | {{OpenStreetMap Blog}}},
+  date = {2025-07-22},
+  url = {https://blog.openstreetmap.org/2025/07/22/vector-tiles-are-deployed-on-openstreetmap-org/},
+  urldate = {2025-10-24},
+  langid = {american},
+  annotation = {VectorTilesAre2025},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/VM5U63MC/vector-tiles-are-deployed-on-openstreetmap-org.html}
+}
+
+@software{vilardagaVtoptimizerVectorTile2023,
+  title = {Vt-Optimizer: {{Vector}} Tile and Style Optimizer},
+  author = {Vilardaga, Isaac Besora},
+  date = {2023},
+  origdate = {2018-10-21T09:32:01Z},
+  url = {https://github.com/ibesora/vt-optimizer},
+  urldate = {2025-10-20},
+  abstract = {A small NodeJS cli tool to inspect and optimize Mapbox Vector Tiles files},
+  annotation = {vilardagaVtoptimizerVectorTile2023}
+}
+
+@article{wallnerOpenSourceVector2022,
+  title = {Open Source Vector Tile Creation for Spatial Data Infrastructure Applications},
+  author = {Wallner, Andreas Georg and Piechl, Thomas and Paulus, Gernot and Anders, Karl-Heinrich},
+  date = {2022-06-11},
+  journaltitle = {AGILE GIScience Ser.},
+  volume = {3},
+  pages = {1--7},
+  issn = {2700-8150},
+  doi = {10.5194/agile-giss-3-67-2022},
+  url = {https://agile-giss.copernicus.org/articles/3/67/2022/},
+  urldate = {2025-10-20},
+  abstract = {Abstract. Accessing geospatial data via the internet is a common way for data integration. This web mapping approach often relies on web services like the web map tile service (WMTS) for accessing maps or the web feature service (WFS) for accessing vector data. An alternative way, which combines aspects like the higher performance through tiling and the usage of vector data is the usage of tiled vector data. This short paper describes an approach for the creation of tiled vector data using standard PostgreSQL, with spatial extension PostGIS, functionality. For that, custom PostGIS functions are implemented to select relevant vector data out of the PostgreSQL database, dynamically generalize/simplify geometries and transform the data to Mapbox mvt format. This approach of creating tiled vector data shall be used for further implementations of web maps for building more efficient spatial data infrastructures.},
+  langid = {english},
+  annotation = {wallnerOpenSourceVector2022},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/SARXZKYR/Wallner et al. - 2022 - Open source vector tile creation for spatial data infrastructure applications.pdf}
+}
+
+@online{WebGLLowLevel3D2011,
+  title = {{{WebGL}} - {{Low-Level 3D Graphics API Based}} on {{OpenGL ES}}},
+  date = {2011-07-19T13:02:00-07:00},
+  url = {https://www.khronos.org/webgl/},
+  urldate = {2026-03-16},
+  abstract = {WebGL is a cross-platform, royalty-free web standard for a low-level 3D graphics API based on OpenGL ES, exposed to ECMAScript via the HTML5 Canvas element. Developers familiar with OpenGL ES 2.0 will recognize WebGL as a Shader-based API using GLSL, with constructs that are semantically similar to those of the underlying OpenGL ES API. It stays very close to the OpenGL ES specification, with some concessions made for what developers expect out o},
+  langid = {english},
+  organization = {The Khronos Group},
+  annotation = {WebGLLowLevel3D2011},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/934GYDTC/webgl.html}
+}
+
+@online{WebGPU,
+  title = {{{WebGPU}}},
+  url = {https://www.w3.org/TR/webgpu/},
+  urldate = {2026-03-16},
+  annotation = {WebGPU},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/CYEPW9NX/webgpu.html}
+}
+
+@online{WhyYourWebsite,
+  title = {Why Your Website Should Be under {{14kB}} in Size | Endtimes.Dev},
+  url = {https://endtimes.dev/why-your-website-should-be-under-14kb-in-size/},
+  urldate = {2026-03-16},
+  annotation = {WhyYourWebsite},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/FZBZ3CDG/why-your-website-should-be-under-14kb-in-size.html}
+}
+
+@article{yaoBigSpatialVector2018,
+  title = {Big Spatial Vector Data Management: A Review},
+  shorttitle = {Big Spatial Vector Data Management},
+  author = {Yao, Xiaochuang and Li, Guoqing},
+  date = {2018-01-02},
+  journaltitle = {Big Earth Data},
+  volume = {2},
+  number = {1},
+  pages = {108--129},
+  issn = {2096-4471, 2574-5417},
+  doi = {10.1080/20964471.2018.1432115},
+  url = {https://www.tandfonline.com/doi/full/10.1080/20964471.2018.1432115},
+  urldate = {2025-10-20},
+  langid = {english},
+  annotation = {yaoBigSpatialVector2018},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/R73PC72F/Yao and Li - 2018 - Big spatial vector data management a review.pdf}
+}
+
+@article{yuAssessmentMapStyleInfluence2024,
+  title = {An {{Assessment}} of the {{Map-Style Influence}} on {{Generalization}} with {{CycleGAN}}: {{Taking Line Features}} as an {{Example}}},
+  shorttitle = {An {{Assessment}} of the {{Map-Style Influence}} on {{Generalization}} with {{CycleGAN}}},
+  author = {Yu, Heng and Chen, Haoxuan and Zhang, Ling},
+  date = {2024-11-21},
+  journaltitle = {IJGI},
+  volume = {13},
+  number = {12},
+  pages = {418},
+  issn = {2220-9964},
+  doi = {10.3390/ijgi13120418},
+  url = {https://www.mdpi.com/2220-9964/13/12/418},
+  urldate = {2025-10-20},
+  abstract = {As the complexity of GIS data continues to increase, there is a growing demand for automated map generalization. As end-to-end generative models, GAN models offer new solutions for automated map generalization. This study explores the impact of different map symbolization configurations on generative models, specifically using CycleGAN for line feature generalization. The quality of the generated results was assessed by constructing various symbolization datasets (line width, type, and color) and evaluating CycleGAN’s performance using metrics such as the MSE, SSIM, and PSNR. The results indicate that moderate line widths (0.5–1) yield better detail preservation, and different line types (framed lines and dashed lines) can highlight feature boundaries and enhance visual perception. By contrast, high-contrast color schemes enhance feature differentiation but increase pixel-level errors. This study concludes that generative models can maintain the geometric structure and spatial distribution of line features, but it is crucial to choose more suitable line features for different scenarios to meet detail requirements, ensuring high-quality outputs under diverse configurations.},
+  langid = {english},
+  annotation = {yuAssessmentMapStyleInfluence2024},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/QIE8FDFI/Yu et al. - 2024 - An Assessment of the Map-Style Influence on Generalization with CycleGAN Taking Line Features as an.pdf}
+}
+
+@article{zhangRESEARCHVECTORTILE2022,
+  title = {Vector Tile Construction Technology Based on {{Apache Sedona}}},
+  author = {Zhang, H. and Du, M. and Huang, W. and Ding, L. and Tang, D. and Jiang, J.},
+  date = {2022-06-02},
+  journaltitle = {Int. Arch. Photogramm. Remote Sens. Spatial Inf. Sci.},
+  volume = {XLIII-B4-2022},
+  pages = {639--644},
+  issn = {2194-9034},
+  doi = {10.5194/isprs-archives-XLIII-B4-2022-639-2022},
+  url = {https://isprs-archives.copernicus.org/articles/XLIII-B4-2022/639/2022/},
+  urldate = {2025-10-20},
+  abstract = {Abstract. With the development of spatial information technology, the amount of geographic information data shows an explosive growth, which puts forward higher demands on the time efficiency and visualization effect of geographic information data release. vector tile maps have become the main map service mode in the fields of Internet maps and GIS industries because of the advantages of its powerful interactive capabilities, efficient data transmission and lower storage costs. In order to construct massive vector tiles quickly and enhance the scalability of vector tiles application, this paper researched the vector tiles construction technology based on the distributed computing framework. Firstly, we introduced the construction process of vector tiles such as pyramid model, data organization and data generalization, Specifically, the data generalization methods of different geometric types were discussed. Second, Apache Sedona, the distributed computing framework were researched and the advantages for vector data processing is introduced. Then, the Sedona based parallel construction technology is proposed, and pipeline optimization of Spark is applied in this process. Third, a comparative experiment to evaluate the performance were conducted, the result showed that the parallel construction technology had obvious performance advantages, the greater the volume and extent of vector data, the greater the advantage.},
+  langid = {english},
+  annotation = {zhangRESEARCHVECTORTILE2022},
+  file = {/home/frank/snap/zotero-snap/common/Zotero/storage/6GC39IMI/Zhang et al. - 2022 - RESEARCH OF VECTOR TILE CONSTRUCTION TECHNOLOGY BASED ON APACHE SEDONA.pdf}
+}
+
+@inproceedings{moonAnalysisClusteringProperties2001,
+  title = {Analysis of the Clustering Properties of the {{Hilbert}} Space-Filling Curve},
+  author = {Moon, Bongki and Jagadish, H. V. and Faloutsos, Christos and Saltz, Joel H.},
+  date = {2001},
+  journaltitle = {IEEE Transactions on Knowledge and Data Engineering},
+  volume = {13},
+  number = {1},
+  pages = {124--141},
+  doi = {10.1109/69.908985}
+}
+
+@inproceedings{boncz2020fsst,
+  title = {{{FSST}}: Fast Random Access String Compression},
+  author = {Boncz, Peter A. and Neumann, Thomas and Manegold, Stefan},
+  date = {2020},
+  booktitle = {Proceedings of the {{VLDB Endowment}}},
+  volume = {13},
+  number = {12},
+  pages = {2649--2661},
+  doi = {10.14778/3407790.3407851}
+}
+
+@inproceedings{broder1997resemblance,
+  title = {On the Resemblance and Containment of Documents},
+  author = {Broder, Andrei Z.},
+  date = {1997},
+  booktitle = {Proceedings of the {{Compression}} and {{Complexity}} of {{Sequences}}},
+  pages = {21--29},
+  publisher = {IEEE},
+  doi = {10.1109/SEQUEN.1997.666900}
+}
+
+@inproceedings{selinger1979access,
+  title = {Access Path Selection in a Relational Database Management System},
+  author = {Selinger, P. Griffiths and Astrahan, M. M. and Chamberlin, D. D. and Lorie, R. A. and Price, T. G.},
+  date = {1979},
+  booktitle = {Proceedings of the 1979 {{ACM SIGMOD}} International Conference on Management of Data},
+  pages = {23--34},
+  publisher = {ACM},
+  doi = {10.1145/582095.582099}
+}
+
+@inproceedings{fastpfor,
+  title = {Decoding Billions of Integers in Milliseconds Through Vectorized Bit Packing},
+  author = {Lemire, Daniel and Boytsov, Leonid},
+  date = {2015},
+  journaltitle = {Software: Practice and Experience},
+  volume = {45},
+  number = {1},
+  pages = {1--29},
+  doi = {10.1002/spe.2203}
+}
+
+@article{flajoletHyperLogLogAnalysisNearperfect2007,
+  title = {{{HyperLogLog}}: The Analysis of a Near-Optimal Cardinality Estimation Algorithm},
+  author = {Flajolet, Philippe and Fusy, {\'E}ric and Gandouet, Olivier and Meunier, Fr{\'e}d{\'e}ric},
+  date = {2007},
+  journaltitle = {Discrete Mathematics \& Theoretical Computer Science},
+  volume = {AH},
+  pages = {137--156},
+  url = {https://hal.science/hal-00406166}
+}
+
+@online{MapboxVectorTileSpec,
+  title = {Mapbox {{Vector Tile Specification}}},
+  author = {{Mapbox}},
+  date = {2016},
+  url = {https://github.com/mapbox/vector-tile-spec/tree/master/2.1},
+  urldate = {2025-10-24},
+  abstract = {Specification for encoding tiled vector data, version 2.1},
+  langid = {english},
+  annotation = {MapboxVectorTileSpec}
+}
+
+@online{ProtocolBuffers,
+  title = {Protocol {{Buffers}} Documentation},
+  author = {{Google}},
+  url = {https://protobuf.dev/},
+  urldate = {2025-10-24},
+  abstract = {Protocol Buffers are a language-neutral, platform-neutral extensible mechanism for serializing structured data},
+  langid = {english},
+  annotation = {ProtocolBuffers}
+}
+
+@misc{rfc7946,
+  title = {The {{GeoJSON Format}}},
+  author = {Butler, Howard and Daly, Martin and Doyle, Allan and Gillies, Sean and Hagen, Stefan and Schaub, Tim},
+  date = {2016-08},
+  number = {7946},
+  howpublished = {RFC 7946},
+  institution = {Internet Engineering Task Force},
+  url = {https://datatracker.ietf.org/doc/rfc7946},
+  annotation = {rfc7946}
+}
+
+@book{ahoCompilersPrinciplesTechniques2006,
+  title = {Compilers: {{Principles}}, {{Techniques}}, and {{Tools}}},
+  author = {Aho, Alfred V. and Lam, Monica S. and Sethi, Ravi and Ullman, Jeffrey D.},
+  date = {2006},
+  edition = {2},
+  publisher = {Addison-Wesley},
+  isbn = {978-0-321-48681-3}
+}
+
+@article{wegmanConstantPropagationConditional1991,
+  title = {Constant Propagation with Conditional Branches},
+  author = {Wegman, Mark N. and Zadeck, F. Kenneth},
+  date = {1991},
+  journaltitle = {ACM Transactions on Programming Languages and Systems},
+  volume = {13},
+  number = {2},
+  pages = {181--210},
+  doi = {10.1145/103135.103136}
+}
+
+@article{abadiDesignImplementationModern2013,
+  title = {The Design and Implementation of Modern Column-Oriented Database Systems},
+  author = {Abadi, Daniel J. and Boncz, Peter and Harizopoulos, Stavros and Idreos, Stratos and Madden, Samuel},
+  date = {2013},
+  journaltitle = {Foundations and Trends in Databases},
+  volume = {5},
+  number = {3},
+  pages = {197--280},
+  doi = {10.1561/1900000024}
+}
+
+@inproceedings{davidsonImprovingInstructionSelection1984,
+  title = {Code Selection through Object Code Optimization},
+  author = {Davidson, Jack W. and Fraser, Christopher W.},
+  date = {1984},
+  journaltitle = {ACM Transactions on Programming Languages and Systems},
+  volume = {6},
+  number = {4},
+  pages = {505--526},
+  doi = {10.1145/1780.1783}
+}
+
+@online{OpenLayers,
+  title = {{{OpenLayers}}: {{A}} High-Performance, Feature-Packed Library for Creating Interactive Maps on the Web},
+  url = {https://openlayers.org/},
+  urldate = {2026-04-09}
+}
+
+@software{tippecanoe,
+  title = {Tippecanoe: {{Build}} Vector Tilesets from Large Collections of {{GeoJSON}} Features},
+  author = {{Felt}},
+  date = {2026},
+  url = {https://github.com/felt/tippecanoe},
+  urldate = {2026-04-09}
+}
+
+@online{mapboxStyleOptimizedTiles,
+  title = {Style-Optimized Vector Tiles},
+  author = {{Mapbox}},
+  url = {https://docs.mapbox.com/help/glossary/style-optimized-vector-tiles/},
+  urldate = {2026-04-09}
+}
+
+@inproceedings{gaffuriTowardWebMapping2012,
+  title = {Toward {{Web Mapping}} with {{Vector Data}}},
+  author = {Gaffuri, Julien},
+  date = {2012},
+  booktitle = {Geographic {{Information Science}}},
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  volume = {7478},
+  pages = {87--101},
+  publisher = {Springer},
+  doi = {10.1007/978-3-642-33024-7_7}
+}
+
+@article{hagueCSSMinificationConstraint2019,
+  title = {{{CSS Minification}} via {{Constraint Solving}}},
+  author = {Hague, Matthew and Lin, Anthony W. and Hong, Chih-Duo},
+  date = {2019},
+  journaltitle = {ACM Transactions on Programming Languages and Systems},
+  volume = {41},
+  number = {2},
+  pages = {1--46},
+  doi = {10.1145/3310337}
+}
+
+@online{planetiler,
+  title = {Planetiler: {{Flexible}} Tool to Build Planet-Scale Vector Tilesets},
+  author = {Barbee, Michael},
+  url = {https://github.com/onthegomap/planetiler},
+  urldate = {2026-04-10}
+}
+
+@online{tilemaker,
+  title = {Tilemaker: {{Make}} Vector Tiles from {{OpenStreetMap}} Data},
+  author = {{Tilemaker contributors}},
+  url = {https://tilemaker.org/},
+  urldate = {2026-04-10}
+}
+
+@online{protomaps,
+  title = {Protomaps: {{Open-source}} Maps for the Web},
+  author = {Landin, Brandon},
+  url = {https://protomaps.com/},
+  urldate = {2026-04-10}
+}
+
+@article{graefe1993query,
+  title = {Query Evaluation Techniques for Large Databases},
+  author = {Graefe, Goetz},
+  date = {1993},
+  journaltitle = {ACM Computing Surveys},
+  volume = {25},
+  number = {2},
+  pages = {73--169},
+  doi = {10.1145/152610.152611}
+}
+
+@book{vohra2016apache,
+  title = {Practical {{Hadoop}} Ecosystem},
+  author = {Vohra, Deepak},
+  date = {2016},
+  publisher = {Apress},
+  doi = {10.1007/978-1-4842-2199-0}
+}
+
+@inproceedings{zitzlerIndicatorBasedSelection2004,
+  title = {Indicator-Based Selection in Multiobjective Search},
+  author = {Zitzler, Eckart and K{\"u}nzli, Simon},
+  booktitle = {Parallel Problem Solving from Nature -- {{PPSN VIII}}},
+  date = {2004},
+  series = {Lecture Notes in Computer Science},
+  volume = {3242},
+  pages = {832--842},
+  publisher = {Springer},
+  doi = {10.1007/978-3-540-30217-9_84}
+}
+
+@book{jainArtComputerSystems1991,
+  title = {The Art of Computer Systems Performance Analysis: Techniques for Experimental Design, Measurement, Simulation, and Modeling},
+  author = {Jain, Raj},
+  date = {1991},
+  publisher = {John Wiley \& Sons},
+  isbn = {978-0-471-50336-1}
+}

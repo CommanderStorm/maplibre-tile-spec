@@ -1,0 +1,11 @@
+This thesis investigates automatic, style- and data-driven co-optimizations for MapLibre-based map rendering pipelines.
+Interactive web maps built on vector tiles face a complex performance landscape: every frame requires fetching tiles over the network, decoding them, evaluating style expressions for each feature, and submitting draw calls to the graphics API.
+Despite this, style authoring and tile data preparation have traditionally been treated as independent concerns, leaving the interaction between the two unexploited.
+
+This work designs and implements a standalone optimiser that operates in two phases.
+Expression-level passes apply 47 rewrite rules---constant folding, algebraic simplification, stats-driven folding from tile statistics, and selectivity-based predicate reordering---all applied to the style's JSON expressions via fixpoint iteration.
+Structural passes then transform typed representations of the style document, performing dead layer elimination, metadata refinement, layer merging, and cleanup.
+Beyond the style, the optimiser bridges into data-level optimizations through style-driven tile shaving, which computes a pruning advisory from the optimised style to remove unused properties, geometry types, and feature values from tile data before re-encoding into the columnar MapLibre Tiles format with automatic encoding strategy selection.
+
+An evaluation across 15~styles, 18~scenarios, and 17~cumulative ablation steps demonstrates that the full pipeline reduces total tile volume by \qty{15}{\percent} (\qty{3.07}{\giga\byte} to \qty{2.61}{\giga\byte}), achieves load-time improvements of \qtyrange{1}{33}{\percent} for most scenarios, and maintains FPS stability within \qty{\pm 1}{\percent}.
+The most significant architectural finding is the cascade from style optimizations through the tile pruning advisory to smaller tiles: optimising the style first makes data-level optimizations more effective, confirming that data-style co-optimizations exceeds the sum of its parts.

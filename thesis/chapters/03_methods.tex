@@ -1,0 +1,803 @@
+\chapter{Methods}\label{ch_methods}
+
+This thesis designs and implements an \textbf{automatic, style- and data-driven optimiser} for map rendering pipelines built on MapLibre GL~JS.
+The optimiser is a standalone tool that consumes a MapLibre style~JSON document and, optionally, tile-level statistics, and produces a semantically equivalent style whose rendering performance is measurably improved.
+All transformations are \emph{visually lossless}: the optimised style must produce pixel-identical output for every tile at every zoom level.
+
+\section{Scope}\label{sec_scope}
+
+As discussed in \cref{sec_styles}, the most common target for performance research on interactive maps is a system built on a rich, dynamic style specification.
+Two implementations dominate this space: Mapbox~styles and MapLibre~styles.
+Since the Mapbox codebase is proprietary and evaluations may not be performed without explicit consent, only MapLibre is a viable research target.
+
+Among MapLibre renderers, the web implementation (\texttt{maplibre-gl-js}) offers the most complete support for the styling language and is the most widely used \emph{as an interactive developer target}: the mobile MapLibre Native renderers share much of the styling engine, but the web renderer is the reference implementation that first tracks new specification features, exposes the richest instrumentation hooks for Puppeteer-driven benchmarking, and runs on the same hardware profile as the benchmark host.
+It was therefore selected as the system under test for all rendering benchmarks.
+
+The optimiser itself is a standalone Rust binary.
+It takes a style~JSON file as input, applies a configurable set of optimizations passes, and writes an optimised style~JSON as output.
+When tile statistics are provided (via an MBTiles database or a pre-computed statistics file), additional data-driven passes become available.
+No integration with a specific tile server is required; the optimised artefacts can be served by any standards-compliant tile infrastructure.
+For more realistic results, a network delay is implemented to avoid artificially high numbers due to local network transfer.
+
+The tile re-encoder described in \cref{sub_data_optimizationss} lives in the same Cargo workspace as the style optimiser, but is deliberately split into three crates so that it can also be consumed from a \ac{JVM}-based tile-generation pipeline without re-implementing the encoder.
+The core encoder and decoder live in \texttt{rust/mlt-core}; a thin C~\ac{ABI} shim in \texttt{rust/mlt-ffi} exposes a stable surface whose header is generated via \texttt{cbindgen} and checked in as \texttt{mlt\_ffi.h}; and \texttt{rust/mlt-java} wraps that shim as a Java library using the Panama \ac{FFM} \ac{API} (JEP~454), with Java bindings regenerated from the header via \texttt{jextract}.
+Panama was chosen over conventional \ac{JNI} glue because it removes the need for hand-written C stubs and gives the \ac{JVM} direct, zero-copy access to off-heap buffers - exactly the boundary shape that a columnar encoder needs, because each tile is handed over as a batch of parallel \texttt{MemorySegment}s rather than one call per feature, amortising the per-boundary cost over thousands of features in one encoder invocation.
+The resulting artefact is published to Maven Central as \texttt{org.maplibre:mlt-encoder-native}, shipped either as a single fat jar that bundles native libraries for all supported targets or as per-platform slim jars (\texttt{linux-x86\_64}, \texttt{linux-x86\_64-musl}, \texttt{linux-aarch64}, \texttt{macos-aarch64}, \texttt{windows-x86\_64}), and requires Java~25 or later for stable Panama support.
+This wrapper is the intended Planetiler integration path: Planetiler already builds tiles in a \ac{JVM} process, so routing its in-memory \ac{JTS} geometries and property tables through \texttt{MltEncoder.encode(\ldots)} is cheaper than serialising them to \ac{MVT} protobuf and re-parsing in a separate Rust process.
+The legacy self-contained Java encoder in \texttt{java/mlt-core}~\cite{tremmelMapLibreTileNext2025} is kept only as a reference baseline for the \ac{MLT} experiments in \cref{ch_experiments} and is not a target of the optimizationss proposed in this thesis.
+
+\section{Approach}\label{sec_approach}
+
+To evaluate the effectiveness of the optimizations strategies developed in this work, a benchmarking-driven approach was adopted.
+A reliable performance baseline was established first, followed by cumulative ablation experiments that isolate the contribution of each optimizations pass.
+
+\subsection{Two-Phase Optimisation Pipeline}\label{sub_pipeline}
+
+The optimiser operates in two distinct phases, each targeting a different level of abstraction:
+
+\begin{enumerate}
+    \item \textbf{Expression passes} operate directly on the JSON representation of style expressions.
+    They apply peephole rewrites, constant folding, and algebraic simplifications to individual expressions without deserialising the style into typed Rust structures.
+    Expression passes run to a fixpoint: the pass set is applied repeatedly (up to eight iterations) until no further changes are detected.
+
+    \item \textbf{Structural passes} deserialise the style into typed Rust structures generated from the upstream MapLibre specification, apply transformations that require cross-layer or cross-source reasoning, and serialise the result back to JSON.
+    These passes handle dead layer elimination, metadata refinement, layer merging, and cleanup.
+\end{enumerate}
+
+After the structural phase, a post-processing stage prunes zoom-bounded interpolation and step stops that have become unreachable due to tightened metadata bounds.
+A final fixpoint re-fold cleans up residual trivial expressions (e.g., \texttt{["all",~x]} $\to$ \texttt{x}) introduced by predicate removal.
+Layer merging runs last, after dead layers have been eliminated, to maximise the number of mergeable adjacent layers.
+
+The separation into two phases is deliberate.
+Expression passes operate on raw JSON and require no knowledge of the style schema beyond expression syntax.
+This permits fine-grained, composable rules that each match a local pattern and apply a rewrite; the rules need not be aware of one another, and new rules can be added without modifying existing ones.
+Structural passes, by contrast, require typed access to the full style document - for example, dead layer elimination must resolve source-layer references across layers and sources, and layer merging must compare paint properties across layers.
+Deserialising the style into typed Rust structures incurs a non-trivial cost (parsing, validation, allocation), so it is performed exactly once, after expression passes have simplified the expressions that the typed structures will contain.
+
+Fixpoint iteration in the expression phase is necessary because rewrites compose non-trivially: constant folding a \texttt{has} expression may produce a boolean literal that enables dead-branch elimination in an enclosing \texttt{case}, which may in turn expose a boolean absorption opportunity in the filter's top-level \texttt{all} node.
+The cap of eight iterations provides a defensive safety margin; in practice, most styles converge within two to three iterations, and no style in either the deep benchmarking corpus or the Maputnik generalisation corpus has ever reached the cap.
+
+A notable cross-phase optimizations is \emph{filter-to-property constant propagation}.
+During the typed structural phase, equality constraints are extracted from a layer's filter expression (e.g.\ if the filter asserts \texttt{["==",~["get",~"class"],~"primary"]}, then the property \texttt{class} is known to equal \texttt{"primary"} for all features passing the filter).
+These constraints are propagated into the layer's paint and layout expressions, replacing \texttt{["get",~"class"]} references with the known literal value.
+This enables further constant folding within paint ramp expressions that branch on the same property, collapsing \texttt{match} and \texttt{case} arms that are unreachable given the filter constraint.
+The propagation operates within a single layer (intra-procedural, in compiler terminology) and extracts constraints from \texttt{all}, equality, \texttt{has}, \texttt{in}, and range predicates.
+
+\subsection{Code Generation from v8.json}\label{sub_codegen}
+
+Type-safe manipulation of style documents is central to the correctness guarantees of the structural passes.
+Rather than operating on raw JSON, the optimiser deserialises styles into Rust structures that are \emph{generated} from the upstream MapLibre GL~JS style specification.
+The generation pipeline proceeds in three stages:
+
+\begin{enumerate}
+    \item \textbf{Decode}: the machine-readable style specification published by the MapLibre project is parsed into an internal representation.
+    \item \textbf{Normalise}: the decoded data is normalised into a stable intermediate representation that resolves cross-cutting concerns-layers combine data from multiple specification sections, expressions require special handling, and so forth.
+    \item \textbf{Generate}: the intermediate representation is consumed by a code emitter that produces Rust source files with serialisation and deserialisation support.
+\end{enumerate}
+
+This pipeline ensures that every structural pass operates on types that faithfully mirror the specification, and that changes to the upstream spec can be incorporated by re-running the generator.
+The alternative - hand-written Rust types - would require manual synchronisation with specification changes and risk silent divergence.
+The generated types include serialisation and deserialisation support, so the structural passes can round-trip through JSON without losing unknown fields that the generator has not yet modelled.
+
+The normalisation stage produces what we call the \emph{MIR} (mid-level intermediate representation), which resolves cross-cutting concerns in the specification.
+For example, the upstream \texttt{v8.json} defines layer properties across multiple sections (paint, layout) and references expression operators in a separate section; the MIR collapses these into per-layer field definitions that include the property's type, default value, and expression capabilities (whether the property supports zoom-dependent, feature-dependent, or both kinds of expressions).
+This metadata is critical for structural passes: layer merging queries the MIR to determine whether a differing paint property supports feature-driven expressions (and can therefore be wrapped in a \texttt{case}/\texttt{match} over the filter discriminator) or is camera-only (and must be uniform across merged layers).
+The MIR also drives the default stripping pass, which compares property values against the specification defaults encoded in the generated types.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.8cm and 1.4cm,
+        box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
+                    minimum width=2.0cm, font=\small, align=center},
+        src/.style={box, fill=blue!12},
+        mir/.style={box, fill=violet!12},
+        gen/.style={box, fill=green!10},
+        data/.style={box, fill=orange!10},
+        opt/.style={box, fill=yellow!12, minimum width=2.4cm},
+        test/.style={box, fill=gray!12},
+        arrow/.style={-{Stealth[length=2.5mm]}, thick},
+        query/.style={-{Stealth[length=2.5mm]}, thick, densely dashed},
+        label/.style={font=\scriptsize\itshape, text=gray},
+    ]
+        % ── Codegen pipeline (top row) ──
+        \node[src]  (v8)     {\texttt{v8.json}};
+        \node[src,  right=of v8]   (parsed) {ParsedSpec};
+        \node[mir,  right=of parsed] (mir)    {MIR};
+        \node[gen,  right=of mir]  (serial) {SerialSpec\\{\scriptsize (generated Rust)}};
+
+        \draw[arrow] (v8)     -- node[above, label] {decode} (parsed);
+        \draw[arrow] (parsed) -- node[above, label] {normalise} (mir);
+        \draw[arrow] (mir)    -- node[above, label] {generate} (serial);
+
+        % ── Data pipeline (bottom row) ──
+        \node[data, below=1.6cm of v8] (proto) {Protobuf\\{\scriptsize (\acs{MVT})}};
+        \node[data, right=of proto] (mvt) {MVTLayer};
+        \node[data, right=of mvt]   (scan) {DataScanner};
+
+        \draw[arrow] (proto) -- node[above, label] {decode} (mvt);
+        \draw[arrow] (mvt)   -- node[above, label] {scan tiles} (scan);
+
+        % ── Optimiser (centre) ──
+        \node[opt, below right=0.5cm and 0.3cm of serial] (opt) {Optimiser};
+
+        % ── Optimiser interactions ──
+        \draw[query] (opt.north -| mir.south) -- node[right, label] {spec metadata} (mir);
+        \draw[query] (opt) -- node[right, label, near start] {optimise} (serial);
+        \draw[query] (scan) -- node[below, label] {tile statistics} (opt);
+
+        % ── Test feedback ──
+        \node[test, below=1.2cm of opt] (test) {Render tests};
+        \draw[arrow] (serial) |- node[near end, above, label] {sample styles} (test);
+        \draw[query] (test) -- node[right, label] {fuzz / validate} (opt);
+    \end{tikzpicture}
+    \caption{System architecture.
+    The \emph{codegen pipeline} (top) transforms the upstream \texttt{v8.json} style specification through three stages into generated Rust types (\texttt{SerialSpec}) used for typed style manipulation, with the MIR providing spec metadata to the optimiser.
+    The \emph{data pipeline} (bottom) decodes \acs{MVT} tiles and scans them to produce tile statistics that feed into data-driven optimizations passes.
+    Dashed arrows denote query or feedback relationships; render tests validate round-trip correctness}
+    \label{fig:system_architecture}
+\end{figure}
+
+\section{Gathering a Representative Sample}\label{sec_gathering_sample}
+
+Evaluating an optimiser requires both a diverse set of styles and realistic tile data.
+We employ a two-tier strategy.
+
+\subsection{Deep Benchmarking Corpus}\label{sub_deep_corpus}
+
+For rendering benchmarks that require tile data and animated camera scenarios, we curated a corpus of 15 publicly available styles that use the OpenMapTiles or BasemapDE schema:
+
+\begin{itemize}
+    \item \textbf{4 OpenFreeMap styles}: liberty, bright, positron, fiord.
+    \item \textbf{7 OpenMapTiles community styles}: dark-matter, osm-bright, klokan-basic, toner, osm-liberty, americana, stadia-outdoors.
+    \item \textbf{4 Government and institutional styles}: ICGC~fosc, ICGC~gris, Basemap\-DE topo\-graphic, Basemap\-DE colour.
+\end{itemize}
+
+These styles span a range of complexity-from minimal basemaps with fewer than 50~layers to verbose institutional styles with several hundred layers-and exercise different subsets of the expression language.
+
+\subsection{Generalisation Corpus}\label{sub_generalisation_corpus}
+
+To assess whether optimizations gains generalise beyond the deep corpus, we collected 13 styles from the Maputnik style editor catalogue (two additional catalogue entries were unavailable at the time of measurement).
+These styles are evaluated using static analysis only (style size, complexity metrics, pass applicability) and do not require tile data.
+
+\subsection{Tile Data and Caching}\label{sub_tile_data}
+
+Tile data is sourced from \ac{OSM} via Planetiler or the German government.
+Both sources are consumed through the standard Web Mercator XYZ tiling scheme used by MapLibre, so all zoom-level reasoning in the thesis assumes this grid; BasemapDE is accessed through its XYZ-compatible endpoint rather than its native \acs{WMTS} grid, ensuring that the optimiser's tile indexing is uniform across the corpus.
+Only for \ac{OSM} is the underlying data fully available, so only for this source can tile statistics be collected at a sample rate of~1.0.
+To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs.
+This eliminates network variability and guarantees that every ablation step operates on identical tile data.
+
+\subsection{Geographic and Use-Case Scenarios}\label{sub_scenarios}
+
+The benchmark harness defines 18 scenarios drawn from a matrix of 15 geographic locations and 5 camera animation types:
+
+\begin{itemize}
+    \item \textbf{Locations} span high-density cities with Latin scripts (Munich, Berlin, Paris, New York, Rome), cities with non-Latin scripts (Tokyo, Beijing, Seoul, Cairo), and low-density or special nature regions (Black Forest, Amazon, Swiss Alps, Sahara, Venice, Stockholm Archipelago).
+    \item \textbf{Animations} exercise different rendering workloads:
+    \emph{zigzag} alternates zoom levels while panning;
+    \emph{spiral} traces a circle at constant zoom with rotating bearing;
+    \emph{zoomdrill} zooms from overview to street level and back;
+    \emph{pansweep} sweeps across a region at constant zoom;
+    \emph{bearingspin} rotates bearing at high pitch.
+\end{itemize}
+
+Each scenario is a specific (location, animation) pair.
+The full cross-product of 15 locations and 5 animations is 75 cells, which is too expensive to run for every ablation step (each cell requires 15 repeat runs across 17 ablation steps and 15 styles, giving roughly $75 \times 15 \times 17 \times 15 = \num{287000}$ full animations).
+The 18 selected scenarios are chosen by stratified sampling so that every location appears at least once and every animation appears at least three times, and so that all combinations of density class (high/low) and script class (Latin/non-Latin) are represented.
+Within each stratum the specific (location, animation) pair is the one that exercises the most layers in the densest style in the corpus, ensuring that the sample is biased \emph{against} the null hypothesis of \enquote{no effect} - i.e.\ towards scenarios where any rendering-cost differences are most likely to be visible.
+This is a convenience sample by design: it is not claimed to be unbiased across all real-world usage patterns, but it is claimed to be a reasonable stress test of the optimiser across the dimensions (density, script, zoom trajectory, camera motion) that most plausibly interact with style and data-level optimizationss.
+
+\section{Building Optimisations}\label{sec_building_optimizationss}
+
+The implemented optimizations passes target four areas of the rendering pipeline: style expressions, structural properties, tile data, and metadata.
+Each pass is classified by \emph{where} it operates (expression-level or structural) and its \emph{data requirements} (none, sampling, or full scan).
+The following sections present the passes in each category; many are analogous to well-known database or compiler optimizations techniques.
+
+\subsection{Expression-Level Optimisations}\label{sub_expression_optimizationss}
+
+Expression passes operate directly on the JSON representation, applying rewrites that reduce expression complexity and eliminate redundant computation.
+\cref{tab:expression_passes} summarises the implemented passes.
+
+\begin{table}[htbp]
+\centering
+\begin{tblr}{
+  colspec = {p{3.8cm} p{1.8cm} p{9.5cm}},
+  rows = {font=\small},
+  row{1} = {font=\small\bfseries},
+}
+\toprule
+Pass & Data & Description [compiler analogy] \\
+\midrule
+Unary simplification         & none     & Unwrap single-argument \texttt{any}/\texttt{all} wrappers [identity elimination] \\
+Expression kind normalisation & none     & Rewrite negated comparisons to their direct form, e.g.\ \texttt{!["==",a,b]} $\to$ \texttt{["!=",a,b]} [operator strength reduction] \\
+Constant folding              & none     & Evaluate statically determinable expressions: boolean algebra, dead branch elimination, redundant coercion removal [constant folding, \acs{SCCP}] \\
+Stats-driven constant folding & sampling & Fold \texttt{has}/\texttt{get}/\texttt{geometry-type} expressions using tile statistics; prune unreachable \texttt{match}/\texttt{in} arms; fold comparisons against known value ranges [sparse conditional constant propagation] \\
+Expression simplification     & none     & De~Morgan's laws, boolean flattening, coalesce flattening, \texttt{case}$\to$\texttt{match} rewriting, \texttt{let}/\texttt{var} inlining, \texttt{any}$\to$\texttt{in} merging, interpolate/step collapsing [algebraic simplification] \\
+Default stripping             & none     & Remove paint/layout properties whose value equals the specification default [dead store elimination] \\
+Colour minification           & none     & Compress colour literals to their shortest representation [literal compression] \\
+Selectivity reordering        & sampling & Reorder filter predicates by selectivity so the most discriminating condition is evaluated first [predicate reordering] \\
+\bottomrule
+\end{tblr}
+\caption{Expression-level optimizations passes.}
+\label{tab:expression_passes}
+\end{table}
+
+The expression pass engine is organised as a table of 46~rewrite rules, each gated by a \emph{pass flag} (which pass must be enabled) and scoped to a \emph{rule scope} (whether the rule applies to filters only, to paint/layout properties, or to both).
+Selectivity reordering is implemented as a separate single-rule pass that runs after the rewrite table has stabilised, bringing the total number of expression-level rewrites to 47.
+Rules are further classified by their \emph{type}: \emph{pure} rules operate on the expression array alone, \emph{MIR-aware} rules additionally consult the specification's type metadata (e.g.\ to determine whether an operator is pure or to look up default values), and \emph{stats-driven} rules are recursive tree folds that receive tile statistics and layer-level context.
+A post-order visitor walks every expression node in the style; at each node, all applicable peephole rules are tested and the first matching rule fires.
+Stats-driven rules are applied as separate tree folds after the peephole pass, because they require recursive context threading that the node-local peephole architecture does not provide.
+This architecture is modelled on peephole optimisers in production compilers: individual rules are simple and local, but their composition through fixpoint iteration achieves globally significant simplification.
+
+\paragraph{Constant folding}
+The constant folding pass implements 17~rewrite rules that collectively perform the role of a compiler's constant propagation and dead code elimination.
+Boolean algebra rules evaluate \texttt{all}/\texttt{any} nodes with known operands: a vacuous \texttt{["all"]} rewrites to \texttt{true} (vacuous truth), a vacuous \texttt{["any"]} to \texttt{false} (vacuous disjunction), and boolean absorption removes known-true operands from \texttt{all} and known-false operands from \texttt{any}.
+Comparison rules evaluate binary comparisons with two literal operands.
+Dead-branch elimination removes arms from \texttt{case} and \texttt{match} expressions whose guard is statically false.
+
+Contradiction detection identifies filters that are logically unsatisfiable by inspecting siblings within an \texttt{all} node.
+When two predicates constrain the same property to disjoint values - e.g.\
+%
+\begin{quote}
+\texttt{["==",~["get",~"class"],~"a"]}~~and~~\texttt{["==",~["get",~"class"],~"b"]}
+\end{quote}
+%
+\noindent the enclosing \texttt{all} is rewritten to \texttt{false}, which the structural dead elimination pass will later exploit to remove the enclosing layer.
+This is the expression-level analogue of unsatisfiable-query detection in a database query planner.
+
+Range tightening detects overlapping range predicates on the same property and replaces them with the tighter bound, e.g.\ \texttt{["all",~["<",~x,~30],~["<",~x,~20]]} becomes \texttt{["<",~x,~20]}.
+Predicate subsumption generalises this to remove predicates that are logically implied by a sibling.
+Pure operator evaluation computes the result of any operator whose arguments are all literals, covering mathematical functions, string operations, and colour constructors.
+
+\paragraph{Stats-driven constant folding}
+When tile statistics are available, the optimiser extends constant folding with eight rules that exploit knowledge of the actual data.
+These rules receive tile statistics for the relevant source layer and fold expressions that are statically indeterminate but data-determinate:
+
+\begin{itemize}
+    \item \textbf{Property presence folding}: if a property is present in every feature, \texttt{["has",~"p"]} folds to \texttt{true}; if present in no feature, to \texttt{false}.
+    \item \textbf{Single-value folding}: if a property has cardinality~1 and is present in all features, \texttt{["get",~"p"]} folds to the single known value.
+    \item \textbf{Geometry-type folding}: if a source layer contains only one geometry type, comparisons against \texttt{geometry-type} fold to a boolean.
+    \item \textbf{Range folding}: numeric comparisons against a property with known data range $[\mathrm{min},\, \mathrm{max}]$ are folded when the predicate is trivially satisfied or violated.
+    The folding rules are:
+    \begin{equation}\label{eq:range_folding}
+    \begin{aligned}
+        p < n  &\;\to\; \mathtt{false} \;\text{if}\; \mathrm{min} \geq n, &
+        p < n  &\;\to\; \mathtt{true}  \;\text{if}\; \mathrm{max} < n, \\
+        p \leq n &\;\to\; \mathtt{false} \;\text{if}\; \mathrm{min} > n, &
+        p \leq n &\;\to\; \mathtt{true}  \;\text{if}\; \mathrm{max} \leq n, \\
+        p > n  &\;\to\; \mathtt{false} \;\text{if}\; \mathrm{max} \leq n, &
+        p > n  &\;\to\; \mathtt{true}  \;\text{if}\; \mathrm{min} > n, \\
+        p \geq n &\;\to\; \mathtt{false} \;\text{if}\; \mathrm{max} < n, &
+        p \geq n &\;\to\; \mathtt{true}  \;\text{if}\; \mathrm{min} \geq n, \\
+        p = n  &\;\to\; \mathtt{false} \;\text{if}\; n < \mathrm{min} \lor n > \mathrm{max}, &
+        p \neq n &\;\to\; \mathtt{true}  \;\text{if}\; n < \mathrm{min} \lor n > \mathrm{max}.
+    \end{aligned}
+    \end{equation}
+    The $\to \mathtt{true}$ cases additionally require that the property is present in all features (otherwise the comparison is undefined for absent features).
+    The equality and disequality rules are applied only to integer-typed columns, because floating-point equality is not a reliable oracle: a stats min/max pair derived from observed doubles may legitimately exclude a literal by a trailing-bit margin, but the filter is still defined (and, for correctness, treated as non-foldable).
+    Strict-inequality folds on floating-point columns are applied at the reported min/max values exactly; stats collection uses the observed extrema rather than synthetic bounds, so the boundary comparison coincides with a value that actually occurs, which is the only case where the fold is unconditionally sound.
+    \item \textbf{Match/in arm pruning}: arms referencing values absent from the tile statistics are removed; if all arms are pruned, the expression collapses to its fallback.
+    \item \textbf{Match arm reordering}: arms are reordered by descending frequency so the renderer evaluates the most common case first.
+\end{itemize}
+
+\begin{sloppypar}
+\noindent A cardinality threshold (implemented as the constant \texttt{CARDI\-NALITY\_\allowbreak THRESHOLD\,=\,200} in \texttt{stats/\allowbreak mod.rs}) governs the granularity of value tracking: when the number of distinct values exceeds this threshold, the statistics switch from full value counts to cardinality-only mode.
+\end{sloppypar}
+This bounds the memory cost on high-cardinality properties (names, identifiers) while retaining full information for the low-cardinality properties (road class, land use, administrative level) that benefit most from data-driven folding.
+The choice of 200 is motivated by the OpenMapTiles schema: every categorical property that is used as a \texttt{match}/\texttt{case} discriminator in the benchmark styles (\texttt{class}, \texttt{subclass}, \texttt{admin\_level}, \texttt{kind}, land-use codes) has fewer than 200 distinct values across the Germany tileset, whereas high-cardinality string columns (feature names, identifiers) exceed it by one or more orders of magnitude.
+The threshold therefore separates the \enquote{folding-useful} properties from the \enquote{folding-useless} ones without tuning for any specific style.
+
+Stats-driven folding is only applied irreversibly (i.e.\ removing features or folding expressions that affect the set of rendered features) when the statistics were collected at a sample rate of~1.0 (a full census of the tile set).
+At lower sample rates the statistics are used conservatively for reordering and selectivity estimation but not for removing data.
+
+\paragraph{Expression simplification}
+De~Morgan's laws push negations inward to expose further folding:
+%
+\begin{quote}
+\texttt{["!",~["all",~a,~b]]}~$\to$~\texttt{["any",~["!",~a],~["!",~b]]}
+\end{quote}
+%
+\noindent Boolean flattening merges nested \texttt{all}/\texttt{any}:
+%
+\begin{quote}
+\texttt{["all",~["all",~a,~b],~c]}~~$\to$~~\texttt{["all",~a,~b,~c]}
+\end{quote}
+%
+\noindent The \texttt{any}$\to$\texttt{in} rewrite detects two or more equality tests against the same property within an \texttt{any} and merges them into a single \texttt{in} expression that the renderer can evaluate as a set membership test.
+Within \texttt{match} expressions, duplicate arms are merged, and arms whose output equals the fallback are removed.
+
+\begin{sloppypar}
+Boolean \texttt{match} patterns (\texttt{["match",\allowbreak~x,\allowbreak~labels,\allowbreak~true,\allowbreak~false]}) are detected and rewritten to \texttt{["in",\allowbreak~x,\allowbreak~["literal",\allowbreak~labels]]}.
+Interpolation and step ramp simplification detects ramps where all stops map to the same value and collapses them to that constant.
+\texttt{let}/\texttt{var} inlining replaces singly-used variable references with the bound expression, eliminating the binding overhead.
+\end{sloppypar}
+
+\paragraph{Default stripping}
+Properties whose value equals the specification default are removed.
+The defaults are derived from the code-generated Rust types: each property's default is known from the upstream \texttt{v8.json}.
+Only plain scalar values are stripped; expression-valued properties are never removed, even if they would evaluate to the default at all zoom levels, to avoid the risk of changing renderer behaviour when the expression's mere presence affects layout (e.g.\ \texttt{text-radial-offset} suppresses \texttt{text-offset} regardless of its value).
+
+\paragraph{Selectivity reordering}
+For variadic boolean expressions (\texttt{all}, \texttt{any}), predicates are reordered by estimated selectivity to exploit short-circuit evaluation.
+For \texttt{all} (conjunction), predicates are sorted by ascending selectivity (the predicate most likely to be false is evaluated first).
+For \texttt{any} (disjunction), predicates are sorted by descending selectivity (the predicate most likely to be true is evaluated first).
+The selectivity estimation formulas follow the independence assumption introduced by Selinger et al.~\cite{selinger1979access}.
+Let $N$ denote the total number of features in the source layer, and $\mathrm{freq}(v)$ the number of features where property~$p$ equals~$v$:
+\begin{equation}\label{eq:selectivity}
+    \begin{aligned}
+        \mathrm{sel}(p = v)   &= \frac{\mathrm{freq}(v)}{N},  &
+        \mathrm{sel}(p \neq v) &= 1 - \mathrm{sel}(p = v), \\[4pt]
+        \mathrm{sel}(p < n)   &= \frac{1}{N}\!\sum_{v < n}\! \mathrm{freq}(v),  &
+        \mathrm{sel}(\mathtt{has}\; p) &= \frac{\mathrm{present}(p)}{N}, \\[4pt]
+        \mathrm{sel}(p \in V)  &= \min\!\Bigl(1,\;\sum_{v \in V}\! \mathrm{sel}(p = v)\Bigr), &
+        \mathrm{sel}(\mathtt{geometry\text{-}type}\; t) &= \frac{\mathrm{count}(t)}{N}.
+    \end{aligned}
+\end{equation}
+Compound predicates are estimated under the standard independence assumption:
+\begin{equation}\label{eq:selectivity_compound}
+    \mathrm{sel}(\texttt{all}) = \prod_i \mathrm{sel}(p_i), \qquad
+    \mathrm{sel}(\texttt{any}) = 1 - \prod_i \bigl(1 - \mathrm{sel}(p_i)\bigr).
+\end{equation}
+
+\noindent The independence assumption is known to be imprecise for correlated predicates~\cite{selinger1979access}, but as discussed in \cref{sec_query_optimizations} the selectivity signal here is consumed only by a reordering heuristic, not by a cost-based plan chooser: what matters is the \emph{ordering} of predicates by selectivity, not their absolute values.
+Correlation between map-style predicates (e.g.\ \texttt{class} and \texttt{subclass} in OpenMapTiles) distorts the absolute selectivities but rarely inverts their relative ordering, so the cheap estimator suffices.
+
+\subsection{Structural Optimisations}\label{sub_structural_optimizationss}
+
+Structural passes operate on typed Rust representations of the full style document, enabling cross-layer and cross-source reasoning.
+\cref{tab:structural_passes} summarises the implemented passes.
+
+\begin{table}[htbp]
+\centering
+\begin{tblr}{
+  colspec = {p{3.8cm} p{1.8cm} p{9.5cm}},
+  rows = {font=\small},
+  row{1} = {font=\small\bfseries},
+}
+\toprule
+Pass & Data & Description [compiler analogy] \\
+\midrule
+Metadata stripping           & none      & Remove \texttt{metadata} fields at the style root and layer level [debug info stripping] \\
+Dead layer/source elimination & none / sampling & Remove layers with always-false filters, geometry-type mismatches (with stats), or empty source-layers; prune unreferenced sources [dead code elimination] \\
+Metadata refinement          & none / sampling & Extract \texttt{minzoom}/\texttt{maxzoom} bounds from filter predicates and paint ramps; tighten bounds using tile coverage statistics; remove consumed zoom predicates from filters [range analysis] \\
+Cleanup                      & none      & Remove empty \texttt{paint}/\texttt{layout} sections, invisible layers (\texttt{visibility:~none}, zero opacity), trivially true filters, and root-level properties at specification defaults [dead code elimination] \\
+Layer merging                & none      & Merge identical adjacent layers by synthesising \texttt{case}/\texttt{match} expressions, with zoom-tolerant matching and sort-key preservation [basic block merging] \\
+Source zoom tightening       & none      & Tighten source \texttt{minzoom}/\texttt{maxzoom} based on the zoom ranges of layers that reference them [liveness analysis] \\
+\bottomrule
+\end{tblr}
+\caption{Structural optimizations passes.}
+\label{tab:structural_passes}
+\end{table}
+
+The following paragraphs describe the algorithm and rationale for each structural pass.
+
+\paragraph{Dead layer and source elimination}
+A layer is considered dead - and removed - if any of the following conditions hold:
+(1)~its filter is the literal \texttt{false} (produced by contradiction detection or stats-driven folding in the expression phase);
+(2)~its source layer contains zero features according to tile statistics;
+(3)~its geometry type does not match the source layer's geometry types (e.g.\ a \texttt{fill} layer targeting a source layer that contains only points).
+After dead layers are removed, sources that are no longer referenced by any surviving layer are pruned.
+This mirrors dead code elimination followed by unreachable function removal in a compiler.
+
+Geometry-type mismatch detection is particularly effective for tile schemas such as OpenMapTiles, where a single source layer (e.g.\ \texttt{transportation}) may contain mixed geometry types.
+A \texttt{fill} layer referencing such a source is dead if the source contains no polygons; a \texttt{circle} layer is dead if it contains no points.
+This information is only available with tile statistics, which is why the pass has both a static and a stats-driven variant.
+
+\paragraph{Metadata refinement}
+This pass extracts implicit zoom bounds from filter predicates and paint ramps, and lifts them into the layer's explicit \texttt{minzoom}/\texttt{maxzoom} metadata.
+Accurate metadata allows the renderer to skip entire layers at zoom levels where they are invisible, avoiding filter evaluation, geometry decoding, and draw-call submission.
+
+\emph{Filter-based extraction} walks the filter expression tree and recognises zoom predicates of the form \texttt{[">=",~["zoom"],~$z$]} or \texttt{["<=",~["zoom"],~$z$]}.
+Within an \texttt{all} node, the extracted bounds are intersected (the tighter of the bounds applies); within an \texttt{any} node, they are unioned (the layer is visible if any branch is satisfied).
+Extracted fractional bounds are rounded to integer zoom levels because tile zoom levels are integral.
+For a comparison operator with threshold~$n$, the extracted zoom interval is:
+\begin{equation}\label{eq:zoom_bounds}
+    \begin{aligned}
+        \texttt{>=}\; n &\;\Rightarrow\; [n,\;\infty), &
+        \texttt{>}\; n  &\;\Rightarrow\; [\lfloor n \rfloor + 1,\;\infty), \\
+        \texttt{<=}\; n &\;\Rightarrow\; [0,\; n], &
+        \texttt{<}\; n  &\;\Rightarrow\; [0,\; \lceil n \rceil - 1].
+    \end{aligned}
+\end{equation}
+Within an \texttt{all} node, extracted intervals are intersected: $[l_1, u_1] \cap [l_2, u_2] = [\max(l_1, l_2),\; \min(u_1, u_2)]$.
+Within an \texttt{any} node, they are unioned: $[l_1, u_1] \cup [l_2, u_2] = [\min(l_1, l_2),\; \max(u_1, u_2)]$.
+After extraction, the consumed zoom predicates are removed from the filter, often simplifying it to \texttt{true}.
+
+\emph{Paint-based visibility analysis} infers zoom bounds from paint properties that control visibility.
+For opacity properties, the pass examines \texttt{interpolate} and \texttt{step} expressions to find the zoom level at which the property transitions from zero to a non-zero value.
+For example, a fill layer whose \texttt{fill-opacity} is a step function that outputs~0 below zoom~12 and~1 above is effectively invisible below zoom~12; the pass raises \texttt{minzoom} to~12.
+For symbol layers, \emph{either} text or icon opacity must be non-zero (the layer is visible if any symbol component is visible); for all other layer types, \emph{both} size and opacity must be non-zero.
+
+\emph{Stats-driven refinement} tightens bounds using actual tile coverage: if a source layer's first tile appears at zoom~4, the layer's \texttt{minzoom} is raised to~4 regardless of what the filter permits, since there is no data to render below that zoom.
+This refinement only tightens bounds; it never loosens them.
+
+\paragraph{Soundness under overzoom}
+A subtle but load-bearing correctness concern is MapLibre's \emph{overzoom} behaviour: when a client requests a tile at a zoom level beyond a source's \texttt{maxzoom}, the renderer reuses the nearest available tile from a lower zoom and upscales it.
+A naive stats-driven tightening - \enquote{the last tile containing polygons appears at zoom~12, therefore set \texttt{maxzoom}=12} - would change the rendered output if the layer is visible at zoom~13 or~14 via overzoom from zoom~12.
+Because the thesis requires visually lossless transformations, the metadata refinement pass enforces two asymmetric rules, which are expressed directly in the implementation:
+\begin{enumerate}
+    \item \textbf{\texttt{minzoom} is symmetric.}
+    Vector tiles are not \emph{underzoomed} - the renderer will not synthesise a coarser tile from a finer one - so raising \texttt{minzoom} to the first data-carrying zoom never removes a rendered pixel.
+    This rule fires unconditionally.
+    \item \textbf{\texttt{maxzoom} is asymmetric.}
+    The refinement pass tightens the layer's \texttt{maxzoom} to the last data-carrying zoom $z^{*}$ only when $z^{*}$ is strictly less than the \emph{source's} \texttt{maxzoom}; otherwise, the layer's tiles at $z^{*}$ will be overzoomed to produce higher zoom levels, and the layer remains rendered beyond $z^{*}$.
+    This condition is checked explicitly in the implementation (c.f.\ \texttt{metadata.rs}: \texttt{if data\_max < source\_maxzoom}).
+\end{enumerate}
+The zoom-folding rule that collapses zoom comparisons in filters is similarly one-sided: only \texttt{minzoom} is used as a lower bound for the fold, because a layer's effective \texttt{maxzoom} is not an upper bound on the camera zoom once overzooming is considered.
+The source-zoom-tightening pass follows the same principle: it tightens a source's \texttt{maxzoom} only as far as the maximum \texttt{maxzoom} of any layer referencing it, which already respects the overzoom rule above, and it never tightens below the source's declared bounds.
+Taken together, these rules ensure that no optimizations can remove a pixel the original style would have rendered via overzoom.
+
+\paragraph{Cleanup}
+The cleanup pass performs four operations:
+(1)~removes empty \texttt{paint} and \texttt{layout} sections (which may have become empty after default stripping or stats-driven folding);
+(2)~removes invisible layers (\texttt{visibility:~none}, or zero opacity that is not an expression);
+(3)~removes trivially true filters (\texttt{["literal",~true]}), which are semantically equivalent to no filter;
+(4)~strips root-level style properties that equal their specification defaults (bearing, pitch, roll, transition).
+Cleanup runs after metadata refinement because refinement may render filters trivially true or make layers invisible.
+
+\paragraph{Layer merging}
+Layer merging identifies adjacent layers of the same type with identical paint and layout properties (modulo filter differences) and merges them into a single layer.
+The motivation is that fewer layers means fewer rendering passes: the renderer processes layers sequentially, and each layer incurs setup cost (binding textures, configuring blend state, submitting draw calls).
+\Cref{lst:painter_loop} shows the renderer's main loop: the painter iterates the layer list twice---once top-to-bottom for the opaque pass and once bottom-to-top for the translucent pass---issuing a \texttt{renderLayer} call for each layer.
+Every eliminated layer therefore removes one iteration from each pass.
+
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS painter render loop (\texttt{src/render/painter.ts:559--596})},label=lst:painter_loop]
+// src/render/painter.ts:559-566 -- opaque pass (top-to-bottom)
+for (this.currentLayer = layerIds.length - 1;
+     this.currentLayer >= 0; this.currentLayer--) {
+    const layer = this.style._layers[layerIds[this.currentLayer]];
+    const tileManager = tileManagers[layer.source];
+    const coords = coordsAscending[layer.source];
+    this._renderTileClippingMasks(layer, coords, false);
+    this.renderLayer(this, tileManager, layer, coords, renderOptions);
+}
+
+// src/render/painter.ts:575-596 -- translucent pass (bottom-to-top)
+for (this.currentLayer = 0;
+     this.currentLayer < layerIds.length; this.currentLayer++) {
+    const layer = this.style._layers[layerIds[this.currentLayer]];
+    const tileManager = tileManagers[layer.source];
+    // ...
+    this.renderLayer(this, tileManager, layer, coords, renderOptions);
+}
+\end{lstlisting}
+
+The merging algorithm proceeds in three phases.
+\emph{Phase~1} (candidate identification) scans the layer list for contiguous runs of layers that share the same type, source, and source-layer, and whose differing properties are all mergeable.
+A property is mergeable if, according to the MIR field metadata, it supports feature-driven expressions (i.e.\ its \texttt{expression.feature} flag is \texttt{true}, meaning it can vary per feature within a layer) and is not a zoom ramp (\texttt{interpolate} or \texttt{step} over \texttt{["zoom"]}), which must remain at the top level of a property expression and cannot be nested inside a \texttt{case}/\texttt{match} wrapper.
+Camera-only properties (such as \texttt{line-dasharray} or \texttt{*-translate}) must be uniform across all layers in a merge group, since they cannot be conditioned on feature attributes.
+Layer types that support sort keys (\texttt{fill}, \texttt{line}, \texttt{circle}, \texttt{fill-extrusion}) are candidates; \texttt{symbol} layers are excluded because MapLibre's collision detection algorithm operates per-layer, and merging symbol layers would alter which labels can suppress each other, changing the rendered output.
+\Cref{lst:placement} shows the per-layer processing: each symbol layer receives its own \texttt{LayerPlacement} instance, which is created at the start of the layer and destroyed at its boundary, while the underlying \texttt{Placement} object (and its \texttt{CollisionIndex}) is shared across all layers.
+Symbols from earlier layers are fully placed before later layers begin, so layer ordering determines placement priority; merging two symbol layers into one would interleave their symbols within a single \texttt{LayerPlacement}, changing which symbols take priority and therefore altering collision outcomes.
+
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS per-layer symbol placement (\texttt{src/style/pauseable\_placement.ts:90--127})},label=lst:placement]
+// src/style/pauseable_placement.ts:90-127 -- continuePlacement()
+while (this._currentPlacementIndex >= 0) {
+    const layerId = order[this._currentPlacementIndex];
+    const layer = layers[layerId];
+    const placementZoom = this.placement.collisionIndex.transform.zoom;
+    if (isSymbolStyleLayer(layer) && layer.layout &&
+        (!layer.minzoom || layer.minzoom <= placementZoom) &&
+        (!layer.maxzoom || layer.maxzoom > placementZoom)) {
+
+        if (!this._inProgressLayer) {
+            this._inProgressLayer = new LayerPlacement(layer); // per-layer scope
+        }
+        const pausePlacement = this._inProgressLayer.continuePlacement(
+            layerTiles[layer.source], this.placement,
+            this._showCollisionBoxes, layer, shouldPausePlacement
+        );
+        if (pausePlacement) return;
+        delete this._inProgressLayer;                          // layer boundary
+    }
+    this._currentPlacementIndex--;
+}
+\end{lstlisting}
+
+\paragraph{Soundness of layer merging}
+The merge pass has to preserve three invariants that collectively witness the visual-equivalence constraint of \cref{sec_problem_statement}:
+(1)~every feature drawn by the original $k$ layers must still be drawn by the merged layer, with the same paint and layout properties it would have had;
+(2)~the per-layer draw order (the painter's algorithm) must be preserved so that the top-most pixel at each screen position is unchanged; and
+(3)~any MapLibre runtime behaviour that is quantified per layer - collision detection, \texttt{feature-state}, \texttt{*-translate} and similar camera-only properties - must not change its per-layer scope.
+Invariant~(1) holds because the merged filter is the disjunction of the original filters ($\bigvee_i F_i$), the merged paint/layout expression is a \texttt{case}/\texttt{match} on the same discriminator that selects the original per-layer value, and the optimiser refuses the merge whenever any differing property lacks \texttt{expression.feature} support (so there is always a syntactic vehicle for the per-feature branch).
+Invariant~(2) is preserved by the synthesised sort key: for layer types that expose a \texttt{*-sort-key} layout property (\texttt{fill}, \texttt{line}, \texttt{circle}), the pass emits a \texttt{case}/\texttt{match} sort key that maps each original layer's features to an ascending integer reflecting the original declaration order, and the MapLibre renderer sorts features within the merged layer by this key before drawing.
+The merge pass refuses to proceed if any candidate layer already carries an explicit sort key, because combining a user-declared sort key with a synthesised one would over-determine the ordering.
+\texttt{fill-extrusion} layers are accepted as merge candidates in principle, but the current implementation inherits the same sort-key restriction; in practice their relative ordering is dominated by the depth buffer rather than the painter's algorithm, so the \texttt{fill-extrusion-sort-key} property is used by the renderer to break ties at co-planar surfaces only.
+Invariant~(3) is guaranteed by the exclusion of symbol layers from the candidate set (collision detection), by the \texttt{expression.feature} gate (camera-only properties must be uniform and thus remain layer-scoped after the merge), and by refusing to merge layers with differing non-mergeable properties at all.
+
+\paragraph{Scope of filter-to-property propagation}
+The filter-to-property constant propagation pass extracts equality constraints from a layer's filter and substitutes them into the layer's paint and layout expressions.
+Its soundness depends on a MapLibre evaluation-order invariant: the filter is evaluated first, and paint/layout expressions are only evaluated for features that passed the filter.
+\Cref{lst:bucket_populate} shows this invariant in the \texttt{FillBucket.populate} method: the filter is applied first, and only features that pass it proceed to bucket construction where paint and layout expressions are evaluated.
+This holds for the data-driven expression variants used across all MapLibre versions this thesis targets (\texttt{match}, \texttt{case}, \texttt{get}, etc.).
+
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS bucket populate method showing filter-first evaluation (\texttt{src/data/bucket/fill\_bucket.ts:84--106})},label=lst:bucket_populate]
+// src/data/bucket/fill_bucket.ts:84-106 -- populate()
+for (const {feature, id, index, sourceLayerIndex} of features) {
+    const needGeometry = this.layers[0]._featureFilter.needGeometry;
+    const evaluationFeature = toEvaluationFeature(feature, needGeometry);
+
+    if (!this.layers[0]._featureFilter.filter(
+        new EvaluationParameters(this.zoom), evaluationFeature, canonical
+    )) continue;  // feature rejected: no paint evaluation occurs
+
+    // Only reached for features that passed the filter:
+    const bucketFeature: BucketFeature = {
+        id, properties: feature.properties, type: feature.type,
+        sourceLayerIndex, index,
+        geometry: needGeometry ? evaluationFeature.geometry
+                               : loadGeometry(feature),
+        patterns: {}, sortKey
+    };
+    bucketFeatures.push(bucketFeature);
+}
+\end{lstlisting}
+The propagation is strictly \emph{intra-layer} (intra-procedural, in compiler terminology): constraints from one layer never flow into another, even if two layers share a source-layer, because the filter of one layer has no bearing on features rendered by a sibling layer.
+The propagation also intentionally ignores \texttt{["feature-state", \ldots]} references, because the feature state is updated from the client at render time and cannot be statically constrained by the filter.
+
+\emph{Phase~2} (match-pattern detection) checks whether all filters within a candidate group match the pattern \texttt{["==",~["get",~P],~literal]} on the same property~$P$.
+If so, the merged filter is a compact \texttt{match} expression rather than a verbose \texttt{case} chain, and merged paint/layout properties also use \texttt{match} with the same discriminator.
+This pattern is common in practice: road styles frequently define separate layers for motorway, trunk, primary, secondary, and tertiary, differing only in width and colour.
+
+\emph{Phase~3} (zoom-tolerant merging) handles layers whose zoom ranges differ slightly.
+Rather than rejecting the merge, it wraps each sub-filter with zoom guards (\texttt{[">=",\allowbreak~["zoom"],\allowbreak~lo]}, \texttt{["<=",\allowbreak~["zoom"],\allowbreak~hi]}) and uses the union of all zoom ranges as the merged layer's bounds.
+This trades a slightly more complex filter for a reduction in layer count.
+
+A \emph{sort key} is synthesised to preserve the original inter-layer draw order.
+When a \texttt{match} pattern is used, the sort key maps each discriminator value to a numeric index corresponding to the original layer order.
+When a \texttt{case} pattern is used, the sort key tests filters in reverse order (last painter wins) and assigns ascending indices.
+Sort-key synthesis is only applied to layer types that support the \texttt{*-sort-key} property and that do not already define one.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\linewidth}{!}{\hfuzz=50pt\begin{tikzpicture}[
+        node distance=0.35cm,
+        layer/.style={rectangle, draw, rounded corners=2pt, minimum width=3.2cm,
+                      minimum height=0.55cm, font=\scriptsize, align=center},
+        merged/.style={rectangle, draw, rounded corners=2pt, minimum width=4.8cm,
+                       font=\scriptsize, align=left, inner sep=4pt},
+        phase/.style={rectangle, draw, dashed, rounded corners=3pt, fill=gray!8,
+                      inner sep=5pt},
+        arrow/.style={-{Stealth[length=2.5mm]}, thick},
+        label/.style={font=\scriptsize\itshape, text=gray},
+        check/.style={font=\scriptsize, text=black!70},
+    ]
+        % ── Input layers (left) ──
+        \node[layer, fill=red!12]   (l0) {line: \texttt{class == "motorway"}\\[1pt]\texttt{line-color: \#e892a2\quad line-width: 3}};
+        \node[layer, fill=orange!12, below=of l0] (l1) {line: \texttt{class == "primary"}\\[1pt]\texttt{line-color: \#fcd6a4\quad line-width: 2}};
+        \node[layer, fill=yellow!15, below=of l1] (l2) {line: \texttt{class == "secondary"}\\[1pt]\texttt{line-color: \#f7fabf\quad line-width: 1.5}};
+
+        \node[above=0.15cm of l0, font=\small\bfseries] {Input: 3 adjacent line layers};
+
+        % ── Phase annotations (middle) ──
+        \node[right=1.4cm of l0, check, text width=4.2cm] (p1) {%
+            \textbf{Phase 1} — Candidate check\\[2pt]
+            same type, source, source-layer \checkmark\\
+            differing props are feature-driven \checkmark\\
+            no zoom ramps in diffs \checkmark\\
+            no existing sort-key \checkmark};
+        \node[right=1.4cm of l1, check, text width=4.2cm] (p2) {%
+            \textbf{Phase 2} — Match detection\\[2pt]
+            all filters: \texttt{["==",\,["get",\,"class"],\,L]}\\
+            same property \texttt{"class"} \checkmark\\
+            unique literals \checkmark\\
+            $\Rightarrow$ use \texttt{match} pattern};
+        \node[right=1.4cm of l2, check, text width=4.2cm] (p3) {%
+            \textbf{Phase 3} — Zoom check\\[2pt]
+            all zoom ranges identical\\
+            $\Rightarrow$ no guards needed};
+
+        % ── Output (right) ──
+        \node[merged, fill=green!8, right=1.4cm of p2, text width=6.0cm] (out) {%
+            \textbf{Merged line layer}\\[3pt]
+            \texttt{filter:}\\
+            \texttt{~~["match",\,["get",\,"class"],}\\
+            \texttt{~~~["motorway","primary","secondary"],}\\
+            \texttt{~~~true,\,false]}\\[3pt]
+            \texttt{line-color:}\\
+            \texttt{~~["match",\,["get",\,"class"],}\\
+            \texttt{~~~"motorway",\,"\#e892a2",}\\
+            \texttt{~~~"primary",\,"\#fcd6a4",\,"\#f7fabf"]}\\[3pt]
+            \texttt{line-width:}\\
+            \texttt{~~["match",\,["get",\,"class"],}\\
+            \texttt{~~~"motorway",\,3,\,"primary",\,2,\,1.5]}\\[3pt]
+            \texttt{line-sort-key:}\\
+            \texttt{~~["match",\,["get",\,"class"],}\\
+            \texttt{~~~"motorway",\,0,\,"primary",\,1,\,2]}
+        };
+
+        \node[above=0.15cm of out, font=\small\bfseries] {Output: 1 merged layer};
+
+        % ── Arrows ──
+        \draw[arrow] (l0.east) -- (p1.west);
+        \draw[arrow] (l1.east) -- (p2.west);
+        \draw[arrow] (l2.east) -- (p3.west);
+        \draw[arrow] (p1.east) -- (out.west |- p1.east);
+        \draw[arrow] (p2.east) -- (out.west);
+        \draw[arrow] (p3.east) -- (out.west |- p3.east);
+    \end{tikzpicture}}
+    \caption[Layer merging example]{Layer merging example.  Three adjacent line layers differing only in filter literal, colour, and width are merged via the \texttt{match} pattern (Phase~2).
+    The merged layer uses \texttt{["match",\,["get",\,"class"],\,\ldots]} for the filter, each differing paint property, and a synthesised sort key that preserves the original draw order.
+    Phase~1 validates that all differing properties support feature-driven expressions; Phase~3 confirms identical zoom ranges, so no zoom guards are needed}
+    \label{fig:layer_merge_example}
+\end{figure}
+
+\paragraph{Source zoom tightening}
+After all layer-level passes, source \texttt{minzoom}/\texttt{maxzoom} bounds are tightened to the effective zoom range of the layers that reference each source.
+This is a liveness analysis: a source is \enquote{live} at a zoom level only if at least one layer referencing it is active at that zoom.
+Tighter source bounds allow the tile server (or client-side tile manager) to skip tile requests for zoom levels where no layer needs data from that source.
+
+\subsection{Data-Level Optimisations}\label{sub_data_optimizationss}
+
+Data-level optimizationss transform the tile data itself, reducing transfer size and decoding cost without altering the rendered output.
+\cref{tab:data_passes} summarises the implemented techniques.
+
+\begin{table}[htbp]
+\centering
+\begin{tblr}{
+  colspec = {p{3.8cm} p{1.8cm} p{9.5cm}},
+  rows = {font=\small},
+  row{1} = {font=\small\bfseries},
+}
+\toprule
+Pass & Data & Description [compiler analogy] \\
+\midrule
+Tile shaving             & full scan & Encode only the properties, layers, and geometry types that the style actually references [tree shaking] \\
+Transparent re-encoding  & full scan & Re-encode \ac{MVT} tiles into the \ac{MLT} format [instruction set translation] \\
+Compression optimizations & full scan & Apply column-aware compression strategies based on data characteristics [profile-guided optimizations] \\
+\bottomrule
+\end{tblr}
+\caption{Data-level optimizations techniques.}
+\label{tab:data_passes}
+\end{table}
+
+\paragraph{Tile shaving}
+Tile shaving bridges style-level and data-level optimizations.
+The optimiser analyses the optimised style to compute a \emph{tile pruning advisory} that specifies, per source-layer and zoom level, exactly what the rendering style needs: which properties are referenced (with zoom ranges), which geometry types are used, which property values appear in any filter, and whether feature IDs are accessed.
+The advisory is computed from the \emph{optimised} style (after all expression and structural passes), so style-level dead layer elimination and metadata refinement cascade into smaller advisories.
+
+Pruning is applied to each tile in order:
+(1)~remove entire source-layers not referenced by any style layer;
+(2)~filter features by geometry type;
+(3)~filter features by unused categorical property values;
+(4)~strip unreferenced properties from the feature property table;
+(5)~strip feature IDs when no style layer uses \texttt{["id"]} or \texttt{["feature-state"]}.
+The result is a tile that contains only the data the style will actually render.
+
+\paragraph{Transparent re-encoding}
+After pruning, tiles are re-encoded from the row-oriented, protobuf-based \ac{MVT} format into the columnar \ac{MLT} format.
+The re-encoding proceeds in three stages: (1)~the row-oriented \ac{MVT} features are converted into an owned columnar representation (\texttt{StagedLayer01}), with separate arrays for each property column, the geometry vertex buffer, and the feature ID column; (2)~the columnar data is optionally reordered according to the sort strategy competition; (3)~each column is independently encoded using the per-stream encoding competition.
+The final wire format consists of three concatenated sections per layer: a header (layer name, tile extent, column count), a metadata section (column types, encoding descriptors), and a data section (the encoded streams).
+
+The encoding competition reformulates the encoding problem as a \emph{multi-strategy competition} inspired by profile-guided optimizations in compilers: rather than committing to a single encoding plan, the encoder tries multiple strategies, measures the output size of each, and selects the smallest.
+This competition operates at two nested levels (described in detail in \cref{sub_encoding_strategies}): an outer loop that trials multiple feature sort orderings, and an inner loop that selects the best integer encoding for each data stream.
+The inner competition criterion is deliberately \emph{single-objective}: the winning candidate is the one with the smallest encoded \texttt{total\_len()} (cf.\ the criteria at \texttt{encoder/optimizer.rs:117} and \texttt{:168}, and the ordered candidate list in \texttt{encoder/stream/optimizer.rs:133--167}).
+Multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - are not resolved inside the encoder; they are deliberately deferred to the outer ablation layer, where deployment-specific weightings are applied in the post-hoc Pareto analysis of \cref{sec_exp_pareto}.
+
+The inner competition uses an \emph{alternatives} mechanism implemented as an RAII guard pattern: each candidate encoding writes its output into the encoder's buffers, and the guard commits only the smallest candidate.
+This avoids copying: the winning candidate's bytes are already positioned correctly in the output buffers, and losing candidates are simply rolled back by resetting buffer positions.
+The mechanism supports nesting (inner competitions resolve before the enclosing sort-strategy trial commits), enabling hierarchical strategy selection without redundant allocation.
+
+\paragraph{Compression optimizations}
+\begin{sloppypar}
+Column-aware compression exploits the statistical properties of individual data streams.
+Integer streams are competed across logical encodings (none, delta, \ac{RLE}, delta-\acs{RLE}) paired with physical encodings (\ac{VarInt}, \ac{FastPFOR}~\cite{fastpfor}).
+\ac{FastPFOR} is restricted to 32-bit integer streams; 64-bit streams fall back to \ac{VarInt}, as the \ac{FastPFOR} codec operates on 32-bit blocks.
+String columns are competed across plain, dictionary, \ac{FSST}~\cite{boncz2020fsst}, and \ac{FSST}-on-dictionary strategies.
+The \ac{FSST} compressor uses a pruning variant that aggressively removes underused symbols from the trained symbol table, shaving additional bytes from the compressed output at no decompression cost.
+Geometry vertices are encoded as either componentwise deltas or Morton-code dictionaries, selected by a HyperLogLog sketch~\cite{flajoletHyperLogLogAnalysisNearperfect2007} that estimates vertex uniqueness.
+The competition is made affordable through warm-start caching: \ac{FSST} compressors, Morton metadata, and vertex-strategy decisions are computed once and reused across sort trials.
+Scratch buffers (temporary arrays for delta computation, run counting, and bit packing) grow on first use and are recycled without re-allocation across streams and sort trials.
+\end{sloppypar}
+
+\subsection{Metadata Optimisations}\label{sub_metadata_optimizationss}
+
+Metadata optimizationss provide the client with more accurate information, enabling it to skip unnecessary work during rendering.
+\cref{tab:metadata_passes} summarises the implemented techniques.
+
+\begin{table}[htbp]
+\centering
+\begin{tblr}{
+  colspec = {p{3.8cm} p{1.8cm} p{9.5cm}},
+  rows = {font=\small},
+  row{1} = {font=\small\bfseries},
+}
+\toprule
+Pass & Data & Description \\
+\midrule
+Dead source elimination & none      & Remove sources that are no longer referenced after dead layer elimination \\
+Metadata refinement     & sampling  & Provide accurate \texttt{minzoom}/\texttt{maxzoom} bounds derived from filter analysis and tile statistics \\
+\bottomrule
+\end{tblr}
+\caption{Metadata-level optimizations techniques.}
+\label{tab:metadata_passes}
+\end{table}
+
+\subsection{Tile Statistics Collection}\label{sub_tile_statistics}
+
+Several optimizations passes - stats-driven constant folding, dead elimination with geometry-type mismatch, metadata refinement, selectivity reordering, and the tile pruning advisory - require knowledge of the actual tile data.
+This knowledge is provided by a statistics collection phase that scans the tile set and produces a per-source, per-source-layer statistical profile.
+
+For each source layer, the following statistics are collected:
+
+\begin{itemize}
+    \item \textbf{Feature count}: total number of features across all tiles (note: features appearing in multiple tiles at different zoom levels are counted multiply, as the optimiser reasons per-tile, not per-geographic-entity).
+    \item \textbf{Features by zoom}: a per-zoom-level feature count, used by metadata refinement to determine the first and last zoom level at which data exists.
+    \item \textbf{Geometry types}: counts of Point, LineString, and Polygon features, used by dead elimination to detect geometry-type mismatches.
+    \item \textbf{Feature ID presence}: whether any feature carries a non-zero feature ID, used by the advisory to decide whether to strip the ID column.
+    \item \textbf{Per-property statistics}: for each property name, the statistics depend on the wire type:
+    \begin{itemize}
+        \item \emph{Boolean}: present count and true count.
+        \item \emph{Integer/unsigned integer}: present count, minimum, maximum, cardinality, and (if cardinality $\leq 200$) a full value-frequency map.
+        \item \emph{Double}: present count, minimum, maximum, cardinality (no value-frequency map, since floating-point equality is unreliable for folding).
+        \item \emph{String}: present count, cardinality, and (if cardinality $\leq 200$) a value-frequency map sorted by descending frequency.
+    \end{itemize}
+\end{itemize}
+
+\noindent The cardinality threshold of~200 governs the transition from value-level to summary-level statistics.
+Below this threshold, the full value-frequency map is retained, enabling match arm pruning, match arm reordering, and precise selectivity estimation.
+Above this threshold, only the cardinality is retained, bounding memory consumption on high-cardinality properties such as feature names or identifiers.
+
+Statistics can be collected at a configurable \emph{sample rate}.
+A sample rate of~1.0 (full census) is required for irreversible decisions such as dead layer elimination or property interning; lower sample rates are sufficient for selectivity estimation and reordering.
+This distinction is enforced by a sample-rate guard in the optimiser: passes that permanently remove data check that the sample rate is~1.0 before applying.
+
+\section{Evaluation}\label{sec_evaluation}
+
+Since many of the investigated optimizations techniques have not previously been studied in the context of map rendering pipelines, their effectiveness must be evaluated empirically.
+The evaluation considers several dimensions:
+
+\begin{itemize}
+    \item \textbf{Data savings}: reduction in style size (raw, gzip, and Brotli) and tile transfer volume.
+    \item \textbf{Rendering performance}: client-side metrics including load time, frames per second, frame time percentiles (p50, p95, p99), jank count, style parse time, time to first tile, and time to first frame.
+    \item \textbf{Optimisation cost}: preprocessing time introduced by each pass, measured as wall-clock time on the optimiser's host machine; this is an offline cost amortised over all subsequent tile deliveries.
+    \item \textbf{Efficiency}: \emph{qualitative} discussion of the energy implications of reduced data transfer and fewer rendering operations.  No direct power or energy measurement (RAPL, battery delta) is performed, because the benchmark harness runs on a desktop workstation rather than a battery-constrained mobile device; any quantitative energy claim would require a different hardware platform and is deferred to future work.
+\end{itemize}
+
+\subsection{Metrics}\label{sub_metrics}
+
+The benchmark harness collects the following metrics per run:
+
+\begin{itemize}
+    \item \textbf{Load time} (\texttt{loadMs}): wall-clock time from requesting the map to completion of the initial render, including style parsing, tile fetching, tile decoding, and first paint.
+    Decoding latency is reported as part of \texttt{loadMs} rather than isolated, because the benchmark harness cannot separate decoder wall-clock time from the surrounding fetch and first-paint work without renderer-internal instrumentation which is not currently available; Research Goal~R3's \enquote{decoding latency} axis is therefore always read through \texttt{loadMs} in the remainder of this thesis.
+    \item \textbf{Style parse time} (\texttt{styleParseMs}): time spent parsing and compiling the style JSON into the renderer's internal representation.
+    \item \textbf{Time to first tile} (\texttt{firstTileMs}): time from map initialisation until the first tile is decoded and ready for rendering.
+    \item \textbf{Time to first frame} (\texttt{firstFrameMs}): time until the first frame is composited and presented.
+    \item \textbf{Frames per second} (\texttt{fps}): average rendering throughput during the animation phase.
+    \item \textbf{Frame time percentiles} (\texttt{p50}, \texttt{p95}, \texttt{p99FrameMs}): distribution of per-frame render times, capturing both typical and worst-case latency.
+    \item \textbf{Jank count} (\texttt{jankCount}): number of frames exceeding \qty{16.67}{\milli\second} (the 60\,\ac{FPS} budget), indicating visible stuttering.
+    \item \textbf{Heap memory} (\texttt{heapUsedMB}, \texttt{peakHeapMB}): JavaScript heap usage during the benchmark, capturing the memory cost of style structures and tile data.
+    \item \textbf{Idle time} (\texttt{idleMs}): time the renderer spends idle (waiting for tiles or GPU sync), indicating headroom.
+\end{itemize}
+
+\noindent Additionally, the following static metrics are computed for each optimised style without running the renderer:
+
+\begin{itemize}
+    \item \textbf{Style size}: raw byte count, gzip-compressed size, and Brotli-compressed size.
+    \item \textbf{Complexity metrics}: total \ac{AST} node count, maximum expression depth, layer count, filter count, and expression operator histogram.
+\end{itemize}
+
+\subsection{Ablation Methodology}\label{sub_ablation}
+
+The primary evaluation methodology is cumulative ablation: passes are added one at a time in a fixed order, and the full benchmark suite is re-run after each addition.
+This reveals both the marginal contribution of each pass and the interactions between passes.
+The ablation comprises 17~steps: a baseline (no optimizations) followed by 16~passes added incrementally in the order listed in \crefrange{tab:expression_passes}{tab:metadata_passes}.
+
+Each scenario/style combination is executed for 15~runs.
+The median and standard deviation of each metric are reported; the median is preferred over the mean because rendering performance distributions are right-skewed (occasional long frames inflate the mean).
+To reduce measurement noise, the benchmark harness pins rendering to real GPU hardware via ANGLE/Vulkan rather than the software rasteriser used for pixel-exact render tests.
+This ensures that GPU-bound workloads (fragment shading, texture sampling, blend operations) are measured realistically.
+
+All tile requests are served from a local caching proxy that stores tiles on first access and replays them on subsequent runs.
+To avoid artificially high performance from local network transfer, the proxy introduces a network delay that simulates realistic latency.
+Concretely, each tile response is delayed by a fixed per-request round-trip time on top of a per-byte throughput throttle, so the wire time for a tile of $b$ bytes is approximately $\mathrm{RTT} + b / \mathrm{bandwidth}$.
+Both values are configurable; the default benchmark run uses an \ac{RTT} of \qty{50}{\milli\second} and a bandwidth cap of \qty{10}{\Mbps}, which approximates a residential 4G connection in Western Europe.
+The model does not simulate packet loss, HTTP/2 multiplexing, or TCP slow-start - all of which would amplify the benefit of smaller tiles - so the measured load-time improvements from tile shaving are a conservative lower bound on what a real deployment would observe.
+This ensures that tile-fetch improvements (e.g.\ smaller tiles due to shaving) are measured under conditions representative of a \ac{CDN}-served deployment while remaining deterministic across runs.
+
+The benchmark harness itself is a Puppeteer-driven headless browser that programmatically loads the MapLibre GL~JS renderer, applies a camera animation scenario, and collects performance counters via the \texttt{Performance} API and custom instrumentation hooks in the renderer.
+
+Visual correctness is verified separately through pixel-exact render tests that compare optimised output against the unoptimised baseline across a grid of zoom levels and geographic locations.
+These tests use a software rasteriser to ensure deterministic pixel output, independent of GPU driver differences.
