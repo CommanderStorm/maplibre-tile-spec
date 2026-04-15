@@ -1,10 +1,22 @@
-//! Feature reordering for the optimizer
+//! Feature reordering for the optimizer.
+//!
+//! Sorting operates on both [`TileLayer01`] (row-oriented) and
+//! [`StagedLayer01`] (columnar).
+//!
+//! - Row-oriented: a single `Vec::sort_by_cached_key` call permutes all
+//!   fields of each `TileFeature` together.
+//! - Columnar: a permutation index is computed, then applied to every column
+//!   independently.  Geometry is rebuilt via `to_geojson` + `push_geom`
+//!   because the offset arrays are entangled across features.
 
 use geo::CoordsIter as _;
 
 use crate::codecs::hilbert::{hilbert_curve_params_from_bounds, hilbert_sort_key};
 use crate::codecs::morton::morton_sort_key;
-use crate::decoder::{TileFeature, TileLayer01};
+use crate::decoder::{GeometryValues, TileFeature, TileLayer01};
+use crate::encoder::model::StagedLayer01;
+use crate::encoder::property::StagedProperty;
+use crate::geojson::first_vertex;
 use crate::{Coord32, Geom32};
 
 /// Controls how features inside a layer are reordered before encoding.
@@ -53,7 +65,8 @@ impl TileLayer01 {
                     hilbert_sort_key
                 };
                 self.features.sort_by_cached_key(|f| {
-                    first_vertex(&f.geometry).map_or(u64::MAX, |c| {
+                    first_vertex(&f.geometry).map_or(u64::MAX, |(x, y)| {
+                        let c = Coord32 { x, y };
                         u64::from(curve_key(c, params.shift, params.num_bits))
                     })
                 });
@@ -89,20 +102,232 @@ fn curve_params_from_features(features: &[TileFeature]) -> CurveParams {
     CurveParams { shift, num_bits }
 }
 
-/// Extract the coordinate of the first vertex of a geometry.
-fn first_vertex(geom: &Geom32) -> Option<Coord32> {
+/// Flatten a geometry into its raw vertex sequence as `[x0, y0, x1, y1, …]`.
+fn geom_vertices(geom: &Geom32) -> Vec<i32> {
+    let mut out = Vec::new();
+    push_geom_vertices(geom, &mut out);
+    out
+}
+
+fn push_geom_vertices(geom: &Geom32, out: &mut Vec<i32>) {
     match geom {
-        Geom32::Point(p) => Some(p.0),
-        Geom32::Line(l) => Some(l.start),
-        Geom32::LineString(ls) => ls.0.first().copied(),
-        Geom32::Polygon(p) => p.exterior().0.first().copied(),
-        Geom32::MultiPoint(mp) => mp.0.first().map(|p| p.0),
-        Geom32::MultiLineString(mls) => mls.0.first().and_then(|ls| ls.0.first().copied()),
-        Geom32::MultiPolygon(mp) => mp.0.first().and_then(|p| p.exterior().0.first().copied()),
-        Geom32::Triangle(t) => Some(t.v1()),
-        Geom32::Rect(r) => Some(r.min()),
-        Geom32::GeometryCollection(gc) => gc.0.first().and_then(first_vertex),
+        Geom32::Point(p) => {
+            out.push(p.0.x);
+            out.push(p.0.y);
+        }
+        Geom32::Line(l) => {
+            out.extend([l.start.x, l.start.y, l.end.x, l.end.y]);
+        }
+        Geom32::LineString(ls) => {
+            for c in &ls.0 {
+                out.push(c.x);
+                out.push(c.y);
+            }
+        }
+        Geom32::Polygon(p) => {
+            for c in &p.exterior().0 {
+                out.push(c.x);
+                out.push(c.y);
+            }
+        }
+        Geom32::MultiPoint(mp) => {
+            for p in &mp.0 {
+                out.push(p.0.x);
+                out.push(p.0.y);
+            }
+        }
+        Geom32::MultiLineString(mls) => {
+            for ls in &mls.0 {
+                for c in &ls.0 {
+                    out.push(c.x);
+                    out.push(c.y);
+                }
+            }
+        }
+        Geom32::MultiPolygon(mp) => {
+            for poly in &mp.0 {
+                for c in &poly.exterior().0 {
+                    out.push(c.x);
+                    out.push(c.y);
+                }
+            }
+        }
+        Geom32::Triangle(t) => {
+            out.extend([t.0.x, t.0.y, t.1.x, t.1.y, t.2.x, t.2.y]);
+        }
+        Geom32::Rect(r) => {
+            let min = r.min();
+            let max = r.max();
+            out.extend([min.x, min.y, max.x, max.y]);
+        }
+        Geom32::GeometryCollection(gc) => {
+            for g in gc {
+                push_geom_vertices(g, out);
+            }
+        }
     }
+}
+
+// ── Columnar (StagedLayer01) sorting ──────────────────────────────────────
+
+/// Reorder all columns of a [`StagedLayer01`] according to `strategy`.
+///
+/// [`SortStrategy::Unsorted`] is a no-op.
+pub(crate) fn reorder_staged(
+    staged: &mut StagedLayer01,
+    strategy: SortStrategy,
+) -> crate::MltResult<()> {
+    let n = staged.geometry.vector_types().len();
+    if n <= 1 || strategy == SortStrategy::Unsorted {
+        return Ok(());
+    }
+
+    let perm = compute_staged_permutation(staged, strategy);
+    if perm.iter().enumerate().all(|(i, &p)| i == p) {
+        return Ok(()); // already sorted
+    }
+    apply_permutation(staged, &perm)
+}
+
+/// Compute a sort permutation for the given strategy.
+fn compute_staged_permutation(staged: &StagedLayer01, strategy: SortStrategy) -> Vec<usize> {
+    let n = staged.geometry.vector_types().len();
+    let mut perm: Vec<usize> = (0..n).collect();
+
+    match strategy {
+        SortStrategy::Unsorted => {}
+        SortStrategy::SpatialMorton | SortStrategy::SpatialHilbert => {
+            let verts = staged.geometry.vertices().unwrap_or(&[]);
+            let (min_val, max_val) = verts
+                .iter()
+                .fold((i32::MAX, i32::MIN), |(min, max), &v| {
+                    (min.min(v), max.max(v))
+                });
+            let (shift, num_bits) = hilbert_curve_params_from_bounds(min_val, max_val);
+            let curve_key = if strategy == SortStrategy::SpatialMorton {
+                morton_sort_key
+            } else {
+                hilbert_sort_key
+            };
+            perm.sort_by_cached_key(|&i| {
+                staged.geometry.first_vertex(i).map_or(u64::MAX, |(x, y)| {
+                    let c = Coord32 { x, y };
+                    u64::from(curve_key(c, shift, num_bits))
+                })
+            });
+        }
+        SortStrategy::Id => {
+            if let Some(ids) = &staged.id {
+                perm.sort_by_cached_key(|&i| {
+                    ids.0
+                        .get(i)
+                        .and_then(|v| *v)
+                        .map_or(0u64, |v| v.saturating_add(1))
+                });
+            }
+        }
+    }
+
+    perm
+}
+
+/// Apply a feature permutation to all columns of a `StagedLayer01`.
+fn apply_permutation(staged: &mut StagedLayer01, perm: &[usize]) -> crate::MltResult<()> {
+    // IDs
+    if let Some(ids) = &mut staged.id {
+        ids.0 = permute_vec(&ids.0, perm);
+    }
+
+    // Extract each geometry as Geom32 in the new order, then rebuild dense offsets.
+    let old_geom = std::mem::take(&mut staged.geometry);
+    let tessellate = old_geom.triangles.is_some();
+    let reordered: Vec<_> = perm
+        .iter()
+        .map(|&i| old_geom.to_geojson(i))
+        .collect::<Result<_, _>>()?;
+    staged.geometry = GeometryValues::from_geoms(&reordered, tessellate);
+
+    // Properties
+    for prop in &mut staged.properties {
+        permute_property(prop, perm);
+    }
+
+    Ok(())
+}
+
+/// Reorder a `Vec<T>` by a permutation index.
+fn permute_vec<T: Clone>(src: &[T], perm: &[usize]) -> Vec<T> {
+    perm.iter().map(|&i| src[i].clone()).collect()
+}
+
+fn permute_property(prop: &mut StagedProperty, perm: &[usize]) {
+    match prop {
+        StagedProperty::Bool(s) => s.values = permute_vec(&s.values, perm),
+        StagedProperty::I8(s) => s.values = permute_vec(&s.values, perm),
+        StagedProperty::U8(s) => s.values = permute_vec(&s.values, perm),
+        StagedProperty::I32(s) => s.values = permute_vec(&s.values, perm),
+        StagedProperty::U32(s) => s.values = permute_vec(&s.values, perm),
+        StagedProperty::I64(s) => s.values = permute_vec(&s.values, perm),
+        StagedProperty::U64(s) => s.values = permute_vec(&s.values, perm),
+        StagedProperty::F32(s) => s.values = permute_vec(&s.values, perm),
+        StagedProperty::F64(s) => s.values = permute_vec(&s.values, perm),
+        StagedProperty::OptBool(s) => permute_opt_scalar(s, perm),
+        StagedProperty::OptI8(s) => permute_opt_scalar(s, perm),
+        StagedProperty::OptU8(s) => permute_opt_scalar(s, perm),
+        StagedProperty::OptI32(s) => permute_opt_scalar(s, perm),
+        StagedProperty::OptU32(s) => permute_opt_scalar(s, perm),
+        StagedProperty::OptI64(s) => permute_opt_scalar(s, perm),
+        StagedProperty::OptU64(s) => permute_opt_scalar(s, perm),
+        StagedProperty::OptF32(s) => permute_opt_scalar(s, perm),
+        StagedProperty::OptF64(s) => permute_opt_scalar(s, perm),
+        StagedProperty::Str(s) | StagedProperty::OptStr(s) => {
+            *s = crate::encoder::property::StagedStrings::from_optional(
+                s.name.clone(),
+                perm.iter()
+                    .map(|&i| s.get(u32::try_from(i).expect("feature index fits u32"))),
+            );
+        }
+        StagedProperty::SharedDict(d) => {
+            for item in &mut d.items {
+                item.ranges = permute_vec(&item.ranges, perm);
+            }
+        }
+    }
+}
+
+/// Permute an optional scalar column: reorder both presence bits and dense values.
+fn permute_opt_scalar<T: Copy + PartialEq>(
+    s: &mut crate::encoder::property::StagedOptScalar<T>,
+    perm: &[usize],
+) {
+    let old_presence = std::mem::take(&mut s.presence);
+    let old_values = std::mem::take(&mut s.values);
+
+    // Build prefix-sum of old presence to map feature index → dense value index.
+    let mut prefix = Vec::with_capacity(old_presence.len() + 1);
+    prefix.push(0usize);
+    for &p in &old_presence {
+        prefix.push(prefix.last().unwrap() + usize::from(p));
+    }
+
+    s.presence = permute_vec(&old_presence, perm);
+    s.values = Vec::with_capacity(old_values.len());
+    for &i in perm {
+        if old_presence[i] {
+            s.values.push(old_values[prefix[i]]);
+        }
+    }
+}
+
+/// Return `true` if a spatial sort is likely to reduce compressed size for
+/// a columnar [`StagedLayer01`].
+pub(crate) fn spatial_sort_likely_to_help_staged(staged: &StagedLayer01) -> bool {
+    let n = staged.geometry.vector_types().len();
+    spatial_sort_heuristic(
+        f64::from(staged.extent),
+        n == 0,
+        (0..n).filter_map(|i| staged.geometry.first_vertex(i)),
+    )
 }
 
 /// Return `true` if a spatial sort is likely to reduce compressed size.
@@ -112,33 +337,41 @@ fn first_vertex(geom: &Geom32) -> Option<Coord32> {
 /// features are too spread-out for locality clustering to help, so spatial
 /// sorting is skipped.
 pub(crate) fn spatial_sort_likely_to_help(layer: &TileLayer01) -> bool {
+    spatial_sort_heuristic(
+        f64::from(layer.extent),
+        layer.features.is_empty(),
+        layer
+            .features
+            .iter()
+            .filter_map(|f| first_vertex(&f.geometry)),
+    )
+}
+
+/// Shared bounding-box heuristic for spatial sort decisions.
+fn spatial_sort_heuristic(
+    extent: f64,
+    is_empty: bool,
+    vertices: impl Iterator<Item = (i32, i32)>,
+) -> bool {
     const SPATIAL_HELP_COVERAGE: f64 = 0.8;
 
-    let extent = f64::from(layer.extent);
-    if extent <= 0.0 || layer.features.is_empty() {
+    if extent <= 0.0 || is_empty {
         return true;
     }
 
-    let (min_x, max_x, min_y, max_y) = layer
-        .features
-        .iter()
-        .filter_map(|f| first_vertex(&f.geometry))
-        .fold(
-            (i32::MAX, i32::MIN, i32::MAX, i32::MIN),
-            |(min_x, max_x, min_y, max_y), Coord32 { x, y }| {
-                (min_x.min(x), max_x.max(x), min_y.min(y), max_y.max(y))
-            },
-        );
+    let (min_x, max_x, min_y, max_y) = vertices.fold(
+        (i32::MAX, i32::MIN, i32::MAX, i32::MIN),
+        |(min_x, max_x, min_y, max_y), (x, y)| {
+            (min_x.min(x), max_x.max(x), min_y.min(y), max_y.max(y))
+        },
+    );
 
     if min_x > max_x || min_y > max_y {
         return true;
     }
 
-    let range_x = f64::from(max_x - min_x);
-    let range_y = f64::from(max_y - min_y);
-
-    let spread_x = range_x / extent;
-    let spread_y = range_y / extent;
+    let spread_x = f64::from(max_x - min_x) / extent;
+    let spread_y = f64::from(max_y - min_y) / extent;
 
     !(spread_x > SPATIAL_HELP_COVERAGE && spread_y > SPATIAL_HELP_COVERAGE)
 }
@@ -213,8 +446,7 @@ mod tests {
         roundtrip_geom(&decoded)
     }
 
-    /// Build a `TileLayer01` from `geoms` and `ids`, apply `reorder_features`,
-    /// and return it.
+    /// Build a `TileLayer01` from `geoms` and `ids`, sort it, and return it.
     fn layer_after_sort(geoms: &[Geom32], ids: &[u64], strategy: SortStrategy) -> TileLayer01 {
         let features: Vec<TileFeature> = geoms
             .iter()

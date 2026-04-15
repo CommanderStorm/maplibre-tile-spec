@@ -182,3 +182,93 @@ pub struct RawFsstData<'a> {
 /// Raw presence/nullability stream borrowed from input bytes.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct RawPresence<'a>(pub Option<RawStream<'a>>);
+
+impl<'a, T: Copy + PartialEq> ParsedScalar<'a, T> {
+    /// Column name.
+    #[must_use]
+    pub fn name(&self) -> &'a str {
+        self.name
+    }
+
+    /// Per-feature values. `None` entries indicate null.
+    #[must_use]
+    pub fn values(&self) -> &[Option<T>] {
+        &self.values
+    }
+}
+
+impl<'a> ParsedStrings<'a> {
+    /// Column name.
+    #[must_use]
+    pub fn name(&self) -> &'a str {
+        self.name
+    }
+
+    /// Iterate per-feature string values. `None` for null entries.
+    pub fn iter_values(&self) -> impl Iterator<Item = Option<&str>> + '_ {
+        let mut prev_end: i32 = 0;
+        self.lengths.iter().map(move |&raw_end| {
+            if raw_end < 0 {
+                // NULL: encoded as -(offset+1), offset stays the same
+                prev_end = !raw_end; // same as -(raw_end + 1)
+                None
+            } else {
+                #[allow(clippy::cast_sign_loss)]
+                let start = prev_end as usize;
+                #[allow(clippy::cast_sign_loss)]
+                let end = raw_end as usize;
+                prev_end = raw_end;
+                Some(&self.data[start..end])
+            }
+        })
+    }
+}
+
+impl<'a> ParsedSharedDict<'a> {
+    /// The prefix shared by all sub-items (e.g., `"address."`).
+    #[must_use]
+    pub fn prefix(&self) -> &'a str {
+        self.prefix
+    }
+
+    /// Sub-item columns within this shared dictionary.
+    #[must_use]
+    pub fn items(&self) -> &[ParsedSharedDictItem<'a>] {
+        &self.items
+    }
+}
+
+impl<'a> ParsedSharedDictItem<'a> {
+    /// The suffix name of this sub-property.
+    #[must_use]
+    pub fn suffix(&self) -> &'a str {
+        self.suffix
+    }
+
+    /// Per-feature `(start, end)` byte ranges into the shared corpus.
+    /// `(-1, -1)` indicates NULL.
+    #[must_use]
+    pub fn ranges(&self) -> &[(i32, i32)] {
+        &self.ranges
+    }
+}
+
+impl ParsedProperty<'_> {
+    /// Number of features in this property column.
+    #[must_use]
+    pub fn feature_count(&self) -> usize {
+        match self {
+            Self::Bool(s) => s.values.len(),
+            Self::I8(s) => s.values.len(),
+            Self::U8(s) => s.values.len(),
+            Self::I32(s) => s.values.len(),
+            Self::U32(s) => s.values.len(),
+            Self::I64(s) => s.values.len(),
+            Self::U64(s) => s.values.len(),
+            Self::F32(s) => s.values.len(),
+            Self::F64(s) => s.values.len(),
+            Self::Str(s) => s.feature_count(),
+            Self::SharedDict(s) => s.items.first().map_or(0, |item| item.ranges.len()),
+        }
+    }
+}

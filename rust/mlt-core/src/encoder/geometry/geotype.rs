@@ -45,6 +45,41 @@ fn earcut_into(polygon: &Polygon<i32>, vertex_offset: u32, index_buf: &mut Vec<u
 }
 
 impl GeometryValues {
+    /// Compute tessellation for all polygon and multi-polygon features,
+    /// populating `self.triangles` and `self.index_buffer`.
+    ///
+    /// No-op if tessellation data already exists (`self.triangles.is_some()`).
+    /// This is the entry point for the FFI / columnar path where geometries are
+    /// constructed via [`GeometryValues::from_columnar`] without tessellation data.
+    #[cfg(feature = "tessellate")]
+    pub fn compute_tessellation(&mut self) -> crate::MltResult<()> {
+        if self.triangles.is_some() {
+            return Ok(());
+        }
+
+        // Collect only polygon geometries to avoid reconstructing non-polygon
+        // features. We must collect first to work around the borrow conflict
+        // between `to_geojson(&self)` and the `&mut self` tessellation methods.
+        let polys: Vec<Geom32> = self
+            .vector_types
+            .iter()
+            .enumerate()
+            .filter(|(_, gt)| gt.is_polygon())
+            .map(|(i, _)| self.to_geojson(i))
+            .collect::<Result<_, _>>()?;
+
+        self.triangles = Some(Vec::new());
+
+        for geom in &polys {
+            match geom {
+                Geom32::Polygon(p) => self.tessellate_polygon(p),
+                Geom32::MultiPolygon(mp) => self.tessellate_multi_polygon(mp),
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+
     /// Returns a [`GeometryValues`] with an empty `triangles` buffer pre-initialized.
     ///
     /// When `triangles` is `Some`, polygon push methods automatically compute and store
@@ -98,7 +133,66 @@ impl GeometryValues {
         self
     }
 
+    /// Build `GeometryValues` from a slice of row-level geometries.
+    ///
+    /// Pre-scans the types to determine which offset arrays are needed, then
+    /// builds everything in a single pass. All offset arrays are **dense**:
+    /// N+1 entries for N features, with implicit +1 entries for types that
+    /// don't contribute real data at that level.
+    #[must_use]
+    pub fn from_geoms(geoms: &[Geom32], tessellate: bool) -> Self {
+        // Pre-scan: determine which offset arrays are needed.
+        let mut has_multi = false;
+        let mut has_line_or_poly = false;
+        let mut has_polygon = false;
+        for g in geoms {
+            match g {
+                Geom32::MultiPoint(_) | Geom32::MultiLineString(_) | Geom32::MultiPolygon(_) => {
+                    has_multi = true;
+                    has_line_or_poly = true;
+                    if matches!(g, Geom32::MultiPolygon(_)) {
+                        has_polygon = true;
+                    }
+                }
+                Geom32::LineString(_) | Geom32::Line(_) => has_line_or_poly = true,
+                Geom32::Polygon(_) | Geom32::Triangle(_) | Geom32::Rect(_) => {
+                    has_line_or_poly = true;
+                    has_polygon = true;
+                }
+                _ => {}
+            }
+        }
+
+        let mut gv = if tessellate {
+            Self::new_tessellated()
+        } else {
+            Self::default()
+        };
+
+        // Pre-allocate and initialize offset arrays so push_geom always finds
+        // them. This guarantees dense offsets regardless of feature order.
+        if has_multi {
+            init_offsets(gv.geometry_offsets.get_or_insert_with(Vec::new));
+        }
+        if has_line_or_poly {
+            init_offsets(gv.part_offsets.get_or_insert_with(Vec::new));
+        }
+        if has_polygon {
+            init_offsets(gv.ring_offsets.get_or_insert_with(Vec::new));
+        }
+
+        for g in geoms {
+            gv.push_geom(g);
+        }
+        gv
+    }
+
     /// Add a geometry to this decoded geometry collection (mutable version).
+    ///
+    /// Prefer [`from_geoms`](Self::from_geoms) when all geometries are known upfront —
+    /// it pre-scans types and guarantees dense offsets. Direct `push_geom` calls
+    /// also produce dense offsets as long as all three offset arrays are
+    /// initialized first (which `from_geoms` does automatically).
     pub fn push_geom(&mut self, geom: &Geom32) {
         match geom {
             Geom32::Point(p) => self.push_point(p.0),
@@ -123,29 +217,35 @@ impl GeometryValues {
         self.vertices
             .get_or_insert_with(Vec::new)
             .extend([coord.x, coord.y]);
+        // Dense: every type gets an implicit +1 in all offset arrays.
+        self.push_implicit(1);
     }
 
     fn push_linestring(&mut self, ls: &LineString<i32>) {
         self.vector_types.push(GeometryType::LineString);
 
         let verts = self.vertices.get_or_insert_with(Vec::new);
-        // If ring_offsets exists (i.e., there's a Polygon in the layer),
-        // add LineString vertex count to ring_offsets instead of part_offsets.
-        // This matches Java's behavior where LineString adds to numRings when containsPolygon.
-        let offsets = self
-            .ring_offsets
-            .as_mut()
-            .unwrap_or_else(|| self.part_offsets.get_or_insert_with(Vec::new));
-
+        let has_ring = self.ring_offsets.is_some();
+        let offsets = if has_ring {
+            self.ring_offsets.as_mut().unwrap()
+        } else {
+            self.part_offsets.get_or_insert_with(Vec::new)
+        };
         push_linestrings(std::iter::once(ls), verts, offsets);
+
+        if let Some(g) = self.geometry_offsets.as_mut() {
+            g.push(g.last().unwrap() + 1);
+        }
+        if has_ring {
+            // ring_offsets got the vertex count; part_offsets gets +1
+            if let Some(p) = self.part_offsets.as_mut() {
+                p.push(p.last().unwrap() + 1);
+            }
+        }
+        // Without rings, part_offsets already got the vertex count via push_linestrings.
     }
 
     fn push_polygon(&mut self, poly: &Polygon<i32>) {
-        // Only on the very first polygon: if LineStrings were pushed before us,
-        // their vertex offsets are sitting in part_offsets. Move them to
-        // ring_offsets now, before we set up ring_offsets for polygon use.
-        // On subsequent polygons ring_offsets is already initialized and
-        // part_offsets holds polygon ring-range data — leave both alone.
         self.vector_types.push(GeometryType::Polygon);
         self.init_polygon_offsets();
 
@@ -154,6 +254,9 @@ impl GeometryValues {
         let parts = self.part_offsets.as_mut().unwrap();
 
         push_polygon_rings(poly, verts, rings, parts);
+        if let Some(g) = self.geometry_offsets.as_mut() {
+            g.push(g.last().unwrap() + 1);
+        }
         self.tessellate_polygon(poly);
     }
 
@@ -177,23 +280,37 @@ impl GeometryValues {
             verts.extend([point.0.x, point.0.y]);
         }
 
-        self.push_geometry_count(u32::try_from(mp.0.len()).expect("point count overflow"));
+        let count = u32::try_from(mp.0.len()).expect("point count overflow");
+        if let Some(g) = self.geometry_offsets.as_mut() {
+            g.push(g.last().unwrap() + count);
+        }
+        for _ in 0..count {
+            self.push_implicit_sub(1);
+        }
     }
 
     fn push_multi_linestring(&mut self, mls: &MultiLineString<i32>) {
         self.vector_types.push(GeometryType::MultiLineString);
 
         let verts = self.vertices.get_or_insert_with(Vec::new);
-        // When a Polygon is present (ring_offsets exists), LineString vertex counts
-        // go to ring_offsets instead of part_offsets. This matches Java's behavior.
-        let offsets = self
-            .ring_offsets
-            .as_mut()
-            .unwrap_or_else(|| self.part_offsets.get_or_insert_with(Vec::new));
-
+        let has_ring = self.ring_offsets.is_some();
+        let offsets = if has_ring {
+            self.ring_offsets.as_mut().unwrap()
+        } else {
+            self.part_offsets.get_or_insert_with(Vec::new)
+        };
         push_linestrings(mls.iter(), verts, offsets);
 
-        self.push_geometry_count(u32::try_from(mls.0.len()).expect("linestring count overflow"));
+        let count = u32::try_from(mls.0.len()).expect("linestring count overflow");
+        if let Some(g) = self.geometry_offsets.as_mut() {
+            g.push(g.last().unwrap() + count);
+        }
+        if has_ring && let Some(p) = self.part_offsets.as_mut() {
+            for _ in 0..count {
+                p.push(p.last().unwrap() + 1);
+            }
+        }
+        // Without rings, part_offsets already got vertex counts via push_linestrings.
     }
 
     fn push_multi_polygon(&mut self, mp: &MultiPolygon<i32>) {
@@ -208,15 +325,30 @@ impl GeometryValues {
             push_polygon_rings(poly, verts, rings, parts);
         }
 
-        self.push_geometry_count(u32::try_from(mp.0.len()).expect("polygon count overflow"));
+        let count = u32::try_from(mp.0.len()).expect("polygon count overflow");
+        if let Some(g) = self.geometry_offsets.as_mut() {
+            g.push(g.last().unwrap() + count);
+        }
         self.tessellate_multi_polygon(mp);
     }
 
-    /// Initialize and update `geometry_offsets` with a sub-geometry count.
-    fn push_geometry_count(&mut self, count: u32) {
-        let g = self.geometry_offsets.get_or_insert_with(Vec::new);
-        init_offsets(g);
-        g.push(g.last().unwrap() + count);
+    /// Push cumulative +delta to all **existing** offset arrays.
+    /// Does NOT create arrays — only `from_geoms` or `init_polygon_offsets` create them.
+    fn push_implicit(&mut self, delta: u32) {
+        if let Some(g) = self.geometry_offsets.as_mut() {
+            g.push(g.last().unwrap() + delta);
+        }
+        self.push_implicit_sub(delta);
+    }
+
+    /// Push cumulative +delta to existing part and ring offsets only.
+    fn push_implicit_sub(&mut self, delta: u32) {
+        if let Some(p) = self.part_offsets.as_mut() {
+            p.push(p.last().unwrap() + delta);
+        }
+        if let Some(r) = self.ring_offsets.as_mut() {
+            r.push(r.last().unwrap() + delta);
+        }
     }
 }
 
@@ -320,10 +452,7 @@ mod tests {
     /// Comparing `canonical == output` catches both panics in the push path
     /// and silent data corruption in encode/decode
     fn roundtrip_via_push(geoms: &[Geom32]) -> (GeometryValues, GeometryValues) {
-        let mut pushed = GeometryValues::default();
-        for g in geoms {
-            pushed.push_geom(g);
-        }
+        let pushed = GeometryValues::from_geoms(geoms, false);
         let canonical = roundtrip(&pushed);
         let output = roundtrip(&canonical);
         (canonical, output)
@@ -642,5 +771,82 @@ mod tests {
                 "second polygon indices should reference verts 4..8: {second:?}"
             );
         }
+    }
+
+    /// Verify that `compute_tessellation` produces the same result as
+    /// building with `new_tessellated()` + `push_geom`.
+    #[test]
+    fn compute_tessellation_matches_push_geom() {
+        let exterior = LineString::from(vec![(0_i32, 0), (10, 0), (10, 10), (0, 10), (0, 0)]);
+        let polygon = Geom32::Polygon(Polygon::new(exterior, vec![]));
+
+        // Path 1: push_geom with new_tessellated (existing path)
+        let mut via_push = GeometryValues::new_tessellated();
+        via_push.push_geom(&polygon);
+
+        // Path 2: push_geom without tessellation, then compute_tessellation
+        let mut via_compute = GeometryValues::default();
+        via_compute.push_geom(&polygon);
+        assert!(via_compute.triangles().is_none());
+        via_compute.compute_tessellation().unwrap();
+
+        assert_eq!(via_push.triangles(), via_compute.triangles());
+        assert_eq!(via_push.index_buffer(), via_compute.index_buffer());
+    }
+
+    /// `compute_tessellation` on a multi-polygon from columnar data.
+    #[test]
+    fn compute_tessellation_multi_polygon_columnar() {
+        let ext1 = LineString::from(vec![(0_i32, 0), (10, 0), (10, 10), (0, 10), (0, 0)]);
+        let ext2 = LineString::from(vec![(20, 0), (30, 0), (30, 10), (20, 10), (20, 0)]);
+        let mp = Geom32::MultiPolygon(MultiPolygon(vec![
+            Polygon::new(ext1, vec![]),
+            Polygon::new(ext2, vec![]),
+        ]));
+
+        // Path 1: from_geoms with tessellation
+        let via_push = GeometryValues::from_geoms(std::slice::from_ref(&mp), true);
+
+        // Path 2: from_geoms without tessellation, then compute
+        let mut via_compute = GeometryValues::from_geoms(&[mp], false);
+        via_compute.compute_tessellation().unwrap();
+
+        assert_eq!(via_push.triangles(), via_compute.triangles());
+        assert_eq!(via_push.index_buffer(), via_compute.index_buffer());
+    }
+
+    /// `compute_tessellation` is a no-op when tessellation data already exists.
+    #[test]
+    fn compute_tessellation_idempotent() {
+        let exterior = LineString::from(vec![(0_i32, 0), (10, 0), (10, 10), (0, 10), (0, 0)]);
+        let polygon = Geom32::Polygon(Polygon::new(exterior, vec![]));
+
+        let mut g = GeometryValues::new_tessellated();
+        g.push_geom(&polygon);
+        let tris_before = g.triangles().unwrap().to_vec();
+        let ib_before = g.index_buffer().unwrap().to_vec();
+
+        g.compute_tessellation().unwrap(); // should be no-op
+
+        assert_eq!(g.triangles().unwrap(), &tris_before);
+        assert_eq!(g.index_buffer().unwrap(), &ib_before);
+    }
+
+    /// Non-polygon types are ignored by `compute_tessellation`.
+    #[test]
+    fn compute_tessellation_skips_non_polygons() {
+        use geo_types::Point;
+
+        let mut g = GeometryValues::default();
+        g.push_geom(&Geom32::Point(Point::new(0_i32, 0)));
+        g.push_geom(&Geom32::LineString(LineString::from(vec![
+            (0_i32, 0),
+            (1, 1),
+        ])));
+        g.compute_tessellation().unwrap();
+
+        assert_eq!(g.triangles(), Some(&[][..]));
+        // index_buffer is only initialized when a polygon is actually tessellated
+        assert!(g.index_buffer().is_none_or(<[u32]>::is_empty));
     }
 }

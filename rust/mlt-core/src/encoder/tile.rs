@@ -29,10 +29,8 @@ impl StagedLayer01 {
     pub fn from_tile(mut source: TileLayer01, sort: SortStrategy, groups: &[StringGroup]) -> Self {
         assert!(!source.features.is_empty(), "empty tile");
         source.sort(sort);
-        let mut geometry = GeometryValues::default();
-        for f in &source.features {
-            geometry.push_geom(&f.geometry);
-        }
+        let geoms: Vec<_> = source.features.iter().map(|f| f.geometry.clone()).collect();
+        let geometry = GeometryValues::from_geoms(&geoms, false);
 
         let id = if source.features.iter().any(|f| f.id.is_some()) {
             Some(IdValues(source.features.iter().map(|f| f.id).collect()))

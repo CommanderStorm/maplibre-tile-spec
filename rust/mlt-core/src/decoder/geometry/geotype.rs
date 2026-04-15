@@ -77,6 +77,34 @@ impl GeometryValues {
         self.vertices.as_deref()
     }
 
+    /// Return the `(x, y)` coordinates of the first vertex of feature `index`.
+    ///
+    /// Resolves through the offset hierarchy (`geometry_offsets` → `part_offsets`
+    /// → `ring_offsets` → `vertices`), returning `None` if the feature or vertex
+    /// buffer is empty.
+    #[must_use]
+    pub fn first_vertex(&self, index: usize) -> Option<(i32, i32)> {
+        let verts = self.vertices.as_deref()?;
+        let geoms = self.geometry_offsets.as_deref();
+        let parts = self.part_offsets.as_deref();
+        let rings = self.ring_offsets.as_deref();
+
+        let mut idx = index;
+        if let Some(g) = geoms {
+            idx = g.get(idx)?.as_usize();
+        }
+        if let Some(p) = parts {
+            idx = p.get(idx)?.as_usize();
+        }
+        if let Some(r) = rings {
+            idx = r.get(idx)?.as_usize();
+        }
+
+        let x = *verts.get(idx * 2)?;
+        let y = *verts.get(idx * 2 + 1)?;
+        Some((x, y))
+    }
+
     /// Build a `GeoJSON` geometry for a single feature at index `i`.
     /// Polygon and `MultiPolygon` rings are closed per `GeoJSON` spec
     /// (MLT omits the closing vertex).

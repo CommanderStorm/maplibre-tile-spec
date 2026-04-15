@@ -1,4 +1,4 @@
-use crate::LazyParsed::Raw;
+use crate::LazyParsed::{Parsed as LParsed, ParsingFailed, Raw};
 use crate::MltError::{
     BufferUnderflow, GeometryWithoutStreams, InvalidSharedDictStreamCount, MissingGeometry,
     MultipleGeometryColumns, MultipleIdColumns, SharedDictRequiresStreams, TrailingLayerData,
@@ -7,9 +7,9 @@ use crate::MltError::{
 use crate::codecs::varint::parse_varint;
 use crate::decoder::{
     Column, ColumnType, DictionaryType, Geometry, GeometryValues, Id, IdValues, Layer01,
-    ParsedLayer01, RawFsstData, RawGeometry, RawId, RawIdValue, RawPlainData, RawPresence,
-    RawProperty, RawScalar, RawSharedDict, RawSharedDictEncoding, RawSharedDictItem, RawStream,
-    RawStrings, RawStringsEncoding, StreamType,
+    ParsedLayer01, ParsedProperty, RawFsstData, RawGeometry, RawId, RawIdValue, RawPlainData,
+    RawPresence, RawProperty, RawScalar, RawSharedDict, RawSharedDictEncoding, RawSharedDictItem,
+    RawStream, RawStrings, RawStringsEncoding, StreamType,
 };
 use crate::errors::AsMltError as _;
 use crate::utils::{AsUsize as _, SetOptionOnce as _, parse_string};
@@ -381,6 +381,53 @@ impl<'a> Layer01<'a, Lazy> {
             })
         } else {
             Err(TrailingLayerData(input.len()))
+        }
+    }
+
+    /// Number of features, available without decoding.
+    ///
+    /// Returns the value count from the geometry metadata stream (Lazy state)
+    /// or the length of the geometry types vector (Parsed state).
+    #[must_use]
+    pub fn feature_count(&self) -> usize {
+        match &self.geometry {
+            Raw(raw) => raw.feature_count() as usize,
+            LParsed(g) => g.vector_types().len(),
+            ParsingFailed => 0,
+        }
+    }
+
+    /// Number of raw property columns (before `SharedDict` expansion).
+    #[must_use]
+    pub fn num_raw_properties(&self) -> usize {
+        self.properties.len()
+    }
+
+    /// Whether the layer has an ID column.
+    #[must_use]
+    pub fn has_ids(&self) -> bool {
+        self.id.is_some()
+    }
+
+    /// Access a decoded property by raw column index.
+    ///
+    /// Returns `None` if the index is out of bounds or the property hasn't been decoded yet.
+    #[must_use]
+    pub fn parsed_property(&self, index: usize) -> Option<&ParsedProperty<'a>> {
+        match self.properties.get(index)? {
+            LParsed(p) => Some(p),
+            _ => None,
+        }
+    }
+
+    /// Access decoded geometry values.
+    ///
+    /// Returns `None` if geometry hasn't been decoded yet.
+    #[must_use]
+    pub fn parsed_geometry(&self) -> Option<&GeometryValues> {
+        match &self.geometry {
+            LParsed(g) => Some(g),
+            _ => None,
         }
     }
 

@@ -10,6 +10,29 @@ use serde_json::{Number, Value};
 use crate::decoder::{Layer, PropValueRef};
 use crate::{Geom32, MltResult, ParsedLayer};
 
+/// Extract the `(x, y)` coordinate of the first vertex of a [`Geom32`].
+#[must_use]
+pub fn first_vertex(geom: &Geom32) -> Option<(i32, i32)> {
+    match geom {
+        Geom32::Point(p) => Some((p.0.x, p.0.y)),
+        Geom32::Line(l) => Some((l.start.x, l.start.y)),
+        Geom32::LineString(ls) => ls.0.first().map(|c| (c.x, c.y)),
+        Geom32::Polygon(p) => p.exterior().0.first().map(|c| (c.x, c.y)),
+        Geom32::MultiPoint(mp) => mp.0.first().map(|p| (p.0.x, p.0.y)),
+        Geom32::MultiLineString(mls) => mls
+            .0
+            .first()
+            .and_then(|ls| ls.0.first().map(|c| (c.x, c.y))),
+        Geom32::MultiPolygon(mp) => {
+            mp.0.first()
+                .and_then(|p| p.exterior().0.first().map(|c| (c.x, c.y)))
+        }
+        Geom32::Triangle(t) => Some((t.0.x, t.0.y)),
+        Geom32::Rect(r) => Some((r.min().x, r.min().y)),
+        Geom32::GeometryCollection(gc) => gc.0.first().and_then(first_vertex),
+    }
+}
+
 /// `GeoJSON` [`FeatureCollection`]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FeatureCollection {

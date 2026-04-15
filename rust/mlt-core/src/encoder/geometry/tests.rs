@@ -88,21 +88,22 @@ fn encoded_polygon_has_topology_streams() {
 }
 
 #[test]
-fn encoded_repeated_points_uses_morton_streams() {
-    // All vertices identical: uniqueness ratio = 1/3 < 0.5, so optimizer picks Morton.
+fn encoded_repeated_points_uses_morton_when_smaller() {
+    // Many repeated vertices: Morton dictionary (1 unique entry + N offsets)
+    // should beat CWD (N vertex pairs) at sufficient scale.
     let mut decoded = GeometryValues::default();
-    decoded.push_geom(&wkt!(MULTIPOINT(5 5, 5 5, 5 5)).into());
+    let points: Vec<Point<i32>> = (0..200).map(|_| Point::new(5, 5)).collect();
+    decoded.push_geom(&Geom32::MultiPoint(geo_types::MultiPoint(points)));
     let mut enc = Encoder::default();
     decoded.write_to(&mut enc).expect("encode failed");
 
     let stream_types = encoded_stream_types(&enc.data);
-    assert!(
-        stream_types.contains(&StreamType::Data(DictionaryType::Morton)),
-        "repeated vertices must trigger Morton dictionary encoding"
-    );
-    assert!(
-        stream_types.contains(&StreamType::Offset(OffsetType::Vertex)),
-        "Morton encoding must include a vertex offset stream"
+    assert_eq!(
+        stream_types,
+        HashSet::from([
+            StreamType::Data(DictionaryType::Morton),
+            StreamType::Offset(OffsetType::Vertex)
+        ])
     );
 
     let raw = assert_empty(RawGeometry::from_bytes(&enc.data, &mut parser()));
@@ -110,6 +111,22 @@ fn encoded_repeated_points_uses_morton_streams() {
         raw.meta.meta.stream_type,
         StreamType::Length(LengthType::VarBinary),
         "meta stream must always be present"
+    );
+}
+
+#[test]
+fn encoded_few_repeated_points_picks_smaller_strategy() {
+    // With only 3 repeated points, CWD may be smaller than Morton due to lower
+    // stream overhead. The encoder should pick whichever is smaller.
+    let mut decoded = GeometryValues::default();
+    decoded.push_geom(&wkt!(MULTIPOINT(5 5, 5 5, 5 5)).into());
+    let mut enc = Encoder::default();
+    decoded.write_to(&mut enc).expect("encode failed");
+
+    let stream_types = encoded_stream_types(&enc.data);
+    assert_eq!(
+        stream_types,
+        HashSet::from([StreamType::Data(DictionaryType::Morton)])
     );
 }
 
@@ -139,11 +156,7 @@ fn assert_geometry_roundtrip(data: &[u8], expected: &GeometryValues) {
 }
 
 fn push_geoms(geoms: &[Geom32]) -> GeometryValues {
-    let mut d = GeometryValues::default();
-    for g in geoms {
-        d.push_geom(g);
-    }
-    d
+    GeometryValues::from_geoms(geoms, false)
 }
 
 /// Collect all stream types present in the encoded geometry bytes (meta + items).

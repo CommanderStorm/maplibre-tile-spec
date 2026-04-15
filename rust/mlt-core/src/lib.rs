@@ -23,6 +23,8 @@ pub(crate) mod utils;
 
 pub use convert::{geojson, mvt};
 pub use decoder::*;
+#[cfg(feature = "__private")]
+pub use encoder::StagedLayer;
 pub use errors::{MltError, MltRefResult, MltResult};
 pub use utils::analyze::{Analyze, StatType};
 pub use utils::lazy_state::{Decode, DecodeState, Lazy, LazyParsed, Parsed};
