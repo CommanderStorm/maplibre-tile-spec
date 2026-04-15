@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude jextract-generated FFI bindings -->
+    <Match>
+        <Package name="org.maplibre.mlt.encoder.ffi"/>
+    </Match>
+    <!-- JTS Geometry is intentionally stored/returned by reference (not cheaply copyable) -->
+    <Match>
+        <Class name="org.maplibre.mlt.encoder.Feature"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+    <!-- Warmup loop: return value intentionally discarded (Error Prone requires var binding) -->
+    <Match>
+        <Class name="org.maplibre.mlt.encoder.BenchmarkUtils"/>
+        <Bug pattern="DLS_DEAD_LOCAL_STORE"/>
+    </Match>
+    <!-- Test code intentionally passes null to @NotNull params to verify validation -->
+    <Match>
+        <Class name="~org\.maplibre\.mlt\.encoder\.MltEncoderTest\$.*"/>
+        <Bug pattern="NP_NONNULL_PARAM_VIOLATION"/>
+    </Match>
+    <!-- Test constants like 3.14f / 2.71828 are intentional test data, not approximate PI/E -->
+    <Match>
+        <Class name="~org\.maplibre\.mlt\.encoder\.MltEncoderTest\$.*"/>
+        <Bug pattern="CNT_ROUGH_CONSTANT_VALUE"/>
+    </Match>
+</FindBugsFilter>

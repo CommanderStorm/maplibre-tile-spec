@@ -1,0 +1,277 @@
+plugins {
+    id 'java-library'
+    id 'com.vanniktech.maven.publish' version '0.36.0'
+    id 'me.champeau.jmh' version '0.7.3'
+    id 'com.diffplug.spotless' version '8.4.0'
+    id 'net.ltgt.errorprone' version '5.1.0'
+    id 'com.github.spotbugs' version '6.4.8'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://maven.ecc.no/releases'
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+dependencies {
+    implementation 'com.carrotsearch:hppc:0.10.0'
+    implementation 'org.locationtech.jts:jts-core:1.20.0'
+    implementation 'org.jetbrains:annotations:26.1.0'
+    implementation 'com.google.errorprone:error_prone_annotations:2.39.0'
+
+    compileOnly 'org.projectlombok:lombok:1.18.44'
+    annotationProcessor 'org.projectlombok:lombok:1.18.44'
+
+    errorprone 'com.google.errorprone:error_prone_core:2.39.0'
+    errorprone 'com.uber.nullaway:nullaway:0.12.6'
+
+    jmhImplementation 'org.maplibre:mlt'
+
+    testImplementation 'org.maplibre:mlt'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.12.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.12.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.12.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.12.2'
+}
+
+// Build the native library via cargo
+tasks.register('cargoBuild', Exec) {
+    workingDir = rootProject.projectDir.parentFile // rust/ directory
+    commandLine 'cargo', 'build', '--release', '-p', 'mlt-ffi'
+}
+
+// Copy native lib to build/natives for test discovery
+tasks.register('copyNativeLib', Copy) {
+    dependsOn cargoBuild
+    def rustTarget = rootProject.projectDir.parentFile.toPath().resolve('target/release')
+    from(rustTarget) {
+        include 'libmlt_ffi.so'
+        include 'libmlt_ffi.dylib'
+        include 'mlt_ffi.dll'
+    }
+    into "${layout.buildDirectory.get()}/natives"
+}
+
+def nativeJvmArgs = [
+    "-Djava.library.path=${layout.buildDirectory.get()}/natives",
+    "--enable-native-access=ALL-UNNAMED",
+    "-Dcom.google.protobuf.use_unsafe_pre22_gencode"
+]
+
+tasks.withType(Test).configureEach {
+    dependsOn copyNativeLib
+    jvmArgs nativeJvmArgs
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat = "full"
+        showStandardStreams = true
+    }
+}
+
+test {
+    useJUnitPlatform {
+        excludeTags 'benchmark'
+    }
+}
+
+tasks.register('benchmark', Test) {
+    description = 'Runs synthetic encoding benchmarks (Rust-only)'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    systemProperty 'benchmark.iterations', System.getProperty('benchmark.iterations', '10')
+    outputs.upToDateWhen { false }
+    useJUnitPlatform {
+        includeTags 'benchmark'
+    }
+}
+
+jmh {
+    jmhVersion = '1.37'
+    jvmArgs = nativeJvmArgs
+    warmupIterations = 5
+    iterations = 5
+    fork = 1
+    threads = 1
+    resultFormat = 'TEXT'
+}
+
+tasks.named('jmh') {
+    dependsOn copyNativeLib
+}
+
+spotless {
+    java {
+        importOrder()
+        target 'src/*/java/**/*.java'
+        googleJavaFormat().skipJavadocFormatting()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+        formatAnnotations()
+    }
+}
+
+gradle.projectsEvaluated {
+    tasks.withType(JavaCompile).tap {
+        configureEach {
+            options.compilerArgs << "-Xlint:all"
+            options.compilerArgs << "-Xlint:-restricted"  // jextract-generated FFI code uses restricted APIs
+            options.errorprone {
+                // Exclude jextract-generated FFI bindings from Error Prone analysis
+                excludedPaths = '.*/encoder/ffi/.*'
+                // Enable ALL disabled checks as warnings (combined with -Werror, they fail the build)
+                allDisabledChecksAsWarnings = false
+                // NullAway: enforce @NotNull/@Nullable at compile time
+                option('NullAway:AnnotatedPackages', 'org.maplibre.mlt')
+                // Selectively disable checks that are too noisy or inapplicable
+                disable('AndroidJdkLibsChecker')
+                disable('Java8ApiChecker')
+                disable('ImmutableMemberCollection')  // we use Collections.unmodifiableMap, not Guava
+                disable('InconsistentOverloads')       // conflicts with record canonical field order
+                disable('Var')                         // requires Error Prone @Var annotation dependency
+                disable('Varifier')                    // too opinionated about var usage
+                disable('SystemOut')                   // legitimate in test/benchmark code
+            }
+        }
+    }
+}
+
+// Disable NullAway for test and JMH code: tests intentionally pass null, JMH uses @Setup
+tasks.named('compileTestJava') {
+    options.errorprone {
+        disable('NullAway')
+    }
+}
+tasks.named('compileJmhJava') {
+    options.errorprone {
+        disable('NullAway')
+    }
+}
+
+// SpotBugs: bytecode-level bug detection
+spotbugs {
+    effort = 'max'
+    reportLevel = 'low'
+    excludeFilter = file('config/spotbugs/exclude.xml')
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+    reports {
+        html.required = true
+        xml.required = false
+    }
+}
+
+// Aggregate lint task: spotless + Error Prone (compile) + SpotBugs (bytecode)
+tasks.register('lint') {
+    description = 'Run all static analysis: Spotless + Error Prone + SpotBugs'
+    group = 'verification'
+    dependsOn 'spotlessJavaCheck', 'compileJava', 'compileTestJava', 'spotbugsMain'
+}
+
+// ---------------------------------------------------------------------------
+// Maven Central publishing
+// ---------------------------------------------------------------------------
+
+tasks.register('validateSemver') {
+    doLast {
+        def v = project.version
+        if (v == null || v == 'unspecified') {
+            throw new GradleException("Version is not set. Please provide a version using -Pversion=<version>")
+        }
+        if (!v.matches(/^\d+\.\d+\.\d+$/)) {
+            throw new GradleException("Version '$v' is not a valid semantic version. Expected format: major.minor.patch (e.g., 1.0.0)")
+        }
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral(true)
+    signAllPublications()
+
+    coordinates("org.maplibre", "mlt-encoder-native", version)
+
+    publishToMavenCentral.dependsOn validateSemver
+
+    pom {
+        name = "MapLibre Tile Encoder (Native)"
+        description = "Java Panama FFM bindings for the Rust MLT encoder"
+        url = "https://github.com/maplibre/maplibre-tile-spec"
+
+        licenses {
+            license {
+                name = "The Apache License, Version 2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+            }
+        }
+
+        developers {
+            developer {
+                id = "maplibre"
+                name = "MapLibre contributors"
+                url = "https://github.com/maplibre"
+            }
+        }
+
+        scm {
+            connection = "scm:git:git://github.com/maplibre/maplibre-tile-spec.git"
+            developerConnection = "scm:git:ssh://github.com:maplibre/maplibre-tile-spec.git"
+            url = "https://github.com/maplibre/maplibre-tile-spec"
+        }
+    }
+}
+
+// Disable signing for local publishing
+tasks.withType(Sign) {
+    onlyIf { !gradle.startParameter.taskNames.contains('publishMavenPublicationToMavenLocal') }
+}
+
+// ---------------------------------------------------------------------------
+// Per-platform classifier JARs containing native libraries
+// ---------------------------------------------------------------------------
+
+def platforms = ['linux-x86_64', 'linux-x86_64-musl', 'linux-aarch64', 'macos-aarch64', 'windows-x86_64']
+
+platforms.each { classifier ->
+    tasks.register("nativeJar-${classifier}", Jar) {
+        archiveClassifier = classifier
+        from("${layout.buildDirectory.get()}/natives/${classifier}") {
+            into("native/${classifier}")
+        }
+    }
+}
+
+// All-platforms fat JAR: bundles every native library for zero-config consumption
+tasks.register("nativeJar-all", Jar) {
+    archiveClassifier = 'all'
+    platforms.each { classifier ->
+        from("${layout.buildDirectory.get()}/natives/${classifier}") {
+            into("native/${classifier}")
+        }
+    }
+}
+
+// Vanniktech creates publications lazily during evaluation, so afterEvaluate is required
+// to attach the classifier artifacts to the auto-created publication.
+afterEvaluate {
+    publishing {
+        publications.withType(MavenPublication).configureEach {
+            platforms.each { classifier ->
+                artifact(tasks.named("nativeJar-${classifier}")) {
+                    it.classifier = classifier
+                }
+            }
+            artifact(tasks.named("nativeJar-all")) {
+                it.classifier = 'all'
+            }
+        }
+    }
+}
