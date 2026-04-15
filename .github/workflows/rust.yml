@@ -68,24 +68,42 @@ jobs:
       matrix:
         include:
           - target: layer
+            crate: core
+            seed: true
           - target: decoded_layer
+            crate: core
+          - target: ffi_decode
+            crate: ffi
+            seed: true
+          - target: ffi_encode_compare
+            crate: ffi
+          - target: ffi_encode_decode
+            crate: ffi
     steps:
       - uses: actions/checkout@v6.0.2
       - uses: ./.github/actions/mlt-setup-rust
         with: { toolchain: nightly }
-      - run: just -v rust::ci-fuzz-build ${{ matrix.target }}
-      - if: matrix.target == 'layer'
-        run: just -v rust::fuzz-seed ${{ matrix.target }}
-      - run: just -v rust::ci-fuzz-run ${{ matrix.target }}
+      - run: just -v rust::ci-fuzz-build ${{ matrix.target }} ${{ matrix.crate }}
+      - if: matrix.seed
+        run: just -v rust::fuzz-seed ${{ matrix.target }} ${{ matrix.crate }}
+      - run: just -v rust::ci-fuzz-run ${{ matrix.target }} ${{ matrix.crate }}
       - name: Generate fuzz coverage
         if: github.repository_owner == 'maplibre'
-        run: just -v rust::ci-fuzz-cov ${{ matrix.target }}
+        run: just -v rust::ci-fuzz-cov ${{ matrix.target }} ${{ matrix.crate }}
       - name: Upload fuzz coverage artifact
         if: github.repository_owner == 'maplibre'
         uses: actions/upload-artifact@v7
         with:
           name: fuzz-coverage-${{ matrix.target }}
           path: rust/target/llvm-cov/fuzz-${{ matrix.target }}.lcov
+
+  test-ffi-cpp:
+    name: Test FFI (C++)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: ./.github/actions/mlt-setup-rust
+      - run: just -v rust::ffi-test-cpp
 
   #  MSRV Testing is not really needed at this stage of code completeness
   #  test-msrv:
@@ -96,6 +114,36 @@ jobs:
   #      - uses: ./.github/actions/mlt-setup-rust
   #        with: { toolchain: msrv }
   #      - run: just -v rust::ci-test-msrv
+
+  lint-java:
+    name: Lint mlt-java
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: ./.github/actions/mlt-setup-rust
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+      - run: just -v rust::ci-lint-java
+
+  test-java:
+    name: Test mlt-java
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: ./.github/actions/mlt-setup-rust
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+      - run: just -v rust::ci-test-java
 
   test-publish:
     name: Test workspace publishing using --dry-run
@@ -185,6 +233,9 @@ jobs:
       # - test-msrv
       - test-wasm
       - lint
+      - lint-java
+      - test-java
+      - test-ffi-cpp
       - build-release-binaries
       - test-publish
       - build-wasm-npm

@@ -9,4 +9,5 @@ target/
 temp/
 tmp/
 venv/
-rustc-ice-*.txt
+mlt-ffi/tests/build
+rustc-ice-*

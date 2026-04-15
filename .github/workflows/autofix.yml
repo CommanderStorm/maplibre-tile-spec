@@ -83,6 +83,27 @@ jobs:
       - uses: autofix-ci/action@7a166d7532b277f34e16238930461bf77f9d7ed8
         with: {commit-message: "chore: regenerate maplibre_tiles.pyi stub"}
 
+  rust-sync-ffi-bindings:
+    name: Regenerate mlt-ffi C header and Java FFI bindings
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    if: |
+      github.event.action == 'opened' ||
+      github.event.action == 'synchronize' ||
+      github.event.action == 'reopened'
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: { persist-credentials: false }
+      - uses: ./.github/actions/mlt-setup-rust
+      - uses: taiki-e/install-action@763e3324d4fd026c9bd284c504378585777a87d5 # v2.62.57
+        with: { tool: 'just' }
+      - name: Regenerate FFI bindings
+        run: just rust::sync-ffi-bindings
+
+      - uses: autofix-ci/action@7a166d7532b277f34e16238930461bf77f9d7ed8 # v1.3.3
+        with: {commit-message: "chore: regenerate mlt-ffi bindings"}
+
   bless:
     name: Bless test output
     runs-on: ubuntu-latest

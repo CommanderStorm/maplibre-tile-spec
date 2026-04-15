@@ -187,6 +187,7 @@ impl Encoder {
             meta: mem::take(&mut self.meta),
             data: mem::take(&mut self.data),
             layer_column_count: mem::take(&mut self.layer_column_count),
+            vertex_buffer_type_cache: None,
             morton_meta_cache: None,
             fsst_cache: HashMap::new(),
             alt_stack: vec![],

@@ -1,0 +1,27 @@
+[package]
+name = "mlt-ffi"
+description = "Diplomat-based FFI bindings for MapLibre Tile (MLT) encoder"
+version = "0.1.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "mlt_ffi"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+bytemuck.workspace = true
+diplomat.workspace = true
+diplomat-runtime.workspace = true
+geo-types.workspace = true
+mlt-core = { workspace = true, features = ["__private"] }
+
+[lints]
+workspace = true

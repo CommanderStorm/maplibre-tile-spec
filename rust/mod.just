@@ -46,6 +46,7 @@ check: (just 'cargo-install' 'cargo-hack')
     cargo hack check --all-targets --each-feature {{hack_skip}} \
         --workspace --exclude-no-default-features --exclude-all-features
     cd mlt-core/fuzz && cargo check --all-features
+    cd mlt-ffi/fuzz && cargo check --all-features
 
 # Generate code coverage report to upload to codecov.io
 ci-coverage: ci-env-info (just 'java::gen-snippets') (just 'cargo-install' 'cargo-llvm-cov')
@@ -130,22 +131,29 @@ ci-test-msrv: ci-env-info
     {{just}} rust::test
     {{just}} assert-git-is-clean
 
-# Build the layer target (installs `cargo fuzz`)
-ci-fuzz-build target: (cargo-fuzz 'build' target '--target' 'x86_64-unknown-linux-gnu')
+# Run mlt-java tests as expected by CI (builds native library automatically via Gradle)
+ci-test-java: ci-env-info test-java
+    {{just}} assert-git-is-clean
 
-# Fuzz the target for 90 seconds (installs `cargo fuzz`)
-ci-fuzz-run target: (cargo-fuzz 'run' target '--target' 'x86_64-unknown-linux-gnu' '--' '-max_total_time=90' '-max_len=300' '-rss_limit_mb=2048')
+# Run mlt-java static analysis as expected by CI
+ci-lint-java: ci-env-info lint-java
+    {{just}} assert-git-is-clean
+
+# Build a fuzz target (installs `cargo fuzz`). Use crate='ffi' for FFI targets.
+ci-fuzz-build target crate='core': (_cargo-fuzz crate 'build' target '--target' 'x86_64-unknown-linux-gnu')
+
+# Fuzz a target for 90 seconds (installs `cargo fuzz`). Use crate='ffi' for FFI targets.
+ci-fuzz-run target crate='core': (_cargo-fuzz crate 'run' target '--target' 'x86_64-unknown-linux-gnu' '--' '-max_total_time=90' '-max_len=300' '-rss_limit_mb=2048')
 
 # Run coverage against a previously generated corpus and export LCOV for Codecov upload.
 # Output: target/llvm-cov/fuzz-<target>.lcov
-[working-directory: 'mlt-core']
-ci-fuzz-cov target: (just 'cargo-install' 'cargo-fuzz')
+ci-fuzz-cov target crate='core': (just 'cargo-install' 'cargo-fuzz')
     #!/usr/bin/env bash
     set -euo pipefail
 
-    LCOV_OUT="../target/llvm-cov/fuzz-{{target}}.lcov"
+    LCOV_OUT="target/llvm-cov/fuzz-{{target}}.lcov"
     mkdir -p "$(dirname "$LCOV_OUT")"
-    {{just}} rust::fuzz-llvm-cov {{target}} "$LCOV_OUT" export --format=lcov
+    {{just}} rust::fuzz-llvm-cov {{target}} {{crate}} "$LCOV_OUT" export --format=lcov
     echo "Fuzz coverage LCOV: $LCOV_OUT"
 
 # Build and package release binary for CI
@@ -178,6 +186,7 @@ clean:
 clippy *args: (just 'cargo-install' 'cargo-hack')
     cargo clippy --all-targets --all-features --workspace {{args}}
     cd mlt-core/fuzz && cargo clippy --all-features {{args}}
+    cd mlt-ffi/fuzz && cargo clippy --all-features {{args}}
 
 # Generate code coverage report. Installs `cargo llvm-cov`
 coverage *args='--no-clean --open': (just 'cargo-install' 'cargo-hack') (just 'cargo-install' 'cargo-llvm-cov')
@@ -234,7 +243,7 @@ docs *args='--open':
     DOCS_RS=1 cargo doc --no-deps {{args}} --features arbitrary --package mlt-core
 
 alias f := fmt
-fmt: (_fmt) (_fmt '--manifest-path' 'mlt-core/fuzz/Cargo.toml')
+fmt: (_fmt) (_fmt '--manifest-path' 'mlt-core/fuzz/Cargo.toml') (_fmt '--manifest-path' 'mlt-ffi/fuzz/Cargo.toml')
 
 # Reformat code. If nightly is available, use it for better results.
 _fmt *ARGS:
@@ -252,27 +261,27 @@ _fmt *ARGS:
 fmt-toml *args: (just 'cargo-install' 'cargo-sort')
     cargo sort --workspace --grouped {{args}}
 
-# Fuzz the layer target (installs `cargo fuzz`)
-fuzz target='layer' *args: (cargo-fuzz 'run' target '--target' 'x86_64-unknown-linux-gnu' '--' args)
+# Fuzz a target (installs `cargo fuzz`). Use crate='ffi' for FFI targets.
+fuzz target='layer' crate='core' *args: (_cargo-fuzz crate 'run' target '--target' 'x86_64-unknown-linux-gnu' '--' args)
 
-# Seed the layer fuzz corpus from all .mlt test files (run once, or after new .mlts are added)
-fuzz-seed target='layer': (just 'cargo-install' 'fd' 'fd-find')
-    mkdir -p mlt-core/fuzz/corpus/{{target}}
-    fd . ../test --extension mlt --threads=1 --exec cp --force {} mlt-core/fuzz/corpus/{{target}}/
-    {{just}} rust::fuzz-cmin {{target}}
+# Seed the fuzz corpus from all .mlt test files (run once, or after new .mlts are added)
+fuzz-seed target='layer' crate='core': (just 'cargo-install' 'fd' 'fd-find')
+    mkdir -p mlt-{{crate}}/fuzz/corpus/{{target}}
+    fd . ../test --extension mlt --threads=1 --exec cp --force {} mlt-{{crate}}/fuzz/corpus/{{target}}/
+    {{just}} rust::fuzz-cmin {{target}} {{crate}}
 
 # Minimize the fuzz corpus for target (slow — run occasionally to prune redundant entries)
-fuzz-cmin target='layer': (cargo-fuzz 'cmin' target '--target' 'x86_64-unknown-linux-gnu')
+fuzz-cmin target='layer' crate='core': (_cargo-fuzz crate 'cmin' target '--target' 'x86_64-unknown-linux-gnu')
 
 # Collect coverage from the fuzz corpus and open an HTML report (installs `cargo fuzz`, `rustfilt`)
-[working-directory: 'mlt-core']
-fuzz-cov target='layer': (just 'cargo-install' 'cargo-fuzz') (just 'cargo-install' 'rustfilt')
+fuzz-cov target='layer' crate='core': (just 'cargo-install' 'cargo-fuzz') (just 'cargo-install' 'rustfilt')
     #!/usr/bin/env bash
     set -euo pipefail
 
+    cd "mlt-{{crate}}"
     HTML_DIR="fuzz/coverage/{{target}}/html"
     mkdir -p "$HTML_DIR"
-    {{just}} rust::fuzz-llvm-cov {{target}} "" show \
+    {{just}} rust::fuzz-llvm-cov {{target}} {{crate}} "" show \
         --format=html \
         --output-dir="$HTML_DIR" \
         --show-instantiations \
@@ -282,7 +291,7 @@ fuzz-cov target='layer': (just 'cargo-install' 'cargo-fuzz') (just 'cargo-instal
     xdg-open "$HTML_DIR/index.html" 2>/dev/null || open "$HTML_DIR/index.html" 2>/dev/null || true
 
 # Minimize the crash in file (installs `cargo fuzz`)
-fuzz-tmin file target='layer': (cargo-fuzz 'tmin' target file)
+fuzz-tmin file target='layer' crate='core': (_cargo-fuzz crate 'tmin' target file)
 
 # Get any package's field from the metadata
 get-crate-field field package=main_crate: (just 'assert-cmd' 'jq')
@@ -291,8 +300,18 @@ get-crate-field field package=main_crate: (just 'assert-cmd' 'jq')
 # Get the minimum supported Rust version (MSRV) for the crate
 get-msrv package=main_crate: (get-crate-field 'rust_version' package)
 
-# Run formatting, cargo check, and clippy for local development
-lint: fmt check clippy test
+# Run all linting steps good for local development
+lint: fmt check clippy test lint-java
+
+# Run mlt-java static analysis (Spotless + Error Prone + SpotBugs)
+[working-directory: 'mlt-java']
+lint-java:
+    ./gradlew lint
+
+# Run mlt-java tests (builds native library automatically via Gradle)
+[working-directory: 'mlt-java']
+test-java:
+    ./gradlew test
 
 # Find the minimum supported Rust version and update Cargo.toml
 msrv: (just 'cargo-install' 'cargo-msrv')
@@ -426,19 +445,80 @@ wasm-test: wasm-build
 validate-synthetic:
     {{just}} mlt ls --validate-to-json --details basic ../test/synthetic/
 
+# Build the FFI shared library and run C++ tests against it
+ffi-test-cpp:
+    cargo build --release -p mlt-ffi
+    cmake -S mlt-ffi/tests -B mlt-ffi/tests/build -DCMAKE_BUILD_TYPE=Release
+    cmake --build mlt-ffi/tests/build
+    ctest --test-dir mlt-ffi/tests/build --output-on-failure
+    cargo +nightly miri test -p mlt-ffi
+
+# Regenerate diplomat C headers and Java FFI bindings from Rust FFI source
+sync-ffi-bindings: (just 'cargo-install' 'diplomat-tool') (_ensure-jextract)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    diplomat-tool c mlt-ffi/generated-c --entry mlt-ffi/src/lib.rs
+    JEXTRACT_DIR="${JEXTRACT_HOME:-$HOME/.local/share/jextract}"
+    JEXTRACT="$(command -v jextract 2>/dev/null || echo "$JEXTRACT_DIR/bin/jextract")"
+    # Auto-generate the --include list from the header. Picks up all Mlt* symbols
+    # and only the Diplomat types actually referenced by the FFI functions.
+    INCLUDES=$(mktemp)
+    trap 'rm -f "$INCLUDES"' EXIT
+
+    "$JEXTRACT" --dump-includes "$INCLUDES" mlt-ffi/mlt_ffi.h
+    # Keep Mlt* functions/constants, Mlt*_result structs, diplomat_buffer_write_* functions,
+    # and only the Diplomat types actually referenced by the generated FFI headers.
+    DIPLOMAT_RE=$(grep -ohP 'Diplomat\w+' mlt-ffi/generated-c/Mlt*.h | sort -u | paste -sd'|')
+    grep -P "^\s*--include-(function|constant) (Mlt|diplomat_buffer_write_)" "$INCLUDES" > "$INCLUDES.f"
+    grep -P "^\s*--include-struct (Mlt\w+_result|(?:${DIPLOMAT_RE}))\s" "$INCLUDES" >> "$INCLUDES.f"
+    mv "$INCLUDES.f" "$INCLUDES"
+
+    rm -rf mlt-java/src/main/java/org/maplibre/mlt/encoder/ffi
+    "$JEXTRACT" \
+        --output mlt-java/src/main/java \
+        --target-package org.maplibre.mlt.encoder.ffi \
+        --header-class-name mlt_ffi_h \
+        --library mlt_ffi \
+        --use-system-load-library \
+        "@$INCLUDES" \
+        mlt-ffi/mlt_ffi.h
+    cd mlt-java && ./gradlew spotlessApply
+
+# Ensure jextract is available (downloads if missing)
 [private]
-[working-directory: 'mlt-core']
-cargo-fuzz *args:  (just 'cargo-install' 'cargo-fuzz')
-    cargo +nightly fuzz {{args}}
+_ensure-jextract:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v jextract > /dev/null; then exit 0; fi
+    JEXTRACT_DIR="${JEXTRACT_HOME:-$HOME/.local/share/jextract}"
+    if [ -x "$JEXTRACT_DIR/bin/jextract" ]; then exit 0; fi
+    echo "jextract not found, downloading..."
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    ARCH=$(uname -m)
+    case "$OS-$ARCH" in
+        linux-x86_64)  SUFFIX="linux-x64" ;;
+        linux-aarch64) SUFFIX="linux-aarch64" ;;
+        darwin-x86_64) SUFFIX="macos-x64" ;;
+        darwin-arm64)  SUFFIX="macos-aarch64" ;;
+        *) echo "Unsupported platform: $OS-$ARCH"; exit 1 ;;
+    esac
+    URL="https://download.java.net/java/early_access/jextract/25/2/openjdk-25-jextract+2-4_${SUFFIX}_bin.tar.gz"
+    mkdir -p "$JEXTRACT_DIR"
+    curl -sL "$URL" | tar xz --strip-components=1 -C "$JEXTRACT_DIR"
+    echo "Installed jextract to $JEXTRACT_DIR/bin/jextract"
+
+[private]
+_cargo-fuzz crate *args: (just 'cargo-install' 'cargo-fuzz')
+    cd mlt-{{crate}} && cargo +nightly fuzz {{args}}
 
 # Resolve llvm-cov from the nightly sysroot and run it against the fuzz profdata for target.
 # Pass output_file="" to write to stdout, or a path to redirect stdout there.
 [private]
-[working-directory: 'mlt-core']
-fuzz-llvm-cov target output_file *args:
+fuzz-llvm-cov target crate='core' output_file='' *args:
     #!/usr/bin/env bash
     set -euo pipefail
 
+    cd "mlt-{{crate}}"
     rustup component add llvm-tools-preview --toolchain nightly
     cargo +nightly fuzz coverage {{target}} --target x86_64-unknown-linux-gnu
 

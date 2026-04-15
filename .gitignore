@@ -15,6 +15,7 @@ bazel-*
 bin/
 codecov*
 coverage/
+cmake_test_discovery*.json
 dist/
 site/
 tmp/

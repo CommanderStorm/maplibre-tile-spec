@@ -32,7 +32,9 @@ pub(crate) use property::*;
 #[cfg(feature = "__private")]
 pub use property::{StagedProperty, StagedSharedDict};
 pub use sort::SortStrategy;
+pub(crate) use sort::reorder_staged;
 pub(crate) use sort::spatial_sort_likely_to_help;
+pub(crate) use sort::spatial_sort_likely_to_help_staged;
 pub(crate) use stream::*;
 #[cfg(feature = "__private")]
 pub use stream::{IntEncoder, LogicalEncoder, PhysicalEncoder};
