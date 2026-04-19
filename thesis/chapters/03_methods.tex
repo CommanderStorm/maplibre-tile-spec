@@ -859,9 +859,9 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
 
             % Decoder arrows
             \draw[-Stealth, thick, densely dashed]
-                (u8.east) |- (decnode.north);
+                (u8.east) -- (decnode.north);
             \draw[-Stealth, thick, densely dashed]
-                (decnode.south) -| ($(name.east)+(0.25,0)$) -- (name.east);
+                (decnode.south) -- ($(name.east)+(0.25,0)$) -- (name.east);
         \end{tikzpicture}
         \caption{Decoding pipeline}
         \label{fig:arch_dec}
