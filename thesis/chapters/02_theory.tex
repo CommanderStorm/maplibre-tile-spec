@@ -254,7 +254,7 @@ The MapLibre style specification~\cite{MapLibreStyleSpec} defines a map's appear
     \Cref{lst:ishidden} shows the implementation: the method checks the layer's zoom bounds and evaluated visibility in a single guard, and is called at both tile-parse time (the worker skips bucket creation) and draw-call time (the painter skips rendering).
     Tight \texttt{minzoom}/\texttt{maxzoom} bounds therefore eliminate work at two stages of the pipeline before any filter evaluation or geometry decoding occurs.
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method and its call sites (\texttt{src/style/style\_layer.ts:328-332}, \texttt{src/source/worker\_tile.ts:111}, \texttt{src/render/painter.ts:658-659})},label=lst:ishidden]
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method and its usages},label=lst:ishidden]
 // src/style/style_layer.ts:328-332
 isHidden(zoom: number = this.minzoom, roundMinZoom: boolean = false) {
     if (this.minzoom && zoom < (roundMinZoom ? Math.floor(this.minzoom) : this.minzoom)) return true;
