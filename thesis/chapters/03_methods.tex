@@ -891,10 +891,8 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             \draw[arrow] (encoded) -- node[right, lbl] {zero-copy} (write);
 
             % Encoder arrows
-            \draw[-Stealth, thick, densely dashed]
-                (staged.west) |- (encnode.south);
-            \draw[-Stealth, thick, densely dashed]
-                (encnode.north) |- (encoded.west);
+            \draw[-Stealth, thick, densely dashed] (staged.west) -| (encnode.south);
+            \draw[-Stealth, thick, densely dashed] (encnode.north) -| (encoded.west);
         \end{tikzpicture}
         \caption{Encoding pipeline}
         \label{fig:arch_enc_sub}
