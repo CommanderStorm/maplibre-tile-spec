@@ -81,7 +81,7 @@ Dynamic data sources can be updated frequently by applying incremental diffs, wh
 At larger scales, in-memory caching of tiles via regional or \ac{CDN}-style infrastructure - combined with fallback to runtime-dynamic data - is essential for performance.
 
 Although all of these resources can be optimized, tiles are usually the most critical due to their continuous streaming nature as a user moves the map thus higher data volume.
-All other resources depend on locale sligtly (for example loading different unicode ranges or fonts), but are generally only handled one time.
+All other resources depend on locale slightly (for example loading different Unicode ranges or fonts), but are generally only handled one time.
 
 Real-world observations support this:
 the performance of highly optimized systems such as Microsoft Bing Maps differs significantly from less optimized deployments, such as basemap.de.
