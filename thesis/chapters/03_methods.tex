@@ -106,30 +106,30 @@ The MIR also drives the default stripping pass, which compares property values a
         \node[mir,  right=of parsed] (mir)    {MIR};
         \node[gen,  right=of mir]  (serial) {SerialSpec\\{\scriptsize (generated Rust)}};
 
-        \draw[arrow] (v8)     -- node[above, label] {decode} (parsed);
-        \draw[arrow] (parsed) -- node[above, label] {normalise} (mir);
-        \draw[arrow] (mir)    -- node[above, label] {generate} (serial);
+        \draw[arrow] (v8)     - node[above, label] {decode} (parsed);
+        \draw[arrow] (parsed) - node[above, label] {normalise} (mir);
+        \draw[arrow] (mir)    - node[above, label] {generate} (serial);
 
         % ── Data pipeline (bottom row) ──
         \node[data, below=1.6cm of v8] (proto) {Protobuf\\{\scriptsize (\acs{MVT})}};
         \node[data, right=of proto] (mvt) {MVTLayer};
         \node[data, right=of mvt]   (scan) {DataScanner};
 
-        \draw[arrow] (proto) -- node[above, label] {decode} (mvt);
-        \draw[arrow] (mvt)   -- node[above, label] {scan tiles} (scan);
+        \draw[arrow] (proto) - node[above, label] {decode} (mvt);
+        \draw[arrow] (mvt)   - node[above, label] {scan tiles} (scan);
 
         % ── Optimiser (centre) ──
         \node[opt, below right=0.5cm and 0.3cm of serial] (opt) {Optimiser};
 
         % ── Optimiser interactions ──
-        \draw[query] (opt.north -| mir.south) -- node[right, label] {spec metadata} (mir);
-        \draw[query] (opt) -- node[right, label, near start] {optimise} (serial);
-        \draw[query] (scan) -- node[below, label] {tile statistics} (opt);
+        \draw[query] (opt.north -| mir.south) - node[right, label] {spec metadata} (mir);
+        \draw[query] (opt) - node[right, label, near start] {optimise} (serial);
+        \draw[query] (scan) - node[below, label] {tile statistics} (opt);
 
         % ── Test feedback ──
         \node[test, below=1.2cm of opt] (test) {Render tests};
         \draw[arrow] (serial) |- node[near end, above, label] {sample styles} (test);
-        \draw[query] (test) -- node[right, label] {fuzz / validate} (opt);
+        \draw[query] (test) - node[right, label] {fuzz / validate} (opt);
     \end{tikzpicture}
     \caption{System architecture.
     The \emph{codegen pipeline} (top) transforms the upstream \texttt{v8.json} style specification through three stages into generated Rust types (\texttt{SerialSpec}) used for typed style manipulation, with the MIR providing spec metadata to the optimiser.
@@ -439,13 +439,13 @@ Cleanup runs after metadata refinement because refinement may render filters tri
 \paragraph{Layer merging}
 Layer merging identifies adjacent layers of the same type with identical paint and layout properties (modulo filter differences) and merges them into a single layer.
 The motivation is that fewer layers means fewer rendering passes: the renderer processes layers sequentially, and each layer incurs setup cost (binding textures, configuring blend state, submitting draw calls).
-\Cref{lst:painter_loop} shows the renderer's main loop: the painter iterates the layer list twice---once top-to-bottom for the opaque pass and once bottom-to-top for the translucent pass---issuing a \texttt{renderLayer} call for each layer.
+\Cref{lst:painter_loop} shows the renderer's main loop: the painter iterates the layer list twice--once top-to-bottom for the opaque pass and once bottom-to-top for the translucent pass--issuing a \texttt{renderLayer} call for each layer.
 Every eliminated layer therefore removes one iteration from each pass.
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS painter render loop (\texttt{src/render/painter.ts:559--596})},label=lst:painter_loop]
-// src/render/painter.ts:559-566 -- opaque pass (top-to-bottom)
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS painter render loop (\texttt{src/render/painter.ts:559-596})},label=lst:painter_loop]
+// src/render/painter.ts:559-566 - opaque pass (top-to-bottom)
 for (this.currentLayer = layerIds.length - 1;
-     this.currentLayer >= 0; this.currentLayer--) {
+     this.currentLayer >= 0; this.currentLayer-) {
     const layer = this.style._layers[layerIds[this.currentLayer]];
     const tileManager = tileManagers[layer.source];
     const coords = coordsAscending[layer.source];
@@ -453,7 +453,7 @@ for (this.currentLayer = layerIds.length - 1;
     this.renderLayer(this, tileManager, layer, coords, renderOptions);
 }
 
-// src/render/painter.ts:575-596 -- translucent pass (bottom-to-top)
+// src/render/painter.ts:575-596 - translucent pass (bottom-to-top)
 for (this.currentLayer = 0;
      this.currentLayer < layerIds.length; this.currentLayer++) {
     const layer = this.style._layers[layerIds[this.currentLayer]];
@@ -471,8 +471,8 @@ Layer types that support sort keys (\texttt{fill}, \texttt{line}, \texttt{circle
 \Cref{lst:placement} shows the per-layer processing: each symbol layer receives its own \texttt{LayerPlacement} instance, which is created at the start of the layer and destroyed at its boundary, while the underlying \texttt{Placement} object (and its \texttt{CollisionIndex}) is shared across all layers.
 Symbols from earlier layers are fully placed before later layers begin, so layer ordering determines placement priority; merging two symbol layers into one would interleave their symbols within a single \texttt{LayerPlacement}, changing which symbols take priority and therefore altering collision outcomes.
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS per-layer symbol placement (\texttt{src/style/pauseable\_placement.ts:90--127})},label=lst:placement]
-// src/style/pauseable_placement.ts:90-127 -- continuePlacement()
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS per-layer symbol placement (\texttt{src/style/pauseable\_placement.ts:90-127})},label=lst:placement]
+// src/style/pauseable_placement.ts:90-127 - continuePlacement()
 while (this._currentPlacementIndex >= 0) {
     const layerId = order[this._currentPlacementIndex];
     const layer = layers[layerId];
@@ -491,7 +491,7 @@ while (this._currentPlacementIndex >= 0) {
         if (pausePlacement) return;
         delete this._inProgressLayer;                          // layer boundary
     }
-    this._currentPlacementIndex--;
+    this._currentPlacementIndex-;
 }
 \end{lstlisting}
 
@@ -512,8 +512,8 @@ Its soundness depends on a MapLibre evaluation-order invariant: the filter is ev
 \Cref{lst:bucket_populate} shows this invariant in the \texttt{FillBucket.populate} method: the filter is applied first, and only features that pass it proceed to bucket construction where paint and layout expressions are evaluated.
 This holds for the data-driven expression variants used across all MapLibre versions this thesis targets (\texttt{match}, \texttt{case}, \texttt{get}, etc.).
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS bucket populate method showing filter-first evaluation (\texttt{src/data/bucket/fill\_bucket.ts:84--106})},label=lst:bucket_populate]
-// src/data/bucket/fill_bucket.ts:84-106 -- populate()
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS bucket populate method showing filter-first evaluation (\texttt{src/data/bucket/fill\_bucket.ts:84-106})},label=lst:bucket_populate]
+// src/data/bucket/fill_bucket.ts:84-106 - populate()
 for (const {feature, id, index, sourceLayerIndex} of features) {
     const needGeometry = this.layers[0]._featureFilter.needGeometry;
     const evaluationFeature = toEvaluationFeature(feature, needGeometry);
@@ -610,12 +610,12 @@ Sort-key synthesis is only applied to layer types that support the \texttt{*-sor
         \node[above=0.15cm of out, font=\small\bfseries] {Output: 1 merged layer};
 
         % ── Arrows ──
-        \draw[arrow] (l0.east) -- (p1.west);
-        \draw[arrow] (l1.east) -- (p2.west);
-        \draw[arrow] (l2.east) -- (p3.west);
-        \draw[arrow] (p1.east) -- (out.west |- p1.east);
-        \draw[arrow] (p2.east) -- (out.west);
-        \draw[arrow] (p3.east) -- (out.west |- p3.east);
+        \draw[arrow] (l0.east) - (p1.west);
+        \draw[arrow] (l1.east) - (p2.west);
+        \draw[arrow] (l2.east) - (p3.west);
+        \draw[arrow] (p1.east) - (out.west |- p1.east);
+        \draw[arrow] (p2.east) - (out.west);
+        \draw[arrow] (p3.east) - (out.west |- p3.east);
     \end{tikzpicture}}
     \caption[Layer merging example]{Layer merging example.  Three adjacent line layers differing only in filter literal, colour, and width are merged via the \texttt{match} pattern (Phase~2).
     The merged layer uses \texttt{["match",\,["get",\,"class"],\,\ldots]} for the filter, each differing paint property, and a synthesised sort key that preserves the original draw order.
@@ -672,7 +672,7 @@ The final wire format consists of three concatenated sections per layer: a heade
 
 The encoding competition reformulates the encoding problem as a \emph{multi-strategy competition} inspired by profile-guided optimizations in compilers: rather than committing to a single encoding plan, the encoder tries multiple strategies, measures the output size of each, and selects the smallest.
 This competition operates at two nested levels (described in detail in \cref{sub_encoding_strategies}): an outer loop that trials multiple feature sort orderings, and an inner loop that selects the best integer encoding for each data stream.
-The inner competition criterion is deliberately \emph{single-objective}: the winning candidate is the one with the smallest encoded \texttt{total\_len()} (cf.\ the criteria at \texttt{encoder/optimizer.rs:117} and \texttt{:168}, and the ordered candidate list in \texttt{encoder/stream/optimizer.rs:133--167}).
+The inner competition criterion is deliberately \emph{single-objective}: the winning candidate is the one with the smallest encoded \texttt{total\_len()} (cf.\ the criteria at \texttt{encoder/optimizer.rs:117} and \texttt{:168}, and the ordered candidate list in \texttt{encoder/stream/optimizer.rs:133-167}).
 Multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - are not resolved inside the encoder; they are deliberately deferred to the outer ablation layer, where deployment-specific weightings are applied in the post-hoc Pareto analysis of \cref{sec_exp_pareto}.
 
 The inner competition uses an \emph{alternatives} mechanism implemented as an RAII guard pattern: each candidate encoding writes its output into the encoder's buffers, and the guard commits only the smallest candidate.
