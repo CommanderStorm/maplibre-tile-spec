@@ -118,7 +118,7 @@ The MIR also drives the default stripping pass, which compares property values a
         % tangled nodes
         \node[opt, below=2cm of serial] (opt) {Optimiser};
         \node[test, below right=0.4cm and 1cm of serial] (test) {Render tests};
-        \node[corpus, below right=1cm of mir] (test) {Render tests};
+        \node[corpus, below right=1cm of mir] (test) {Style Corpus};
 
         % tanlged arrows
         \draw[query] (corpus.north -| serial.south) -- node[right, label] {validate} (mir);
