@@ -121,11 +121,11 @@ The MIR also drives the default stripping pass, which compares property values a
         \node[test, below=1cm of mir] (corpus) {Style Corpus};
 
         % tanlged arrows
-        \draw[red,->] (corpus) -- node[red,below, label] {validate} (serial);
+        \draw[ultra thick,red,->] (corpus) -- node[red,below, label] {validate} (serial);
         \draw[query] (opt) -- node[right, label] {optimise} (serial);
         \draw[query] (scan) -- node[above, near start, label] {statistics} (opt);
-        \draw[red,->] (serial) -- node[red,right, label] {sample styles} (test);
-        \draw[red,->] (test) -- node[red,right, label] {fuzz / validate} (opt);
+        \draw[ultra thick,red,->] (serial) -- node[red,right, label] {sample styles} (test);
+        \draw[ultra thick,red,->] (test) -- node[red,right, label] {fuzz / validate} (opt);
     \end{tikzpicture}
     \caption{System architecture.
     The \emph{codegen pipeline} (top) transforms the upstream \texttt{v8.json} style specification through three stages into generated Rust types (\texttt{SerialSpec}) used for typed style manipulation, with the MIR providing spec metadata to the optimiser.
