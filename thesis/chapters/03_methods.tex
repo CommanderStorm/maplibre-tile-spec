@@ -886,7 +886,7 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             \node[encode, below=of staged]  (tile)    {Tile*};
 
             % *Encoder off-centre towards the middle (left side)
-            \node[enc, left=0.8cm of $(encoded)!0.5!(staged)$] (encnode) {*Encoder};
+            \node[enc, left=2cm of $(encoded)!0.5!(staged)$] (encnode) {*Encoder};
 
             \draw[arrow] (tile)    -- node[right, lbl, align=left] {convert to\\columnar} (staged);
             \draw[arrow] (staged)  -- node[right, lbl, align=left] {fully encode to\\wire-ready format} (encoded);
