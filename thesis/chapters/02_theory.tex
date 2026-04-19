@@ -131,31 +131,44 @@ This observation has direct consequences for any optimiser that rewrites zoom bo
 The slicing function rescales geometry coordinates into the target tile's coordinate space and clips to the tile extent, producing a synthetic tile from the nearest available data.
 
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts:87--124})},label=lst:overzoom]
-export function sliceVectorTileLayer(
-    sourceLayer: VectorTileLayerLike,
-    maxZoomTileID: CanonicalTileID,
-    targetTileID: CanonicalTileID
-): VectorTileLayerOverzoomed {
+export function sliceVectorTileLayer(sourceLayer: VectorTileLayerLike, maxZoomTileID: CanonicalTileID, targetTileID: CanonicalTileID): VectorTileLayerOverzoomed {
+    const {extent} = sourceLayer;
     const dz = targetTileID.z - maxZoomTileID.z;
     const scale = Math.pow(2, dz);
+
+    // Calculate the target tile's position within the source tile in target coordinate space
+    // This ensures all tiles share the same coordinate system
     const offsetX = (targetTileID.x - maxZoomTileID.x * scale) * extent;
     const offsetY = (targetTileID.y - maxZoomTileID.y * scale) * extent;
 
+    const featureWrappers: VectorTileFeatureOverzoomed[] = [];
     for (let index = 0; index < sourceLayer.length; index++) {
-        const feature = sourceLayer.feature(index);
+        const feature: VectorTileFeatureLike = sourceLayer.feature(index);
         let geometry = feature.loadGeometry();
+
+        // Transform all coordinates to target tile space
         for (const ring of geometry) {
             for (const point of ring) {
                 point.x = point.x * scale - offsetX;
                 point.y = point.y * scale - offsetY;
             }
         }
-        geometry = clipGeometry(geometry, feature.type,
-            -buffer, -buffer, extent + buffer, extent + buffer);
-        if (geometry.length === 0) continue;
+
+        const buffer = 128;
+        geometry = clipGeometry(geometry, feature.type, -buffer, -buffer, extent + buffer, extent + buffer);
+        if (geometry.length === 0) {
+            continue;
+        }
+
         featureWrappers.push(new VectorTileFeatureOverzoomed(
-            feature.type, geometry, feature.properties, feature.id, extent));
+        feature.type,
+        geometry,
+        feature.properties,
+        feature.id,
+        extent
+        ));
     }
+    return new VectorTileLayerOverzoomed(featureWrappers, sourceLayer.name, extent);
 }
 \end{lstlisting}
 
