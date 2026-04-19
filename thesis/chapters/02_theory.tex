@@ -228,7 +228,7 @@ Three architectural approaches to map styling have been established:
     \item \begin{sloppypar}\textbf{Client-side declarative} styles, as used by MapLibre~\cite{maplibreMapLibre} and Mapbox~\cite{MapboxMapsNavigation}, transmit a machine-readable style document to the client, which interprets the style at render time.
     This enables dynamic restyling, data-driven visualisation, and interactive features such as hover effects and click queries without regenerating tiles.\end{sloppypar}
 
-    \item \textbf{Callback-based} styling, as proposed by Gleo~\cite{ortegaGleoWebGLMap}, replaces declarative rules with imperative callbacks that the application registers with the renderer.
+    \item \textbf{Callback-based} styling, as proposed by Gleo~\cite{ortegaGleoWebGLMap} or Navara~\cite{navara}, replace declarative rules with imperative callbacks that the application registers with the renderer.
     This offers maximum flexibility but makes static analysis and automatic optimizations impossible, since the styling logic is opaque to the rendering engine.
 \end{itemize}
 
