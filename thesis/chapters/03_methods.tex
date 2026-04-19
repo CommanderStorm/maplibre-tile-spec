@@ -76,7 +76,7 @@ This pipeline ensures that every structural pass operates on types that faithful
 The alternative - hand-written Rust types - would require manual synchronisation with specification changes and risk silent divergence.
 The generated types include serialisation and deserialisation support, so the structural passes can round-trip through JSON without losing unknown fields that the generator has not yet modelled.
 
-The normalisation stage produces what we call the \emph{MIR} (mid-level intermediate representation), which resolves cross-cutting concerns in the specification.
+The normalisation stage produces what we call the \texttt{MIR} (mid-level intermediate representation), which resolves cross-cutting concerns in the specification.
 For example, the upstream \texttt{v8.json} defines layer properties across multiple sections (paint, layout) and references expression operators in a separate section; the MIR collapses these into per-layer field definitions that include the property's type, default value, and expression capabilities (whether the property supports zoom-dependent, feature-dependent, or both kinds of expressions).
 This metadata is critical for structural passes: layer merging queries the MIR to determine whether a differing paint property supports feature-driven expressions (and can therefore be wrapped in a \texttt{case}/\texttt{match} over the filter discriminator) or is camera-only (and must be uniform across merged layers).
 The MIR also drives the default stripping pass, which compares property values against the specification defaults encoded in the generated types.
@@ -137,8 +137,7 @@ The MIR also drives the default stripping pass, which compares property values a
     \end{tikzpicture}
     \caption{System architecture.
     The \emph{codegen pipeline} (top) transforms the upstream \texttt{v8.json} style specification through three stages into generated Rust types (\texttt{SerialSpec}) used for typed style manipulation, with the MIR providing spec metadata to the optimiser.
-    The \emph{data pipeline} (bottom) decodes \acs{MVT} tiles and scans them to produce tile statistics that feed into data-driven optimizations passes.
-    Dashed arrows denote query or feedback relationships; render tests validate round-trip correctness}
+    The \emph{data pipeline} (bottom) decodes \acs{MVT} tiles and scans them to produce tile statistics that feed into data-driven optimizations passes. Render tests validate round-trip correctness and the style corpus is used to both validate the codegen and evaluate the optimiser.}
     \label{fig:system_architecture}
 \end{figure}
 
