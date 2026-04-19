@@ -93,8 +93,8 @@ The MIR also drives the default stripping pass, which compares property values a
         data/.style={box, fill=orange!10},
         opt/.style={box, fill=yellow!12, minimum width=2.4cm},
         test/.style={box, fill=red!12},
-        arrow/.style={-{Stealth[length=2.5mm]}, thick},
-        query/.style={-{Stealth[length=2.5mm]}, thick, densely dashed},
+        arrow/.style={-Stealth, thick},
+        query/.style={-Stealth, thick, densely dashed},
         label/.style={font=\scriptsize\itshape, text=gray},
         validationlabel/.style={font=\scriptsize\itshape, text=red},
         validation/.style={
@@ -616,7 +616,7 @@ Sort-key synthesis is only applied to layer types that support the \texttt{*-sor
                        font=\scriptsize, align=left, inner sep=4pt},
         phase/.style={rectangle, draw, dashed, rounded corners=3pt, fill=gray!8,
                       inner sep=5pt},
-        arrow/.style={-{Stealth[length=2.5mm]}, thick},
+        arrow/.style={-Stealth, thick},
         label/.style={font=\scriptsize\itshape, text=gray},
         check/.style={font=\scriptsize, text=black!70},
     ]
@@ -764,7 +764,7 @@ The pruning operations, applied in order, are:
         style/.style={box, fill=blue!10, minimum width=2.8cm},
         data/.style={box, fill=orange!10, minimum width=2.8cm},
         both/.style={box, fill=green!10, minimum width=2.8cm},
-        arrow/.style={-{Stealth[length=2.5mm]}, thick},
+        arrow/.style={-Stealth, thick},
         label/.style={font=\scriptsize\itshape, text=gray},
     ]
         % Style optimisations
@@ -873,7 +873,7 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             encode/.style={box, fill=orange!10},
             enc/.style={box, fill=yellow!12, minimum width=1.6cm},
             io/.style={font=\small\ttfamily},
-            arrow/.style={-{Stealth[length=2.5mm]}, thick},
+            arrow/.style={-Stealth, thick},
             lbl/.style={font=\scriptsize\itshape, text=gray},
             node distance=1.2cm,
         ]
@@ -891,10 +891,10 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             \draw[arrow] (encoded) -- node[right, lbl] {zero-copy} (write);
 
             % Encoder arrows
-            \draw[-{Stealth[length=2.5mm]}, thick, densely dashed]
-                (staged.west) -- ++(-0.25,0) |- (encnode.south);
-            \draw[-{Stealth[length=2.5mm]}, thick, densely dashed]
-                (encnode.north) -| ($(encoded.west)+(-0.25,0)$) -- (encoded.west);
+            \draw[-Stealth, thick, densely dashed]
+                (staged.west) -- (encnode.south);
+            \draw[-Stealth, thick, densely dashed]
+                (encnode.north) -- (encoded.west);
         \end{tikzpicture}
         \caption{Encoding pipeline}
         \label{fig:arch_enc_sub}
@@ -938,7 +938,7 @@ Property-based sort strategies were considered but are not included in the curre
         decision/.style={diamond, draw, fill=yellow!15, aspect=2.8,
                          font=\small, inner sep=1pt},
         output/.style={box, fill=green!15},
-        arrow/.style={-{Stealth[length=2.5mm]}, thick},
+        arrow/.style={-Stealth, thick},
         label/.style={font=\scriptsize\itshape, text=gray},
         annot/.style={font=\scriptsize, text=gray, align=left},
     ]
@@ -1072,7 +1072,7 @@ The value 0.075 is therefore retained as a conservative default that captures th
 \begin{figure}[htbp]
     \centering
     \resizebox{\textwidth}{!}{\begin{tikzpicture}[
-        arrow/.style={-{Stealth[length=2.5mm]}, thick},
+        arrow/.style={-Stealth, thick},
         cmp/.style={font=\scriptsize, align=left},
         stepbox/.style={draw, rounded corners=3pt, inner sep=5pt, font=\scriptsize},
         steplabel/.style={font=\scriptsize\bfseries},
