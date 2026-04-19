@@ -131,7 +131,7 @@ The MIR also drives the default stripping pass, which compares property values a
         \draw[query] (opt) -- node[left, label] {optimise} (serial);
         \draw[query] (scan) -- node[above, label] {statistics} (opt);
         \draw[validation] (corpus) -- node[below, validationlabel] {validate} (serial);
-        \draw[validation] (serial) -- node[right, validationlabel] {validate} (test);
+        \draw[validation] (validate) -- node[right, validationlabel] {validate} (serial);
         \draw[validation] (test) -- node[right, validationlabel] {validate} (opt);
     \end{tikzpicture}
     \caption{System architecture.
