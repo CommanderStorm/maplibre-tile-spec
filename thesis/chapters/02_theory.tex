@@ -240,8 +240,9 @@ The MapLibre style specification~\cite{MapLibreStyleSpec} defines a map's appear
     \item \textbf{Sources} declare where tile data comes from (a tile server URL, an MBTiles file, or inline GeoJSON) and at which zoom levels tiles are available (\texttt{minzoom}, \texttt{maxzoom}).
 
     \item \textbf{Layers} are the central rendering unit.
-    Each layer references a source and a \emph{source-layer} within that source, specifies a \emph{type} - one of \texttt{fill}, \texttt{line}, \texttt{circle}, \texttt{symbol}, \texttt{fill-extrusion}, \texttt{raster}, \texttt{background}, or \texttt{hillshade} - and carries a set of paint and layout properties that control its appearance.
-    Layers are drawn in declaration order from bottom to top.
+    Each layer references a source and a \emph{source-layer} within that source, specifies a \emph{type} (\texttt{fill}, \texttt{line}, \texttt{circle}, \texttt{symbol}, \texttt{fill-extrusion}, \texttt{raster}, \texttt{background}, or \texttt{hillshade}) and carries a set of paint and layout properties that control its appearance.
+    Layers are drawn in declaration order from bottom to top
+    \begin{itemize}
 
     \item \textbf{Filters} are boolean expressions attached to layers that select which features from the source-layer are rendered.
     A feature is drawn by a layer only if the layer's filter evaluates to \texttt{true} for that feature's properties and geometry type.
@@ -252,6 +253,8 @@ The MapLibre style specification~\cite{MapLibreStyleSpec} defines a map's appear
     \item \textbf{Metadata bounds} (\texttt{minzoom}, \texttt{maxzoom}) restrict the zoom range at which a layer is active, allowing the renderer to skip entire layers outside their visible range without evaluating their filters.
     \Cref{lst:ishidden} shows the implementation: the method checks the layer's zoom bounds and evaluated visibility in a single guard, and is called at both tile-parse time (the worker skips bucket creation) and draw-call time (the painter skips rendering).
     Tight \texttt{minzoom}/\texttt{maxzoom} bounds therefore eliminate work at two stages of the pipeline before any filter evaluation or geometry decoding occurs.
+    \end{itemize}
+\end{itemize}
 
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method and its call sites (\texttt{src/style/style\_layer.ts:328-332}, \texttt{src/source/worker\_tile.ts:111}, \texttt{src/render/painter.ts:658-659})},label=lst:ishidden]
 // src/style/style_layer.ts:328-332
