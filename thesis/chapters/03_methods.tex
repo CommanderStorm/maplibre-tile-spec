@@ -123,7 +123,7 @@ The MIR also drives the default stripping pass, which compares property values a
         \draw[query] (opt.north -| mir.south) -- node[right, label] {spec metadata} (mir);
         \draw[query] (opt) -- node[right, label, near start] {optimise} (serial);
         \draw[query] (scan) -- node[below, label] {tile statistics} (opt);
-        \draw[arrow] (serial) |- node[near end, below, label] {sample styles} (test);
+        \draw[arrow] (serial) |- node[above, near end, label] {sample styles} (test);
         \draw[query] (test) -- node[right, label] {fuzz / validate} (opt);
     \end{tikzpicture}
     \caption{System architecture.
