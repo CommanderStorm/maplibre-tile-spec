@@ -115,8 +115,8 @@ The MIR also drives the default stripping pass, which compares property values a
         \draw[arrow] (proto) -- node[above, label] {decode} (mvt);
         \draw[arrow] (mvt)   -- node[above, label] {scan tiles} (scan);
 
-% tests
-\node[test, below right=0.5cm and 1.2cm of serial] (test) {Render tests};
+        % tests 1
+        \node[test, below right=0.5cm and 1.2cm of serial] (test) {Render tests};
 
         % ── Optimiser (centre) ──
         \node[opt, below=0.3cm of test] (opt) {Optimiser};
@@ -126,7 +126,7 @@ The MIR also drives the default stripping pass, which compares property values a
         \draw[query] (opt) -- node[right, label, near start] {optimise} (serial);
         \draw[query] (scan) -- node[below, label] {tile statistics} (opt);
 
-        % ── Test feedback ──
+        % ── Test 2
         \draw[arrow] (serial) |- node[near end, above, label] {sample styles} (test);
         \draw[query] (test) -- node[right, label] {fuzz / validate} (opt);
     \end{tikzpicture}
