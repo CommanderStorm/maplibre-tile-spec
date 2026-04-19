@@ -848,24 +848,18 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             % Main pipeline on centre line (x=0)
             \node[io]     (u8)     {\&[u8]};
             \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
-                {\texttt{enum <Name> \{}\\[1pt]\quad\scriptsize\texttt{Raw*,}\\[0pt]\quad\scriptsize\texttt{Parsed*,}\\[1pt]\texttt{\}}};
+                {\texttt{enum <Name> \{}\\[1pt]\quad\texttt{Raw*,}\\[0pt]\quad\texttt{Parsed*,}\\[1pt]\texttt{\}}};
             \node[decode, below=of name]   (tile)   {Tile*};
 
             % Decoder off-centre towards the middle (right side)
-            \node[dec, right=1.5cm of $(u8)!0.5!(name)$] (decnode) {Decoder};
-
-            % Phantom node to balance bounding box so pipeline stays centred
-            \path let \p1=(decnode.east), \p2=(name.center) in
-                node[inner sep=0pt, minimum width=0pt] at (2*\x2-\x1, 0) {};
+            \node[dec, right=2cm of $(u8)!0.5!(name)$] (decnode) {Decoder};
 
             \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse;\\columns decoded\\lazily} (name);
             \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
 
             % Decoder arrows
-            \draw[-{Stealth[length=2.5mm]}, thick, densely dashed]
-                (u8.east) -| (decnode.north);
-            \draw[-{Stealth[length=2.5mm]}, thick, densely dashed]
-                (decnode.south) |- (name.east);
+            \draw[-Stealth, thick, densely dashed] (u8.east) -| (decnode.north);
+            \draw[-Stealth, thick, densely dashed] (decnode.south) |- (name.east);
         \end{tikzpicture}
         \caption{Decoding pipeline}
         \label{fig:arch_dec}
