@@ -832,40 +832,6 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[t]{0.45\linewidth}
-        \centering
-        \begin{tikzpicture}[
-            box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
-                        minimum width=2.4cm, font=\small, align=center},
-            decode/.style={box, fill=blue!12},
-            dec/.style={box, fill=yellow!12, minimum width=1.6cm},
-            io/.style={font=\small\ttfamily},
-            arrow/.style={-Stealth, thick},
-            lbl/.style={font=\scriptsize\itshape, text=gray},
-            node distance=1.4cm,
-        ]
-            % Main pipeline on centre line (x=0)
-            \node[io]     (u8)     {\&[u8]};
-            \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
-                {\texttt{enum <Name> \{}\\[1pt]\quad\texttt{Raw(Raw*),}\\[0pt]\quad\texttt{Parsed(Parsed*),}\\[1pt]\texttt{\}}};
-            \node[decode, below=of name]   (tile)   {Tile*};
-
-            % Decoder off-centre towards the middle (right side)
-            \node[dec, right=2cm of $(u8)!0.5!(name)$] (decnode) {Decoder\\{\scriptsize reusable decoding buffers\\memory usage limits}};
-
-            \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse;\\columns decoded\\lazily} (name);
-            \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
-
-            % Phantom to mirror Decoder so pipeline stays centred
-            \node[inner sep=0pt, minimum size=0pt, left=2cm of $(u8)!0.5!(name)$] {};
-
-            % Decoder arrows
-            \draw[-Stealth, thick, densely dashed] (u8.east) -| (decnode.north);
-            \draw[-Stealth, thick, densely dashed] (decnode.south) |- (name.east);
-        \end{tikzpicture}
-        \caption{Decoding pipeline}
-        \label{fig:arch_dec}
-    \end{subfigure}%
     \hfill
     \begin{subfigure}[t]{0.45\linewidth}
         \centering
@@ -886,14 +852,14 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             \node[encode, below=of staged]  (tile)    {Tile*};
 
             % *Encoder off-centre towards the middle (left side)
-            \node[enc, left=2cm of $(encoded)!0.5!(staged)$] (encnode) {*Encoder};
+            \node[enc] at (-3.5, -2.5) (encnode) {*Encoder};
 
             \draw[arrow] (tile)    -- node[right, lbl, align=left] {convert to\\columnar} (staged);
             \draw[arrow] (staged)  -- node[right, lbl, align=left] {fully encode to\\wire-ready format} (encoded);
             \draw[arrow] (encoded) -- node[right, lbl] {zero-copy} (write);
 
-            % Phantom to mirror *Encoder so pipeline stays centred
-            \node[inner sep=0pt, minimum size=0pt, right=2cm of $(encoded)!0.5!(staged)$] {};
+            % Phantom to balance bounding box
+            \path (3.5, 0);
 
             % Encoder arrows
             \draw[-Stealth, thick, densely dashed] (staged.west) -| (encnode.south);
