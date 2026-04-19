@@ -291,7 +291,6 @@ for (const sourceLayerId in layerFamilies) {
         continue;
     }
     ...
-
     const sourceLayerIndex = sourceLayerCoder.encode(sourceLayerId);
     const features = [];
     for (let index = 0; index < sourceLayer.length; index++) {
@@ -302,6 +301,7 @@ for (const sourceLayerId in layerFamilies) {
 
     for (const family of layerFamilies[sourceLayerId]) {
         const layer = family[0];
+        ...
 
         if (layer.source !== this.source) {
             warnOnce(`layer.source = ${layer.source} does not equal this.source = ${this.source}`);
