@@ -130,7 +130,7 @@ This observation has direct consequences for any optimiser that rewrites zoom bo
 \Cref{lst:overzoom} shows the implementation: when overzoom parameters are present, the worker source substitutes a sliced version of the source's \texttt{maxzoom} tile.
 The slicing function rescales geometry coordinates into the target tile's coordinate space and clips to the tile extent, producing a synthetic tile from the nearest available data.
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts:87--124})},label=lst:overzoom]
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts:87--125})},label=lst:overzoom]
 export function sliceVectorTileLayer(sourceLayer: VectorTileLayerLike, maxZoomTileID: CanonicalTileID, targetTileID: CanonicalTileID): VectorTileLayerOverzoomed {
     const {extent} = sourceLayer;
     const dz = targetTileID.z - maxZoomTileID.z;
@@ -174,9 +174,16 @@ export function sliceVectorTileLayer(sourceLayer: VectorTileLayerLike, maxZoomTi
 
 No symmetric \enquote{underzoom} behaviour exists: if a source has no tile at a zoom lower than \texttt{minzoom}, the layer is simply not rendered there.
 
-A \emph{vector tile} encodes map data - geometry and associated attribute properties - in a compact binary format rather than as a pre-rendered image.
+A \emph{vector tile} encodes map data in a compact binary format rather than as a pre-rendered image.
 Each tile is organised into \emph{source layers} (for example, roads, buildings, water), and each source layer contains a set of \emph{features}.
-A feature consists of a geometry (point, linestring, or polygon encoded as integer coordinates relative to the tile's extent) and a set of key--value \emph{properties} (for example, \texttt{class=motorway} or \texttt{name=Main~Street}).
+A feature consists of
+\begin{itemize}
+    \item geometry (point, linestring, or polygon encoded as integer coordinates relative to the tile's extent)
+    \item optionally, a set of key--value \emph{properties} (for example, \texttt{class=motorway} or \texttt{name=Main~Street})
+    \item optionally, a set of ids
+    \item metadata
+\end{itemize}
+and .
 
 The following formats are used for encoding and transferring vector map data to the client:
 
