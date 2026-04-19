@@ -833,30 +833,41 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[t]{0.38\linewidth}
+    \begin{subfigure}[t]{0.45\linewidth}
         \centering
         \begin{tikzpicture}[
             box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
                         minimum width=2.4cm, font=\small, align=center},
             decode/.style={box, fill=blue!12},
+            dec/.style={box, fill=yellow!12, minimum width=1.6cm},
             io/.style={font=\small\ttfamily},
             arrow/.style={-{Stealth[length=2.5mm]}, thick},
             lbl/.style={font=\scriptsize\itshape, text=gray},
             node distance=1.4cm,
         ]
+            % Main pipeline on centre line (x=0)
             \node[io]     (u8)     {\&[u8]};
             \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
-                {\texttt{enum <Name> \{}\\[1pt]\quad\texttt{Raw(Raw<Name>),}\\[0pt]\quad\texttt{Parsed(Parsed<Name>),}\\[1pt]\texttt{\}}};
+                {\texttt{enum <Name> \{}\\[1pt]\quad\scriptsize\texttt{Raw*,}\\[0pt]\quad\scriptsize\texttt{Parsed*,}\\[1pt]\texttt{\}}};
             \node[decode, below=of name]   (tile)   {Tile*};
 
-            \draw[arrow] (u8)   -- node[right, lbl, align=left] {zero-copy parse\\lazy decoding} (name);
-            \draw[arrow] (name) -- node[right, lbl, align=left] {convert to\\row format} (tile);
+            % Decoder off-centre towards the middle (right side)
+            \node[dec, right=2cm of $(u8)!0.5!(name)$] (decnode) {Decoder};
+
+            \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse;\\columns decoded\\lazily} (name);
+            \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
+
+            % Decoder arrows
+            \draw[-{Stealth[length=2.5mm]}, thick, densely dashed]
+                (u8.east) -- ++(0.25,0) |- (decnode.north);
+            \draw[-{Stealth[length=2.5mm]}, thick, densely dashed]
+                (decnode.south) -| ($(name.east)+(0.25,0)$) -- (name.east);
         \end{tikzpicture}
         \caption{Decoding pipeline}
         \label{fig:arch_dec}
     \end{subfigure}%
     \hfill
-    \begin{subfigure}[t]{0.38\linewidth}
+    \begin{subfigure}[t]{0.45\linewidth}
         \centering
         \begin{tikzpicture}[
             box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
@@ -868,23 +879,24 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             lbl/.style={font=\scriptsize\itshape, text=gray},
             node distance=1.2cm,
         ]
+            % Main pipeline on centre line (x=0)
             \node[io]     (write)   {impl Write};
             \node[encode, below=of write]   (encoded) {Encoded*};
             \node[encode, below=1.4cm of encoded] (staged)  {Staged*};
             \node[encode, below=of staged]  (tile)    {Tile*};
 
-            % *Encoder mediates Staged* -> Encoded*
-            \node[enc, right=1.2cm of $(encoded)!0.5!(staged)$] (encnode) {*Encoder};
+            % *Encoder off-centre towards the middle (left side)
+            \node[enc, left=0.8cm of $(encoded)!0.5!(staged)$] (encnode) {*Encoder};
 
-            \draw[arrow] (tile)    -- node[left, lbl, align=right] {convert to\\columnar} (staged);
-            \draw[arrow] (staged)  -- node[left, lbl, align=right] {fully encode to\\wire-ready format} (encoded);
-            \draw[arrow] (encoded) -- node[left, lbl] {zero-copy} (write);
+            \draw[arrow] (tile)    -- node[right, lbl, align=left] {convert to\\columnar} (staged);
+            \draw[arrow] (staged)  -- node[right, lbl, align=left] {fully encode to\\wire-ready format} (encoded);
+            \draw[arrow] (encoded) -- node[right, lbl] {zero-copy} (write);
 
             % Encoder arrows
             \draw[-{Stealth[length=2.5mm]}, thick, densely dashed]
-                (staged.east) -- ++(0.3,0) |- (encnode.south);
+                (staged.west) -- ++(-0.25,0) |- (encnode.south);
             \draw[-{Stealth[length=2.5mm]}, thick, densely dashed]
-                (encnode.north) -| ($(encoded.east)+(0.3,0)$) -- (encoded.east);
+                (encnode.north) -| ($(encoded.west)+(-0.25,0)$) -- (encoded.west);
         \end{tikzpicture}
         \caption{Encoding pipeline}
         \label{fig:arch_enc_sub}
