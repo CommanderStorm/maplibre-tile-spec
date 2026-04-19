@@ -116,7 +116,7 @@ The MIR also drives the default stripping pass, which compares property values a
         \draw[arrow] (mvt)   -- node[above, label] {scan tiles} (scan);
 
         % ── Optimiser (centre) ──
-        \node[opt, below=0.3cm of opt] (opt) {Optimiser};
+        \node[opt, below=0.3cm of test] (opt) {Optimiser};
 
         % ── Optimiser interactions ──
         \draw[query] (opt.north -| mir.south) -- node[right, label] {spec metadata} (mir);
