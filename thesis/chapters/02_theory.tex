@@ -39,15 +39,8 @@ Instead, they operate on lower-level graphics primitives such as textures, trian
 These low-level graphics building blocks are linked to map data through sprites, fonts, and styles, which are then interpreted by a rendering engine.
 
 \newpage
-As a lower-level representation layer for displaying map content, the following components are required, as shown in \cref{fig:basic-arch}:
-
-\begin{itemize}
-\item styles define the visual appearance of the map and reference the other required resources,
-\item tiles provide the geometry (points, lines, polygons) and associated attributes (for example, building heights) displayed on the map,
-\item sprites supply the icons shown on the map,
-\item fonts provide the glyphs used to render text labels.
-\item sometimes, additional assets such as 3D geometry models or terrain is used
-\end{itemize}
+As a lower-level representation layer for displaying map content, the following components are required, as shown in \cref{fig:basic-arch}: \emph{styles} define the visual appearance of the map and reference the other required resources; \emph{tiles} provide the geometry (points, lines, polygons) and associated attributes (for example, building heights) displayed on the map; \emph{sprites} supply the icons; and \emph{fonts} provide the glyphs used to render text labels.
+Occasionally, additional assets such as 3D geometry models or terrain are used as well.
 
 \begin{figure}[h]
 \centering
@@ -110,12 +103,7 @@ Sprites in computer graphics are a fairly solved problem.
 To avoid having to request hundreds to thousands of small files or to have to render SVGs on a client, this work is shifted to the server and the server delivers sprite sheets.
 This allows efficient GPU Sprite instancing.
 
-Common open-source renderers like maplibre or source available renderers like mapbox do this by shipping both
-
-\begin{itemize}
-\item plain PNG or \acs{SDF}-PNG~\cite{greenImprovedAlphatestedMagnification2007} sprite sheets, in combination with
-\item a lookup table of where on the sprite sheet each sprite is located, whether the sprite is a \ac{SDF}, and whether there are regions of the sprite that can be stretched to account for placing text inside the sprite.
-\end{itemize}
+Common open-source renderers like maplibre or source available renderers like mapbox do this by shipping plain PNG or \acs{SDF}-PNG~\cite{greenImprovedAlphatestedMagnification2007} sprite sheets together with a lookup table recording where on the sprite sheet each sprite is located, whether it is a \ac{SDF}, and whether there are regions that can be stretched to account for placing text inside the sprite.
 
 \subsection{Tiles}\label{sec_tiles}
 
@@ -176,13 +164,7 @@ No symmetric \enquote{underzoom} behaviour exists: if a source has no tile at a 
 
 A \emph{vector tile} encodes map data in a compact binary format rather than as a pre-rendered image.
 Each tile is organised into \emph{source layers} (for example, roads, buildings, water), and each source layer contains a set of \emph{features}.
-A feature consists of
-\begin{itemize}
-    \item geometry (point, linestring, or polygon encoded as integer coordinates relative to the tile's extent)
-    \item optionally, a set of key-value \emph{properties} (for example, \texttt{class=motorway} or \texttt{name=Main~Street})
-    \item optionally, a set of ids
-    \item metadata like the extent
-\end{itemize}
+A feature consists of geometry (point, linestring, or polygon encoded as integer coordinates relative to the tile's extent), optionally a set of key-value \emph{properties} (for example, \texttt{class=motorway} or \texttt{name=Main~Street}), optionally a set of IDs, and metadata such as the tile extent.
 
 The following formats are used for encoding and transferring data to the client:
 
@@ -338,7 +320,6 @@ A post-order visitor walks the expression tree and attempts to apply each rule a
 \emph{Constant folding} evaluates expressions whose operands are all compile-time constants, replacing the expression with its result~\cite{ahoCompilersPrinciplesTechniques2006}.
 For example, the expression $3 + 5$ is replaced by $8$.
 In a style context, a comparison such as \texttt{["==",~2,~3]} can be evaluated at optimizations time and replaced by \texttt{false}.
-
 \emph{Constant propagation} extends this idea by tracking the known values of variables through the program's control flow and substituting them at their use sites.
 If a variable is assigned a constant, all subsequent references to that variable can be replaced by the constant, potentially enabling further constant folding at the use sites.
 
@@ -347,12 +328,7 @@ A more powerful variant, \acf{SCCP}, combines constant propagation with dead bra
 \subsection{Dead Code Elimination}
 
 \acf{DCE} removes program statements whose results are never used or whose control-flow paths are unreachable~\cite{ahoCompilersPrinciplesTechniques2006}.
-Two common forms are:
-
-\begin{itemize}
-    \item \emph{Unreachable code elimination}: removing code that can never be executed (e.g., code after a guaranteed return, or branches guarded by a statically false condition).
-    \item \emph{Dead store elimination}: removing assignments to variables that are never subsequently read.
-\end{itemize}
+Two common forms are \emph{unreachable code elimination}, which removes code that can never be executed (e.g., code after a guaranteed return, or branches guarded by a statically false condition), and \emph{dead store elimination}, which removes assignments to variables that are never subsequently read.
 
 In the map-style domain, dead code elimination corresponds to removing style layers that can never produce visible output - because their filter is unsatisfiable, their geometry type does not match the data, or their paint properties render them invisible (e.g., zero opacity at all zoom levels).
 
@@ -407,8 +383,8 @@ For a single equality predicate $A = v$ on a column with $d$ distinct values, th
 When value-frequency histograms are available, the estimate improves to $s = \mathit{freq}(v) / N$, where $N$ is the total number of records.
 Compound predicates are estimated by combining individual selectivities:
 \begin{equation}\label{eq:selectivity_theory}
-    s(p_1 \land p_2) = s(p_1) \cdot s(p_2), \qquad
-    s(p_1 \lor p_2) = 1 - (1 - s(p_1))(1 - s(p_2)).
+    s(p_1 \land p_2) = s(p_1) \cdot s(p_2)
+    s(p_1 \lor p_2) = 1 - (1 - s(p_1))(1 - s(p_2))
 \end{equation}
 
 The independence assumption is known to be inaccurate when columns are correlated, but it provides a computationally cheap approximation that is effective in practice~\cite{selinger1979access}.
@@ -429,13 +405,10 @@ Traditional database systems store data in \emph{row-oriented} layouts, where al
 This layout is efficient for transactional workloads that access entire records, but wasteful for analytical queries that access only a few columns, as the entire record must be read to access any single attribute.
 
 \emph{Column-oriented} (columnar) storage transposes this layout, storing all values of a single attribute contiguously~\cite{abadiDesignImplementationModern2013}.
-This has several advantages for read-heavy workloads:
-
-\begin{itemize}
-    \item \emph{Reduced I/O}: only the columns referenced by a query need to be read from disk or transferred over the network.
-    \item \emph{Better compression}: values of the same type and semantic domain are stored together, exhibiting higher homogeneity and thus compressing more effectively than interleaved multi-type records.
-    \item \emph{Vectorised processing}: columnar data enables \ac{SIMD}-style batch operations on arrays of values of the same type.
-\end{itemize}
+This has several advantages for read-heavy workloads.
+First, \emph{reduced I/O}: only the columns referenced by a query need to be read from disk or transferred over the network.
+Second, \emph{better compression}: values of the same type and semantic domain are stored together, exhibiting higher homogeneity and thus compressing more effectively than interleaved multi-type records.
+Third, \emph{vectorised processing}: columnar data enables \ac{SIMD}-style batch operations on arrays of values of the same type.
 
 In the context of vector tiles, the row-oriented \ac{MVT} format stores all properties of a feature together, whereas the columnar \ac{MLT} format stores each property as an independent column.
 The columnar layout allows per-column encoding strategies: a column of road classes can use dictionary encoding, while a column of building heights can use delta encoding, each chosen independently.
