@@ -101,7 +101,7 @@ The MIR also drives the default stripping pass, which compares property values a
         \node[src]  (v8)     {\texttt{v8.json}};
         \node[src,  right=of v8]   (parsed) {ParsedSpec};
         \node[mir,  right=of parsed] (mir)    {MIR};
-        \node[gen,  right=of mir]  (serial) {SerialSpec\\{\scriptsize (generated Rust)}};
+        \node[gen,  right=of mir]  (serial) {SerialSpec\\{\scriptsize (generated Code)}};
 
         \draw[arrow] (v8)     -- node[above, label] {decode} (parsed);
         \draw[arrow] (parsed) -- node[above, label] {normalise} (mir);
