@@ -580,12 +580,10 @@ Sort-key synthesis is only applied to layer types that support the \texttt{*-sor
             same type, source,source-layer
             differing props are feature-driven,
             no zoom ramps in diffs,
-            no existing sort-key[2pt]};
+            no existing sort-key};
         \node[right=1.4cm of l1, check, text width=4.2cm] (p2) {%
             \textbf{Phase 2} — Match detection\\[2pt]
-            all filters: \texttt{["==",\,["get",\,"class"],\,L]}\\
-            same property \texttt{"class"} \checkmark\\
-            unique literals \checkmark\\
+            all filters  (\texttt{["==",\,["get",\,"class"],\,L]}) access the same property \texttt{"class"} with unique literals\\
             $\Rightarrow$ use \texttt{match} pattern};
         \node[right=1.4cm of l2, check, text width=4.2cm] (p3) {%
             \textbf{Phase 3} — Zoom check\\[2pt]
