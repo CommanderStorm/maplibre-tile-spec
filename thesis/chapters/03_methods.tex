@@ -168,8 +168,8 @@ These styles are evaluated using static analysis only (style size, complexity me
 Tile data is sourced from \ac{OSM} via Planetiler or the German government.
 Both sources are consumed through the standard Web Mercator XYZ tiling scheme used by MapLibre, so all zoom-level reasoning in the thesis assumes this grid; BasemapDE is accessed through its XYZ-compatible endpoint rather than its native \acs{WMTS} grid, ensuring that the optimiser's tile indexing is uniform across the corpus.
 Only for \ac{OSM} is the underlying data fully available, so only for this source can tile statistics be collected at a sample rate of~1.0.
-To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs with the latency and download speed of a 4G internet connection according to Rusan et al.~\cite{rusan4gPacketLatency} ($30\frac{Mb}{s}$).
-This eliminates network variability and guarantees that every ablation step operates on identical tile data.
+To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs with the latency and download speed of a 4G internet connection according to Rusan et al.~\cite{rusan4gPacketLatency} ($\text{size} / 30\frac{Mb}{s} + 25ms$).
+This eliminates network variability and guarantees that every ablation step operates on identical tile data (after an initial, discarded run).
 
 \subsection{Geographic and Use-Case Scenarios}\label{sub_scenarios}
 
@@ -186,10 +186,11 @@ The benchmark harness defines 18 scenarios drawn from a matrix of 15 geographic 
 \end{itemize}
 
 Each scenario is a specific (location, animation) pair.
-The full cross-product of 15 locations and 5 animations is 75 cells, which is too expensive to run for every ablation step (each cell requires 15 repeat runs across 17 ablation steps and 15 styles, giving roughly $75 \times 15 \times 17 \times 15 = \num{287000}$ full animations).
+The full cross-product of 15 locations and 5 animations is 75 pairs, which is too expensive to run for every ablation step (each cell requires 15 repeat runs for statistical validity across 17 ablation steps and 15 styles, giving roughly $75 \times 15 \times 17 \times 15 = \num{286875}$ full animations).
 The 18 selected scenarios are chosen by stratified sampling so that every location appears at least once and every animation appears at least three times, and so that all combinations of density class (high/low) and script class (Latin/non-Latin) are represented.
 Within each stratum the specific (location, animation) pair is the one that exercises the most layers in the densest style in the corpus, ensuring that the sample is biased \emph{against} the null hypothesis of \enquote{no effect} - i.e.\ towards scenarios where any rendering-cost differences are most likely to be visible.
-This is a convenience sample by design: it is not claimed to be unbiased across all real-world usage patterns, but it is claimed to be a reasonable stress test of the optimiser across the dimensions (density, script, zoom trajectory, camera motion) that most plausibly interact with style and data-level optimizationss.
+This is a convenience sample by design:
+it is not claimed to be unbiased across all real-world usage patterns, but it is claimed to be a reasonable stress test of the optimiser across the dimensions (density, script, zoom trajectory, camera motion) that most plausibly interact with style and data-level optimizationss.
 
 \section{Building Optimisations}\label{sec_building_optimizationss}
 
