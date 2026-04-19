@@ -98,7 +98,7 @@ The MIR also drives the default stripping pass, which compares property values a
         label/.style={font=\scriptsize\itshape, text=gray},
         validationlabel/.style={font=\scriptsize\itshape, text=red},
         validation/.style={
-            ultra thick,
+            densely dashed,
             red,
             ->,
             every edge node/.append style={text=red}
@@ -130,9 +130,9 @@ The MIR also drives the default stripping pass, which compares property values a
         % tanlged arrows
         \draw[query] (opt) -- node[right, label] {optimise} (serial);
         \draw[query] (scan) -- node[above, label] {statistics} (opt);
-        \draw[validation] (corpus) -- node[red,below, label] {validate} (serial);
+        \draw[validation] (corpus) -- node[below, validationlabel] {validate} (serial);
         \draw[validation] (serial) -- node[right, validationlabel] {validate} (test);
-        \draw[validation] (test) -- node[red,right, validationlabel] {validate} (opt);
+        \draw[validation] (test) -- node[right, validationlabel] {validate} (opt);
     \end{tikzpicture}
     \caption{System architecture.
     The \emph{codegen pipeline} (top) transforms the upstream \texttt{v8.json} style specification through three stages into generated Rust types (\texttt{SerialSpec}) used for typed style manipulation, with the MIR providing spec metadata to the optimiser.
