@@ -214,7 +214,7 @@ Expression passes operate directly on the JSON representation, applying rewrites
 Pass & Data & Description [compiler analogy] \\
 \midrule
 Unary simplification         & none     & Unwrap single-argument \texttt{any}/\texttt{all} wrappers [identity elimination] \\
-Expression kind normalisation & none     & Rewrite negated comparisons to their direct form, e.g.\ \texttt{!["==",a,b]} $\to$ \texttt{["!=",a,b]} [operator strength reduction] \\
+Expression kind normalisation & none     & Rewrite negated comparisons to their direct form, e.g.\ \texttt{["!",["==",a,b]]} $\to$ \texttt{["!=",a,b]} [operator strength reduction] \\
 Constant folding              & none     & Evaluate statically determinable expressions: boolean algebra, dead branch elimination, redundant coercion removal [constant folding, \acs{SCCP}] \\
 Stats-driven constant folding & sampling & Fold \texttt{has}/\texttt{get}/\texttt{geometry-type} expressions using tile statistics; prune unreachable \texttt{match}/\texttt{in} arms; fold comparisons against known value ranges [sparse conditional constant propagation] \\
 Expression simplification     & none     & De~Morgan's laws, boolean flattening, coalesce flattening, \texttt{case}$\to$\texttt{match} rewriting, \texttt{let}/\texttt{var} inlining, \texttt{any}$\to$\texttt{in} merging, interpolate/step collapsing [algebraic simplification] \\
@@ -286,7 +286,7 @@ These rules receive tile statistics for the relevant source layer and fold expre
 \end{itemize}
 
 \begin{sloppypar}
-\noindent A cardinality threshold (implemented as the constant \texttt{CARDI\-NALITY\_\allowbreak THRESHOLD\,=\,200} in \texttt{stats/\allowbreak mod.rs}) governs the granularity of value tracking: when the number of distinct values exceeds this threshold, the statistics switch from full value counts to cardinality-only mode.
+\noindent A cardinality threshold (implemented as the constant \texttt{CARDI\-NALITY\_\allowbreak THRESHOLD\,=\,200} governs the granularity of value tracking: when the number of distinct values exceeds this threshold, the statistics switch from full value counts to cardinality-only mode.
 \end{sloppypar}
 This bounds the memory cost on high-cardinality properties (names, identifiers) while retaining full information for the low-cardinality properties (road class, land use, administrative level) that benefit most from data-driven folding.
 The choice of 200 is motivated by the OpenMapTiles schema: every categorical property that is used as a \texttt{match}/\texttt{case} discriminator in the benchmark styles (\texttt{class}, \texttt{subclass}, \texttt{admin\_level}, \texttt{kind}, land-use codes) has fewer than 200 distinct values across the Germany tileset, whereas high-cardinality string columns (feature names, identifiers) exceed it by one or more orders of magnitude.
