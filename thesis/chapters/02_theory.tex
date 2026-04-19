@@ -5,10 +5,10 @@ Building such a pipeline requires foundations from several fields: the map rende
 
 This chapter introduces these foundations in the order in which the optimiser consumes them.
 \cref{sec_map_rendering_approaches} describes the map rendering process and its resource pipeline.
-\cref{sec_compiler_optimizations} surveys compiler optimisation techniques - peephole rewriting, constant folding, and fixpoint iteration - whose analogues are applied to style expressions.
-\cref{sec_query_optimizations} presents query optimisation concepts - predicate pushdown and selectivity estimation - used for filter rewriting and reordering.
+\cref{sec_compiler_optimisations} surveys compiler optimisation techniques - peephole rewriting, constant folding, and fixpoint iteration - whose analogues are applied to style expressions.
+\cref{sec_query_optimisations} presents query optimisation concepts - predicate pushdown and selectivity estimation - used for filter rewriting and reordering.
 \cref{sec_data_encoding} covers the columnar encoding and compression schemes employed at the tile level.
-\cref{sec_multi_objective_optimizations} discusses multi-objective optimisation, \cref{sec_benchmarking} covers benchmarking methodology, and \cref{sec_problem_statement} formalises the optimisation problem that \cref{ch_methods} addresses.
+\cref{sec_multi_objective_optimisations} discusses multi-objective optimisation, \cref{sec_benchmarking} covers benchmarking methodology, and \cref{sec_problem_statement} formalises the optimisation problem that \cref{ch_methods} addresses.
 
 \section{Map Rendering Approaches}\label{sec_map_rendering_approaches}
 
@@ -32,7 +32,7 @@ Due to having better hardware access, these APIs can render more complex scenes 
 \end{itemize}
 
 Due to the more advanced features and mostly better performance, this research focuses exclusively on renderers based on open-source 3D graphics APIs.
-While these renderers are powerful, they require data to be preprocessed and optimized specifically for rendering.
+While these renderers are powerful, they require data to be preprocessed and optimised specifically for rendering.
 As a result, they cannot directly render high-level primitives such as shapes (polygons, lines, points), text, or images.
 Instead, they operate on lower-level graphics primitives such as textures, triangles, and quads.
 
@@ -73,13 +73,13 @@ Tiles, by contrast, can be stored and accessed using three major approaches:
 Dynamic data sources can be updated frequently by applying incremental diffs, whereas the other approaches typically require a full rebuild when the underlying data changes.
 At larger scales, in-memory caching of tiles via regional or \ac{CDN}-style infrastructure - combined with fallback to runtime-dynamic data - is essential for performance.
 
-Although all of these resources can be optimized, tiles are usually the most critical due to their continuous streaming nature as a user moves the map thus higher data volume.
+Although all of these resources can be optimised, tiles are usually the most critical due to their continuous streaming nature as a user moves the map thus higher data volume.
 All other resources depend on locale slightly (for example loading different Unicode ranges or fonts), but are generally only handled one time.
 
 Real-world observations support this:
-the performance of highly optimized systems such as Microsoft Bing Maps differs significantly from less optimized deployments, such as basemap.de.
+the performance of highly optimised systems such as Microsoft Bing Maps differs significantly from less optimised deployments, such as basemap.de.
 
-The following sections examine each resource in detail, focusing on the performance characteristics and optimizations strategies relevant to this work:
+The following sections examine each resource in detail, focusing on the performance characteristics and optimisations strategies relevant to this work:
 
 \subsection{Fonts}
 
@@ -194,8 +194,8 @@ The following formats are used for encoding and transferring data to the client:
     Tremmel et~al.\ report 2-6$\times$ tile size reductions over \ac{MVT} depending on data characteristics.\end{sloppypar}
 \end{itemize}
 
-Beyond the choice of tile format, a number of transfer-layer optimizations can improve delivery performance: utilising the approximately \qty{14}{\kilo\byte} TCP slow-start window as discussed by Nathaniel~\cite{WhyYourWebsite}, edge caching~\cite{BestPracticesMap}, or HTTP/2 multiplexing.
-Since \ac{MVT} is the established baseline and \ac{MLT} aims to improve upon it, this thesis evaluates both formats and uses the transition from \ac{MVT} to \ac{MLT} as one of its data-level optimizations strategies.
+Beyond the choice of tile format, a number of transfer-layer optimisations can improve delivery performance: utilising the approximately \qty{14}{\kilo\byte} TCP slow-start window as discussed by Nathaniel~\cite{WhyYourWebsite}, edge caching~\cite{BestPracticesMap}, or HTTP/2 multiplexing.
+Since \ac{MVT} is the established baseline and \ac{MLT} aims to improve upon it, this thesis evaluates both formats and uses the transition from \ac{MVT} to \ac{MLT} as one of its data-level optimisations strategies.
 
 \subsection{Styles}\label{sec_styles}
 
@@ -211,10 +211,10 @@ Three architectural approaches to map styling have been established:
     This enables dynamic restyling, data-driven visualisation, and interactive features such as hover effects and click queries without regenerating tiles.\end{sloppypar}
 
     \item \textbf{Callback-based} styling, as proposed by Gleo~\cite{ortegaGleoWebGLMap} or Navara~\cite{navara}, replace declarative rules with imperative callbacks that the application registers with the renderer.
-    This offers maximum flexibility but makes static analysis and automatic optimizations impossible, since the styling logic is opaque to the rendering engine.
+    This offers maximum flexibility but makes static analysis and automatic optimisations impossible, since the styling logic is opaque to the rendering engine.
 \end{itemize}
 
-This thesis focuses on client-side declarative styles, specifically the MapLibre style specification, as it is the most widely adopted approach in open-source map rendering and - its declarative nature makes it amenable to static analysis and automatic optimizations.
+This thesis focuses on client-side declarative styles, specifically the MapLibre style specification, as it is the most widely adopted approach in open-source map rendering and - its declarative nature makes it amenable to static analysis and automatic optimisations.
 
 The MapLibre style specification~\cite{MapLibreStyleSpec} defines a map's appearance as a JSON document with the following key components:
 
@@ -245,7 +245,7 @@ isHidden(zoom: number = this.minzoom, roundMinZoom: boolean = false) {
 }
 \end{lstlisting}
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS usages of \texttt{isHidden}},label=lst:ishidden]
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS usages of \texttt{isHidden}},label=lst:ishidden_usage]
 // src/source/worker_tile.ts:111 - worker skips bucket creation
 if (layer.isHidden(this.zoom, true)) continue;
 
@@ -259,7 +259,7 @@ renderLayer(painter, tileManager, layer, coords, renderOptions) {
 \end{itemize}
 
 Filters and properties can be specified as literal constants, as \emph{zoom-dependent} expressions (varying with the camera zoom level via \texttt{interpolate} or \texttt{step} ramps), as \emph{data-driven} expressions (varying per feature based on property values via \texttt{match}, \texttt{case}, or \texttt{get} operators), or as a combination of both.
-The resulting expression trees can be deeply nested and may contain redundant or unreachable branches - characteristics that make them amenable to the same kinds of simplification and optimizations techniques used in compilers and database query planners.
+The resulting expression trees can be deeply nested and may contain redundant or unreachable branches - characteristics that make them amenable to the same kinds of simplification and optimisations techniques used in compilers and database query planners.
 
 \Cref{lst:worker_pipeline} shows how these components interact in practice: MapLibre's worker thread parses a tile by iterating source layers, collecting features, checking \texttt{isHidden}, recalculating layer expressions at the current zoom, and populating buckets (which runs the filter and builds vertex data).
 Every optimisation in \cref{ch_methods} maps to a step in this pipeline.
@@ -295,7 +295,7 @@ for (const sourceLayerId in layerFamilies) {
 }
 \end{lstlisting}
 
-\section{Compiler Optimisation Techniques}\label{sec_compiler_optimizations}
+\section{Compiler Optimisation Techniques}\label{sec_compiler_optimisations}
 
 The style expressions used by map renderers such as MapLibre are, in essence, small programs: they contain conditionals (\texttt{case}, \texttt{match}), boolean operators (\texttt{all}, \texttt{any}), arithmetic, and data access (\texttt{get}, \texttt{has}).
 Optimising these expressions draws directly on techniques developed over decades in compiler construction~\cite{ahoCompilersPrinciplesTechniques2006}.
@@ -306,7 +306,7 @@ This section introduces the foundational concepts applied in \cref{ch_methods}.
 \begin{sloppypar}
 A \emph{peephole optimiser} examines a small, fixed-size window of code (the \enquote{peephole}) and applies local pattern-matching rewrites that replace instruction sequences with shorter or faster equivalents~\cite{davidsonImprovingInstructionSelection1984}.
 Each rewrite rule is independent: it matches a local pattern and emits a replacement, without requiring knowledge of the surrounding program.
-The simplicity of individual rules is offset by their composition through repeated application - many small, local improvements accumulate into significant global optimizations.
+The simplicity of individual rules is offset by their composition through repeated application - many small, local improvements accumulate into significant global optimisations.
 \end{sloppypar}
 
 Peephole optimisers are classified by the level at which they operate.
@@ -319,7 +319,7 @@ A post-order visitor walks the expression tree and attempts to apply each rule a
 
 \emph{Constant folding} evaluates expressions whose operands are all compile-time constants, replacing the expression with its result~\cite{ahoCompilersPrinciplesTechniques2006}.
 For example, the expression $3 + 5$ is replaced by $8$.
-In a style context, a comparison such as \texttt{["==",~2,~3]} can be evaluated at optimizations time and replaced by \texttt{false}.
+In a style context, a comparison such as \texttt{["==",~2,~3]} can be evaluated at optimisations time and replaced by \texttt{false}.
 \emph{Constant propagation} extends this idea by tracking the known values of variables through the program's control flow and substituting them at their use sites.
 If a variable is assigned a constant, all subsequent references to that variable can be replaced by the constant, potentially enabling further constant folding at the use sites.
 
@@ -350,7 +350,7 @@ A filter \texttt{["all", ["all", a, b], c]} is flattened to \texttt{["all", a, b
 
 \subsection{Fixpoint Iteration}\label{sub_fixpoint}
 
-Individual peephole rules may expose further optimizations opportunities: constant folding a subexpression may create a new constant parent, which in turn enables dead branch elimination.
+Individual peephole rules may expose further optimisations opportunities: constant folding a subexpression may create a new constant parent, which in turn enables dead branch elimination.
 A single traversal is therefore generally insufficient.
 
 \begin{sloppypar}
@@ -360,10 +360,10 @@ In practice, convergence is rapid: most programs stabilise within a small number
 \end{sloppypar}
 
 
-\section{Query Optimisation}\label{sec_query_optimizations}
+\section{Query Optimisation}\label{sec_query_optimisations}
 
 Style filters in map rendering are structurally equivalent to database query predicates: both select a subset of records (features) from a dataset (tile) based on attribute conditions.
-Techniques from relational query optimizations therefore apply directly.
+Techniques from relational query optimisations therefore apply directly.
 
 \subsection{Cost-Based Query Optimisation}
 
@@ -397,7 +397,7 @@ The independence-estimator error therefore propagates into the quality of the sh
 \section{Data Encoding and Compression}\label{sec_data_encoding}
 
 Efficient encoding of tile data is essential for interactive map performance, as tiles are fetched continuously during map interaction.
-This section surveys the encoding and compression techniques used in the data-level optimizationss of \cref{ch_methods}.
+This section surveys the encoding and compression techniques used in the data-level optimisations of \cref{ch_methods}.
 
 \subsection{Column-Oriented Storage}\label{sub_column_storage}
 
@@ -493,29 +493,25 @@ where $\mathbf{1}[\cdot]$ is the indicator function.
 The estimate is unbiased with variance $O(1/k)$~\cite{broder1997resemblance}.
 
 
-\section{Multi-Objective Optimisation}\label{sec_multi_objective_optimizations}
+\section{Multi-Objective Optimisation}\label{sec_multi_objective_optimisations}
 
-Map rendering optimizations is inherently multi-objective: reducing tile size, minimising load time, maximising rendering throughput, and controlling memory consumption are competing goals, where improving one metric often negatively impacts another.
-Such problems can be formulated as \acsp{MOOP}, where the set of \emph{Pareto-optimal} solutions - configurations for which no objective can be improved without worsening another - forms the \emph{Pareto front}~\cite{pareto1896cours}.
-A range of algorithms exist for approximating the Pareto front, including evolutionary methods such as NSGA-II~\cite{debFastElitistMultiobjective2002}, indicator-based methods such as IBEA~\cite{zitzlerIndicatorBasedSelection2004}, and decomposition-based methods such as MOEA/D~\cite{qingfuzhangMOEAMultiobjectiveEvolutionary2007}; these are retained here as theoretical background rather than as search algorithms embedded in the optimiser.
-This thesis instead uses Pareto dominance as a \emph{post-hoc analysis tool} over the cumulative-ablation result space (\cref{sec_exp_pareto}).
-The analysis is deliberately narrower than the full multi-objective framing above: a benchmark-corpus noise decomposition (\cref{sub_pareto_noise}) demonstrates that only two of the candidate axes - transfer size (\texttt{gzip\_bytes}) and a pipeline-complexity cost proxy - carry a per-step signal large enough to support frontier claims at the current sample size, so the frontier is reported on those two axes only.
-The rendering-performance, memory, and energy axes are acknowledged in the same section as future work gated on a larger benchmark campaign or on renderer-internal instrumentation.
-The inner encoder competition (\cref{sub_data_optimizationss}) deliberately remains single-objective (size-minimising) for correctness reasons; deployment trade-offs are surfaced at the outer ablation layer.
-A formal \ac{MOOP} search - enumerating Pareto-optimal pass permutations and internal-knob configurations beyond the measured cumulative and isolated modes, over an objective space that includes the presently-noise-limited axes - remains identified as future work in \cref{ch_conclusion}.
+Map rendering optimisation is inherently multi-objective: reducing tile size, minimising load time, maximising rendering throughput, and controlling memory consumption are competing goals.
+Such problems can be formulated as \acsp{MOOP}, where the set of \emph{Pareto-optimal} solutions --- configurations for which no objective can be improved without worsening another --- forms the \emph{Pareto front}~\cite{pareto1896cours}.
+A range of algorithms exist for approximating the Pareto front~\cite{debFastElitistMultiobjective2002,zitzlerIndicatorBasedSelection2004,qingfuzhangMOEAMultiobjectiveEvolutionary2007}.
+This thesis does not embed a \ac{MOOP} search algorithm; instead, it uses Pareto dominance as a post-hoc analysis tool over the cumulative-ablation result space (\cref{sec_exp_pareto}), restricted to the two axes whose signal exceeds the benchmark noise floor.
 
 
 \section{Benchmarking}\label{sec_benchmarking}
 
 Benchmarking refers to the systematic measurement of system performance using controlled workloads and standardized metrics.
-The purpose of benchmarking is to evaluate system behaviour, compare alternative implementations, and quantify the effects of optimizations.
+The purpose of benchmarking is to evaluate system behaviour, compare alternative implementations, and quantify the effects of optimisations.
 
 According to Jain~\cite{jainArtComputerSystems1991}, a good evaluation must start with selecting relevant metrics.
 In the context of web maps, the candidate metrics span a range from deployment-critical on battery-constrained targets to directly user-visible on the desktop:
 
 \begin{itemize}
-    \item \textbf{Power consumption} in Watts, which is relevant for mobile devices and battery-powered systems.  This thesis does not measure power directly (\cref{ch_methods} runs on a desktop workstation), but it is listed here because transfer-size and frame-rate gains are proxies for energy savings on mobile targets, and the qualitative energy discussion in \cref{ch_experiments} relies on this connection.
-    \item \textbf{Resource utilisation}, such as CPU load, GPU utilisation, and memory consumption to have pointers where further optimizations is possible.
+    \item \textbf{Power consumption} in Watts, which is relevant for mobile devices and battery-powered systems.  This thesis does not measure power consumption --- no RAPL counters, battery deltas, or external power meters are used, as the benchmark host is a desktop workstation rather than a battery-constrained mobile device.  Power is listed here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets: cellular radio energy is proportional to data volume, and GPU active time scales with draw-call count.  No quantitative energy claim is made in this thesis; the qualitative energy discussion in \cref{ch_experiments} is limited to stating the expected direction of the effect.
+    \item \textbf{Resource utilisation}, such as CPU load, GPU utilisation, and memory consumption to have pointers where further optimisations is possible.
     \item \textbf{Latency and responsiveness}, measuring the time between initiating an operation (for example zooming) and the first visible result.
     \item \textbf{Throughput}, typically measured in \acp{FPS} or frame time, describing how many frames can be rendered per second.
     \item \textbf{Frame stability}, which captures variations in frame time and identifies dropped frames or rendering stutters.
@@ -535,7 +531,7 @@ The benchmark harness controls for network variability (via a caching proxy) and
 
 \section{Formalised Problem Statement}\label{sec_problem_statement}
 
-With the background established, the optimizations problem addressed by this thesis can be stated formally.
+With the background established, the optimisations problem addressed by this thesis can be stated formally.
 Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~JSON documents, and $\mathcal{T}$ be the set of tile sets (a tile set is a finite family of tiles indexed by source, $x$, $y$, $z$).
 Let $\mathcal{V}$ be the set of \emph{viewing states} a renderer can be in - roughly, $(x, y, z, \text{pitch}, \text{bearing}, \text{viewport size})$ tuples - and let
 \begin{equation}\label{eq:render_function}

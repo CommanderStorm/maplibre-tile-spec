@@ -3,6 +3,7 @@
 # dependencies = [
 #     "plotly>=6.0",
 #     "pandas>=2.0",
+#     "numpy>=1.24",
 #     "kaleido>=0.4",
 # ]
 # ///
@@ -13,6 +14,7 @@ import json
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -44,6 +46,54 @@ LAYOUT_DEFAULTS = dict(
     font=dict(size=12),
     margin=dict(l=70, r=30, t=40, b=60),
 )
+
+
+STEP_LABELS: dict[int, str] = {
+    0: "Baseline",
+    1: "Unary simpl.",
+    2: "Kind norm.",
+    3: "Const. fold",
+    4: "Stats fold",
+    5: "Expr. simpl.",
+    6: "Strip defaults",
+    7: "Minify colours",
+    8: "Strip metadata",
+    9: "Dead elim.",
+    10: "DE stats",
+    11: "Meta. refine.",
+    12: "MR paint",
+    13: "MR stats",
+    14: "Cleanup",
+    15: "Layer merge",
+    16: "Selectivity",
+    17: "Shave only",
+    18: "Shave",
+    19: "MLT rewrite",
+}
+
+# Full-pipeline steps (only available for fiord/liberty)
+FULL_PIPELINE_STEPS = {16, 17, 18, 19}
+
+
+def _bootstrap_ci(
+    values: np.ndarray, n_boot: int = 10_000, seed: int = 42,
+) -> tuple[float, float, float]:
+    """Percentile-bootstrap 95% CI for the median.  Returns (median, ci_lo, ci_hi)."""
+    arr = np.asarray(values, dtype=np.float64)
+    arr = arr[~np.isnan(arr)]
+    n = len(arr)
+    if n < 2:
+        m = float(np.median(arr)) if n == 1 else 0.0
+        return m, m, m
+    rng = np.random.default_rng(seed)
+    meds = np.empty(n_boot)
+    for i in range(n_boot):
+        meds[i] = np.median(rng.choice(arr, n, replace=True))
+    return (
+        float(np.median(arr)),
+        float(np.percentile(meds, 2.5)),
+        float(np.percentile(meds, 97.5)),
+    )
 
 
 def export_figure(fig: go.Figure, name: str) -> None:
@@ -190,6 +240,165 @@ def plot_minhash_sweep(df: pd.DataFrame) -> None:
     export_figure(fig, "minhash_sweep")
 
 
+def _load_ci_levels() -> pd.DataFrame | None:
+    """Load confidence_intervals.csv and return a (style, step) → loadMs pivot.
+
+    Missing (deduped) steps are forward-filled so that every step 0..max has a value.
+    """
+    ci_csv = DATA_DIR / "confidence_intervals.csv"
+    if not ci_csv.exists():
+        return None
+    ci = pd.read_csv(ci_csv)
+    load = ci[ci["metric"] == "loadMs"][["style", "step", "median"]].copy()
+    pivot = load.pivot_table(index="step", columns="style", values="median")
+    all_steps = range(int(pivot.index.min()), int(pivot.index.max()) + 1)
+    pivot = pivot.reindex(all_steps).ffill()
+    return pivot
+
+
+def plot_waterfall_loadMs() -> None:
+    """Waterfall chart: cumulative load-time change per ablation step with bootstrap 95% CI."""
+    print("Generating waterfall_loadMs…")
+    pivot = _load_ci_levels()
+    if pivot is None:
+        print("  Skipped (run generate_ci.py first)")
+        return
+
+    baseline = pivot.loc[0]
+    # Percentage change from baseline per style
+    pct = (pivot.subtract(baseline)) / baseline * 100
+
+    steps = sorted(pct.index)
+    labels = [STEP_LABELS.get(int(s), f"Step {s}") for s in steps]
+
+    # Per-step cross-style bootstrap CI of cumulative percentage change
+    cum_med = []
+    for s in steps:
+        vals = pct.loc[s].dropna().values
+        m, _, _ = _bootstrap_ci(vals)
+        cum_med.append(m)
+
+    # Compute per-step deltas and their CIs
+    deltas, delta_err_lo, delta_err_hi = [], [], []
+    for i, s in enumerate(steps):
+        if i == 0:
+            # Step 0 is baseline → 0% change
+            deltas.append(0.0)
+            delta_err_lo.append(0.0)
+            delta_err_hi.append(0.0)
+            continue
+        prev = steps[i - 1]
+        # Per-style delta between consecutive steps
+        per_style_delta = (pct.loc[s] - pct.loc[prev]).dropna().values
+        m, lo, hi = _bootstrap_ci(per_style_delta)
+        deltas.append(m)
+        delta_err_lo.append(m - lo)
+        delta_err_hi.append(hi - m)
+
+    # Build waterfall using stacked bars (base + delta)
+    # Compute running total for bar bases
+    running = 0.0
+    bases, heights = [], []
+    colors = []
+    for i, d in enumerate(deltas):
+        if i == 0:
+            bases.append(0.0)
+            heights.append(0.0)
+            colors.append("#AAAAAA")  # neutral baseline
+        elif d <= 0:
+            bases.append(running + d)
+            heights.append(abs(d))
+            colors.append("#44AA99")  # teal = improvement
+        else:
+            bases.append(running)
+            heights.append(d)
+            colors.append("#CC6677")  # rose = regression
+        running += d
+
+    fig = go.Figure()
+    # Invisible base bars
+    fig.add_trace(go.Bar(
+        x=labels, y=bases,
+        marker_color="rgba(0,0,0,0)", showlegend=False,
+        hoverinfo="skip",
+    ))
+    # Visible delta bars
+    fig.add_trace(go.Bar(
+        x=labels, y=heights,
+        marker_color=colors, showlegend=False,
+        error_y=dict(
+            type="data", symmetric=False,
+            array=delta_err_hi, arrayminus=delta_err_lo,
+            visible=True,
+        ),
+        hovertemplate="%{x}<br>Δ: %{y:.1f}%<extra></extra>",
+    ))
+
+    fig.update_layout(
+        **LAYOUT_DEFAULTS,
+        barmode="stack",
+        xaxis=dict(tickangle=45),
+        yaxis=dict(title="Cumulative load-time change (%)"),
+    )
+    export_figure(fig, "waterfall_loadMs")
+
+
+def plot_marginal_loadMs() -> None:
+    """Bar chart: marginal load-time contribution per ablation step with bootstrap 95% CI."""
+    print("Generating marginal_loadMs…")
+    pivot = _load_ci_levels()
+    if pivot is None:
+        print("  Skipped (run generate_ci.py first)")
+        return
+
+    baseline = pivot.loc[0]
+    pct = (pivot.subtract(baseline)) / baseline * 100
+
+    steps = sorted(pct.index)
+
+    # Compute per-step deltas (skip baseline)
+    plot_steps, plot_labels = [], []
+    deltas, err_lo, err_hi = [], [], []
+    colors = []
+
+    for i, s in enumerate(steps):
+        if i == 0:
+            continue
+        prev = steps[i - 1]
+        per_style_delta = (pct.loc[s] - pct.loc[prev]).dropna().values
+        m, lo, hi = _bootstrap_ci(per_style_delta)
+
+        # Skip near-zero deltas (deduped steps)
+        if abs(m) < 0.05 and abs(lo) < 0.1 and abs(hi) < 0.1:
+            continue
+
+        plot_steps.append(s)
+        plot_labels.append(STEP_LABELS.get(int(s), f"Step {s}"))
+        deltas.append(m)
+        err_lo.append(m - lo)
+        err_hi.append(hi - m)
+        colors.append("#44AA99" if m <= 0 else "#CC6677")
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=plot_labels, y=deltas,
+        marker_color=colors, showlegend=False,
+        error_y=dict(
+            type="data", symmetric=False,
+            array=err_hi, arrayminus=err_lo,
+            visible=True,
+        ),
+        hovertemplate="%{x}<br>Δ: %{y:.1f}%<extra></extra>",
+    ))
+
+    fig.update_layout(
+        **LAYOUT_DEFAULTS,
+        xaxis=dict(tickangle=45),
+        yaxis=dict(title="Marginal load-time change (%)"),
+    )
+    export_figure(fig, "marginal_loadMs")
+
+
 def main() -> None:
     tile_sizes_csv = DATA_DIR / "tile_sizes.csv"
     if not tile_sizes_csv.exists():
@@ -221,6 +430,10 @@ def main() -> None:
     else:
         print("\nSkipped: interaction_plot (pass --bench <jsonl> with tile_shave data)")
         print("Skipped: rendering_metrics_mlt (pass --bench <jsonl> with tile_shave data)")
+
+    # CI-derived plots (waterfall and marginal) — use precomputed confidence_intervals.csv
+    plot_waterfall_loadMs()
+    plot_marginal_loadMs()
 
     print(f"\nAll figures written to {OUTPUT_DIR}")
 
@@ -275,7 +488,7 @@ def plot_interaction(df: pd.DataFrame) -> None:
     """Bar chart showing style-only, shaving-only, and style+shaving reductions.
 
     If the combined bar exceeds the sum of the two individual bars, the
-    optimizationss are synergistic."""
+    optimisations are synergistic."""
     print("Generating interaction_plot…")
 
     # Compute median gzip_bytes per config across all (style, scenario) pairs
@@ -318,34 +531,46 @@ def plot_interaction(df: pd.DataFrame) -> None:
 
 
 def plot_rendering_metrics_mlt(df: pd.DataFrame) -> None:
-    """Grouped bar chart: load time and FPS across the 5 thesis configurations."""
+    """Grouped bar chart with bootstrap 95% CI: load time and FPS across the 5 thesis configurations."""
     print("Generating rendering_metrics_mlt…")
 
     configs = [c for c in CONFIG_MAP.values() if c in df["config"].unique()]
 
-    # Compute per-config medians (median of per-scenario medians)
+    # Compute per-(style, scenario) medians, then bootstrap the cross-scenario median per config
     scenario_med = df.groupby(["config", "style", "scenario"]).agg(
         loadMs=("loadMs", "median"),
         fps=("fps", "median"),
     ).reset_index()
-    config_med = scenario_med.groupby("config").agg(
-        loadMs=("loadMs", "median"),
-        fps=("fps", "median"),
-    ).reindex(configs)
 
-    from plotly.subplots import make_subplots
+    load_meds, load_err_lo, load_err_hi = [], [], []
+    fps_meds, fps_err_lo, fps_err_hi = [], [], []
+
+    for config in configs:
+        sub = scenario_med[scenario_med["config"] == config]
+        m, lo, hi = _bootstrap_ci(sub["loadMs"].values)
+        load_meds.append(m)
+        load_err_lo.append(m - lo)
+        load_err_hi.append(hi - m)
+
+        m, lo, hi = _bootstrap_ci(sub["fps"].values)
+        fps_meds.append(m)
+        fps_err_lo.append(m - lo)
+        fps_err_hi.append(hi - m)
+
     fig = make_subplots(rows=1, cols=2, subplot_titles=["Load Time", "Frames per Second"],
                         horizontal_spacing=0.15)
 
     colors = [CONFIG_COLORS.get(c, "#999") for c in configs]
 
     fig.add_trace(go.Bar(
-        x=configs, y=config_med["loadMs"],
+        x=configs, y=load_meds,
+        error_y=dict(type="data", symmetric=False, array=load_err_hi, arrayminus=load_err_lo),
         marker_color=colors, showlegend=False,
     ), row=1, col=1)
 
     fig.add_trace(go.Bar(
-        x=configs, y=config_med["fps"],
+        x=configs, y=fps_meds,
+        error_y=dict(type="data", symmetric=False, array=fps_err_hi, arrayminus=fps_err_lo),
         marker_color=colors, showlegend=False,
     ), row=1, col=2)
 

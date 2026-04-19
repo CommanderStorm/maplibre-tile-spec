@@ -103,7 +103,7 @@ Americana is excluded from the per-style tables due to incomplete benchmark data
 
 \section{Per-Zoom Tile Size Breakdown}\label{app_tile_sizes}
 
-\cref{tab:tile_sizes_per_zoom} shows the per-zoom-level tile size (gzip) for the Germany OpenMapTiles tileset across four encoding configurations: the \ac{MVT} baseline, the Tremmel \& Zink \ac{MLT}-Java encoder, the \ac{MLT}-Rust encoder (without shaving), and the full pipeline (style optimizations + tile shaving + \ac{MLT}-Rust encoding).
+\cref{tab:tile_sizes_per_zoom} shows the per-zoom-level tile size (gzip) for the Germany OpenMapTiles tileset across four encoding configurations: the \ac{MVT} baseline, the Tremmel \& Zink \ac{MLT}-Java encoder, the \ac{MLT}-Rust encoder (without shaving), and the full pipeline (style optimisations + tile shaving + \ac{MLT}-Rust encoding).
 The shaved configuration uses the advisory generated from the fiord style; other styles would produce slightly different shaving results depending on their property and layer references.
 
 \begin{table}[htbp]
@@ -127,7 +127,7 @@ The shaved configuration uses the advisory generated from the fiord style; other
  \fmtdelta{\deltaPct}}%
 \caption{Per-zoom tile size (gzip) for the Germany OpenMapTiles
 tileset across four encoding configurations.  The $\Delta$\% column
-shows the reduction of the full pipeline (style optimizations + tile
+shows the reduction of the full pipeline (style optimisations + tile
 shaving + MLT encoding) relative to the MVT baseline}
 \label{tab:tile_sizes_per_zoom}
 \end{table}
