@@ -1,11 +1,14 @@
 \chapter{Theoretical Background}\label{ch_theoretical_background}
 
-Discussing performance improvements for slippy web maps requires understanding of the underlying architecture, the optimizations techniques drawn from compiler and database research, and the data encoding strategies that underpin efficient tile delivery.
-\cref{sec_map_rendering_approaches} introduces the map rendering process and its core resources.
-\cref{sec_compiler_optimizations} surveys compiler optimizations techniques whose analogues are applied to style expressions.
-\cref{sec_query_optimizations} presents query optimizations concepts used for filter rewriting and predicate reordering.
-\cref{sec_data_encoding} covers data encoding and compression schemes employed in tile-level optimizationss.
-\cref{sec_multi_objective_optimizations} discusses multi-objective optimizations, \cref{sec_benchmarking} covers benchmarking methodology, and \cref{sec_problem_statement} formalises the optimizations problem that \cref{ch_methods} addresses.
+The related work survey identified that existing tools operate on individual optimisation dimensions - tile data pruning, encoding, or style cleanup - but none composes them into a joint pipeline, and none draws systematically on compiler or database optimisation theory.
+Building such a pipeline requires foundations from several fields: the map rendering architecture that defines what is being optimised, the compiler techniques whose analogues drive the expression-level passes, the query optimisation concepts that inform filter rewriting and predicate reordering, and the columnar encoding strategies that underpin the data-level passes.
+
+This chapter introduces these foundations in the order in which the optimiser consumes them.
+\cref{sec_map_rendering_approaches} describes the map rendering process and its resource pipeline.
+\cref{sec_compiler_optimizations} surveys compiler optimisation techniques - peephole rewriting, constant folding, and fixpoint iteration - whose analogues are applied to style expressions.
+\cref{sec_query_optimizations} presents query optimisation concepts - predicate pushdown and selectivity estimation - used for filter rewriting and reordering.
+\cref{sec_data_encoding} covers the columnar encoding and compression schemes employed at the tile level.
+\cref{sec_multi_objective_optimizations} discusses multi-objective optimisation, \cref{sec_benchmarking} covers benchmarking methodology, and \cref{sec_problem_statement} formalises the optimisation problem that \cref{ch_methods} addresses.
 
 \section{Map Rendering Approaches}\label{sec_map_rendering_approaches}
 
@@ -28,10 +31,14 @@ This allows a more complex 3D-based rendering with pitch, yaw, and roll.
 Due to having better hardware access, these APIs can render more complex scenes with better performance.\end{sloppypar}
 \end{itemize}
 
-Due to the need for low-level access, this research focuses exclusively on renderers based on open-source 3D graphics APIs. While these renderers are powerful, they require data to be preprocessed and optimized specifically for rendering. As a result, they cannot directly render high-level primitives such as shapes (polygons, lines, points), text, or images. Instead, they operate on lower-level graphics primitives such as textures, triangles, and quads.
+Due to the more advanced features and mostly better performance, this research focuses exclusively on renderers based on open-source 3D graphics APIs.
+While these renderers are powerful, they require data to be preprocessed and optimized specifically for rendering.
+As a result, they cannot directly render high-level primitives such as shapes (polygons, lines, points), text, or images.
+Instead, they operate on lower-level graphics primitives such as textures, triangles, and quads.
 
 These low-level graphics building blocks are linked to map data through sprites, fonts, and styles, which are then interpreted by a rendering engine.
 
+\newpage
 As a lower-level representation layer for displaying map content, the following components are required, as shown in \cref{fig:basic-arch}:
 
 \begin{itemize}
@@ -52,20 +59,32 @@ As a lower-level representation layer for displaying map content, the following 
 There are several approaches to delivering client-side rendered vector maps.
 
 Styles, sprites, and fonts are typically served from a file server or \ac{CDN} and require little processing.
-In some cases, parts of these resources may be generated dynamically - for example, to support complex text shaping for Arabic, Hebrew, Indic, or Japanese scripts as described by Wipfli~\cite{ComplexTextPlugin} - but this processing is usually handled server-side.
+In some cases, parts of these resources may be generated dynamically - for example, to support complex text shaping for Arabic, Hebrew, Indic, or Japanese scripts as described by Wipfli~\cite{ComplexTextPlugin} for MapLibre or Lengyel~\cite{https://terathon.com/blog/decade-slug.html} for SLUG.
+This processing currently usually handled ahead of time on the server-side.
 
 Tiles, by contrast, can be stored and accessed using three major approaches:
 
 \begin{itemize}
-\item \textbf{Dynamic}: Store geospatial data in a database (for example, PostGIS) and use a tile server to generate and serve tiles on demand.
-\item \textbf{Client-driven}: Store encoded tiles as a single file in a blob store using a format that includes an internal tile index (for example, PMTiles or VersaTiles). Clients retrieve tiles using multiple HTTP requests with appropriate Range headers to locate the required data.
-\item \textbf{Semi-static}: Store encoded tiles in a database file on disk (for example, SQLite) and use a tile server to extract and serve tiles to clients.
+\item
+    \textbf{Dynamic}:
+    Store geospatial data in a database (for example, PostGIS) and use a tile server to generate and serve tiles on demand.
+\item
+    \textbf{Client-driven}:
+    Store encoded tiles as a single file in a blob store using a format that includes an internal tile index (for example, PMTiles or VersaTiles).
+    Clients retrieve tiles using multiple HTTP requests with appropriate Range headers to locate the required data.
+\item
+    \textbf{Semi-static}:
+    Store encoded tiles in a database file on disk (for example, SQLite) and use a tile server to extract and serve tiles to clients.
 \end{itemize}
 
-Dynamic data sources can be updated frequently by applying incremental diffs, whereas the other approaches typically require a full rebuild when the underlying data changes. At larger scales, in-memory caching of tiles via regional or \ac{CDN}-style infrastructure - combined with fallback to static data - is essential for performance.
+Dynamic data sources can be updated frequently by applying incremental diffs, whereas the other approaches typically require a full rebuild when the underlying data changes.
+At larger scales, in-memory caching of tiles via regional or \ac{CDN}-style infrastructure - combined with fallback to runtime-dynamic data - is essential for performance.
 
-Although all of these resources can be optimized, tiles are usually the most critical due to their continuous streaming nature and typically higher data volume.
-Real-world observations support this: the performance of highly optimized systems such as Microsoft Bing Maps differs significantly from less optimized deployments, such as basemap.de.
+Although all of these resources can be optimized, tiles are usually the most critical due to their continuous streaming nature as a user moves the map thus higher data volume.
+All other resources depend on locale sligtly (for example loading different unicode ranges or fonts), but are generally only handled one time.
+
+Real-world observations support this:
+the performance of highly optimized systems such as Microsoft Bing Maps differs significantly from less optimized deployments, such as basemap.de.
 
 The following sections examine each resource in detail, focusing on the performance characteristics and optimizations strategies relevant to this work:
 
@@ -76,14 +95,14 @@ This requires shipping a font renderer to the client, as neither native nor web 
 This also means that for some fonts up to \qty{30}{\mega\byte} of font data needs to be transferred.
 
 For interactive use cases, this is prohibitive as the time to download this would be longer than acceptable.
-Some fonts need this shaping, as they connect neatly, but Latin fonts do not.
-For these fonts, there is a clear 1:1 relationship between the Unicode code point and a rendered character.
+Some fonts need this shaping as they need to connect neigboring characters neatly, but Latin fonts do usually not.
+For latin-like characters, there is usually a clear 1:1 relationship between the Unicode code point and a rendered character.
 
 This is why a simpler way exists:
 Cutting fonts up into Unicode slices (\texttt{start..end}) and serving only the ranges that are needed to the client.
 This cutting of fonts has the implicit advantage of pruning the space of possible font data to just the data that is needed to render the map.
 
-Common open-source renderers like MapLibre or source-available renderers like Mapbox do this by shipping pre-rasterised glyph ranges as Protocol Buffer (PBF) encoded signed distance fields, indexed by Unicode range (e.g.\ \texttt{0-255.pbf}, \texttt{256-511.pbf}).
+Common open-source renderers like MapLibre or source-available renderers like Mapbox do this by shipping pre-rasterised glyph ranges as \acp{PBF} encoded \acp{SDF}, indexed by Unicode range (e.g.\ \texttt{0-255.pbf}, \texttt{256-511.pbf}).
 
 \subsection{Sprites}
 
@@ -111,14 +130,7 @@ This observation has direct consequences for any optimiser that rewrites zoom bo
 \Cref{lst:overzoom} shows the implementation: when overzoom parameters are present, the worker source substitutes a sliced version of the source's \texttt{maxzoom} tile.
 The slicing function rescales geometry coordinates into the target tile's coordinate space and clips to the tile extent, producing a synthetic tile from the nearest available data.
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_worker\_source.ts:99--102}, \texttt{src/source/vector\_tile\_overzoomed.ts:87--124})},label=lst:overzoom]
-// src/source/vector_tile_worker_source.ts:99-102
-let {vectorTile, rawData} = tileResult;
-if (overzoomParameters) {
-    ({vectorTile, rawData} = this._getOverzoomTile(params, vectorTile));
-}
-
-// src/source/vector_tile_overzoomed.ts:87-124 -- sliceVectorTileLayer()
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts:87--124})},label=lst:overzoom]
 export function sliceVectorTileLayer(
     sourceLayer: VectorTileLayerLike,
     maxZoomTileID: CanonicalTileID,
