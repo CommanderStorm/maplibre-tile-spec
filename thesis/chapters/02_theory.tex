@@ -187,6 +187,12 @@ A feature consists of
 The following formats are used for encoding and transferring data to the client:
 
 \begin{itemize}
+    \item \textbf{Raster tiles} deliver pre-rendered images (PNG, JPEG, WebP, Avif, JPEGXL) rather than vector geometry.
+    They require no client-side rendering logic but cannot be restyled, rotated at arbitrary angles, or queried interactively, as the visual representation is fixed at generation time.
+
+    \item \textbf{Analysis-focused formats} such as FlatGeoBuf, GeoParquet, and GeoArrow are optimised for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
+    They support random access and columnar scans but do not follow the tiled spatial access pattern required by interactive map renderers and are therefore not considered further in this work.
+
     \item \textbf{GeoJSON}~\cite{rfc7946} is a JSON-based geospatial interchange format.
     Its human-readable structure makes it useful for debugging and small overlays, but its verbosity - text-encoded coordinates and repeated property keys per feature - makes it impractical for the continuous tile streaming required by interactive map renderers.
 
@@ -204,12 +210,6 @@ The following formats are used for encoding and transferring data to the client:
     Instead of the row-major key-value-pair layout of \ac{MVT}, \ac{MLT} stores each property as an independent column with type-specific encoding.
     This columnar layout enables per-column compression strategies - for example, dictionary encoding for low-cardinality string columns, delta encoding for monotonically increasing integers, or run-length encoding for repeated values - and eliminates the per-feature tag overhead of the protobuf encoding.
     Tremmel et~al.\ report 2-6$\times$ tile size reductions over \ac{MVT} depending on data characteristics.\end{sloppypar}
-
-    \item \textbf{Analysis-focused formats} such as FlatGeoBuf, GeoParquet, and GeoArrow are optimised for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
-    They support random access and columnar scans but do not follow the tiled spatial access pattern required by interactive map renderers and are therefore not considered further in this work.
-
-    \item \textbf{Raster tiles} deliver pre-rendered images (PNG, JPEG, WebP, Avif, JPEGXL) rather than vector geometry.
-    They require no client-side rendering logic but cannot be restyled, rotated at arbitrary angles, or queried interactively, as the visual representation is fixed at generation time.
 \end{itemize}
 
 Beyond the choice of tile format, a number of transfer-layer optimizations can improve delivery performance: utilising the approximately \qty{14}{\kilo\byte} TCP slow-start window as discussed by Nathaniel~\cite{WhyYourWebsite}, edge caching~\cite{BestPracticesMap}, or HTTP/2 multiplexing.
