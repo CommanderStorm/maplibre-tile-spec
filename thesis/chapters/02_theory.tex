@@ -130,7 +130,7 @@ This observation has direct consequences for any optimiser that rewrites zoom bo
 \Cref{lst:overzoom} shows the implementation: when overzoom parameters are present, the worker source substitutes a sliced version of the source's \texttt{maxzoom} tile.
 The slicing function rescales geometry coordinates into the target tile's coordinate space and clips to the tile extent, producing a synthetic tile from the nearest available data.
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts:87--125})},label=lst:overzoom]
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts:87-125})},label=lst:overzoom]
 export function sliceVectorTileLayer(sourceLayer: VectorTileLayerLike, maxZoomTileID: CanonicalTileID, targetTileID: CanonicalTileID): VectorTileLayerOverzoomed {
     const {extent} = sourceLayer;
     const dz = targetTileID.z - maxZoomTileID.z;
@@ -179,7 +179,7 @@ Each tile is organised into \emph{source layers} (for example, roads, buildings,
 A feature consists of
 \begin{itemize}
     \item geometry (point, linestring, or polygon encoded as integer coordinates relative to the tile's extent)
-    \item optionally, a set of key--value \emph{properties} (for example, \texttt{class=motorway} or \texttt{name=Main~Street})
+    \item optionally, a set of key-value \emph{properties} (for example, \texttt{class=motorway} or \texttt{name=Main~Street})
     \item optionally, a set of ids
     \item metadata like the extent
 \end{itemize}
@@ -191,14 +191,18 @@ The following formats are used for encoding and transferring vector map data to 
     Its human-readable structure makes it useful for debugging and small overlays, but its verbosity - text-encoded coordinates and repeated property keys per feature - makes it impractical for the continuous tile streaming required by interactive map renderers.
 
     \item \textbf{\acf{MVT}}~\cite{MapboxVectorTileSpec} is the dominant vector tile format, adopted as a \emph{de~facto} standard across open-source map renderers including MapLibre.
-    It uses \acp{PBF}~\cite{ProtocolBuffers} as its wire format and stores features in a \emph{row-oriented} layout: each feature carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
-    Geometry is encoded as a sequence of \texttt{MoveTo}, \texttt{LineTo}, and \texttt{ClosePath} commands with delta-encoded integer coordinates relative to the tile extent (typically 4096 units per tile edge).
-    The row-oriented layout means that accessing a single property column requires parsing past all other properties of the same feature, and that compression operates on the interleaved byte stream rather than on homogeneous data columns.
+    It uses \acp{PBF}~\cite{ProtocolBuffers} as its wire format and stores features in a \emph{row-oriented} layout:
+\begin{itemize}
+    \item each feature carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
+    \item Geometry is encoded as a sequence of \texttt{MoveTo}, \texttt{LineTo}, and \texttt{ClosePath} commands with delta-encoded integer coordinates relative to the tile extent (typically \texttt{4096} units per tile edge).
+    \item The row-oriented layout means that accessing a single property column requires parsing past all other properties of the same feature, and that compression operates on the interleaved byte stream rather than on homogeneous data columns.
+\end{itemize}
+
 
     \item \begin{sloppypar}\textbf{\acf{MLT}} is a columnar vector tile format proposed by Tremmel et~al.~\cite{tremmelMapLibreTileNext2025}.
-    Instead of the row-major key--value-pair layout of \ac{MVT}, \ac{MLT} stores each property as an independent column with type-specific encoding.
+    Instead of the row-major key-value-pair layout of \ac{MVT}, \ac{MLT} stores each property as an independent column with type-specific encoding.
     This columnar layout enables per-column compression strategies - for example, dictionary encoding for low-cardinality string columns, delta encoding for monotonically increasing integers, or run-length encoding for repeated values - and eliminates the per-feature tag overhead of the protobuf encoding.
-    Tremmel et~al.\ report 2--6$\times$ tile size reductions over \ac{MVT} depending on data characteristics.\end{sloppypar}
+    Tremmel et~al.\ report 2-6$\times$ tile size reductions over \ac{MVT} depending on data characteristics.\end{sloppypar}
 
     \item \textbf{Analysis-focused formats} such as FlatGeoBuf, GeoParquet, and GeoArrow are optimised for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
     They support random access and columnar scans but do not follow the tiled spatial access pattern required by interactive map renderers and are therefore not considered further in this work.
@@ -248,7 +252,7 @@ The MapLibre style specification~\cite{MapLibreStyleSpec} defines a map's appear
     \Cref{lst:ishidden} shows the implementation: the method checks the layer's zoom bounds and evaluated visibility in a single guard, and is called at both tile-parse time (the worker skips bucket creation) and draw-call time (the painter skips rendering).
     Tight \texttt{minzoom}/\texttt{maxzoom} bounds therefore eliminate work at two stages of the pipeline before any filter evaluation or geometry decoding occurs.
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method and its call sites (\texttt{src/style/style\_layer.ts:328--332}, \texttt{src/source/worker\_tile.ts:111}, \texttt{src/render/painter.ts:658--659})},label=lst:ishidden]
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method and its call sites (\texttt{src/style/style\_layer.ts:328-332}, \texttt{src/source/worker\_tile.ts:111}, \texttt{src/render/painter.ts:658-659})},label=lst:ishidden]
 // src/style/style_layer.ts:328-332
 isHidden(zoom: number = this.minzoom, roundMinZoom: boolean = false) {
     if (this.minzoom && zoom < (roundMinZoom ? Math.floor(this.minzoom) : this.minzoom)) return true;
@@ -256,10 +260,10 @@ isHidden(zoom: number = this.minzoom, roundMinZoom: boolean = false) {
     return this._evaluatedVisibility === 'none';
 }
 
-// src/source/worker_tile.ts:111 -- worker skips bucket creation
+// src/source/worker_tile.ts:111 - worker skips bucket creation
 if (layer.isHidden(this.zoom, true)) continue;
 
-// src/render/painter.ts:658-659 -- painter skips draw calls
+// src/render/painter.ts:658-659 - painter skips draw calls
 renderLayer(painter, tileManager, layer, coords, renderOptions) {
     if (layer.isHidden(this.transform.zoom)) return;
     // ...dispatches to draw.fill, draw.line, draw.symbol, etc.
@@ -274,8 +278,8 @@ The resulting expression trees can be deeply nested and may contain redundant or
 \Cref{lst:worker_pipeline} shows how these components interact in practice: MapLibre's worker thread parses a tile by iterating source layers, collecting features, checking \texttt{isHidden}, recalculating layer expressions at the current zoom, and populating buckets (which runs the filter and builds vertex data).
 Every optimisation in \cref{ch_methods} maps to a step in this pipeline.
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS worker tile processing pipeline (\texttt{src/source/worker\_tile.ts:85--127})},label=lst:worker_pipeline]
-// src/source/worker_tile.ts:85-127 -- WorkerTile.parse()
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS worker tile processing pipeline (\texttt{src/source/worker\_tile.ts:85-127})},label=lst:worker_pipeline]
+// src/source/worker_tile.ts:85-127 - WorkerTile.parse()
 const layerFamilies = layerIndex.familiesBySource[this.source];
 for (const sourceLayerId in layerFamilies) {
     const sourceLayer = data.layers[sourceLayerId];
