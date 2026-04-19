@@ -6,7 +6,7 @@ This chapter applies that methodology to evaluate the pipeline empirically.
 The evaluation is structured to mirror the pipeline's own architecture.
 \cref{sec_exp_expressions} isolates the eight expression-level passes, measuring their effect on style size, load time, and AST complexity in cumulative ablation order.
 \cref{sec_exp_structural} evaluates the six structural passes, with particular attention to inter-pass dependencies and the synergy between dead layer elimination and layer merging.
-\cref{sec_exp_mlt} assesses the data-level optimisations: style-driven tile shaving and the MLT encoding strategy competition.
+\cref{sec_exp_mlt} assesses data-level optimisations, demonstrating the cascade from style-level dead layer elimination through tile shaving into smaller tiles, and evaluating how the encoding strategy competition delivers the shaved data to the wire.
 \cref{sec_exp_cross_style} tests generalisation by applying the full pipeline to 15 styles beyond the deep benchmarking corpus, and \cref{sec_exp_combined} brings all three levels together to quantify the end-to-end effect on tile volume, load time, and rendering stability - and to examine how style-level and data-level optimisations interact through the cascade.
 
 \section{Experiment 1: Expression-Level Optimisations}\label{sec_exp_expressions}
@@ -70,6 +70,12 @@ Styles with deeply nested expressions (e.g., Americana, which uses complex label
 \paragraph{Stats-driven passes require full coverage}
 Stats-driven constant folding is gated on a sample rate of~$1.0$ for folding operations, since removing an expression arm based on incomplete data could produce incorrect rendering.
 Frequency-based reordering, however, is safe under sampling, as the relative ordering of selectivities is robust to moderate sampling noise.
+
+\paragraph{Downstream cascade into the data pipeline}
+Beyond their direct rendering benefit, expression-level simplifications cascade into the data-level pipeline evaluated in \cref{sec_exp_mlt}.
+Each folded filter predicate and each pruned \texttt{match} arm reduces the set of property names and categorical values that the tile pruning advisory (\cref{sub_tile_shaving}) must track; each filter reduced to \texttt{false} enables dead layer elimination in the structural phase, which removes that layer's entire property footprint from the advisory.
+Simpler filters are also more amenable to the advisory's static analysis, because canonical forms (e.g., a direct \texttt{["==",~\ldots]} rather than a double-negated comparison) expose referenced property values more readily.
+The magnitude of this cascade is quantified in \cref{sec_exp_mlt}.
 
 
 \section{Experiment 2: Structural Optimisations}\label{sec_exp_structural}
@@ -166,351 +172,103 @@ MapLibre's label collision detection operates per-layer: labels within the same 
 Merging two symbol layers would change which labels collide, potentially hiding labels that the original style intended to show or showing labels that should have been suppressed.
 A future extension could detect cases where merged symbol layers produce identical collision behaviour, but this would require modelling the collision algorithm, which is beyond the scope of this work.
 
+\paragraph{Downstream cascade into tile shaving}
+Dead layer elimination has a second-order effect beyond reducing per-frame draw calls: each eliminated layer removes its property references from the tile pruning advisory computed in the data-level pipeline (\cref{sub_tile_shaving}).
+If a removed layer was the sole consumer of a property column, that column is stripped from every tile at encoding time.
+Similarly, metadata refinement's tightened zoom bounds cause the advisory to mark additional zoom levels as unused for a given source-layer, potentially eliminating entire tiles.
+This cascade --- from style-level dead elimination and metadata refinement through advisory shrinkage into smaller tiles --- is the thesis's central architectural finding, quantified in \cref{sec_exp_mlt}.
+
 
 \section{Experiment 3: Data-Level Optimisations}\label{sec_exp_mlt}
 
-Experiments~1 and~2 demonstrate that style-level transformations - informed by tile statistics - can significantly reduce rendering cost by simplifying the \emph{program} that the renderer executes.
-This experiment addresses the complementary question: can the \emph{data} itself be transformed to reduce transfer size and decoding cost, and do style-level and data-level optimisations compose?
+Experiments~1 and~2 optimised the \emph{program} the renderer executes: simpler expressions, fewer layers, tighter metadata.
+Each of these style-level changes also narrows the set of tile data that the rendering pipeline references --- an effect that the preceding discussions identified as a cascade from style optimisation through the tile pruning advisory into smaller tiles.
+This experiment asks: can the \emph{data} itself be co-optimised to exploit this cascade, and does the predicted interaction between style-level and data-level optimisations actually materialise?
 
-The research by Tremmel et al.~\cite{tremmelMapLibreTileNext2025} has demonstrated that the \ac{MLT} format is structurally superior to the protobuf-based \ac{MVT} format, offering columnar storage, built-in compression, and a richer type system.
-However, their evaluations used fixed encoder configurations that did not consider the characteristics of the data being encoded, and - did not consider the style.
-As the introduction observes, existing tools optimise either data or style, but not both.
+The research by Tremmel et al.~\cite{tremmelMapLibreTileNext2025} demonstrated that the \ac{MLT} columnar format is structurally superior to protobuf-based \ac{MVT}, offering columnar storage, built-in compression, and a richer type system.
+However, their evaluations used fixed encoder configurations that did not consider the characteristics of the data being encoded, and did not consider the style.
+This experiment bridges that gap by applying the data-level pipeline described in \cref{sub_data_optimisations} --- style-driven tile shaving, data transformations, and automatic encoding strategy selection --- using the optimised style from Experiments~1--2 to drive the pruning advisory.
 
 \subsection{Problem Statement}\label{sub_mlt_problem}
 
 Two problems remain open after the style-level optimisations of Experiments~1 and~2:
 
 \begin{enumerate}
-    \item \textbf{Tiles carry data the style never uses.}
+    \item \textbf{Tiles carry data the style never uses --- and how much depends on the style.}
     Vector tiles are produced from a general-purpose schema (e.g., OpenMapTiles) that includes hundreds of properties and multiple geometry types.
-    A specific rendering style typically references only a fraction of these.
-    Unused columns are transferred, decoded, and discarded on every tile request - wasted bandwidth and CPU.
+    A specific rendering style references only a fraction of these.
+    Crucially, the amount of removable data is \emph{style-dependent}: a style with many dead layers (removed by Experiment~2's dead elimination) references fewer properties, leaving more columns removable; a style whose expressions have been simplified (Experiment~1) exposes fewer categorical values in its filters, leaving more features removable.
+    Unused columns and features are transferred, decoded, and discarded on every tile request --- wasted bandwidth and CPU that the style optimisations have made quantifiable.
 
-    \item \textbf{Encoders ignore data characteristics.}
+    \item \textbf{Encoders ignore the data characteristics that shaving produces.}
     Existing \ac{MLT} encoders apply uniform encoding strategies across all columns, disregarding the statistical properties of individual fields.
-    Furthermore, safety-critical libraries such as FastPFor~\cite{fastpfor} explicitly disclaim input validation.
+    After style-driven shaving removes columns and features, the remaining data has different statistical properties: fewer distinct property values (longer \ac{RLE} runs), more homogeneous distributions (better delta encoding), and smaller string vocabularies (more effective dictionary compression).
+    An encoder that adapts to these changed characteristics --- through the profiler-driven candidate pruning described in \cref{sub_encoding_strategies} --- can capture savings that a fixed-strategy encoder leaves on the table.
+    Furthermore, safety-critical libraries such as FastPFor~\cite{fastpfor} explicitly disclaim input validation, necessitating the multi-layer correctness validation described in \cref{sub_data_optimisations}.
 \end{enumerate}
 
-\subsection{Approach}\label{sub_mlt_approach}
+\subsection{Evaluation Design}\label{sub_mlt_evaluation}
 
-\cref{sub_data_optimisations} provides a high-level overview of the data-level techniques; this section details the algorithms and their experimental configuration.
-The data-level optimisations pipeline operates in three stages that mirror the structure of a database query optimiser: \emph{logical} rewriting (what data to keep), \emph{physical} strategy selection (how to encode it), and \emph{cost-based} competition (which encoding is smallest).
+This experiment evaluates the data-level pipeline described in \cref{sub_data_optimisations}: style-driven tile shaving (\cref{sub_tile_shaving}), data transformations (\cref{sub_data_transforms}), and automatic encoding strategy selection (\cref{sub_encoding_strategies}).
+The central question is whether style-level and data-level optimisations \emph{compose} --- that is, whether optimising the style first and then encoding the resulting tile set produces measurably better results than either optimisation category in isolation.
+This directly addresses Research Goal~R1.
 
-\begin{enumerate}
-    \item \textbf{Style-driven tile shaving} (\cref{sub_tile_shaving}): the optimised style from Experiments~1-2 is analysed to produce a \emph{tile pruning advisory} that specifies, per source-layer and zoom level, which properties, geometry types, and property values to retain.
-    Tiles are pruned according to this advisory before encoding.
-    \item \textbf{Data transformations} (\cref{sub_data_transforms}): remaining data is transformed to improve compressibility - categorical string properties are replaced by frequency-ordered integers (\emph{string interning}), and features are reordered to exploit spatial or categorical locality.
-    \item \textbf{Encoding strategy selection} (\cref{sub_encoding_strategies}): the pruned, transformed data is re-encoded into \ac{MLT} using a multi-strategy competition that automatically profiles each data stream and selects the most compact encoding.
-\end{enumerate}
-
-\noindent Stage~1 is the key \emph{style-data co-optimisations}: the style determines what data survives, and the style-level optimisations from Experiments~1-2 cascade into smaller advisories (fewer live layers means fewer referenced properties) that produce smaller tiles.
-Stage~2 uses data statistics to improve compressibility.
-Stage~3 is a data-only optimisations that adapts encoding to the statistical properties of the data after pruning and transformation.
-
-\subsubsection{Stage 1: Style-Driven Tile Shaving}\label{sub_tile_shaving}
-
-The bridge between style-level and data-level optimisations is the \emph{tile pruning advisory} - a structured report that captures, for each source-layer and zoom level, exactly what the rendering style needs.
-The advisory is computed from the \emph{optimised} style (after all expression and structural passes) together with tile statistics.
-This ordering is critical: style-level dead layer elimination, metadata refinement, and layer merging reduce the set of live style layers, which in turn reduces the set of referenced properties and geometry types in the advisory.
-The style optimisations from Experiments~1-2 thus \emph{cascade} into data-level savings.
-
-The advisory captures the following per source-layer:
-
-\begin{itemize}
-    \item \textbf{Used properties with zoom ranges}: for each property name appearing in a \texttt{["get",~\ldots]} or \texttt{["has",~\ldots]} expression in any live style layer, the zoom range over which it is referenced.
-    Properties not referenced at any zoom level are candidates for removal.
-    \item \textbf{Used geometry types with zoom ranges}: which of Point, LineString, and Polygon are needed, derived from the style layer types (e.g., \texttt{fill} $\to$ Polygon, \texttt{circle} $\to$ Point).
-    Features with geometry types unused by any style layer at the current zoom level are removed.
-    \item \textbf{Unused zoom levels}: zoom levels at which no style layer targets the source-layer.
-    Tiles at these zoom levels need not be encoded at all.
-    \item \textbf{Unused property values}: specific values of categorical properties that are never matched by any style filter.
-    For example, if no style layer filters for \texttt{class = "ferry"}, features with that value can be removed.
-    \item \textbf{Feature ID requirement}: whether any style layer uses \texttt{["id"]} or \texttt{["feature-state",~\ldots]}.
-    When IDs are unused, the entire ID column is stripped.
-\end{itemize}
-
-\noindent The pruning advisory is applied to each \ac{MVT} tile before encoding.
-The pruning operations, applied in order, are:
-
-\begin{enumerate}
-    \item Remove entire source-layers not referenced by any style layer.
-    \item For each remaining layer:
-    \begin{enumerate}
-        \item Filter features by geometry type: remove features whose geometry type is unused at the current zoom level.
-        \item Filter features by property values: remove features with unused categorical values.
-        \item Strip unused properties: rebuild the property key-value table to include only referenced properties.
-        \item Strip feature IDs when not needed.
-    \end{enumerate}
-\end{enumerate}
-
-\begin{figure}[htbp]
-    \centering
-    \begin{tikzpicture}[
-        node distance=0.5cm and 0.7cm,
-        box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.65cm, font=\small, align=center},
-        style/.style={box, fill=blue!10, minimum width=2.8cm},
-        data/.style={box, fill=orange!10, minimum width=2.8cm},
-        both/.style={box, fill=green!10, minimum width=2.8cm},
-        arrow/.style={-{Stealth[length=2.5mm]}, thick},
-        label/.style={font=\scriptsize\itshape, text=gray},
-    ]
-        % Style optimisations
-        \node[style] (sopt) {Style optimisations\\{\scriptsize (Experiments 1-2)}};
-        \node[data, right=1.0cm of sopt] (stats) {Tile statistics};
-
-        % Advisory
-        \node[both, below=0.8cm of sopt, xshift=1.8cm] (adv) {Tile pruning advisory};
-        \draw[arrow] (sopt) -- node[left, label] {optimised style} (adv);
-        \draw[arrow] (stats) -- node[right, label] {property/geometry stats} (adv);
-
-        % Tile processing
-        \node[data, below left=0.8cm and 0.3cm of adv] (mvt) {\ac{MVT} tile};
-        \node[data, below=0.8cm of adv] (prune) {Prune \& transform};
-        \node[data, below right=0.8cm and 0.3cm of adv] (mlt) {\ac{MLT} tile};
-
-        \draw[arrow] (adv) -- (prune);
-        \draw[arrow] (mvt) -- (prune);
-        \draw[arrow] (prune) -- node[right, label] {re-encode} (mlt);
-
-        % Cascade annotation
-        \draw[decorate, decoration={brace, amplitude=5pt, mirror}, thick, gray]
-            ($(sopt.south west)+(0,-0.15)$) -- ($(adv.south east)+(0,-0.15)$)
-            node[midway, below=7pt, font=\scriptsize, text=gray, align=center] {cascade: fewer live layers $\to$\\fewer referenced properties $\to$ smaller tiles};
-    \end{tikzpicture}
-    \caption{Style-driven tile shaving pipeline.  The optimised style from Experiments~1-2 and tile statistics jointly produce a pruning advisory.  Each \ac{MVT} tile is pruned according to the advisory, transformed, and re-encoded as \ac{MLT}.  Style-level dead layer elimination cascades into smaller advisories and thus smaller tiles}
-    \label{fig:tile_shaving_pipeline}
-\end{figure}
-
-\subsubsection{Stage 2: Data Transformations}\label{sub_data_transforms}
-
-After pruning, two data transformations improve compressibility before encoding.
-
-\paragraph{String property interning}
-Categorical string properties - such as road class, land-use type, or administrative level - are replaced by frequency-ordered integer indices.
-The interning table is derived from the tile statistics: all distinct values of a string property are sorted by descending frequency, and each value is assigned a sequential integer starting from~0.
-The most common value receives index~0, the second most common receives~1, and so on.
-
-This transformation has two benefits.
-First, it reduces the per-feature storage cost from a variable-length string (with length prefix and dictionary overhead) to a small integer (typically \qtyrange{1}{2}{\byte} as a \ac{VarInt}).
-Second, the frequency ordering means that common values receive small indices, which compress well under \ac{VarInt} and delta encoding.
-
-The corresponding style expressions are rewritten to reference the integer indices rather than the original string values.
-For example, a filter \texttt{["==",~["get",~"class"],~"primary"]} is rewritten to \texttt{["==",~["get",~"class"],~0]} if \texttt{"primary"} is the most frequent value.
-This rewriting ensures that the optimised style remains consistent with the transformed tile data.
-
-\paragraph{Feature reordering}
-The order of features within a tile layer affects the compressibility of every parallel column.
-The encoder explores multiple feature orderings - spatial (Hilbert/Morton curve of first vertex), ID-based, and property-based (grouping by a low-cardinality attribute) - and retains the ordering that produces the smallest encoded output.
-This is described in detail in \cref{sub_encoding_strategies}.
-
-\subsubsection{Stage 3: Automatic Encoding Strategy Selection}\label{sub_encoding_strategies}
-
-The pruned and transformed data is re-encoded into the \ac{MLT} columnar format.
-The Rust-based encoder reformulates the encoding problem as a \emph{multi-strategy competition} inspired by profile-guided optimisations in compilers: rather than committing to a single encoding plan, the encoder tries multiple strategies, measures the output size of each, and selects the smallest result.
-This competition operates at two nested levels: an \emph{outer loop} that trials multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\linewidth]{figures/arch_enc}
-    \caption{Encoder and decoder data-flow in \texttt{mlt-core}.
-    \emph{Decoding} (left) descends from an input \texttt{\&[u8]} slice through \texttt{Raw*} (zero-copy views over the wire format), \texttt{Parsed*} (lazily decoded, still columnar), and finally \texttt{Tile*} (row-oriented, ready to consume).
-    \emph{Encoding} (right) ascends from a row-oriented \texttt{Tile*} through \texttt{Staged*} (columnar, not yet encoded) and \texttt{Encoded*} (wire-ready byte buffers) into an \texttt{impl Write} sink via a final zero-copy step.
-    Within the encoding path, a \emph{Profile$\leftrightarrow$Optimiser$\leftrightarrow$Encoder} feedback loop implements the multi-strategy competition described in this section: the profile summarises each \texttt{Staged*} stream, the optimiser uses those summaries to trim the candidate search space and generate per-stream encoder guesses, and the encoder fully determines the bytes committed to \texttt{Encoded*}.
-    The \texttt{Raw*}/\texttt{Parsed*}/\texttt{Staged*}/\texttt{Encoded*}/\texttt{Tile*} families share a common \texttt{<Name>} stem and can be in either an encoded or decoded state, which keeps encoder, decoder, and in-place re-encoding on a single type hierarchy}
-    \label{fig:arch_enc}
-\end{figure}
-
-\paragraph{Outer loop: sort-strategy competition}
-Reordering features within a layer permutes every parallel column - geometry, IDs, and all properties - simultaneously.
-Different orderings favour different encoding schemes: spatial orderings cluster nearby geometries and their correlated properties, improving \ac{RLE} run lengths; ID ordering produces sequential integer sequences amenable to delta-\acs{RLE}.
-
-The encoder trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count.
-The implemented strategies (\texttt{SortStrategy} in \texttt{mlt-core/src/encoder/sort.rs}) are:
-
-\begin{enumerate}
-    \item \textbf{Unsorted}: the original MVT feature order is preserved.
-    \item \textbf{Spatial (Morton/Z-order)}: features are sorted by the Z-order curve index of their first vertex, computed via bit-interleaving.  Fast to compute; provides reasonable spatial locality.
-    \item \textbf{Spatial (Hilbert)}: features are sorted by the Hilbert curve index of their first vertex.  Slower to compute than Morton but achieves superior spatial locality, as the Hilbert curve avoids the long jumps inherent in the Z-order curve's recursive structure~\cite{moonAnalysisClusteringProperties2001}.
-    \item \textbf{ID}: features are sorted by feature ID in ascending order.
-\end{enumerate}
-
-For each candidate strategy, the encoder constructs a fresh \texttt{Encoder} instance, encodes the reordered layer, and measures the total output size (header + metadata + data).
-The strategy producing the smallest output is retained; all others are discarded.
-When only a single strategy is applicable, the competition is elided and the layer is encoded directly without cloning.
-Property-based sort strategies were considered but are not included in the current implementation, because the string interning pass (\cref{sub_data_transforms}) already groups features of the same discriminator value into dense dictionary-index ranges, and Hilbert or ID ordering strictly dominated an explicit categorical sort on the benchmark tileset.
-
-\begin{figure}[htbp]
-    \centering
-    \begin{tikzpicture}[
-        node distance=0.5cm and 0.6cm,
-        box/.style={rectangle, draw, rounded corners=2pt, minimum width=2cm, minimum height=0.65cm, font=\small, align=center},
-        input/.style={box, fill=gray!15},
-        strategy/.style={box, fill=blue!10, minimum width=1.6cm},
-        encoder/.style={box, fill=orange!10, minimum width=2.4cm},
-        decision/.style={diamond, draw, fill=yellow!15, aspect=2.5, font=\small, inner sep=1pt},
-        output/.style={box, fill=green!15},
-        arrow/.style={-{Stealth[length=2.5mm]}, thick},
-        label/.style={font=\scriptsize\itshape, text=gray},
-    ]
-        % Input
-        \node[input] (layer) {TileLayer01};
-
-        % Strategy candidates
-        \node[strategy, below left=1.0cm and 1.2cm of layer] (s1) {Unsorted};
-        \node[strategy, left=0.3cm of s1] (s0) {Hilbert};
-        \node[strategy, right=0.3cm of s1] (s2) {Morton};
-        \node[strategy, right=0.3cm of s2] (s3) {ID};
-
-        % Pruning annotation
-        \node[above=0.1cm of s0, font=\scriptsize, text=gray, anchor=south] (prune) {bbox heuristic};
-
-        \draw[arrow] (layer) -- (s0);
-        \draw[arrow] (layer) -- (s1);
-        \draw[arrow] (layer) -- (s2);
-        \draw[arrow] (layer) -- (s3);
-
-        % Encoding trials
-        \node[encoder, below=0.8cm of s1] (enc) {Encode all columns\\{\scriptsize (per-stream competition)}};
-
-        \draw[arrow] (s0) -- (enc);
-        \draw[arrow] (s1) -- (enc);
-        \draw[arrow] (s2) -- (enc);
-        \draw[arrow] (s3) -- (enc);
-
-        % Size comparison
-        \node[decision, below=0.7cm of enc] (cmp) {size $<$ best?};
-        \draw[arrow] (enc) -- node[right, label] {measure \texttt{total\_len()}} (cmp);
-
-        % Output
-        \node[output, below=0.7cm of cmp] (best) {Keep smallest};
-        \draw[arrow] (cmp) -- node[right, label] {yes: update best} (best);
-        \draw[arrow] (cmp.west) -- ++(-1.2,0) |- node[near start, above, label] {no: discard} (enc.west);
-    \end{tikzpicture}
-    \caption{Multi-strategy sort competition.  The layer is encoded under each candidate sort order; the encoding with the smallest \texttt{total\_len()} is retained.  Spatial strategies are pruned by the bounding-box heuristic for large, widely-spread layers.  Within each trial, per-stream encoding competitions select the best integer encoder for every data stream}
-    \label{fig:sort_competition}
-\end{figure}
-
-To avoid wasting trials on unpromising strategies, a \emph{bounding-box heuristic} skips spatial sorting on large layers whose features are too spatially dispersed for locality clustering to help.
-Specifically, for layers with more than \texttt{SORT\_TRIAL\_THRESHOLD = 512} features, the spatial trials are pruned when the first-vertex bounding box covers more than \texttt{SPATIAL\_HELP\_COVERAGE = 80\%} of the tile extent on \emph{both} axes (implemented in \texttt{sort.rs::spatial\_sort\_likely\_to\_help}).
-Small layers (below the threshold) are always trialled, since the absolute cost of an extra encoding pass is negligible for them.
-
-\paragraph{Inner loop: per-stream encoding competition}\label{sub_stream_competition}
-Within each sort-strategy trial, every integer data stream is subject to an independent encoding competition.
-Each candidate pairs a \emph{logical} encoding (Plain, Delta, \ac{RLE}, or DeltaRle) with a \emph{physical} encoding (\ac{VarInt} or \ac{FastPFOR}~\cite{fastpfor}).
-The na\"ive approach - encoding every combination and comparing - would be prohibitively expensive for large tiles.
-Instead, a \emph{data profiler} (\texttt{encoder/stream/optimizer.rs}) samples a contiguous block taken from the middle of the stream: streams with at most \texttt{MIN\_SAMPLE = 512} values are profiled in full, and longer streams are profiled over $\lfloor |s| / 100 \rfloor$ values clamped to $[\texttt{MIN\_SAMPLE},\, \texttt{MAX\_SAMPLE}]$ with \texttt{MAX\_SAMPLE = \num{16384}}.
-The contiguous mid-stream window is chosen over a random sample because \ac{RLE} run lengths and delta-bit-width statistics are destroyed by permutation, and because the middle of a spatially or ID-sorted stream is a representative point away from the boundary artefacts at the ends.
-The profiler computes four metrics in a single pass:
-
-\begin{itemize}
-    \item \emph{Average run length} ($\bar{r} = |s| / n_{\text{runs}}$): the mean number of consecutive identical values.
-    \item \emph{Delta average run length} ($\bar{r}_\Delta = (|s|-1) / n_{\Delta\text{-runs}}$): the mean run length in the zigzag-encoded delta stream.
-    \item \emph{Sortedness}: whether the sample is monotonically ascending or descending.
-    \item \emph{Bit-width sums}: the total bit widths of both raw values and zigzag-encoded deltas, used to estimate whether delta encoding reduces the representation cost.
-\end{itemize}
-
-Based on these metrics, candidates are pruned before any full encoding is attempted:
-\ac{RLE} is excluded when $\bar{r} < 2.0$;
-Delta is excluded when the stream is unsorted \emph{and} delta bit widths exceed raw bit widths;
-DeltaRle is excluded when $\bar{r}_\Delta < 2.0$ and neither \ac{RLE} nor Delta is independently viable.
-\ac{FastPFOR} is only offered for 32-bit integer types, as the algorithm's block structure is designed for fixed-width words.
-The remaining candidates (typically two to four) are encoded in full, and the smallest output is committed.
-
-\paragraph{String encoding}
-String columns are competed across four strategies, reflecting the two orthogonal dimensions of string compression: deduplication and byte-level compression.
-
-\begin{enumerate}
-    \item \textbf{Plain}: raw bytes with length prefixes.
-    The length stream is itself subject to the integer encoding competition.
-    \item \textbf{Dictionary}: a deduplicated corpus with per-string offset indices.
-    Effective when many features share the same string value (e.g., road names that repeat across tiles).
-    \item \textbf{\ac{FSST}}~\cite{boncz2020fsst}: a lightweight, random-access string compressor that learns a symbol table of up to~255 frequent byte sequences and replaces occurrences with single-byte codes.
-    The symbol table is stored once per column; the compressed corpus remains directly scannable without decompression.
-    \item \textbf{\ac{FSST} + Dictionary}: \ac{FSST} applied to a deduplicated dictionary, combining both deduplication and byte-level compression.
-\end{enumerate}
-
-A viability probe ensures that \ac{FSST} is only attempted when the symbol-table overhead (up to \qty{2040}{\byte}) is likely to be recouped: columns below \texttt{FSST\_OVERHEAD\_THRESHOLD = \num{2048}}~raw bytes are excluded, and a trial compression on a sample of up to \texttt{FSST\_SAMPLE\_STRINGS = 256} strings is evaluated before committing (\texttt{encoder/property/strings.rs}).
-Trained \ac{FSST} compressors are cached by column name in a \texttt{HashMap} and reused across all sort-strategy trials, avoiding redundant training.
-A \emph{pruning variant} of the \ac{FSST} compressor removes symbols whose observed frequency in the trial compression falls below a viability threshold, shrinking the stored symbol table at no additional decoder cost.
-
-\paragraph{Shared dictionary grouping}\label{sub_cardinality}
-The \ac{MLT} format supports shared dictionaries where multiple string columns reference a common deduplicated corpus, amortising dictionary overhead across columns with overlapping vocabularies.
-The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \texttt{name:en}, \texttt{name:de}), which misses semantic overlaps (e.g., \texttt{class} and \texttt{subclass} in OpenMapTiles share many values).
-
-\begin{sloppypar}
-The Rust encoder replaces prefix matching with MinHash-based similarity clustering~\cite{broder1997resemblance}.
-For each string column, two MinHash sketches of \texttt{MINHASH\_PERMUTATIONS = 128} permutations are computed: one over exact string values and one over byte trigrams (3-byte sliding windows).
-The choice of 128 permutations corresponds to an expected standard error of approximately $1/\sqrt{128} \approx 8.8\%$ on the Jaccard estimate, which is adequate for the binary accept/reject decision of the clustering step.
-The trigram sketch captures partial overlap between columns whose values are substrings or morphological variants of each other.
-Pairwise Jaccard similarity is estimated as $\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| / 128$ for each sketch type, and the maximum of the two estimates is taken.
-Columns whose similarity exceeds \texttt{MINHASH\_SIMILARITY\_THRESHOLD = 0.075} are unified via a Union-Find structure (union by size); the low threshold reflects that even small vocabulary overlap reduces the marginal cost of adding a column to an existing dictionary.
-Groups with fewer than two members are discarded.
-The threshold and similarity mode were selected via a sweep over $\{0.025, 0.050, 0.075, 0.100, 0.125\}$ under three similarity modes (\emph{hybrid} taking $\max(\textit{exact}, \textit{trigram})$, \emph{only-trigram}, \emph{only-exact}), applied to the Germany OpenMapTiles tileset and measuring the total encoded size after clustering (\cref{fig:minhash_sweep}; the sweep harness is \texttt{scripts/generate\_minhash\_sweep.py}, which patches the threshold constant, rebuilds the encoder, and re-encodes the tileset for each cell).
-All three modes produce monotonically smaller output as the threshold decreases (i.e.\ as more column pairs qualify for grouping), with hybrid mode producing the smallest output at every threshold.
-The total spread across all 15 cells is approximately \qty{6}{\mega\byte} ($\approx \qty{0.19}{\percent}$ of the \qty{3.14}{\giga\byte} tileset), indicating that shared-dictionary grouping has a measurable but modest effect on total encoded size.
-The hybrid mode at 0.025 yields the overall minimum; however, the marginal improvement from 0.075 to 0.025 is only \qty{1.6}{\mega\byte}, and lower thresholds increase the risk of false-positive unions on tilesets with different vocabulary distributions.
-The value 0.075 is therefore retained as a conservative default that captures the majority of the grouping benefit while leaving headroom for datasets where column vocabularies are less correlated than in OpenMapTiles.
-\end{sloppypar}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\linewidth]{figures/minhash_sweep.pdf}
-    \caption{Total encoded mbtiles size of the Germany OpenMapTiles tileset under different MinHash similarity modes and Jaccard thresholds.  Lower is better.  The hybrid mode (teal) produces the smallest output at every threshold; all modes increase monotonically with threshold as fewer column pairs qualify for shared-dictionary grouping.  The y-axis is zoomed to the data range to make the differences visible; the full range spans approximately \qty{6}{\mega\byte} out of \qty{3.14}{\giga\byte} total}
-    \label{fig:minhash_sweep}
-\end{figure}
-
-\paragraph{Geometry and ID encoding}
-Geometry vertices are encoded as either \emph{componentwise deltas} (CWD) or \emph{Morton-code dictionaries}.
-CWD encodes each vertex as the delta from the previous vertex, producing a single interleaved stream $[x_0, y_0, \Delta x_1, \Delta y_1, \ldots]$ that is then compressed via the per-stream integer competition.
-The Morton-code dictionary approach computes a Z-order code for each unique vertex pair, stores the deduplicated codes as a sorted dictionary, and references them via per-vertex offset indices - producing two streams (offsets and dictionary deltas) instead of one.
-The encoder tries both strategies (when the coordinate range permits Morton encoding, i.e., both axes fit within 16~bits after shifting) and retains the smaller result.
-Feature IDs are encoded through the same per-stream integer competition as other integer columns, using an explicit \texttt{IdWidth} tag (\texttt{Id32} or \texttt{Id64}) to select the physical word width.
-The \ac{FastPFOR} codec operates on 32-bit blocks by construction, so only 32-bit ID streams and property columns reach it; 64-bit streams fall back to \ac{VarInt} (the \ac{VarInt} candidate list covers both widths).
-The encoder chooses \texttt{Id32} when the maximum observed ID fits in \texttt{u32}, narrowing 64-bit-declared ID columns whose actual values fit in 32 bits; the round-trip correctness of this narrowing is covered by per-case tests including \texttt{test\_config\_produces\_correct\_variant} and proptest round-trips over $[0,\,\texttt{u32::MAX}]$ and $[0,\,\texttt{u64::MAX}]$ domains.
-Structural patterns (sequential, constant) are discovered by the same data profiler that drives the inner competition: sequential IDs reach DeltaRle, constant IDs reach \ac{RLE}, and short or irregular sequences fall back to plain \ac{VarInt}.
-
-\paragraph{Encoder cost amortisation}
-The multi-trial approach is made affordable through warm-start caching: \ac{FSST} compressors, Morton metadata, and vertex-strategy decisions are computed once and reused across sort trials.
-Scratch buffers grow on first use and are recycled without re-allocation.
-The alternatives mechanism itself is implemented as an RAII stack of \texttt{AltSession} guards (\texttt{encoder/writer.rs}): each candidate writes into a sub-range of the encoder's buffers, and when the session's \texttt{Drop} impl fires, it retains only the bytes of the smallest candidate and rolls the buffer cursor back for the others.
-Nesting is supported explicitly, so the inner per-stream competition can resolve before the enclosing sort-strategy trial commits.
-
-\paragraph{Encoder correctness validation}
-\begin{sloppypar}
-Because \ac{FastPFOR} explicitly disclaims input validation and the encoder performs narrowing, run-encoding, and dictionary rebuilds that each have independent failure modes, the encoder is validated by a multi-layer test harness:
-(i)~an in-tree proptest suite covering every \texttt{IntEncoder} variant, with round-trip assertions across the full representable range of the selected physical type;
-(ii)~a libFuzzer harness (\texttt{mlt\allowbreak-core/\allowbreak fuzz/\allowbreak fuzz\_targets/\allowbreak decoded\_layer.rs}) that fuzzes full \texttt{DecodedLayer} round-trips, with a corpus accumulated over previous runs;
-(iii)~snapshot tests via \texttt{insta} for the per-stream profiler's candidate lists, pinning the pruning heuristics to known-good outputs; and
-(iv)~the pixel-exact visual validation described in \cref{sec_visual_correctness}, which exercises the full decode path against a known-good baseline.
-\end{sloppypar}
-
-\subsection{Evaluation}\label{sub_mlt_evaluation}
-
-The central evaluation question for this experiment is whether style-level and data-level optimisations \emph{compose} - that is, whether optimising the style first, then encoding the resulting tile set, produces better results than either optimisations category in isolation.
-This directly addresses Research Goal~R1 (to what extent does data-style co-optimisations reduce tile size and improve rendering).
-
-The evaluation uses a cumulative design with five configurations, each adding one optimisations layer:
+The evaluation uses a cumulative design with five configurations, each adding one optimisation layer:
 
 \begin{enumerate}
     \item \textbf{\ac{MVT} baseline}: unoptimised protobuf-encoded tiles served with the original style.
     \item \textbf{Style-only}: the optimised style from Experiments~1-2, served with unmodified \ac{MVT} tiles.
     \item \textbf{Shaving-only}: the original style with tile shaving applied (advisory-driven pruning of unused columns, geometry types, and property values), but without style optimisations.
-    \item \textbf{Style + shaving}: the optimised style driving tile shaving - the cascade configuration where dead layer elimination and metadata refinement reduce the advisory, which in turn reduces tile size.
-    \item \textbf{Style + shaving + MLT encoding}: the full pipeline with automatic encoding strategy selection (sort competition, per-stream profiling, string interning).
+    \item \textbf{Style + shaving}: the optimised style driving tile shaving --- the cascade configuration where dead layer elimination and metadata refinement reduce the advisory, which in turn reduces tile size.
+    \item \textbf{Style + shaving + MLT encoding}: the full pipeline --- the encoding stage that delivers the shaved data to the wire via automatic encoding strategy selection (sort competition, per-stream profiling, string compression).
 \end{enumerate}
 
-\noindent Configurations~2-4 isolate the interaction effect: if the combined reduction of style+shaving exceeds the sum of style-only and shaving-only, the two optimisations categories are \emph{synergistic}; if less, they are partially redundant.
+\noindent Configurations~2-4 isolate the interaction effect: if the combined reduction of style+shaving exceeds the sum of style-only and shaving-only, the two optimisation categories are \emph{synergistic}; if less, they are partially redundant.
+Configuration~5 adds the encoding layer: after shaving has determined what data survives, the multi-strategy competition adapts to the statistical properties of the surviving data --- properties that differ from the unshaved original because shaving has removed columns and features, altering value distributions and run-length characteristics.
 
-For each configuration, two classes of metrics are collected: \emph{tile transfer metrics} -- encoded tile size (raw, gzip, Brotli) per zoom level, total tileset volume, and encoding time per tile -- and \emph{rendering metrics} shared with Experiments~1-2 (load time, frames per second, frame time percentiles p50/p95/p99, and time to first tile), enabling direct comparison of data-level contributions against expression-level and structural contributions in the combined analysis (\cref{sec_exp_combined}).
+For each configuration, two classes of metrics are collected: \emph{tile transfer metrics} --- encoded tile size (raw, gzip, Brotli) per zoom level, total tileset volume, and encoding time per tile --- and \emph{rendering metrics} shared with Experiments~1-2 (load time, frames per second, frame time percentiles p50/p95/p99, and time to first tile), enabling direct comparison of data-level contributions against expression-level and structural contributions in the combined analysis (\cref{sec_exp_combined}).
 
 The tileset covers OpenMapTiles zoom levels~0-14.
 Sparse overview tiles at low zoom exercise the advisory's zoom-level pruning; dense urban tiles at high zoom exercise the encoding competition's spatial sorting and per-stream profiling.
 
-% The per-zoom cascade data is visualised in \cref{fig:size_total_per_zoom}.
-% The intermediate shaved-MVT mbtiles (configs~3/4) were not persisted, so exact
-% per-zoom numbers for those configurations cannot be populated in tabular form.
+\subsection{Results: Style-Driven Cascade}\label{sub_mlt_results}
 
-\subsection{Results}\label{sub_mlt_results}
+The central finding of this experiment is the cascade from style-level optimisations into data-level savings: dead layer elimination and metadata refinement (\cref{sec_exp_structural}) reduce the pruning advisory, which in turn reduces the data that must be encoded.
+The following paragraphs quantify this cascade before turning to the encoding evaluation.
+
+\paragraph{Interaction between style and data optimisations}
+\cref{fig:interaction_plot} compares the gzip-size reductions of style-only (config~2), shaving-only (config~3), and their combination (config~4).
+For Fiord, the style-only reduction is \qty{14.1}{\percent} and shaving-only contributes a negligible reduction, yet the combined style+shaving reduction is \qty{14.7}{\percent} - the cascade effect of dead-layer elimination shrinking the pruning advisory.
+For Liberty, shaving-only also contributes negligibly (Liberty's broad layer structure already references most tile properties), and the combined reduction (\qty{4.8}{\percent}) is close to the style-only reduction (\qty{4.9}{\percent}), indicating approximately additive behaviour.
+The aggregate across both styles shows no super-additive interaction at the median level, though per-scenario synergy is present in 16 of the 26 scenarios with complete data.
+
+\paragraph{Rendering metrics across configurations}
+\cref{fig:rendering_metrics_mlt} reveals that the dominant rendering improvement comes from tile shaving, not from style optimisations.
+The median load time drops from \qty{424}{\milli\second} (baseline) to \qty{406}{\milli\second} with style-only (\qty{-4.1}{\percent}), but plunges to \qty{121}{\milli\second} with shaving-only (\qty{-71.5}{\percent}) and \qty{113}{\milli\second} with style+shaving (\qty{-73.3}{\percent}).
+The \ac{MLT} re-encoding step (config~5) adds a small load-time regression relative to config~4 (\qty{119}{\milli\second} vs.\ \qty{113}{\milli\second}, \qty{+5}{\percent}) while achieving better compression (gzip \qty{-11.0}{\percent} vs.\ baseline across both styles).
+\ac{FPS} follows the same pattern: shaving-only lifts the median from 807 to \num{2289} (\qty{+184}{\percent}), with style+shaving reaching \num{2331} (\qty{+189}{\percent}).
+The \ac{MLT} variant is slightly below at \num{2232} \ac{FPS}, consistent with the additional decoding cost of the columnar format offsetting the smaller transfer size during sustained rendering.
+Bootstrap \qty{95}{\percent} confidence intervals confirm that the full-pipeline load-time improvements are tight: Fiord's final load time is \qty{108.7}{\milli\second} (CI: [\num{107.6}, \num{109.7}]), Liberty's is \qty{123.5}{\milli\second} (CI: [\num{122.7}, \num{124.4}]), both with $p < 10^{-45}$ (Wilcoxon) against their respective baselines.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{figures/interaction_plot.pdf}
+    \caption{Interaction between style optimisations and tile shaving.  If the combined reduction exceeds the sum of individual reductions, the optimisations are synergistic - the style cascade produces advisory savings that shaving alone cannot achieve}
+    \label{fig:interaction_plot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{figures/rendering_metrics_mlt.pdf}
+    \caption{Rendering metrics (load time, FPS) across configurations~1-5, enabling direct comparison with Experiments~1-2 in the combined analysis}
+    \label{fig:rendering_metrics_mlt}
+\end{figure}
+
+
+\subsection{Results: Encoding the Shaved Data}\label{sub_mlt_encoding_results}
+
+After shaving determines what data survives, the encoding stage determines whether the cascade's savings reach the wire.
+The multi-strategy competition described in \cref{sub_encoding_strategies} adapts to the shaved data's characteristics --- fewer distinct values, more homogeneous distributions, smaller dictionaries --- because its profiler-driven candidate pruning responds to actual stream statistics rather than fixed encoding plans.
 
 \cref{fig:size_total_per_zoom} plots total tile size per zoom level across the five configurations; the vertical gap between \enquote{style-only} and \enquote{style+shaving} is the cascade effect of style-level dead elimination and metadata refinement on the tile data, while the gap between \enquote{style+shaving} and \enquote{style+shaving+MLT} is the contribution of the Rust encoder's strategy selection on top of the shaved content.
 \cref{fig:compression_ratio_per_zoom} reframes the same evidence as a ratio against the \ac{MVT} baseline, adding the Tremmel \& Zink \ac{MLT}-Java encoder for comparison: the \ac{MLT}-Rust curves remain at roughly $0.6$-$0.8\times$ \ac{MVT} throughout the zoom range, whereas the \ac{MLT}-Java curves drift above $1.0\times$ at several zoom levels under brotli/zstd, underscoring that the gains attributed to the \ac{MLT} format in this thesis come almost entirely from the encoder-side strategy competition and not from the columnar format alone.
@@ -558,7 +316,7 @@ The data-driven encoding strategy selection of the Rust encoder reclaims this ga
 This advantage is preserved (\qty{12.9}{\percent}) even against zstd-22, the strongest general-purpose compressor in the comparison.
 \emph{Third}, the relative gap between Rust and Java is stable across all four compressors (\qty{-23}{\percent} to \qty{-28}{\percent}).
 This stability indicates that the per-stream profiler's selection is robust to post-hoc compression, not merely shuffling bytes into shapes that a downstream compressor happens to exploit.
-This isolation directly answers the question posed at the start of \cref{sub_mlt_approach}: the \ac{MLT}-Rust contribution is not in the columnar format alone, but in the joint strategy-selection layer that sits on top of it.
+This isolation directly answers the question posed at the start of \cref{sec_exp_mlt}: the \ac{MLT}-Rust contribution is not in the columnar format alone, but in the joint strategy-selection layer that sits on top of it.
 
 \paragraph{Why not just apply zstd to MVT?}
 A natural objection is that general-purpose compressors such as zstd-22 or Brotli-11 should be sufficient: if compression is the goal, simply applying the strongest available compressor to the existing \ac{MVT} wire format would avoid the complexity of a columnar encoder entirely.
@@ -575,42 +333,48 @@ The \ac{MLT}-Rust decoder is engineered to keep the per-column cost close to tha
 The trade-off relative to \ac{MVT} is the fixed cost of dispatching multiple codecs (versus protobuf's single-path parser), which amortises over the per-feature work: for tiles with more than a few hundred features the per-column setup is negligible, and for very small tiles the overall tile size is small enough that decoding is not on the critical path.
 Benchmarks on the full Germany tileset with the \ac{MLT}-Rust decoder executed inside MapLibre GL~JS (via the \texttt{mlt-wasm} crate) show end-to-end rendering metrics comparable to or better than \ac{MVT} at matched workloads; the detailed decoder-level micro-benchmarks are tracked by \texttt{mlt-core/benches} and are outside the scope of this chapter, but the absence of any negative effect in the sustained frame-time metrics (\cref{sub_combined_marginal}) is consistent with the design intent.
 
-\paragraph{Interaction between style and data optimisations}
-\cref{fig:interaction_plot} compares the gzip-size reductions of style-only (config~2), shaving-only (config~3), and their combination (config~4).
-For Fiord, the style-only reduction is \qty{14.1}{\percent} and shaving-only contributes a negligible reduction, yet the combined style+shaving reduction is \qty{14.7}{\percent} - the cascade effect of dead-layer elimination shrinking the pruning advisory.
-For Liberty, shaving-only also contributes negligibly (Liberty's broad layer structure already references most tile properties), and the combined reduction (\qty{4.8}{\percent}) is close to the style-only reduction (\qty{4.9}{\percent}), indicating approximately additive behaviour.
-The aggregate across both styles shows no super-additive interaction at the median level, though per-scenario synergy is present in 16 of the 26 scenarios with complete data.
 
-\paragraph{Rendering metrics across configurations}
-\cref{fig:rendering_metrics_mlt} reveals that the dominant rendering improvement comes from tile shaving, not from style optimisations.
-The median load time drops from \qty{424}{\milli\second} (baseline) to \qty{406}{\milli\second} with style-only (\qty{-4.1}{\percent}), but plunges to \qty{121}{\milli\second} with shaving-only (\qty{-71.5}{\percent}) and \qty{113}{\milli\second} with style+shaving (\qty{-73.3}{\percent}).
-The \ac{MLT} re-encoding step (config~5) adds a small load-time regression relative to config~4 (\qty{119}{\milli\second} vs.\ \qty{113}{\milli\second}, \qty{+5}{\percent}) while achieving better compression (gzip \qty{-11.0}{\percent} vs.\ baseline across both styles).
-\ac{FPS} follows the same pattern: shaving-only lifts the median from 807 to \num{2289} (\qty{+184}{\percent}), with style+shaving reaching \num{2331} (\qty{+189}{\percent}).
-The \ac{MLT} variant is slightly below at \num{2232} \ac{FPS}, consistent with the additional decoding cost of the columnar format offsetting the smaller transfer size during sustained rendering.
-Bootstrap \qty{95}{\percent} confidence intervals confirm that the full-pipeline load-time improvements are tight: Fiord's final load time is \qty{108.7}{\milli\second} (CI: [\num{107.6}, \num{109.7}]), Liberty's is \qty{123.5}{\milli\second} (CI: [\num{122.7}, \num{124.4}]), both with $p < 10^{-45}$ (Wilcoxon) against their respective baselines.
+\paragraph{Decoding throughput}
+To isolate decoding latency from the browser-based rendering benchmark (where it is embedded in \texttt{loadMs}), Criterion micro-benchmarks measure full-decode throughput for \ac{MLT}-Rust vs.\ \ac{MVT} with and without transport compression.
+Each benchmark parses the tile header and materialises all features and properties; \ac{MVT} variants include gzip decompression in the measured path.
+\Cref{tab:decode_throughput} reports the results on a representative subset of the OpenMapTiles fixture tiles at zoom levels~4, 7, and~13 (100~samples per cell).
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\linewidth]{figures/interaction_plot.pdf}
-    \caption{Interaction between style optimisations and tile shaving.  If the combined reduction exceeds the sum of individual reductions, the optimisations are synergistic - the style cascade produces advisory savings that shaving alone cannot achieve}
-    \label{fig:interaction_plot}
-\end{figure}
+\begin{table}[htbp]
+\centering
+\small
+\begin{tblr}{colspec={l r r r}, rows={font=\small}, row{1}={font=\small\bfseries}}
+\toprule
+Format & Zoom~4 & Zoom~7 & Zoom~13 \\
+\midrule
+\ac{MLT}-Rust & \qty{5.73}{\milli\second} & \qty{19.4}{\milli\second} & \qty{4.09}{\milli\second} \\
+\ac{MVT}+gzip & \qty{47.6}{\milli\second} & \qty{103}{\milli\second} & \qty{18.7}{\milli\second} \\
+\ac{MVT} (uncompressed) & \qty{44.2}{\milli\second} & \qty{90.6}{\milli\second} & \qty{16.5}{\milli\second} \\
+\midrule
+Speedup (vs.\ gzip) & $8.3\times$ & $5.3\times$ & $4.6\times$ \\
+\bottomrule
+\end{tblr}
+\caption{Full-decode latency for \ac{MLT}-Rust vs.\ \ac{MVT} on OpenMapTiles fixture tiles, measured by Criterion micro-benchmarks (\texttt{decoding\_e2e.rs}, 100~samples per cell).
+\ac{MLT}-Rust achieves \numrange{96}{134}\,MiB/s decode throughput vs.\ \numrange{15}{23}\,MiB/s for \ac{MVT}+gzip (measured over wire-format input size)}
+\label{tab:decode_throughput}
+\end{table}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\linewidth]{figures/rendering_metrics_mlt.pdf}
-    \caption{Rendering metrics (load time, FPS) across configurations~1-5, enabling direct comparison with Experiments~1-2 in the combined analysis}
-    \label{fig:rendering_metrics_mlt}
-\end{figure}
+The \ac{MLT} decoder's columnar layout enables selective column access and avoids the per-feature tag-parsing overhead of protobuf, which accounts for the speedup even before transport decompression is considered: \ac{MLT}-Rust is $4.0$--$7.7\times$ faster than uncompressed \ac{MVT}.
+These micro-benchmark results complement the browser-based \texttt{loadMs} metric by providing an isolated measurement of the decoding-latency axis of Research Goal~R3.
+
 
 \subsection{Discussion}\label{sub_mlt_discussion}
 
-\paragraph{The cascade effect}
-The most significant finding of this experiment is whether style-level and data-level optimisations are synergistic.
+\paragraph{The cascade as central finding}
+The most significant architectural finding of this experiment is the cascade from style-level optimisations into data-level savings.
 Dead layer elimination (Experiment~2) removes style layers whose filters are unsatisfiable.
 Each removed layer reduces the set of referenced properties in the pruning advisory, which in turn eliminates entire columns from the encoded tile.
 Metadata refinement tightens zoom bounds, which causes the advisory to mark additional zoom levels as unused, eliminating tiles entirely.
-This cascade - from style simplification through advisory shrinkage to tile reduction - is the concrete realisation of the \enquote{data-style co-optimisations} promised in the thesis title.
+This cascade --- from style simplification through advisory shrinkage to tile reduction --- is the concrete realisation of the data-style co-optimisation promised in the thesis title.
+
+\paragraph{The encoder as delivery mechanism}
+The multi-strategy competition is not an independent contribution but the \emph{delivery mechanism} for the cascade.
+After shaving has removed unused columns and features, the remaining data has different statistical properties: fewer distinct property values produce longer \ac{RLE} runs (detected by \texttt{DataProfile::rle\_is\_viable} in \texttt{encoder/\allowbreak stream/\allowbreak optimizer.rs}), smaller value ranges improve delta encoding (detected by \texttt{delta\_is\_beneficial}), and smaller string vocabularies shrink dictionaries and improve \ac{FSST} compression ratios (probed by \texttt{fsst\_try\_train} in \texttt{encoder/\allowbreak property/\allowbreak strings.rs}).
+The competition matters \emph{more} after shaving because the data distributions have changed in ways that favour compact encodings --- which is why the encoder belongs in this thesis rather than in a standalone encoder paper.
 
 \paragraph{Style-dependent tile sizes}
 A consequence of style-driven shaving is that different styles produce different tile sizes from the same source data.
@@ -639,34 +403,6 @@ By evaluating the full encoding pipeline under each sort order, the competition 
 The multi-strategy competition and tile shaving increase preprocessing time compared to a single-pass encoder.
 Since tile encoding is an offline step - tiles are encoded once and served many times - the increased cost is amortised over all subsequent requests.
 Encoder state reuse (\ac{FSST} cache, Morton metadata, scratch buffers) and pruning heuristics (bounding-box check, data profiling) keep the marginal cost of additional trials manageable.
-
-\subsection{Decoding Throughput}\label{sub_decode_throughput}
-
-To isolate decoding latency from the browser-based rendering benchmark (where it is embedded in \texttt{loadMs}), Criterion micro-benchmarks measure full-decode throughput for \ac{MLT}-Rust vs.\ \ac{MVT} with and without transport compression.
-Each benchmark parses the tile header and materialises all features and properties; \ac{MVT} variants include gzip decompression in the measured path.
-\Cref{tab:decode_throughput} reports the results on a representative subset of the OpenMapTiles fixture tiles at zoom levels~4, 7, and~13 (100~samples per cell).
-
-\begin{table}[htbp]
-\centering
-\small
-\begin{tblr}{colspec={l r r r}, rows={font=\small}, row{1}={font=\small\bfseries}}
-\toprule
-Format & Zoom~4 & Zoom~7 & Zoom~13 \\
-\midrule
-\ac{MLT}-Rust & \qty{5.73}{\milli\second} & \qty{19.4}{\milli\second} & \qty{4.09}{\milli\second} \\
-\ac{MVT}+gzip & \qty{47.6}{\milli\second} & \qty{103}{\milli\second} & \qty{18.7}{\milli\second} \\
-\ac{MVT} (uncompressed) & \qty{44.2}{\milli\second} & \qty{90.6}{\milli\second} & \qty{16.5}{\milli\second} \\
-\midrule
-Speedup (vs.\ gzip) & $8.3\times$ & $5.3\times$ & $4.6\times$ \\
-\bottomrule
-\end{tblr}
-\caption{Full-decode latency for \ac{MLT}-Rust vs.\ \ac{MVT} on OpenMapTiles fixture tiles, measured by Criterion micro-benchmarks (\texttt{decoding\_e2e.rs}, 100~samples per cell).
-\ac{MLT}-Rust achieves \numrange{96}{134}\,MiB/s decode throughput vs.\ \numrange{15}{23}\,MiB/s for \ac{MVT}+gzip (measured over wire-format input size)}
-\label{tab:decode_throughput}
-\end{table}
-
-The \ac{MLT} decoder's columnar layout enables selective column access and avoids the per-feature tag-parsing overhead of protobuf, which accounts for the speedup even before transport decompression is considered: \ac{MLT}-Rust is $4.0$--$7.7\times$ faster than uncompressed \ac{MVT}.
-These micro-benchmark results complement the browser-based \texttt{loadMs} metric by providing an isolated measurement of the decoding-latency axis of Research Goal~R3.
 
 
 \section{Cross-Style Generalisation}\label{sec_exp_cross_style}

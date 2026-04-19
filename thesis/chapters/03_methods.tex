@@ -707,43 +707,479 @@ Compression optimisations & full scan & Apply column-aware compression strategie
 \label{tab:data_passes}
 \end{table}
 
-\paragraph{Tile shaving}
-Tile shaving bridges style-level and data-level optimisations.
-The optimiser analyses the optimised style to compute a \emph{tile pruning advisory} that specifies, per source-layer and zoom level, exactly what the rendering style needs: which properties are referenced (with zoom ranges), which geometry types are used, which property values appear in any filter, and whether feature IDs are accessed.
-The advisory is computed from the \emph{optimised} style (after all expression and structural passes), so style-level dead layer elimination and metadata refinement cascade into smaller advisories.
+The pipeline operates in three stages that mirror the structure of a database query optimiser: \emph{logical} rewriting (what data to keep), \emph{physical} strategy selection (how to encode it), and \emph{cost-based} competition (which encoding is smallest).
 
-Pruning is applied to each tile in order:
-(1)~remove entire source-layers not referenced by any style layer;
-(2)~filter features by geometry type;
-(3)~filter features by unused categorical property values;
-(4)~strip unreferenced properties from the feature property table;
-(5)~strip feature IDs when no style layer uses \texttt{["id"]} or \texttt{["feature-state"]}.
-The result is a tile that contains only the data the style will actually render.
+\begin{enumerate}
+    \item \textbf{Style-driven tile shaving} (\cref{sub_tile_shaving}): the optimised style is analysed to produce a \emph{tile pruning advisory} that specifies, per source-layer and zoom level, which properties, geometry types, and property values to retain.
+    Tiles are pruned according to this advisory before encoding.
+    \item \textbf{Data transformations} (\cref{sub_data_transforms}): remaining data is transformed to improve compressibility --- categorical string properties are replaced by frequency-ordered integers (\emph{string interning}), and features are reordered to exploit spatial or categorical locality.
+    \item \textbf{Encoding strategy selection} (\cref{sub_encoding_strategies}): the pruned, transformed data is re-encoded into \ac{MLT} using a multi-strategy competition that automatically profiles each data stream and selects the most compact encoding.
+\end{enumerate}
 
-\paragraph{Transparent re-encoding}
-After pruning, tiles are re-encoded from the row-oriented, protobuf-based \ac{MVT} format into the columnar \ac{MLT} format.
+\noindent Stage~1 is the key \emph{style-data bridge}: the optimised style from the expression-level and structural phases determines what data survives, and the cascade from dead layer elimination through advisory shrinkage into smaller tiles is the concrete mechanism by which style-level and data-level optimisations compose.
+Stages~2 and~3 adapt to the statistical properties of the surviving data --- properties that change after shaving removes columns and features, altering value distributions and cardinalities.
+The profiler-driven candidate pruning in Stage~3 (\texttt{DataProfile::prune\_candidates} in \texttt{encoder/\allowbreak stream/\allowbreak optimizer.rs}) responds to these changes automatically: its viability tests --- \texttt{rle\_is\_viable} (average run length $\geq 2.0$), \texttt{delta\_is\_beneficial} (delta bit-width sum less than raw), \texttt{delta\_rle\_is\_viable} (delta-stream run length $\geq 2.0$) --- operate on the actual stream statistics, so a column whose distinct-value count drops after shaving naturally presents longer runs and triggers more compact encoding candidates.
+
+\subsubsection{Style-Driven Tile Shaving}\label{sub_tile_shaving}
+
+The bridge between style-level and data-level optimisations is the \emph{tile pruning advisory} --- a structured report that captures, for each source-layer and zoom level, exactly what the rendering style needs.
+The advisory is computed from the \emph{optimised} style (after all expression and structural passes) together with tile statistics.
+This ordering is critical: style-level dead layer elimination, metadata refinement, and layer merging reduce the set of live style layers, which in turn reduces the set of referenced properties and geometry types in the advisory.
+The preceding style optimisations thus \emph{cascade} into data-level savings.
+
+The advisory captures the following per source-layer:
+
+\begin{itemize}
+    \item \textbf{Used properties with zoom ranges}: for each property name appearing in a \texttt{["get",~\ldots]} or \texttt{["has",~\ldots]} expression in any live style layer, the zoom range over which it is referenced.
+    Properties not referenced at any zoom level are candidates for removal.
+    \item \textbf{Used geometry types with zoom ranges}: which of Point, LineString, and Polygon are needed, derived from the style layer types (e.g., \texttt{fill} $\to$ Polygon, \texttt{circle} $\to$ Point).
+    Features with geometry types unused by any style layer at the current zoom level are removed.
+    \item \textbf{Unused zoom levels}: zoom levels at which no style layer targets the source-layer.
+    Tiles at these zoom levels need not be encoded at all.
+    \item \textbf{Unused property values}: specific values of categorical properties that are never matched by any style filter.
+    For example, if no style layer filters for \texttt{class = "ferry"}, features with that value can be removed.
+    \item \textbf{Feature ID requirement}: whether any style layer uses \texttt{["id"]} or \texttt{["feature-state",~\ldots]}.
+    When IDs are unused, the entire ID column is stripped.
+\end{itemize}
+
+\noindent The pruning advisory is applied to each \ac{MVT} tile before encoding.
+The pruning operations, applied in order, are:
+
+\begin{enumerate}
+    \item Remove entire source-layers not referenced by any style layer.
+    \item For each remaining layer:
+    \begin{enumerate}
+        \item Filter features by geometry type: remove features whose geometry type is unused at the current zoom level.
+        \item Filter features by property values: remove features with unused categorical values.
+        \item Strip unused properties: rebuild the property key-value table to include only referenced properties.
+        \item Strip feature IDs when not needed.
+    \end{enumerate}
+\end{enumerate}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.5cm and 0.7cm,
+        box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.65cm, font=\small, align=center},
+        style/.style={box, fill=blue!10, minimum width=2.8cm},
+        data/.style={box, fill=orange!10, minimum width=2.8cm},
+        both/.style={box, fill=green!10, minimum width=2.8cm},
+        arrow/.style={-{Stealth[length=2.5mm]}, thick},
+        label/.style={font=\scriptsize\itshape, text=gray},
+    ]
+        % Style optimisations
+        \node[style] (sopt) {Style optimisations\\{\scriptsize (\cref{sub_expression_optimisations,sub_structural_optimisations})}};
+        \node[data, right=1.0cm of sopt] (stats) {Tile statistics};
+
+        % Advisory
+        \node[both, below=0.8cm of sopt, xshift=1.8cm] (adv) {Tile pruning advisory};
+        \draw[arrow] (sopt) -- node[left, label] {optimised style} (adv);
+        \draw[arrow] (stats) -- node[right, label] {property/geometry stats} (adv);
+
+        % Tile processing
+        \node[data, below left=0.8cm and 0.3cm of adv] (mvt) {\ac{MVT} tile};
+        \node[data, below=0.8cm of adv] (prune) {Prune \& transform};
+        \node[data, below right=0.8cm and 0.3cm of adv] (mlt) {\ac{MLT} tile};
+
+        \draw[arrow] (adv) -- (prune);
+        \draw[arrow] (mvt) -- (prune);
+        \draw[arrow] (prune) -- node[right, label] {re-encode} (mlt);
+
+        % Cascade annotation
+        \draw[decorate, decoration={brace, amplitude=5pt, mirror}, thick, gray]
+            ($(sopt.south west)+(0,-0.15)$) -- ($(adv.south east)+(0,-0.15)$)
+            node[midway, below=7pt, font=\scriptsize, text=gray, align=center] {cascade: fewer live layers $\to$\\fewer referenced properties $\to$ smaller tiles};
+    \end{tikzpicture}
+    \caption{Style-driven tile shaving pipeline.  The optimised style and tile statistics jointly produce a pruning advisory.  Each \ac{MVT} tile is pruned according to the advisory, transformed, and re-encoded as \ac{MLT}.  Style-level dead layer elimination cascades into smaller advisories and thus smaller tiles}
+    \label{fig:tile_shaving_pipeline}
+\end{figure}
+
+\subsubsection{Data Transformations}\label{sub_data_transforms}
+
+After pruning, two data transformations improve compressibility before encoding.
+
+\paragraph{String property interning}
+Categorical string properties --- such as road class, land-use type, or administrative level --- are replaced by frequency-ordered integer indices.
+The interning table is derived from the tile statistics: all distinct values of a string property are sorted by descending frequency, and each value is assigned a sequential integer starting from~0.
+The most common value receives index~0, the second most common receives~1, and so on.
+
+This transformation has two benefits.
+First, it reduces the per-feature storage cost from a variable-length string (with length prefix and dictionary overhead) to a small integer (typically \qtyrange{1}{2}{\byte} as a \ac{VarInt}).
+Second, the frequency ordering means that common values receive small indices, which compress well under \ac{VarInt} and delta encoding.
+
+The corresponding style expressions are rewritten to reference the integer indices rather than the original string values.
+For example, a filter \texttt{["==",~["get",~"class"],~"primary"]} is rewritten to \texttt{["==",~["get",~"class"],~0]} if \texttt{"primary"} is the most frequent value.
+This rewriting ensures that the optimised style remains consistent with the transformed tile data.
+
+\paragraph{Feature reordering}
+The order of features within a tile layer affects the compressibility of every parallel column.
+The encoder explores multiple feature orderings --- spatial (Hilbert/Morton curve of first vertex), ID-based, and property-based (grouping by a low-cardinality attribute) --- and retains the ordering that produces the smallest encoded output.
+This is described in detail in \cref{sub_encoding_strategies}.
+
+\subsubsection{Automatic Encoding Strategy Selection}\label{sub_encoding_strategies}
+
+The pruned and transformed data is re-encoded into the \ac{MLT} columnar format.
 The re-encoding proceeds in three stages: (1)~the row-oriented \ac{MVT} features are converted into an owned columnar representation (\texttt{StagedLayer01}), with separate arrays for each property column, the geometry vertex buffer, and the feature ID column; (2)~the columnar data is optionally reordered according to the sort strategy competition; (3)~each column is independently encoded using the per-stream encoding competition.
 The final wire format consists of three concatenated sections per layer: a header (layer name, tile extent, column count), a metadata section (column types, encoding descriptors), and a data section (the encoded streams).
 
-The encoding competition reformulates the encoding problem as a \emph{multi-strategy competition} inspired by profile-guided optimisations in compilers: rather than committing to a single encoding plan, the encoder tries multiple strategies, measures the output size of each, and selects the smallest.
-This competition operates at two nested levels (described in detail in \cref{sub_encoding_strategies}): an outer loop that trials multiple feature sort orderings, and an inner loop that selects the best integer encoding for each data stream.
+The Rust-based encoder reformulates the encoding problem as a \emph{multi-strategy competition} inspired by profile-guided optimisations in compilers: rather than committing to a single encoding plan, the encoder tries multiple strategies, measures the output size of each, and selects the smallest result.
+This competition operates at two nested levels: an \emph{outer loop} that trials multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
 The inner competition criterion is deliberately \emph{single-objective}: the winning candidate is the one with the smallest encoded \texttt{total\_len()} (cf.\ the criteria at \texttt{encoder/optimizer.rs:117} and \texttt{:168}, and the ordered candidate list in \texttt{encoder/stream/optimizer.rs:133-167}).
-Multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - are not resolved inside the encoder; they are deliberately deferred to the outer ablation layer, where deployment-specific weightings are applied in the post-hoc Pareto analysis of \cref{sec_exp_pareto}.
+Multi-axis trade-offs --- between transfer size, decoding latency, rendering throughput, and preprocessing cost --- are not resolved inside the encoder; they are deliberately deferred to the outer ablation layer, where deployment-specific weightings are applied in the post-hoc Pareto analysis of \cref{sec_exp_pareto}.
 
 The inner competition uses an \emph{alternatives} mechanism implemented as an RAII guard pattern: each candidate encoding writes its output into the encoder's buffers, and the guard commits only the smallest candidate.
 This avoids copying: the winning candidate's bytes are already positioned correctly in the output buffers, and losing candidates are simply rolled back by resetting buffer positions.
 The mechanism supports nesting (inner competitions resolve before the enclosing sort-strategy trial commits), enabling hierarchical strategy selection without redundant allocation.
 
-\paragraph{Compression optimisations}
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.38\linewidth}
+        \centering
+        \begin{tikzpicture}[
+            box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
+                        minimum width=2.4cm, font=\small, align=center},
+            decode/.style={box, fill=blue!12},
+            io/.style={font=\small\ttfamily},
+            arrow/.style={-{Stealth[length=2.5mm]}, thick},
+            lbl/.style={font=\scriptsize\itshape, text=gray},
+            node distance=1.4cm,
+        ]
+            \node[io]     (u8)     {\&[u8]};
+            \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
+                {\texttt{enum <Name> \{}\\[1pt]\quad\scriptsize\texttt{Raw*,}\\[0pt]\quad\scriptsize\texttt{Parsed*,}\\[1pt]\texttt{\}}};
+            \node[decode, below=of name]   (tile)   {Tile*};
+
+            \draw[arrow] (u8)   -- node[right, lbl, align=left] {zero-copy parse;\\columns decoded lazily} (name);
+            \draw[arrow] (name) -- node[right, lbl, align=left] {convert to\\row format} (tile);
+        \end{tikzpicture}
+        \caption{Decoding pipeline}
+        \label{fig:arch_dec}
+    \end{subfigure}%
+    \hfill
+    \begin{subfigure}[t]{0.38\linewidth}
+        \centering
+        \begin{tikzpicture}[
+            box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
+                        minimum width=2.0cm, font=\small, align=center},
+            encode/.style={box, fill=orange!10},
+            enc/.style={box, fill=yellow!12, minimum width=1.6cm},
+            io/.style={font=\small\ttfamily},
+            arrow/.style={-{Stealth[length=2.5mm]}, thick},
+            lbl/.style={font=\scriptsize\itshape, text=gray},
+            node distance=1.2cm,
+        ]
+            \node[io]     (write)   {impl Write};
+            \node[encode, below=of write]   (encoded) {Encoded*};
+            \node[encode, below=1.4cm of encoded] (staged)  {Staged*};
+            \node[encode, below=of staged]  (tile)    {Tile*};
+
+            % *Encoder mediates Staged* -> Encoded*
+            \node[enc, right=1.2cm of $(encoded)!0.5!(staged)$] (encnode) {*Encoder};
+
+            \draw[arrow] (tile)    -- node[left, lbl, align=right] {convert to\\columnar} (staged);
+            \draw[arrow] (staged)  -- node[left, lbl, align=right] {fully encode to\\wire-ready format} (encoded);
+            \draw[arrow] (encoded) -- node[left, lbl] {zero-copy} (write);
+
+            % Encoder arrows
+            \draw[-{Stealth[length=2.5mm]}, thick, densely dashed]
+                (staged.east) -- ++(0.3,0) |- (encnode.south);
+            \draw[-{Stealth[length=2.5mm]}, thick, densely dashed]
+                (encnode.north) -| ($(encoded.east)+(0.3,0)$) -- (encoded.east);
+        \end{tikzpicture}
+        \caption{Encoding pipeline}
+        \label{fig:arch_enc_sub}
+    \end{subfigure}
+    \caption{Encoder and decoder data-flow in \texttt{mlt-core}.
+    \emph{Decoding}~\subref{fig:arch_dec}: an input \texttt{\&[u8]} slice is zero-copy parsed into a \texttt{<Name>} container whose columns are held as \texttt{LazyParsed<Raw*,\,Parsed*>} variants, decoded on demand and cached; columnar data is then converted to row-oriented \texttt{Tile*} features.
+    \emph{Encoding}~\subref{fig:arch_enc_sub}: row-oriented \texttt{Tile*} features are converted to columnar \texttt{Staged*} data, fully encoded to wire-ready \texttt{Encoded*} byte buffers via \texttt{*Encoder} types that implement the multi-strategy competition, and written to an \texttt{impl Write} sink via a final zero-copy step.
+    The \texttt{Raw*}/\texttt{Parsed*}/\texttt{Staged*}/\texttt{Encoded*}/\texttt{Tile*} families share a common \texttt{<Name>} stem and can be in either an encoded or decoded state, which keeps encoder, decoder, and in-place re-encoding on a single type hierarchy}
+    \label{fig:arch_enc}
+\end{figure}
+
+\paragraph{Outer loop: sort-strategy competition}
+Reordering features within a layer permutes every parallel column --- geometry, IDs, and all properties --- simultaneously.
+Different orderings favour different encoding schemes: spatial orderings cluster nearby geometries and their correlated properties, improving \ac{RLE} run lengths; ID ordering produces sequential integer sequences amenable to delta-\acs{RLE}.
+
+The encoder trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count.
+The implemented strategies (\texttt{SortStrategy} in \texttt{mlt-core/src/encoder/sort.rs}) are:
+
+\begin{enumerate}
+    \item \textbf{Unsorted}: the original MVT feature order is preserved.
+    \item \textbf{Spatial (Morton/Z-order)}: features are sorted by the Z-order curve index of their first vertex, computed via bit-interleaving.  Fast to compute; provides reasonable spatial locality.
+    \item \textbf{Spatial (Hilbert)}: features are sorted by the Hilbert curve index of their first vertex.  Slower to compute than Morton but achieves superior spatial locality, as the Hilbert curve avoids the long jumps inherent in the Z-order curve's recursive structure~\cite{moonAnalysisClusteringProperties2001}.
+    \item \textbf{ID}: features are sorted by feature ID in ascending order.
+\end{enumerate}
+
+For each candidate strategy, the encoder constructs a fresh \texttt{Encoder} instance, encodes the reordered layer, and measures the total output size (header + metadata + data).
+The strategy producing the smallest output is retained; all others are discarded.
+When only a single strategy is applicable, the competition is elided and the layer is encoded directly without cloning.
+Property-based sort strategies were considered but are not included in the current implementation, because the string interning pass (\cref{sub_data_transforms}) already groups features of the same discriminator value into dense dictionary-index ranges, and Hilbert or ID ordering strictly dominated an explicit categorical sort on the benchmark tileset.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.6cm,
+        box/.style={rectangle, draw, rounded corners=2pt, minimum width=4.2cm,
+                    minimum height=0.65cm, font=\small, align=center},
+        input/.style={box, fill=gray!15},
+        prep/.style={box, fill=violet!10},
+        stage/.style={box, fill=blue!10},
+        encoder/.style={box, fill=orange!10},
+        decision/.style={diamond, draw, fill=yellow!15, aspect=2.8,
+                         font=\small, inner sep=1pt},
+        output/.style={box, fill=green!15},
+        arrow/.style={-{Stealth[length=2.5mm]}, thick},
+        label/.style={font=\scriptsize\itshape, text=gray},
+        annot/.style={font=\scriptsize, text=gray, align=left},
+    ]
+        % --- Input ---
+        \node[input] (layer) {\texttt{TileLayer01}};
+
+        % --- Prep: group_string_properties ---
+        \node[prep, below=0.7cm of layer] (grp)
+            {\texttt{group\_string\_properties()}};
+        \draw[arrow] (layer) -- (grp);
+        \node[annot, right=0.3cm of grp] {computed once,\\reused across trials};
+
+        % --- Prep: collect_sort_strategies ---
+        \node[prep, below=0.7cm of grp] (coll)
+            {\texttt{collect\_sort\_strategies()}};
+        \draw[arrow] (grp) -- (coll);
+        \node[annot, right=0.3cm of coll] {Unsorted always;\\%
+            +Morton/Hilbert if cfg\\%
+            \textsc{and} ($n{<}512$ \textsc{or} bbox ok);\\%
+            +Id if cfg};
+
+        % --- Loop body (nodes first, then fit box) ---
+        % Sort + columnarize
+        \node[stage, below=1.4cm of coll] (sort)
+            {Sort + columnarize\\%
+            {\scriptsize\texttt{from\_tile(clone, sort, \&groups)}}};
+        \draw[arrow] (coll) -- (sort);
+
+        % Encode
+        \node[encoder, below=0.7cm of sort] (enc)
+            {Encode all columns\\{\scriptsize (per-stream competition)}};
+        \draw[arrow] (sort) -- (enc);
+
+        % Decision
+        \node[decision, below=0.7cm of enc] (cmp) {size $<$ best?};
+        \draw[arrow] (enc) -- node[right, label] {\texttt{total\_len()}} (cmp);
+
+        % Discard stub (short dead-end, no back-arrow)
+        \draw[thick] (cmp.west) -- ++(-1.0,0)
+            node[above, label] {no: discard};
+
+        % Yes arrow exits loop box downward
+        \node[coordinate, below=0.5cm of cmp] (yes_exit) {};
+        \draw[arrow] (cmp) -- node[right, label] {yes: update} (yes_exit);
+
+        % --- Dashed iteration box ---
+        \node[draw, dashed, rounded corners=4pt,
+              inner xsep=18pt, inner ysep=14pt,
+              fit=(sort)(enc)(cmp)] (loop) {};
+        \node[anchor=north west, font=\small\itshape, text=gray]
+            at (loop.north west) {for each strategy in candidates};
+
+        % --- Output ---
+        \node[output, below=1.4cm of cmp] (best)
+            {Keep smallest\\%
+            {\scriptsize\texttt{best.into\_layer\_bytes()}}};
+        \draw[arrow] (yes_exit) -- (best);
+    \end{tikzpicture}
+    \caption{Multi-strategy sort competition.
+    Shared-dictionary string groups are computed once and reused across all trials.
+    The encoder collects candidate sort strategies, pruning spatial strategies via the bounding-box heuristic for large, widely-spread layers.
+    For each candidate, the layer is cloned, sorted, and columnarized via \texttt{from\_tile}; the columnar data is then encoded with per-stream integer competitions.
+    The encoding with the smallest \texttt{total\_len()} is retained}
+    \label{fig:sort_competition}
+\end{figure}
+
+To avoid wasting trials on unpromising strategies, a \emph{bounding-box heuristic} skips spatial sorting on large layers whose features are too spatially dispersed for locality clustering to help.
+Specifically, for layers with more than \texttt{SORT\_TRIAL\_THRESHOLD = 512} features, the spatial trials are pruned when the first-vertex bounding box covers more than \texttt{SPATIAL\_HELP\_COVERAGE = 80\%} of the tile extent on \emph{both} axes (implemented in \texttt{sort.rs::spatial\_sort\_likely\_to\_help}).
+Small layers (below the threshold) are always trialled, since the absolute cost of an extra encoding pass is negligible for them.
+
+\paragraph{Inner loop: per-stream encoding competition}\label{sub_stream_competition}
+Within each sort-strategy trial, every integer data stream is subject to an independent encoding competition.
+Each candidate pairs a \emph{logical} encoding (Plain, Delta, \ac{RLE}, or DeltaRle) with a \emph{physical} encoding (\ac{VarInt} or \ac{FastPFOR}~\cite{fastpfor}).
+The na\"ive approach --- encoding every combination and comparing --- would be prohibitively expensive for large tiles.
+Instead, a \emph{data profiler} (\texttt{encoder/stream/optimizer.rs}) samples a contiguous block taken from the middle of the stream: streams with at most \texttt{MIN\_SAMPLE = 512} values are profiled in full, and longer streams are profiled over $\lfloor |s| / 100 \rfloor$ values clamped to $[\texttt{MIN\_SAMPLE},\, \texttt{MAX\_SAMPLE}]$ with \texttt{MAX\_SAMPLE = \num{16384}}.
+The contiguous mid-stream window is chosen over a random sample because \ac{RLE} run lengths and delta-bit-width statistics are destroyed by permutation, and because the middle of a spatially or ID-sorted stream is a representative point away from the boundary artefacts at the ends.
+The profiler computes four metrics in a single pass:
+
+\begin{itemize}
+    \item \emph{Average run length} ($\bar{r} = |s| / n_{\text{runs}}$): the mean number of consecutive identical values.
+    \item \emph{Delta average run length} ($\bar{r}_\Delta = (|s|-1) / n_{\Delta\text{-runs}}$): the mean run length in the zigzag-encoded delta stream.
+    \item \emph{Sortedness}: whether the sample is monotonically ascending or descending.
+    \item \emph{Bit-width sums}: the total bit widths of both raw values and zigzag-encoded deltas, used to estimate whether delta encoding reduces the representation cost.
+\end{itemize}
+
+Based on these metrics, candidates are pruned before any full encoding is attempted:
+\ac{RLE} is excluded when $\bar{r} < 2.0$;
+Delta is excluded when the stream is unsorted \emph{and} delta bit widths exceed raw bit widths;
+DeltaRle is excluded when $\bar{r}_\Delta < 2.0$ and neither \ac{RLE} nor Delta is independently viable.
+\ac{FastPFOR} is only offered for 32-bit integer types, as the algorithm's block structure is designed for fixed-width words.
+The remaining candidates (typically two to four) are encoded in full, and the smallest output is committed.
+
+\paragraph{String encoding}
+String columns are competed across four strategies, reflecting the two orthogonal dimensions of string compression: deduplication and byte-level compression.
+
+\begin{enumerate}
+    \item \textbf{Plain}: raw bytes with length prefixes.
+    The length stream is itself subject to the integer encoding competition.
+    \item \textbf{Dictionary}: a deduplicated corpus with per-string offset indices.
+    Effective when many features share the same string value (e.g., road names that repeat across tiles).
+    \item \textbf{\ac{FSST}}~\cite{boncz2020fsst}: a lightweight, random-access string compressor that learns a symbol table of up to~255 frequent byte sequences and replaces occurrences with single-byte codes.
+    The symbol table is stored once per column; the compressed corpus remains directly scannable without decompression.
+    \item \textbf{\ac{FSST} + Dictionary}: \ac{FSST} applied to a deduplicated dictionary, combining both deduplication and byte-level compression.
+\end{enumerate}
+
+A viability probe ensures that \ac{FSST} is only attempted when the symbol-table overhead (up to \qty{2040}{\byte}) is likely to be recouped: columns below \texttt{FSST\_OVERHEAD\_THRESHOLD = \num{2048}}~raw bytes are excluded, and a trial compression on a sample of up to \texttt{FSST\_SAMPLE\_STRINGS = 256} strings is evaluated before committing (\texttt{encoder/property/strings.rs}).
+Trained \ac{FSST} compressors are cached by column name in a \texttt{HashMap} and reused across all sort-strategy trials, avoiding redundant training.
+A \emph{pruning variant} of the \ac{FSST} compressor removes symbols whose observed frequency in the trial compression falls below a viability threshold, shrinking the stored symbol table at no additional decoder cost.
+
+\paragraph{Shared dictionary grouping}\label{sub_cardinality}
+The \ac{MLT} format supports shared dictionaries where multiple string columns reference a common deduplicated corpus, amortising dictionary overhead across columns with overlapping vocabularies.
+The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \texttt{name:en}, \texttt{name:de}), which misses semantic overlaps (e.g., \texttt{class} and \texttt{subclass} in OpenMapTiles share many values).
+
 \begin{sloppypar}
-Column-aware compression exploits the statistical properties of individual data streams.
-Integer streams are competed across logical encodings (none, delta, \ac{RLE}, delta-\acs{RLE}) paired with physical encodings (\ac{VarInt}, \ac{FastPFOR}~\cite{fastpfor}).
-\ac{FastPFOR} is restricted to 32-bit integer streams; 64-bit streams fall back to \ac{VarInt}, as the \ac{FastPFOR} codec operates on 32-bit blocks.
-String columns are competed across plain, dictionary, \ac{FSST}~\cite{boncz2020fsst}, and \ac{FSST}-on-dictionary strategies.
-The \ac{FSST} compressor uses a pruning variant that aggressively removes underused symbols from the trained symbol table, shaving additional bytes from the compressed output at no decompression cost.
-Geometry vertices are encoded as either componentwise deltas or Morton-code dictionaries, selected by a HyperLogLog sketch~\cite{flajoletHyperLogLogAnalysisNearperfect2007} that estimates vertex uniqueness.
-The competition is made affordable through warm-start caching: \ac{FSST} compressors, Morton metadata, and vertex-strategy decisions are computed once and reused across sort trials.
-Scratch buffers (temporary arrays for delta computation, run counting, and bit packing) grow on first use and are recycled without re-allocation across streams and sort trials.
+The Rust encoder replaces prefix matching with MinHash-based similarity clustering~\cite{broder1997resemblance}.
+For each string column, two MinHash sketches of \texttt{MINHASH\_PERMUTATIONS = 128} permutations are computed: one over exact string values and one over byte trigrams (3-byte sliding windows).
+The choice of 128 permutations corresponds to an expected standard error of approximately $1/\sqrt{128} \approx 8.8\%$ on the Jaccard estimate, which is adequate for the binary accept/reject decision of the clustering step.
+The trigram sketch captures partial overlap between columns whose values are substrings or morphological variants of each other.
+Pairwise Jaccard similarity is estimated as $\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| / 128$ for each sketch type, and the maximum of the two estimates is taken.
+Columns whose similarity exceeds \texttt{MINHASH\_SIMILARITY\_THRESHOLD = 0.075} are unified via a Union-Find structure (union by size); the low threshold reflects that even small vocabulary overlap reduces the marginal cost of adding a column to an existing dictionary.
+Groups with fewer than two members are discarded.
+The threshold and similarity mode were selected via a sweep over $\{0.025, 0.050, 0.075, 0.100, 0.125\}$ under three similarity modes (\emph{hybrid} taking $\max(\textit{exact}, \textit{trigram})$, \emph{only-trigram}, \emph{only-exact}), applied to the Germany OpenMapTiles tileset and measuring the total encoded size after clustering (\cref{fig:minhash_sweep}; the sweep harness is \texttt{scripts/generate\_minhash\_sweep.py}, which patches the threshold constant, rebuilds the encoder, and re-encodes the tileset for each cell).
+All three modes produce monotonically smaller output as the threshold decreases (i.e.\ as more column pairs qualify for grouping), with hybrid mode producing the smallest output at every threshold.
+The total spread across all 15 cells is approximately \qty{6}{\mega\byte} ($\approx \qty{0.19}{\percent}$ of the \qty{3.14}{\giga\byte} tileset), indicating that shared-dictionary grouping has a measurable but modest effect on total encoded size.
+The hybrid mode at 0.025 yields the overall minimum; however, the marginal improvement from 0.075 to 0.025 is only \qty{1.6}{\mega\byte}, and lower thresholds increase the risk of false-positive unions on tilesets with different vocabulary distributions.
+The value 0.075 is therefore retained as a conservative default that captures the majority of the grouping benefit while leaving headroom for datasets where column vocabularies are less correlated than in OpenMapTiles.
+\end{sloppypar}
+
+\DeclareRobustCommand{\circled}[1]{\tikz[baseline=(char.base)]{\node[circle, draw, inner sep=1pt, font=\scriptsize\bfseries] (char) {#1};}}
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\textwidth}{!}{\begin{tikzpicture}[
+        arrow/.style={-{Stealth[length=2.5mm]}, thick},
+        cmp/.style={font=\scriptsize, align=left},
+        stepbox/.style={draw, rounded corners=3pt, inner sep=5pt, font=\scriptsize},
+        steplabel/.style={font=\scriptsize\bfseries},
+    ]
+        % ═══ Top-left (Step 1): Column value table ═══
+        \node[stepbox] (tbl) {%
+            \begin{tabular}{@{}l l@{}}
+                \toprule
+                \textbf{Column} & \textbf{Distinct values (sample)} \\
+                \midrule
+                \texttt{name:de}  & Straßburg, Freiburg, Mühlhausen, \ldots \\
+                \texttt{name:fr}  & Strasbourg, Fribourg, Mulhouse, \ldots \\
+                \texttt{class}    & motorway, trunk, primary, rail, \ldots \\
+                \texttt{subclass} & motorway, trunk, primary, link, \ldots \\
+                \texttt{maxspeed} & 30, 50, 80, 120, \ldots \\
+                \bottomrule
+            \end{tabular}%
+        };
+        \node[steplabel, above=1pt of tbl] {\circled{1} Column vocabularies};
+
+        % ═══ Top-right (Step 2): MinHash sketch generation ═══
+        \node[stepbox, right=0.8cm of tbl, anchor=west] (hash) {%
+            \begin{tabular}{@{}l c c@{}}
+                \toprule
+                \textbf{Column} & \textbf{Exact sketch} & \textbf{Trigram sketch} \\
+                \midrule
+                \texttt{name:de}  & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                \texttt{name:fr}  & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                \texttt{class}    & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                \texttt{subclass} & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                \texttt{maxspeed} & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                \bottomrule
+            \end{tabular}%
+        };
+        \node[steplabel, above=1pt of hash] {\circled{2} MinHash signatures (128 permutations each)};
+
+        % ═══ Bottom-left (Step 4): Union-Find result ═══
+        \node[stepbox, below=0.8cm of tbl, cmp, anchor=north] (res) {%
+            \textbf{Shared dictionary groups:}\\[3pt]
+            \fbox{\strut\texttt{name:de}, \texttt{name:fr}}\\[1pt]
+            \quad{\scriptsize trigrams detected cross-language overlap}\\[4pt]
+            \fbox{\strut\texttt{class}, \texttt{subclass}}\\[1pt]
+            \quad{\scriptsize exact values detected semantic overlap}\\[4pt]
+            \texttt{maxspeed} --- singleton, individual dictionary\\[1pt]
+            \quad{\scriptsize no overlap with any string column}%
+        };
+        \node[steplabel, above=1pt of res] {\circled{4} Union-Find clustering};
+
+        % ═══ Bottom-right (Step 3): Pairwise Jaccard ═══
+        \node[stepbox, below=0.8cm of hash, cmp, text width=6.2cm, anchor=north] (sim) {%
+            $\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| \,/\, 128$\quad for each sketch\\[3pt]
+            \texttt{name:de} vs.\ \texttt{name:fr}:\\
+            \quad $\hat{J}_{\text{exact}}\!=\!0.14$\enspace
+            $\hat{J}_{\text{tri}}\!=\!\mathbf{0.35}$
+            \;$\Rightarrow$ $0.35 > \tau$ \;\checkmark\\[1pt]
+            \quad{\scriptsize 20 shared trigrams (Str, Keh, Off, Col, \ldots)}\\[2pt]
+            \texttt{class} vs.\ \texttt{subclass}:\\
+            \quad $\hat{J}_{\text{exact}}\!=\!\mathbf{0.45}$\enspace
+            $\hat{J}_{\text{tri}}\!=\!0.57$
+            \;$\Rightarrow$ $0.57 > \tau$ \;\checkmark\\[1pt]
+            \quad{\scriptsize 5 shared values (motorway, trunk, primary, \ldots)}\\[2pt]
+            \texttt{name:de} vs.\ \texttt{class}:\\
+            \quad $\hat{J}_{\text{exact}}\!=\!0.00$\enspace
+            $\hat{J}_{\text{tri}}\!=\!0.01$
+            \;$\Rightarrow$ $0.01 < \tau$ \;$\times$\\[2pt]
+            \texttt{maxspeed} vs.\ \emph{all others}:\\
+            \quad $\hat{J}_{\text{exact}}\!=\!0.00$\enspace
+            $\hat{J}_{\text{tri}}\!=\!0.00$
+            \;$\Rightarrow$ $0.00 < \tau$ \;$\times$%
+        };
+        \node[steplabel, above=1pt of sim] {\circled{3} Pairwise comparison ($\tau = 0.075$)};
+
+        % ═══ Arrows (clockwise) ═══
+        \draw[arrow] (tbl) -- node[above, font=\scriptsize\itshape] {hash} (hash);
+        \draw[arrow] (hash) -- (sim);
+        \draw[arrow] (sim) -- node[above, font=\scriptsize\itshape] {$>\!\tau$?} (res);
+
+    \end{tikzpicture}}
+    \caption[MinHash-based shared dictionary clustering]{MinHash-based shared dictionary clustering (clockwise from top-left).
+    \circled{1}~Each string column's distinct values form a set.
+    \circled{2}~Two 128-permutation MinHash sketches are computed per column: one over exact string values, one over byte trigrams (3-byte sliding windows).
+    \circled{3}~Pairwise Jaccard similarity is estimated by counting matching hash positions; the maximum of the two sketch types is compared against threshold $\tau = 0.075$.
+    Exact matching detects columns that share literal values (\texttt{class}/\texttt{subclass}); trigram matching detects cross-language morphological variants (\texttt{name:de}/\texttt{name:fr} in a border region).
+    \circled{4}~Column pairs exceeding the threshold are unified via Union-Find; the resulting groups share a single deduplicated dictionary corpus}
+    \label{fig:minhash_clustering}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{figures/minhash_sweep.pdf}
+    \caption{Total encoded mbtiles size of the Germany OpenMapTiles tileset under different MinHash similarity modes and Jaccard thresholds.  Lower is better.  The hybrid mode (teal) produces the smallest output at every threshold; all modes increase monotonically with threshold as fewer column pairs qualify for shared-dictionary grouping.  The y-axis is zoomed to the data range to make the differences visible; the full range spans approximately \qty{6}{\mega\byte} out of \qty{3.14}{\giga\byte} total}
+    \label{fig:minhash_sweep}
+\end{figure}
+
+\paragraph{Geometry and ID encoding}
+Geometry vertices are encoded as either \emph{componentwise deltas} (CWD) or \emph{Morton-code dictionaries}.
+CWD encodes each vertex as the delta from the previous vertex, producing a single interleaved stream $[x_0, y_0, \Delta x_1, \Delta y_1, \ldots]$ that is then compressed via the per-stream integer competition.
+The Morton-code dictionary approach computes a Z-order code for each unique vertex pair, stores the deduplicated codes as a sorted dictionary, and references them via per-vertex offset indices --- producing two streams (offsets and dictionary deltas) instead of one.
+The encoder tries both strategies (when the coordinate range permits Morton encoding, i.e., both axes fit within 16~bits after shifting) and retains the smaller result.
+Feature IDs are encoded through the same per-stream integer competition as other integer columns, using an explicit \texttt{IdWidth} tag (\texttt{Id32} or \texttt{Id64}) to select the physical word width.
+The \ac{FastPFOR} codec operates on 32-bit blocks by construction, so only 32-bit ID streams and property columns reach it; 64-bit streams fall back to \ac{VarInt} (the \ac{VarInt} candidate list covers both widths).
+The encoder chooses \texttt{Id32} when the maximum observed ID fits in \texttt{u32}, narrowing 64-bit-declared ID columns whose actual values fit in 32 bits; the round-trip correctness of this narrowing is covered by per-case tests including \texttt{test\_config\_produces\_correct\_variant} and proptest round-trips over $[0,\,\texttt{u32::MAX}]$ and $[0,\,\texttt{u64::MAX}]$ domains.
+Structural patterns (sequential, constant) are discovered by the same data profiler that drives the inner competition: sequential IDs reach DeltaRle, constant IDs reach \ac{RLE}, and short or irregular sequences fall back to plain \ac{VarInt}.
+
+\paragraph{Encoder cost amortisation}
+The multi-trial approach is made affordable through warm-start caching: \ac{FSST} compressors, Morton metadata, and vertex-strategy decisions are computed once and reused across sort trials.
+Scratch buffers grow on first use and are recycled without re-allocation.
+The alternatives mechanism itself is implemented as an RAII stack of \texttt{AltSession} guards (\texttt{encoder/writer.rs}): each candidate writes into a sub-range of the encoder's buffers, and when the session's \texttt{Drop} impl fires, it retains only the bytes of the smallest candidate and rolls the buffer cursor back for the others.
+Nesting is supported explicitly, so the inner per-stream competition can resolve before the enclosing sort-strategy trial commits.
+
+\paragraph{Encoder correctness validation}
+\begin{sloppypar}
+Because \ac{FastPFOR} explicitly disclaims input validation and the encoder performs narrowing, run-encoding, and dictionary rebuilds that each have independent failure modes, the encoder is validated by a multi-layer test harness:
+(i)~an in-tree proptest suite covering every \texttt{IntEncoder} variant, with round-trip assertions across the full representable range of the selected physical type;
+(ii)~a libFuzzer harness (\texttt{mlt\allowbreak-core/\allowbreak fuzz/\allowbreak fuzz\_targets/\allowbreak decoded\_layer.rs}) that fuzzes full \texttt{DecodedLayer} round-trips, with a corpus accumulated over previous runs;
+(iii)~snapshot tests via \texttt{insta} for the per-stream profiler's candidate lists, pinning the pruning heuristics to known-good outputs; and
+(iv)~the pixel-exact visual validation described in \cref{sec_visual_correctness}, which exercises the full decode path against a known-good baseline.
 \end{sloppypar}
 
 \subsection{Metadata Optimisations}\label{sub_metadata_optimisations}

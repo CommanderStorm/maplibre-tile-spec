@@ -38,7 +38,7 @@ The main contributions of this thesis are:
 
     \item \textbf{Style-driven tile shaving} that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data - enabling a cascade where style-level dead layer elimination reduces the pruning advisory, which in turn reduces the data that must be encoded.
 
-    \item An \textbf{automatic encoding strategy selection} for the MapLibre Tiles (MLT) columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies.
+    \item An \textbf{automatic encoding strategy selection} for the MapLibre Tiles (MLT) columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies, adapting to the changed data characteristics that emerge after style-driven shaving alters value distributions and column cardinalities.
 
     \item An \textbf{empirical evaluation} across 15 styles, 18 scenarios, and 17 cumulative ablation steps, validated end-to-end on two styles with tile data, demonstrating measurable improvements in tile volume, load time, and rendering stability.
 \end{enumerate}
@@ -56,7 +56,7 @@ It introduces the map rendering architecture and its resource pipeline (tiles, s
 It describes the two-phase pipeline - expression-level passes on raw JSON followed by structural passes on typed Rust representations generated from the MapLibre style specification - and details each individual pass: constant folding, algebraic simplification, stats-driven folding, dead layer elimination, metadata refinement, and layer merging.
 The chapter then extends the pipeline to the data level with style-driven tile shaving and automatic encoding strategy selection for the MLT columnar format, and concludes with the benchmarking methodology, including scenario design and the cumulative ablation protocol.
 
-\cref{ch_experiments} evaluates the optimiser through three experiments that mirror the pipeline's structure: expression-level optimisations (eight passes evaluated in cumulative ablation order), structural optimisations (six passes with inter-pass dependency analysis), and data-level optimisations (tile shaving and MLT encoding strategy competition).
+\cref{ch_experiments} evaluates the optimiser through three experiments that mirror the pipeline's structure: expression-level optimisations (eight passes evaluated in cumulative ablation order), structural optimisations (six passes with inter-pass dependency analysis), and data-level optimisations (demonstrating the cascade from style-level dead layer elimination through tile shaving into smaller tiles, and evaluating how automatic encoding strategy selection delivers the shaved data to the wire).
 A cross-style generalisation study across 15 styles tests robustness beyond the deep benchmarking corpus, and a combined analysis quantifies the full pipeline's end-to-end effect on tile volume, load time, and rendering stability.
 
 \cref{ch_conclusion} revisits the three research questions in light of the experimental evidence, summarises the cascade effect between style-level and data-level optimisations as the central architectural finding, discusses limitations, and identifies directions for future work including symbol layer merging, runtime re-encoding, and formal multi-objective search.
