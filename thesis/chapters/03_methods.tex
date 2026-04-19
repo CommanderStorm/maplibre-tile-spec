@@ -168,7 +168,7 @@ These styles are evaluated using static analysis only (style size, complexity me
 Tile data is sourced from \ac{OSM} via Planetiler or the German government.
 Both sources are consumed through the standard Web Mercator XYZ tiling scheme used by MapLibre, so all zoom-level reasoning in the thesis assumes this grid; BasemapDE is accessed through its XYZ-compatible endpoint rather than its native \acs{WMTS} grid, ensuring that the optimiser's tile indexing is uniform across the corpus.
 Only for \ac{OSM} is the underlying data fully available, so only for this source can tile statistics be collected at a sample rate of~1.0.
-To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs.
+To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs with the latency and download speed of a 4G internet connection according to Rusan et al.~\cite{rusan4gPacketLatency} ($30\frac{Mb}{s}$).
 This eliminates network variability and guarantees that every ablation step operates on identical tile data.
 
 \subsection{Geographic and Use-Case Scenarios}\label{sub_scenarios}
