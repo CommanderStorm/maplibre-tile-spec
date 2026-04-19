@@ -830,6 +830,103 @@ The inner competition uses an \emph{alternatives} mechanism implemented as an RA
 This avoids copying: the winning candidate's bytes are already positioned correctly in the output buffers, and losing candidates are simply rolled back by resetting buffer positions.
 The mechanism supports nesting (inner competitions resolve before the enclosing sort-strategy trial commits), enabling hierarchical strategy selection without redundant allocation.
 
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.45\linewidth}
+        \centering
+        \begin{tikzpicture}[
+            box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
+                        minimum width=2.4cm, font=\small, align=center},
+            decode/.style={box, fill=blue!12},
+            dec/.style={box, fill=yellow!12, minimum width=1.6cm},
+            io/.style={font=\small\ttfamily},
+            arrow/.style={-Stealth, thick},
+            lbl/.style={font=\scriptsize\itshape, text=gray},
+            node distance=1.4cm,
+        ]
+            % Main pipeline on centre line (x=0)
+            \node[io]     (u8)     {\&[u8]};
+            \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
+                {\texttt{enum <Name> \{}\\[1pt]\quad\texttt{Raw(Raw*),}\\[0pt]\quad\texttt{Parsed(Parsed*),}\\[1pt]\texttt{\}}};
+            \node[decode, below=of name]   (tile)   {Tile*};
+
+            % Decoder off-centre towards the middle (right side)
+            \node[dec, right=2cm of $(u8)!0.5!(name)$] (decnode) {Decoder\\{\scriptsize reusable decoding buffers\\memory usage limits}};
+
+            \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse;\\columns decoded\\lazily} (name);
+            \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
+
+            % Phantom to mirror Decoder so pipeline stays centred
+            \node[inner sep=0pt, minimum size=0pt, left=2cm of $(u8)!0.5!(name)$] {};
+
+            % Decoder arrows
+            \draw[-Stealth, thick, densely dashed] (u8.east) -| (decnode.north);
+            \draw[-Stealth, thick, densely dashed] (decnode.south) |- (name.east);
+        \end{tikzpicture}
+        \caption{Decoding pipeline}
+        \label{fig:arch_dec}
+    \end{subfigure}%
+    \hfill
+    \begin{subfigure}[t]{0.45\linewidth}
+        \centering
+        \begin{tikzpicture}[
+            box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
+                        minimum width=2.0cm, font=\small, align=center},
+            encode/.style={box, fill=orange!10},
+            enc/.style={box, fill=yellow!12, minimum width=1.6cm},
+            io/.style={font=\small\ttfamily},
+            arrow/.style={-Stealth, thick},
+            lbl/.style={font=\scriptsize\itshape, text=gray},
+            node distance=1.2cm,
+        ]
+            % Main pipeline on centre line (x=0)
+            \node[io]     (write)   {impl Write};
+            \node[encode, below=of write]   (encoded) {Encoded*};
+            \node[encode, below=1.4cm of encoded] (staged)  {Staged*};
+            \node[encode, below=of staged]  (tile)    {Tile*};
+
+            % *Encoder off-centre towards the middle (left side)
+            \node[enc, left=2cm of $(encoded)!0.5!(staged)$] (encnode) {*Encoder};
+
+            \draw[arrow] (tile)    -- node[right, lbl, align=left] {convert to\\columnar} (staged);
+            \draw[arrow] (staged)  -- node[right, lbl, align=left] {fully encode to\\wire-ready format} (encoded);
+            \draw[arrow] (encoded) -- node[right, lbl] {zero-copy} (write);
+
+            % Phantom to mirror *Encoder so pipeline stays centred
+            \node[inner sep=0pt, minimum size=0pt, right=2cm of $(encoded)!0.5!(staged)$] {};
+
+            % Encoder arrows
+            \draw[-Stealth, thick, densely dashed] (staged.west) -| (encnode.south);
+            \draw[-Stealth, thick, densely dashed] (encnode.north) |- (encoded.west);
+        \end{tikzpicture}
+        \caption{Encoding pipeline}
+        \label{fig:arch_enc_sub}
+    \end{subfigure}
+    \caption{Encoder and decoder data-flow in \texttt{mlt-core}.
+    \emph{Decoding}~\subref{fig:arch_dec}: an input \texttt{\&[u8]} slice is zero-copy parsed into a \texttt{<Name>} container whose columns are held as \texttt{LazyParsed<Raw*,\,Parsed*>} variants, decoded on demand and cached; columnar data is then converted to row-oriented \texttt{Tile*} features.
+    \emph{Encoding}~\subref{fig:arch_enc_sub}: row-oriented \texttt{Tile*} features are converted to columnar \texttt{Staged*} data, fully encoded to wire-ready \texttt{Encoded*} byte buffers via \texttt{*Encoder} types that implement the multi-strategy competition, and written to an \texttt{impl Write} sink via a final zero-copy step.
+    The \texttt{Raw*}/\texttt{Parsed*}/\texttt{Staged*}/\texttt{Encoded*}/\texttt{Tile*} families share a common \texttt{<Name>} stem and can be in either an encoded or decoded state, which keeps encoder, decoder, and in-place re-encoding on a single type hierarchy}
+    \label{fig:arch_enc}
+\end{figure}
+
+\paragraph{Outer loop: sort-strategy competition}
+Reordering features within a layer permutes every parallel column --- geometry, IDs, and all properties --- simultaneously.
+Different orderings favour different encoding schemes: spatial orderings cluster nearby geometries and their correlated properties, improving \ac{RLE} run lengths; ID ordering produces sequential integer sequences amenable to delta-\acs{RLE}.
+
+The encoder trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count.
+The implemented strategies (\texttt{SortStrategy} in \texttt{mlt-core/src/encoder/sort.rs}) are:
+
+\begin{enumerate}
+    \item \textbf{Unsorted}: the original MVT feature order is preserved.
+    \item \textbf{Spatial (Morton/Z-order)}: features are sorted by the Z-order curve index of their first vertex, computed via bit-interleaving.  Fast to compute; provides reasonable spatial locality.
+    \item \textbf{Spatial (Hilbert)}: features are sorted by the Hilbert curve index of their first vertex.  Slower to compute than Morton but achieves superior spatial locality, as the Hilbert curve avoids the long jumps inherent in the Z-order curve's recursive structure~\cite{moonAnalysisClusteringProperties2001}.
+    \item \textbf{ID}: features are sorted by feature ID in ascending order.
+\end{enumerate}
+
+For each candidate strategy, the encoder constructs a fresh \texttt{Encoder} instance, encodes the reordered layer, and measures the total output size (header + metadata + data).
+The strategy producing the smallest output is retained; all others are discarded.
+When only a single strategy is applicable, the competition is elided and the layer is encoded directly without cloning.
+Property-based sort strategies were considered but are not included in the current implementation, because the string interning pass (\cref{sub_data_transforms}) already groups features of the same discriminator value into dense dictionary-index ranges, and Hilbert or ID ordering strictly dominated an explicit categorical sort on the benchmark tileset.
 
 To avoid wasting trials on unpromising strategies, a \emph{bounding-box heuristic} skips spatial sorting on large layers whose features are too spatially dispersed for locality clustering to help.
 Specifically, for layers with more than \texttt{SORT\_TRIAL\_THRESHOLD = 512} features, the spatial trials are pruned when the first-vertex bounding box covers more than \texttt{SPATIAL\_HELP\_COVERAGE = 80\%} of the tile extent on \emph{both} axes (implemented in \texttt{sort.rs::spatial\_sort\_likely\_to\_help}).
