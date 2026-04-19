@@ -532,3 +532,38 @@ These can be benchmarked at different workload levels~\cite{jainArtComputerSyste
 
 \noindent This thesis primarily uses macro-benchmarks: a full style is loaded, tiles are fetched and decoded, and a scripted camera animation exercises the renderer.
 The benchmark harness controls for network variability (via a caching proxy) and GPU variability (via hardware-accelerated rendering with ANGLE/Vulkan) to achieve reproducible results at the macro level.
+
+\section{Formalised Problem Statement}\label{sec_problem_statement}
+
+With the background established, the optimizations problem addressed by this thesis can be stated formally.
+Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~JSON documents, and $\mathcal{T}$ be the set of tile sets (a tile set is a finite family of tiles indexed by source, $x$, $y$, $z$).
+Let $\mathcal{V}$ be the set of \emph{viewing states} a renderer can be in - roughly, $(x, y, z, \text{pitch}, \text{bearing}, \text{viewport size})$ tuples - and let
+\begin{equation}\label{eq:render_function}
+    R : \mathcal{S} \times \mathcal{T} \times \mathcal{V} \to \mathcal{I}
+\end{equation}
+denote MapLibre's rendering function, which maps a style, a tile set, and a viewing state to a rasterised image in $\mathcal{I}$.
+The optimiser solves the following problem: given an input pair $(S, T)$ and a cost function $c : \mathcal{S} \times \mathcal{T} \to \mathbb{R}_{\geq 0}$, find $(S', T')$ minimising $c(S', T')$ subject to the \emph{visual equivalence} constraint
+\begin{equation}\label{eq:visual_equivalence}
+    \forall v \in \mathcal{V}:\; R(S, T, v) \equiv R(S', T', v),
+\end{equation}
+where $\equiv$ denotes pixel-identity under a deterministic rasteriser.
+In practice, $v$ is quantified only over the discrete grid of integer zoom levels and axis-aligned viewports, and pixel-identity is verified by direct image comparison rather than by proof.
+The cost function $c$ encodes the deployment-relevant metrics discussed in \cref{sec_benchmarking}; this thesis does not attempt to collapse them into a scalar, instead reporting the effect of each pass on each metric separately.
+
+The constraint~(\ref{eq:visual_equivalence}) is the \emph{soundness criterion} for every pass in \cref{ch_methods}: any rewrite whose correctness depends on a MapLibre runtime invariant must either preserve the invariant or reject the rewrite when the invariant cannot be established.
+For example, the stats-driven folding pass cannot soundly remove a \texttt{match} arm without a full census of the tile data, because the arm may be reached by features the statistics have not observed; the pass is consequently gated on \texttt{sample\_rate = 1.0}.
+Similarly, the metadata-refinement pass must reason about overzoom (\cref{sec_tiles}) when tightening \texttt{maxzoom}, because an overzoomed tile counts as a viewing state in~(\ref{eq:visual_equivalence}).
+
+\paragraph{Termination of the expression-level fixpoint}
+The expression-level phase applies the entire rewrite rule set until the style JSON stops changing.
+Fixpoint iteration terminates because each successful rule application strictly decreases a well-founded measure
+\begin{equation}\label{eq:termination_measure}
+    \mu(S) = (n_{\mathrm{AST}}(S),\, d_{\max}(S),\, n_{\mathrm{lit}}(S))
+\end{equation}
+ordered lexicographically, where $n_{\mathrm{AST}}$ is the total number of \ac{AST} nodes in all expressions of $S$, $d_{\max}$ is the maximum expression nesting depth, and $n_{\mathrm{lit}}$ is the number of non-literal nodes.
+All peephole rules either reduce $n_{\mathrm{AST}}$ (e.g.\ constant folding, boolean absorption, dead-branch elimination), keep $n_{\mathrm{AST}}$ unchanged but strictly reduce $d_{\max}$ (e.g.\ boolean flattening), or keep both unchanged but strictly reduce $n_{\mathrm{lit}}$ (e.g.\ redundant coercion removal).
+The two potential exceptions - \texttt{any}$\to$\texttt{in} merging and predicate reordering - are either strictly monotone in the measure (\texttt{any}$\to$\texttt{in} reduces $n_{\mathrm{AST}}$ because the merged \texttt{in} has fewer nodes than the original chain of equalities) or semantically idempotent after one application (selectivity reordering sorts predicates into a canonical order).
+Because $\mu$ is bounded below by $(0, 0, 0)$ and strictly decreases on each productive iteration, the fixpoint is reached in finitely many steps.
+The implementation adds a conservative hard cap of \texttt{NORMALIZE\_FOLD\_FIXPOINT\_CAP = 8} iterations as a defensive safeguard against future rules that might violate the monotonicity invariant above.
+
+With these theoretical tools in place - the rendering architecture that defines the optimisation target, the compiler and database techniques that supply the rewrite strategies, the encoding schemes that govern the data level, and the formal problem statement that constrains correctness - the following chapter presents the concrete design and implementation of the optimiser.
