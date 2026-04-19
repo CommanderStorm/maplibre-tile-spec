@@ -1,10 +1,13 @@
 \chapter{Experiments}\label{ch_experiments}
 
-This chapter presents three experiments that evaluate the optimizations categories introduced in \cref{ch_methods}.
-Expression-level optimizationss (\cref{sec_exp_expressions}) operate on the JSON representation of individual style expressions.
-Structural optimizationss (\cref{sec_exp_structural}) operate on typed Rust representations of the full style document.
-Data-level optimizationss (\cref{sec_exp_mlt}) transform the tile encoding itself.
-The chapter concludes with a cross-style generalisation study (\cref{sec_exp_cross_style}) and a combined analysis of the full pipeline (\cref{sec_exp_combined}).
+The previous chapter designed a three-level optimisation pipeline - expression-level rewrites, structural passes, and data-level transformations - together with a cumulative ablation methodology for measuring each pass's contribution.
+This chapter applies that methodology to evaluate the pipeline empirically.
+
+The evaluation is structured to mirror the pipeline's own architecture.
+\cref{sec_exp_expressions} isolates the eight expression-level passes, measuring their effect on style size, load time, and AST complexity in cumulative ablation order.
+\cref{sec_exp_structural} evaluates the six structural passes, with particular attention to inter-pass dependencies and the synergy between dead layer elimination and layer merging.
+\cref{sec_exp_mlt} assesses the data-level optimisations: style-driven tile shaving and the MLT encoding strategy competition.
+\cref{sec_exp_cross_style} tests generalisation by applying the full pipeline to 15 styles beyond the deep benchmarking corpus, and \cref{sec_exp_combined} brings all three levels together to quantify the end-to-end effect on tile volume, load time, and rendering stability - and to examine whether the cascade between style-level and data-level optimisations exceeds the sum of its parts.
 
 \section{Experiment 1: Expression-Level Optimisations}\label{sec_exp_expressions}
 
@@ -255,21 +258,21 @@ The pruning operations, applied in order, are:
 
         % Advisory
         \node[both, below=0.8cm of sopt, xshift=1.8cm] (adv) {Tile pruning advisory};
-        \draw[arrow] (sopt) - node[left, label] {optimised style} (adv);
-        \draw[arrow] (stats) - node[right, label] {property/geometry stats} (adv);
+        \draw[arrow] (sopt) -- node[left, label] {optimised style} (adv);
+        \draw[arrow] (stats) -- node[right, label] {property/geometry stats} (adv);
 
         % Tile processing
         \node[data, below left=0.8cm and 0.3cm of adv] (mvt) {\ac{MVT} tile};
         \node[data, below=0.8cm of adv] (prune) {Prune \& transform};
         \node[data, below right=0.8cm and 0.3cm of adv] (mlt) {\ac{MLT} tile};
 
-        \draw[arrow] (adv) - (prune);
-        \draw[arrow] (mvt) - (prune);
-        \draw[arrow] (prune) - node[right, label] {re-encode} (mlt);
+        \draw[arrow] (adv) -- (prune);
+        \draw[arrow] (mvt) -- (prune);
+        \draw[arrow] (prune) -- node[right, label] {re-encode} (mlt);
 
         % Cascade annotation
         \draw[decorate, decoration={brace, amplitude=5pt, mirror}, thick, gray]
-            ($(sopt.south west)+(0,-0.15)$) - ($(adv.south east)+(0,-0.15)$)
+            ($(sopt.south west)+(0,-0.15)$) -- ($(adv.south east)+(0,-0.15)$)
             node[midway, below=7pt, font=\scriptsize, text=gray, align=center] {cascade: fewer live layers $\to$\\fewer referenced properties $\to$ smaller tiles};
     \end{tikzpicture}
     \caption{Style-driven tile shaving pipeline.  The optimised style from Experiments~1-2 and tile statistics jointly produce a pruning advisory.  Each \ac{MVT} tile is pruned according to the advisory, transformed, and re-encoded as \ac{MLT}.  Style-level dead layer elimination cascades into smaller advisories and thus smaller tiles}
@@ -359,27 +362,27 @@ Property-based sort strategies were considered but are not included in the curre
         % Pruning annotation
         \node[above=0.1cm of s0, font=\scriptsize, text=gray, anchor=south] (prune) {bbox heuristic};
 
-        \draw[arrow] (layer) - (s0);
-        \draw[arrow] (layer) - (s1);
-        \draw[arrow] (layer) - (s2);
-        \draw[arrow] (layer) - (s3);
+        \draw[arrow] (layer) -- (s0);
+        \draw[arrow] (layer) -- (s1);
+        \draw[arrow] (layer) -- (s2);
+        \draw[arrow] (layer) -- (s3);
 
         % Encoding trials
         \node[encoder, below=0.8cm of s1] (enc) {Encode all columns\\{\scriptsize (per-stream competition)}};
 
-        \draw[arrow] (s0) - (enc);
-        \draw[arrow] (s1) - (enc);
-        \draw[arrow] (s2) - (enc);
-        \draw[arrow] (s3) - (enc);
+        \draw[arrow] (s0) -- (enc);
+        \draw[arrow] (s1) -- (enc);
+        \draw[arrow] (s2) -- (enc);
+        \draw[arrow] (s3) -- (enc);
 
         % Size comparison
         \node[decision, below=0.7cm of enc] (cmp) {size $<$ best?};
-        \draw[arrow] (enc) - node[right, label] {measure \texttt{total\_len()}} (cmp);
+        \draw[arrow] (enc) -- node[right, label] {measure \texttt{total\_len()}} (cmp);
 
         % Output
         \node[output, below=0.7cm of cmp] (best) {Keep smallest};
-        \draw[arrow] (cmp) - node[right, label] {yes: update best} (best);
-        \draw[arrow] (cmp.west) - ++(-1.2,0) |- node[near start, above, label] {no: discard} (enc.west);
+        \draw[arrow] (cmp) -- node[right, label] {yes: update best} (best);
+        \draw[arrow] (cmp.west) -- ++(-1.2,0) |- node[near start, above, label] {no: discard} (enc.west);
     \end{tikzpicture}
     \caption{Multi-strategy sort competition.  The layer is encoded under each candidate sort order; the encoding with the smallest \texttt{total\_len()} is retained.  Spatial strategies are pruned by the bounding-box heuristic for large, widely-spread layers.  Within each trial, per-stream encoding competitions select the best integer encoder for every data stream}
     \label{fig:sort_competition}

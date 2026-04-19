@@ -1,8 +1,8 @@
 \chapter{Methods}\label{ch_methods}
 
-This thesis designs and implements an \textbf{automatic, style- and data-driven optimiser} for map rendering pipelines built on MapLibre GL~JS.
-The optimiser is a standalone tool that consumes a MapLibre style~JSON document and, optionally, tile-level statistics, and produces a semantically equivalent style whose rendering performance is measurably improved.
-All transformations are \emph{visually lossless}: the optimised style must produce pixel-identical output for every tile at every zoom level.
+The preceding chapters established that no existing tool jointly optimises map styles and tile data, and introduced the compiler, database, and encoding techniques whose analogues make such joint optimisation possible.
+This chapter applies those foundations to the design and implementation of a concrete optimiser: a standalone Rust tool that consumes a MapLibre style~JSON document and, optionally, tile-level statistics, and produces a semantically equivalent style together with optimised tile data.
+All transformations are \emph{visually lossless}: the optimised output must produce pixel-identical rendering for every tile at every zoom level, satisfying the visual equivalence constraint formalised in \cref{sec_problem_statement}.
 
 \section{Scope}\label{sec_scope}
 
@@ -610,12 +610,12 @@ Sort-key synthesis is only applied to layer types that support the \texttt{*-sor
         \node[above=0.15cm of out, font=\small\bfseries] {Output: 1 merged layer};
 
         % ── Arrows ──
-        \draw[arrow] (l0.east) - (p1.west);
-        \draw[arrow] (l1.east) - (p2.west);
-        \draw[arrow] (l2.east) - (p3.west);
-        \draw[arrow] (p1.east) - (out.west |- p1.east);
-        \draw[arrow] (p2.east) - (out.west);
-        \draw[arrow] (p3.east) - (out.west |- p3.east);
+        \draw[arrow] (l0.east) -- (p1.west);
+        \draw[arrow] (l1.east) -- (p2.west);
+        \draw[arrow] (l2.east) -- (p3.west);
+        \draw[arrow] (p1.east) -- (out.west |- p1.east);
+        \draw[arrow] (p2.east) -- (out.west);
+        \draw[arrow] (p3.east) -- (out.west |- p3.east);
     \end{tikzpicture}}
     \caption[Layer merging example]{Layer merging example.  Three adjacent line layers differing only in filter literal, colour, and width are merged via the \texttt{match} pattern (Phase~2).
     The merged layer uses \texttt{["match",\,["get",\,"class"],\,\ldots]} for the filter, each differing paint property, and a synthesised sort key that preserves the original draw order.
@@ -801,3 +801,5 @@ The benchmark harness itself is a Puppeteer-driven headless browser that program
 
 Visual correctness is verified separately through pixel-exact render tests that compare optimised output against the unoptimised baseline across a grid of zoom levels and geographic locations.
 These tests use a software rasteriser to ensure deterministic pixel output, independent of GPU driver differences.
+
+With the optimiser pipeline, its individual passes, and the evaluation methodology now defined, the following chapter applies this methodology to evaluate each optimisation category - expression-level, structural, and data-level - and then analyses their combined effect across the full benchmark corpus.

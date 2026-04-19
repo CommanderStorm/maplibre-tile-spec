@@ -1,7 +1,7 @@
 \chapter{Conclusion}\label{ch_conclusion}
 
-This thesis presented an automatic, style- and data-driven optimiser for MapLibre-based map rendering pipelines.
-The optimiser operates in two phases - expression-level rewrites on raw JSON followed by structural transformations on typed Rust representations - and extends into data-level optimizations through style-driven tile shaving and automatic encoding strategy selection for the \ac{MLT} format.
+The experiments in the preceding chapter evaluated each optimisation level in isolation and then measured their combined effect, revealing that the cascade from style simplification through tile shaving to columnar re-encoding is strictly more effective than the sum of its parts.
+This chapter draws together the findings: it summarises the contributions, distils the key insights, revisits the three research questions posed in \cref{sec_research_goals}, and identifies directions for future work.
 
 \section{Summary of Contributions}
 

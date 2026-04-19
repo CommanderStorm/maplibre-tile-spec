@@ -1,6 +1,13 @@
 \chapter{Related Work}\label{ch_related_work}
 
-This chapter surveys existing work on optimising map rendering pipelines, organised by the level at which the optimizations operates: tile data, tile encoding, style specification, and rendering performance measurement.
+The introduction identified a gap between how map styles and tile data are prepared today: styles are tuned for visual appearance while tiles are encoded with general-purpose content and compression, and no existing open-source system exploits the interaction between the two.
+Before developing an optimiser that bridges this gap, this chapter surveys the state of the art along four dimensions that correspond to the levels at which the optimiser will operate.
+\cref{sec_rw_tile_data} reviews existing approaches to tile data pruning and schema design.
+\cref{sec_rw_tile_encoding} covers tile encoding formats and columnar compression techniques.
+\cref{sec_rw_style_optimizations} examines the limited prior work on style-level optimisation.
+\cref{sec_rw_benchmarking} surveys rendering performance benchmarking methodologies.
+For each area, the discussion identifies what existing tools achieve and where they fall short, building toward the composite gap that motivates the co-optimisation approach developed in this thesis.
+
 For each category, the relevant tools and publications are discussed, and the gap that this thesis addresses is identified.
 
 \section{Tile Data Optimisation}\label{sec_rw_tile_data}
@@ -8,16 +15,16 @@ For each category, the relevant tools and publications are discussed, and the ga
 The most direct approach to reducing tile transfer cost is to remove data that the rendering style does not reference.
 
 Mapbox developed \texttt{vtshaver}~\cite{mapboxVtshaverTileShaving2018}, a C++/Node.js tool that takes a vector tile and a Mapbox GL style, analyses which layers, features, and properties the style references, and strips everything else.
-This reduces tile size and decoding cost, but \texttt{vtshaver} operates exclusively on the data side: it does not modify the style itself and therefore cannot simplify filter expressions, merge redundant layers, or reduce per-frame rendering overhead.
+This reduces tile size and decoding cost, but \texttt{vtshaver} operates exclusively on the data side:
+it does not modify the style itself and therefore cannot simplify filter expressions, merge redundant layers, or reduce per-frame rendering overhead.
+
+Mapbox also offers \emph{style-optimized vector tiles} as a proprietary server-side feature~\cite{mapboxStyleOptimizedTiles}: when a tile request includes style metadata, the server analyses the style's sources, filters, and zoom ranges, then strips all data not visible for that style.
+This is the closest commercial precedent for style-data co-optimizations, but it is opaque, closed-source, and API-only - it cannot be extended, audited, or deployed independently.
+The exact set of optimisations is not disclosed and given that MapBox does not have a open research stance (their terms of service explicitly forbid this), reverse-engineering would likely be illegal\footnote{\url{https://media.ccc.de/v/36c3-11089-reflections_on_the_new_reverse_engineering_law}}.
 
 Vilardaga built \texttt{vt-optimizer}~\cite{vilardagaVtoptimizerVectorTile2023}, which drops invisible or unused layers and fields in both the style and data.
 The tool also provides an inspection mode that checks conformance to Mapbox's recommended tile size limits (\qty{50}{\kilo\byte} average, \qty{500}{\kilo\byte} maximum).
 However, the optimizationss are limited to visibility-based pruning; the tool does not perform expression-level rewrites, cross-layer merging, or data-driven constant folding.
-
-\begin{sloppypar}
-Mapbox also offers \emph{style-optimized vector tiles} as a proprietary server-side feature~\cite{mapboxStyleOptimizedTiles}: when a tile request includes style metadata, the server analyses the style's sources, filters, and zoom ranges, then strips all data not visible for that style.
-This is the closest commercial precedent for style-data co-optimizations, but it is opaque, closed-source, and API-only - it cannot be extended, audited, or deployed independently.
-\end{sloppypar}
 
 Tippecanoe~\cite{tippecanoe} is the standard open-source tool for building vector tilesets from large GeoJSON or FlatGeobuf collections.
 It implements several data-level optimizations heuristics: feature dropping based on density budgets (\texttt{--drop-densest-as-needed}), polygon coalescing at low zoom levels, Visvalingam line simplification, and attribute exclusion.
@@ -124,3 +131,4 @@ This thesis                                                    & \checkmark & \c
 As the table shows, existing tools address individual optimizations dimensions but none combines all four.
 Critically, no existing open-source tool performs \emph{joint} optimizations of style and data: using tile statistics to simplify the style, and using the simplified style to prune the data, creating a cascade where each side makes the other more effective.
 This thesis fills this gap by applying compiler and database optimizations techniques - peephole rewriting, constant folding, dead code elimination, selectivity-based predicate reordering, and profile-guided encoding selection - to the map style and tile data as a unified optimizations target.
+The following chapter introduces the theoretical foundations that these techniques draw on: the map rendering architecture that defines the optimisation target, the compiler and query optimisation concepts that inform the rewrite rules, and the encoding strategies that underpin the data-level passes.
