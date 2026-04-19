@@ -288,11 +288,11 @@ These rules receive tile statistics for the relevant source layer and fold expre
 \begin{sloppypar}
 \noindent A cardinality threshold (implemented as the constant \texttt{CARDI\-NALITY\_\allowbreak THRESHOLD\,=\,200} governs the granularity of value tracking: when the number of distinct values exceeds this threshold, the statistics switch from full value counts to cardinality-only mode.
 \end{sloppypar}
-This bounds the memory cost on high-cardinality properties (names, identifiers) while retaining full information for the low-cardinality properties (road class, land use, administrative level) that benefit most from data-driven folding.
+This bounds the cost on high-cardinality properties (names, identifiers) while retaining full information for the low-cardinality properties (class, subclass, administrative level) that benefit most from data-driven folding.
 The choice of 200 is motivated by the OpenMapTiles schema: every categorical property that is used as a \texttt{match}/\texttt{case} discriminator in the benchmark styles (\texttt{class}, \texttt{subclass}, \texttt{admin\_level}, \texttt{kind}, land-use codes) has fewer than 200 distinct values across the Germany tileset, whereas high-cardinality string columns (feature names, identifiers) exceed it by one or more orders of magnitude.
 The threshold therefore separates the \enquote{folding-useful} properties from the \enquote{folding-useless} ones without tuning for any specific style.
 
-Stats-driven folding is only applied irreversibly (i.e.\ removing features or folding expressions that affect the set of rendered features) when the statistics were collected at a sample rate of~1.0 (a full census of the tile set).
+\textbf{Stats-driven folding is} only applied \textbf{irreversibly} (i.e.\ removing features or folding expressions that affect the set of rendered features) when the statistics were collected at a \textbf{sample rate of~1.0} (a full census of the tile set).
 At lower sample rates the statistics are used conservatively for reordering and selectivity estimation but not for removing data.
 
 \paragraph{Expression simplification}
@@ -390,7 +390,7 @@ This information is only available with tile statistics, which is why the pass h
 
 \paragraph{Metadata refinement}
 This pass extracts implicit zoom bounds from filter predicates and paint ramps, and lifts them into the layer's explicit \texttt{minzoom}/\texttt{maxzoom} metadata.
-Accurate metadata allows the renderer to skip entire layers at zoom levels where they are invisible, avoiding filter evaluation, geometry decoding, and draw-call submission.
+Accurate metadata allows the renderer to skip entire layers at zoom levels where they are invisible, avoiding filter evaluation, partially geometry decoding, and draw-call submission.
 
 \emph{Filter-based extraction} walks the filter expression tree and recognises zoom predicates of the form \texttt{[">=",~["zoom"],~$z$]} or \texttt{["<=",~["zoom"],~$z$]}.
 Within an \texttt{all} node, the extracted bounds are intersected (the tighter of the bounds applies); within an \texttt{any} node, they are unioned (the layer is visible if any branch is satisfied).
