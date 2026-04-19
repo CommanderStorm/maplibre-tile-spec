@@ -846,10 +846,10 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
         ]
             \node[io]     (u8)     {\&[u8]};
             \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
-                {\texttt{enum <Name> \{}\\[1pt]\quad\scriptsize\texttt{Raw*,}\\[0pt]\quad\scriptsize\texttt{Parsed*,}\\[1pt]\texttt{\}}};
+                {\texttt{enum <Name> \{}\\[1pt]\quad\scriptsize\texttt{Raw(Raw<Name>),}\\[0pt]\quad\scriptsize\texttt{Parsed(Parsed<Name>),}\\[1pt]\texttt{\}}};
             \node[decode, below=of name]   (tile)   {Tile*};
 
-            \draw[arrow] (u8)   -- node[right, lbl, align=left] {zero-copy parse;\\columns decoded lazily} (name);
+\draw[arrow] (u8)   -- node[right, lbl, align=left] {zero-copy parse\\lazy decoding} (name);
             \draw[arrow] (name) -- node[right, lbl, align=left] {convert to\\row format} (tile);
         \end{tikzpicture}
         \caption{Decoding pipeline}
