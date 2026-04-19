@@ -121,7 +121,7 @@ The MIR also drives the default stripping pass, which compares property values a
         \node[corpus, below=1cm of mir] (test) {Style Corpus};
 
         % tanlged arrows
-        \draw[query] (corpus.north -| serial.south) -- node[right, label] {validate} (mir);
+        \draw[query] (corpus.north |- serial.south) -- node[right, label] {validate} (mir);
         \draw[query] (opt) -- node[right, label, near start] {optimise} (serial);
         \draw[query] (scan) -- node[above, label] {tile statistics} (opt);
         \draw[arrow] (serial) -- node[above, near end, label] {sample styles} (test);
