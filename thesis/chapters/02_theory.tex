@@ -253,8 +253,6 @@ The MapLibre style specification~\cite{MapLibreStyleSpec} defines a map's appear
     \item \textbf{Metadata bounds} (\texttt{minzoom}, \texttt{maxzoom}) restrict the zoom range at which a layer is active, allowing the renderer to skip entire layers outside their visible range without evaluating their filters.
     \Cref{lst:ishidden} shows the implementation: the method checks the layer's zoom bounds and evaluated visibility in a single guard, and is called at both tile-parse time (the worker skips bucket creation) and draw-call time (the painter skips rendering).
     Tight \texttt{minzoom}/\texttt{maxzoom} bounds therefore eliminate work at two stages of the pipeline before any filter evaluation or geometry decoding occurs.
-    \end{itemize}
-\end{itemize}
 
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method and its call sites (\texttt{src/style/style\_layer.ts:328-332}, \texttt{src/source/worker\_tile.ts:111}, \texttt{src/render/painter.ts:658-659})},label=lst:ishidden]
 // src/style/style_layer.ts:328-332
@@ -273,6 +271,8 @@ renderLayer(painter, tileManager, layer, coords, renderOptions) {
     // ...dispatches to draw.fill, draw.line, draw.symbol, etc.
 }
 \end{lstlisting}
+\end{itemize}
+\end{itemize}
 
 Filters and properties can be specified as literal constants, as \emph{zoom-dependent} expressions (varying with the camera zoom level via \texttt{interpolate} or \texttt{step} ramps), as \emph{data-driven} expressions (varying per feature based on property values via \texttt{match}, \texttt{case}, or \texttt{get} operators), or as a combination of both.
 The resulting expression trees can be deeply nested and may contain redundant or unreachable branches - characteristics that make them amenable to the same kinds of simplification and optimizations techniques used in compilers and database query planners.
