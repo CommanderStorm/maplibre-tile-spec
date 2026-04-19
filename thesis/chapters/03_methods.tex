@@ -106,9 +106,9 @@ The MIR also drives the default stripping pass, which compares property values a
         \node[mir,  right=of parsed] (mir)    {MIR};
         \node[gen,  right=of mir]  (serial) {SerialSpec\\{\scriptsize (generated Rust)}};
 
-        \draw[arrow] (v8)     - node[above, label] {decode} (parsed);
-        \draw[arrow] (parsed) - node[above, label] {normalise} (mir);
-        \draw[arrow] (mir)    - node[above, label] {generate} (serial);
+        \draw[arrow] (v8)     -- node[above, label] {decode} (parsed);
+        \draw[arrow] (parsed) -- node[above, label] {normalise} (mir);
+        \draw[arrow] (mir)    -- node[above, label] {generate} (serial);
 
         % ── Data pipeline (bottom row) ──
         \node[data, below=1.6cm of v8] (proto) {Protobuf\\{\scriptsize (\acs{MVT})}};
