@@ -80,3 +80,63 @@ The normalisation stage produces what we call the \texttt{MIR} (mid-level interm
 For example, the upstream \texttt{v8.json} defines layer properties across multiple sections (paint, layout) and references expression operators in a separate section; the MIR collapses these into per-layer field definitions that include the property's type, default value, and expression capabilities (whether the property supports zoom-dependent, feature-dependent, or both kinds of expressions).
 This metadata is critical for structural passes: layer merging queries the MIR to determine whether a differing paint property supports feature-driven expressions (and can therefore be wrapped in a \texttt{case}/\texttt{match} over the filter discriminator) or is camera-only (and must be uniform across merged layers).
 The MIR also drives the default stripping pass, which compares property values against the specification defaults encoded in the generated types.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.8cm and 1.4cm,
+        box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
+                    minimum width=2.0cm, font=\small, align=center},
+        src/.style={box, fill=blue!12},
+        mir/.style={box, fill=violet!12},
+        gen/.style={box, fill=green!10},
+        data/.style={box, fill=orange!10},
+        opt/.style={box, fill=yellow!12, minimum width=2.4cm},
+        test/.style={box, fill=red!12},
+        arrow/.style={-Stealth, thick},
+        query/.style={-Stealth, thick, densely dashed},
+        label/.style={font=\scriptsize\itshape, text=gray},
+        validationlabel/.style={font=\scriptsize\itshape, text=red},
+        validation/.style={
+            dashed,
+            red,
+            ->,
+            every edge node/.append style={text=red}
+        },
+    ]
+        % ── Codegen pipeline (top row) ──
+        \node[src]  (v8)     {\texttt{v8.json}};
+        \node[mir,  right=of v8]   (parsed) {ParsedSpec};
+        \node[mir,  right=of parsed] (mir)    {MIR};
+        \node[gen,  right=of mir]  (serial) {SerialSpec\\{\scriptsize (generated Code)}};
+
+        \draw[arrow] (v8)     -- node[above, label] {decode} (parsed);
+        \draw[arrow] (parsed) -- node[above, label] {normalise} (mir);
+        \draw[arrow] (mir)    -- node[above, label] {generate} (serial);
+
+        % ── Data pipeline (bottom row) ──
+        \node[src, below=2.5cm of v8] (proto) {Protobuf\\{\scriptsize (\acs{MVT})}};
+        \node[data, right=of proto] (mvt) {MVTLayer};
+        \node[data, right=of mvt]   (scan) {DataScanner};
+
+        \draw[query] (proto) -- node[above, label] {decode} (mvt);
+        \draw[query] (mvt)   -- node[above, label] {scan tiles} (scan);
+
+        % tangled nodes
+        \node[opt, below=2.5cm of serial] (opt) {Optimiser};
+        \node[test] (test)  at ($(serial)!0.5!(opt) + (3cm,0)$)  {Render tests};
+        \node[test, below=1cm of mir] (corpus) {Style Corpus};
+
+        % tanlged arrows
+        \draw[<->,double,thick,densely dashed] (opt) -- node[left,black] {\scriptsize\itshape optimise} (serial);
+        \draw[query] (scan) -- node[above, label] {statistics} (opt);
+        \draw[validation] (corpus) -- node[left, validationlabel] {validate} (serial);
+        \draw[validation] (corpus) -- node[left, validationlabel] {eval} (opt);
+        \draw[validation] (test) -- node[right, validationlabel] {validate} (serial);
+        \draw[validation] (test) -- node[right, validationlabel] {validate} (opt);
+    \end{tikzpicture}
+    \caption{System architecture.
+    The \emph{codegen pipeline} (top) transforms the upstream \texttt{v8.json} style specification through three stages into generated Rust types (\texttt{SerialSpec}) used for typed style manipulation, with the MIR providing spec metadata to the optimiser.
+    The \emph{data pipeline} (bottom) decodes \acs{MVT} tiles and scans them to produce tile statistics that feed into data-driven optimisations passes. Render tests validate round-trip correctness and the style corpus is used to both validate the codegen and evaluate the optimiser.}
+    \label{fig:system_architecture}
+\end{figure}
