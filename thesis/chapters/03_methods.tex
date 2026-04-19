@@ -116,7 +116,7 @@ The MIR also drives the default stripping pass, which compares property values a
         \draw[arrow] (mvt)   -- node[above, label] {scan tiles} (scan);
 
         % tangled nodes
-        \node[opt, right=of scan] (opt) {Optimiser};
+        \node[opt, below=2cm of serial] (opt) {Optimiser};
         \node[test, below right=0.4cm and 1cm of serial] (test) {Render tests};
 
         % tanlged arrows
