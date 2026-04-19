@@ -115,21 +115,21 @@ The MIR also drives the default stripping pass, which compares property values a
         \node[data, right=of proto] (mvt) {MVTLayer};
         \node[data, right=of mvt]   (scan) {DataScanner};
 
-        \draw[arrow] (proto) - node[above, label] {decode} (mvt);
-        \draw[arrow] (mvt)   - node[above, label] {scan tiles} (scan);
+        \draw[arrow] (proto) -- node[above, label] {decode} (mvt);
+        \draw[arrow] (mvt)   -- node[above, label] {scan tiles} (scan);
 
         % ── Optimiser (centre) ──
         \node[opt, below right=0.5cm and 0.3cm of serial] (opt) {Optimiser};
 
         % ── Optimiser interactions ──
-        \draw[query] (opt.north -| mir.south) - node[right, label] {spec metadata} (mir);
-        \draw[query] (opt) - node[right, label, near start] {optimise} (serial);
-        \draw[query] (scan) - node[below, label] {tile statistics} (opt);
+        \draw[query] (opt.north -| mir.south) -- node[right, label] {spec metadata} (mir);
+        \draw[query] (opt) -- node[right, label, near start] {optimise} (serial);
+        \draw[query] (scan) -- node[below, label] {tile statistics} (opt);
 
         % ── Test feedback ──
         \node[test, below=1.2cm of opt] (test) {Render tests};
         \draw[arrow] (serial) |- node[near end, above, label] {sample styles} (test);
-        \draw[query] (test) - node[right, label] {fuzz / validate} (opt);
+        \draw[query] (test) -- node[right, label] {fuzz / validate} (opt);
     \end{tikzpicture}
     \caption{System architecture.
     The \emph{codegen pipeline} (top) transforms the upstream \texttt{v8.json} style specification through three stages into generated Rust types (\texttt{SerialSpec}) used for typed style manipulation, with the MIR providing spec metadata to the optimiser.
