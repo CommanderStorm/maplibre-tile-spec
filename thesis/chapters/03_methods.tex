@@ -830,6 +830,50 @@ The inner competition uses an \emph{alternatives} mechanism implemented as an RA
 This avoids copying: the winning candidate's bytes are already positioned correctly in the output buffers, and losing candidates are simply rolled back by resetting buffer positions.
 The mechanism supports nesting (inner competitions resolve before the enclosing sort-strategy trial commits), enabling hierarchical strategy selection without redundant allocation.
 
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.45\linewidth}
+        \centering
+        \begin{tikzpicture}[
+            box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
+                        minimum width=2.4cm, font=\small, align=center},
+            decode/.style={box, fill=blue!12},
+            dec/.style={box, fill=yellow!12, minimum width=1.6cm},
+            io/.style={font=\small\ttfamily},
+            arrow/.style={-Stealth, thick},
+            lbl/.style={font=\scriptsize\itshape, text=gray},
+            node distance=1.4cm,
+        ]
+            % Main pipeline on centre line (x=0)
+            \node[io]     (u8)     {\&[u8]};
+            \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
+                {\texttt{enum <Name> \{}\\[1pt]\quad\texttt{Raw(Raw*),}\\[0pt]\quad\texttt{Parsed(Parsed*),}\\[1pt]\texttt{\}}};
+            \node[decode, below=of name]   (tile)   {Tile*};
+
+            % Decoder off-centre towards the middle (right side)
+            \node[dec, right=2cm of $(u8)!0.5!(name)$] (decnode) {Decoder\\{\scriptsize reusable decoding buffers\\memory usage limits}};
+
+            \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse;\\columns decoded\\lazily} (name);
+            \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
+
+            % Phantom to mirror Decoder so pipeline stays centred
+            \node[inner sep=0pt, minimum size=0pt, left=2cm of $(u8)!0.5!(name)$] {};
+
+            % Decoder arrows
+            \draw[-Stealth, thick, densely dashed] (u8.east) -| (decnode.north);
+            \draw[-Stealth, thick, densely dashed] (decnode.south) |- (name.east);
+        \end{tikzpicture}
+        \caption{Decoding pipeline}
+        \label{fig:arch_dec}
+    \end{subfigure}%
+    \hfill
+    \caption{Encoder and decoder data-flow in \texttt{mlt-core}.
+    \emph{Decoding}~\subref{fig:arch_dec}: an input \texttt{\&[u8]} slice is zero-copy parsed into a \texttt{<Name>} container whose columns are held as \texttt{LazyParsed<Raw*,\,Parsed*>} variants, decoded on demand and cached; columnar data is then converted to row-oriented \texttt{Tile*} features.
+    \emph{Encoding}~\subref{fig:arch_enc_sub}: row-oriented \texttt{Tile*} features are converted to columnar \texttt{Staged*} data, fully encoded to wire-ready \texttt{Encoded*} byte buffers via \texttt{*Encoder} types that implement the multi-strategy competition, and written to an \texttt{impl Write} sink via a final zero-copy step.
+    The \texttt{Raw*}/\texttt{Parsed*}/\texttt{Staged*}/\texttt{Encoded*}/\texttt{Tile*} families share a common \texttt{<Name>} stem and can be in either an encoded or decoded state, which keeps encoder, decoder, and in-place re-encoding on a single type hierarchy}
+    \label{fig:arch_enc}
+\end{figure}
+
 \paragraph{Outer loop: sort-strategy competition}
 Reordering features within a layer permutes every parallel column --- geometry, IDs, and all properties --- simultaneously.
 Different orderings favour different encoding schemes: spatial orderings cluster nearby geometries and their correlated properties, improving \ac{RLE} run lengths; ID ordering produces sequential integer sequences amenable to delta-\acs{RLE}.
