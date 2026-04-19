@@ -848,7 +848,7 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             % Main pipeline on centre line (x=0)
             \node[io]     (u8)     {\&[u8]};
             \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
-                {\texttt{enum <Name> \{}\\[1pt]\quad\texttt{Raw*,}\\[0pt]\quad\texttt{Parsed*,}\\[1pt]\texttt{\}}};
+                {\texttt{enum <Name> \{}\\[1pt]\quad\texttt{Raw(Raw*),}\\[0pt]\quad\texttt{Parsed(Parsed*),}\\[1pt]\texttt{\}}};
             \node[decode, below=of name]   (tile)   {Tile*};
 
             % Decoder off-centre towards the middle (right side)
@@ -856,6 +856,10 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
 
             \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse;\\columns decoded\\lazily} (name);
             \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
+
+            % Phantom to mirror Decoder width so pipeline stays centred
+            \path let \p1=(decnode.east), \p2=(name.center) in
+                node[inner sep=0pt] at (2*\x2-\x1, 0) {};
 
             % Decoder arrows
             \draw[-Stealth, thick, densely dashed] (u8.east) -| (decnode.north);
@@ -889,6 +893,10 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             \draw[arrow] (tile)    -- node[right, lbl, align=left] {convert to\\columnar} (staged);
             \draw[arrow] (staged)  -- node[right, lbl, align=left] {fully encode to\\wire-ready format} (encoded);
             \draw[arrow] (encoded) -- node[right, lbl] {zero-copy} (write);
+
+            % Phantom to mirror *Encoder width so pipeline stays centred
+            \path let \p1=(encnode.west), \p2=(staged.center) in
+                node[inner sep=0pt] at (2*\x2-\x1, 0) {};
 
             % Encoder arrows
             \draw[-Stealth, thick, densely dashed] (staged.west) -| (encnode.south);
