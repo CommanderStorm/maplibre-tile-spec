@@ -852,7 +852,7 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
 
             % Decoder off-centre towards the middle (right side)
             \node[dec, align=center] at (3.5, -1.4) (decnode)
-                {Decoder\\{\scriptsize reusable buffers,\\memory budget}};
+                {Decoder\\{\scriptsize reusable buffers,}\\{\scriptsize memory budget}};
 
             \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse;\\columns decoded\\lazily} (name);
             \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
