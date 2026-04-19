@@ -195,7 +195,7 @@ The following formats are used for encoding and transferring data to the client:
 \begin{itemize}
     \item each feature carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
     \item Geometry is encoded as a sequence of \texttt{MoveTo}, \texttt{LineTo}, and \texttt{ClosePath} commands with delta-encoded integer coordinates relative to the tile extent (typically \texttt{4096} units per tile edge).
-    This is also commonly called "turtle style"\footnote{\url{https://docs.python.org/3/library/turtle.html}}.
+    This is also known as " turtle style"\footnote{\url{https://docs.python.org/3/library/turtle.html}}.
     \item The row-oriented layout means that accessing a single property column requires parsing past all other properties of the same feature, and that compression operates on the interleaved byte stream rather than on homogeneous data columns.
 \end{itemize}
 
