@@ -119,8 +119,8 @@ The MIR also drives the default stripping pass, which compares property values a
         \node[data, right=of proto] (mvt) {MVTLayer};
         \node[data, right=of mvt]   (scan) {DataScanner};
 
-        \draw[arrow] (proto) -- node[above, label] {decode} (mvt);
-        \draw[arrow] (mvt)   -- node[above, label] {scan tiles} (scan);
+        \draw[query] (proto) -- node[above, label] {decode} (mvt);
+        \draw[query] (mvt)   -- node[above, label] {scan tiles} (scan);
 
         % tangled nodes
         \node[opt, below=2.5cm of serial] (opt) {Optimiser};
