@@ -383,7 +383,7 @@ For a single equality predicate $A = v$ on a column with $d$ distinct values, th
 When value-frequency histograms are available, the estimate improves to $s = \mathit{freq}(v) / N$, where $N$ is the total number of records.
 Compound predicates are estimated by combining individual selectivities:
 \begin{align*}\label{eq:selectivity_theory}
-    s(p_1 \land p_2) &= s(p_1) \cdot s(p_2)
+    s(p_1 \land p_2) &= s(p_1) \cdot s(p_2)\\
     s(p_1 \lor p_2) &= 1 - (1 - s(p_1))(1 - s(p_2))
 \end{align*}
 
@@ -533,7 +533,7 @@ These can be benchmarked at different workload levels~\cite{jainArtComputerSyste
 \noindent This thesis primarily uses macro-benchmarks: a full style is loaded, tiles are fetched and decoded, and a scripted camera animation exercises the renderer.
 The benchmark harness controls for network variability (via a caching proxy) and GPU variability (via hardware-accelerated rendering with ANGLE/Vulkan) to achieve reproducible results at the macro level.
 
-\section{Problem Statement}\label{sec_problem_statement}
+\section{Formalised Problem Statement}\label{sec_problem_statement}
 
 With the background established, the optimizations problem addressed by this thesis can be stated formally.
 Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~JSON documents, and $\mathcal{T}$ be the set of tile sets (a tile set is a finite family of tiles indexed by source, $x$, $y$, $z$).
