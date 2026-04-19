@@ -302,10 +302,6 @@ for (const sourceLayerId in layerFamilies) {
     for (const family of layerFamilies[sourceLayerId]) {
         const layer = family[0];
         ...
-
-        if (layer.source !== this.source) {
-            warnOnce(`layer.source = ${layer.source} does not equal this.source = ${this.source}`);
-        }
         if (layer.isHidden(this.zoom, true)) continue;
         recalculateLayers(family, this.zoom, availableImages);
 
