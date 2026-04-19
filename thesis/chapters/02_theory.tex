@@ -382,10 +382,10 @@ Selinger et~al.~\cite{selinger1979access} introduced the foundational formulas f
 For a single equality predicate $A = v$ on a column with $d$ distinct values, the estimated selectivity is $s = 1/d$ (uniform distribution assumption).
 When value-frequency histograms are available, the estimate improves to $s = \mathit{freq}(v) / N$, where $N$ is the total number of records.
 Compound predicates are estimated by combining individual selectivities:
-\begin{equation}\label{eq:selectivity_theory}
-    s(p_1 \land p_2) = s(p_1) \cdot s(p_2)
-    s(p_1 \lor p_2) = 1 - (1 - s(p_1))(1 - s(p_2))
-\end{equation}
+\begin{align*}\label{eq:selectivity_theory}
+    s(p_1 \land p_2) &= s(p_1) \cdot s(p_2)
+    s(p_1 \lor p_2) &= 1 - (1 - s(p_1))(1 - s(p_2))
+\end{align*}
 
 The independence assumption is known to be inaccurate when columns are correlated, but it provides a computationally cheap approximation that is effective in practice~\cite{selinger1979access}.
 More sophisticated estimators - such as multi-dimensional histograms or sampling-based methods - improve accuracy at higher computational cost.
