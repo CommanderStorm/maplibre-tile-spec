@@ -95,6 +95,7 @@ The MIR also drives the default stripping pass, which compares property values a
         test/.style={box, fill=gray!12},
         arrow/.style={-{Stealth[length=2.5mm]}, thick},
         query/.style={-{Stealth[length=2.5mm]}, thick, densely dashed},
+        test/.style={label, text=red},
         label/.style={font=\scriptsize\itshape, text=gray},
     ]
         % ── Codegen pipeline (top row) ──
@@ -121,11 +122,11 @@ The MIR also drives the default stripping pass, which compares property values a
         \node[test, below=1cm of mir] (corpus) {Style Corpus};
 
         % tanlged arrows
-        \draw[ultra thick,red,->] (corpus) -- node[red,below, label] {validate} (serial);
+        \draw[test] (corpus) -- node[red,below, label] {validate} (serial);
         \draw[query] (opt) -- node[right, label] {optimise} (serial);
         \draw[query] (scan) -- node[above, near start, label] {statistics} (opt);
-        \draw[ultra thick,red,->] (serial) -- node[right, label] {[text=red]validate} (test);
-        \draw[ultra thick,red,->] (test) -- node[red,right, label] {[text=red]validate} (opt);
+        \draw[test] (serial) -- node[right, label] {validate} (test);
+        \draw[test] (test) -- node[red,right, label] {validate} (opt);
     \end{tikzpicture}
     \caption{System architecture.
     The \emph{codegen pipeline} (top) transforms the upstream \texttt{v8.json} style specification through three stages into generated Rust types (\texttt{SerialSpec}) used for typed style manipulation, with the MIR providing spec metadata to the optimiser.
