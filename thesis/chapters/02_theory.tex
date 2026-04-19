@@ -191,7 +191,7 @@ The following formats are used for encoding and transferring vector map data to 
     Its human-readable structure makes it useful for debugging and small overlays, but its verbosity - text-encoded coordinates and repeated property keys per feature - makes it impractical for the continuous tile streaming required by interactive map renderers.
 
     \item \textbf{\acf{MVT}}~\cite{MapboxVectorTileSpec} is the dominant vector tile format, adopted as a \emph{de~facto} standard across open-source map renderers including MapLibre.
-    It uses Protocol Buffers~\cite{ProtocolBuffers} as its wire format and stores features in a \emph{row-oriented} layout: each feature carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
+    It uses \acp{PBF}~\cite{ProtocolBuffers} as its wire format and stores features in a \emph{row-oriented} layout: each feature carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
     Geometry is encoded as a sequence of \texttt{MoveTo}, \texttt{LineTo}, and \texttt{ClosePath} commands with delta-encoded integer coordinates relative to the tile extent (typically 4096 units per tile edge).
     The row-oriented layout means that accessing a single property column requires parsing past all other properties of the same feature, and that compression operates on the interleaved byte stream rather than on homogeneous data columns.
 
