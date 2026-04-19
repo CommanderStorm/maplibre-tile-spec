@@ -207,7 +207,7 @@ The following formats are used for encoding and transferring vector map data to 
     \item \textbf{Analysis-focused formats} such as FlatGeoBuf, GeoParquet, and GeoArrow are optimised for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
     They support random access and columnar scans but do not follow the tiled spatial access pattern required by interactive map renderers and are therefore not considered further in this work.
 
-    \item \textbf{Raster tiles} deliver pre-rendered images (PNG, JPEG, WebP, Avif) rather than vector geometry.
+    \item \textbf{Raster tiles} deliver pre-rendered images (PNG, JPEG, JPEGXL, WebP, Avif) rather than vector geometry.
     They require no client-side rendering logic but cannot be restyled, rotated at arbitrary angles, or queried interactively, as the visual representation is fixed at generation time.
 \end{itemize}
 
