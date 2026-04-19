@@ -59,7 +59,7 @@ As a lower-level representation layer for displaying map content, the following 
 There are several approaches to delivering client-side rendered vector maps.
 
 Styles, sprites, and fonts are typically served from a file server or \ac{CDN} and require little processing.
-In some cases, parts of these resources may be generated dynamically - for example, to support complex text shaping for Arabic, Hebrew, Indic, or Japanese scripts as described by Wipfli~\cite{ComplexTextPlugin} for MapLibre or Lengyel~\cite{https://terathon.com/blog/decade-slug.html} for SLUG.
+In some cases, parts of these resources may be generated dynamically - for example, to support complex text shaping for Arabic, Hebrew, Indic, or Japanese scripts as described by Wipfli~\cite{ComplexTextPlugin} for MapLibre or Lengyel~\cite{ADecadeOfSlug} for SLUG.
 This processing currently usually handled ahead of time on the server-side.
 
 Tiles, by contrast, can be stored and accessed using three major approaches:
@@ -582,3 +582,5 @@ All peephole rules either reduce $n_{\mathrm{AST}}$ (e.g.\ constant folding, boo
 The two potential exceptions - \texttt{any}$\to$\texttt{in} merging and predicate reordering - are either strictly monotone in the measure (\texttt{any}$\to$\texttt{in} reduces $n_{\mathrm{AST}}$ because the merged \texttt{in} has fewer nodes than the original chain of equalities) or semantically idempotent after one application (selectivity reordering sorts predicates into a canonical order).
 Because $\mu$ is bounded below by $(0, 0, 0)$ and strictly decreases on each productive iteration, the fixpoint is reached in finitely many steps.
 The implementation adds a conservative hard cap of \texttt{NORMALIZE\_FOLD\_FIXPOINT\_CAP = 8} iterations as a defensive safeguard against future rules that might violate the monotonicity invariant above.
+
+With these theoretical tools in place - the rendering architecture that defines the optimisation target, the compiler and database techniques that supply the rewrite strategies, the encoding schemes that govern the data level, and the formal problem statement that constrains correctness - the following chapter presents the concrete design and implementation of the optimiser.
