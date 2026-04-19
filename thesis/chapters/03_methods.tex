@@ -115,16 +115,14 @@ The MIR also drives the default stripping pass, which compares property values a
         \draw[arrow] (proto) -- node[above, label] {decode} (mvt);
         \draw[arrow] (mvt)   -- node[above, label] {scan tiles} (scan);
 
-% tangled nodes
-\node[opt, right=of query] (opt) {Optimiser};
-\node[test, below right=0.4cm and 1cm of test] (test) {Render tests};
+        % tangled nodes
+        \node[opt, right=of query] (opt) {Optimiser};
+        \node[test, below right=0.4cm and 1cm of test] (test) {Render tests};
 
-        % tanlgedarrows
+        % tanlged arrows
         \draw[query] (opt.north -| mir.south) -- node[right, label] {spec metadata} (mir);
         \draw[query] (opt) -- node[right, label, near start] {optimise} (serial);
         \draw[query] (scan) -- node[below, label] {tile statistics} (opt);
-
-        % tests 1
         \draw[arrow] (serial) |- node[near end, above, label] {sample styles} (test);
         \draw[query] (test) -- node[right, label] {fuzz / validate} (opt);
     \end{tikzpicture}
