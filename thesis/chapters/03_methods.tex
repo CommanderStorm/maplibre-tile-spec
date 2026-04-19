@@ -830,85 +830,6 @@ The inner competition uses an \emph{alternatives} mechanism implemented as an RA
 This avoids copying: the winning candidate's bytes are already positioned correctly in the output buffers, and losing candidates are simply rolled back by resetting buffer positions.
 The mechanism supports nesting (inner competitions resolve before the enclosing sort-strategy trial commits), enabling hierarchical strategy selection without redundant allocation.
 
-\begin{figure}[htbp]
-    \centering
-    \begin{subfigure}[t]{0.45\linewidth}
-        \centering
-        \begin{tikzpicture}[
-            box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
-                        minimum width=2.4cm, font=\small, align=center},
-            decode/.style={box, fill=blue!12},
-            dec/.style={box, fill=yellow!12, minimum width=1.6cm},
-            io/.style={font=\small\ttfamily},
-            arrow/.style={-Stealth, thick},
-            lbl/.style={font=\scriptsize\itshape, text=gray},
-            node distance=1.4cm,
-        ]
-            % Main pipeline on centre line (x=0)
-            \node[io]     (u8)     {\&[u8]};
-            \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
-                {\texttt{enum <Name> \{}\\[1pt]\quad\texttt{Raw(Raw*),}\\[0pt]\quad\texttt{Parsed(Parsed*),}\\[1pt]\texttt{\}}};
-            \node[decode, below=of name]   (tile)   {Tile*};
-
-            % Decoder off-centre towards the middle (right side)
-            \node[dec, right=2cm of $(u8)!0.5!(name)$] (decnode) {Decoder\\{\scriptsize reusable decoding buffers\\memory usage limits}};
-
-            \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse;\\columns decoded\\lazily} (name);
-            \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
-
-            % Phantom to mirror Decoder so pipeline stays centred
-            \node[inner sep=0pt, minimum size=0pt, left=2cm of $(u8)!0.5!(name)$] {};
-
-            % Decoder arrows
-            \draw[-Stealth, thick, densely dashed] (u8.east) -| (decnode.north);
-            \draw[-Stealth, thick, densely dashed] (decnode.south) |- (name.east);
-        \end{tikzpicture}
-        \caption{Decoding pipeline}
-        \label{fig:arch_dec}
-    \end{subfigure}%
-    \hfill
-    \begin{subfigure}[t]{0.45\linewidth}
-        \centering
-        \begin{tikzpicture}[
-            box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
-                        minimum width=2.0cm, font=\small, align=center},
-            encode/.style={box, fill=orange!10},
-            enc/.style={box, fill=yellow!12, minimum width=1.6cm},
-            io/.style={font=\small\ttfamily},
-            arrow/.style={-Stealth, thick},
-            lbl/.style={font=\scriptsize\itshape, text=gray},
-            node distance=1.2cm,
-        ]
-            % Main pipeline on centre line (x=0)
-            \node[io]     (write)   {impl Write};
-            \node[encode, below=of write]   (encoded) {Encoded*};
-            \node[encode, below=1.4cm of encoded] (staged)  {Staged*};
-            \node[encode, below=of staged]  (tile)    {Tile*};
-
-            % *Encoder off-centre towards the middle (left side)
-            \node[enc, left=2cm of $(encoded)!0.5!(staged)$] (encnode) {*Encoder};
-
-            \draw[arrow] (tile)    -- node[right, lbl, align=left] {convert to\\columnar} (staged);
-            \draw[arrow] (staged)  -- node[right, lbl, align=left] {fully encode to\\wire-ready format} (encoded);
-            \draw[arrow] (encoded) -- node[right, lbl] {zero-copy} (write);
-
-            % Phantom to mirror *Encoder so pipeline stays centred
-            \node[inner sep=0pt, minimum size=0pt, right=2cm of $(encoded)!0.5!(staged)$] {};
-
-            % Encoder arrows
-            \draw[-Stealth, thick, densely dashed] (staged.west) -| (encnode.south);
-            \draw[-Stealth, thick, densely dashed] (encnode.north) |- (encoded.west);
-        \end{tikzpicture}
-        \caption{Encoding pipeline}
-        \label{fig:arch_enc_sub}
-    \end{subfigure}
-    \caption{Encoder and decoder data-flow in \texttt{mlt-core}.
-    \emph{Decoding}~\subref{fig:arch_dec}: an input \texttt{\&[u8]} slice is zero-copy parsed into a \texttt{<Name>} container whose columns are held as \texttt{LazyParsed<Raw*,\,Parsed*>} variants, decoded on demand and cached; columnar data is then converted to row-oriented \texttt{Tile*} features.
-    \emph{Encoding}~\subref{fig:arch_enc_sub}: row-oriented \texttt{Tile*} features are converted to columnar \texttt{Staged*} data, fully encoded to wire-ready \texttt{Encoded*} byte buffers via \texttt{*Encoder} types that implement the multi-strategy competition, and written to an \texttt{impl Write} sink via a final zero-copy step.
-    The \texttt{Raw*}/\texttt{Parsed*}/\texttt{Staged*}/\texttt{Encoded*}/\texttt{Tile*} families share a common \texttt{<Name>} stem and can be in either an encoded or decoded state, which keeps encoder, decoder, and in-place re-encoding on a single type hierarchy}
-    \label{fig:arch_enc}
-\end{figure}
-
 \paragraph{Outer loop: sort-strategy competition}
 Reordering features within a layer permutes every parallel column --- geometry, IDs, and all properties --- simultaneously.
 Different orderings favour different encoding schemes: spatial orderings cluster nearby geometries and their correlated properties, improving \ac{RLE} run lengths; ID ordering produces sequential integer sequences amenable to delta-\acs{RLE}.
@@ -927,6 +848,86 @@ For each candidate strategy, the encoder constructs a fresh \texttt{Encoder} ins
 The strategy producing the smallest output is retained; all others are discarded.
 When only a single strategy is applicable, the competition is elided and the layer is encoded directly without cloning.
 Property-based sort strategies were considered but are not included in the current implementation, because the string interning pass (\cref{sub_data_transforms}) already groups features of the same discriminator value into dense dictionary-index ranges, and Hilbert or ID ordering strictly dominated an explicit categorical sort on the benchmark tileset.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.6cm,
+        box/.style={rectangle, draw, rounded corners=2pt, minimum width=4.2cm,
+            minimum height=0.65cm, font=\small, align=center},
+        input/.style={box, fill=gray!15},
+        prep/.style={box, fill=violet!10},
+        stage/.style={box, fill=blue!10},
+        encoder/.style={box, fill=orange!10},
+        decision/.style={diamond, draw, fill=yellow!15, aspect=2.8,
+            font=\small, inner sep=1pt},
+        output/.style={box, fill=green!15},
+        arrow/.style={-Stealth, thick},
+        label/.style={font=\scriptsize\itshape, text=gray},
+        annot/.style={font=\scriptsize, text=gray, align=left},
+        ]
+        % --- Input ---
+        \node[input] (layer) {\texttt{TileLayer01}};
+
+        % --- Prep: group_string_properties ---
+        \node[prep, below=0.7cm of layer] (grp)
+        {\texttt{group\_string\_properties()}};
+        \draw[arrow] (layer) -- (grp);
+        \node[annot, right=0.3cm of grp] {computed once,\\reused across trials};
+
+        % --- Prep: collect_sort_strategies ---
+        \node[prep, below=0.7cm of grp] (coll)
+        {\texttt{collect\_sort\_strategies()}};
+        \draw[arrow] (grp) -- (coll);
+        \node[annot, right=0.3cm of coll] {Unsorted always;\\%
+            +Morton/Hilbert if cfg\\%
+            \textsc{and} ($n{<}512$ \textsc{or} bbox ok);\\%
+            +Id if cfg};
+
+        % --- Loop body (nodes first, then fit box) ---
+        % Sort + columnarize
+        \node[stage, below=1.4cm of coll] (sort)
+        {Sort + columnarize\\%
+            {\scriptsize\texttt{from\_tile(clone, sort, \&groups)}}};
+        \draw[arrow] (coll) -- (sort);
+
+        % Encode
+        \node[encoder, below=0.7cm of sort] (enc)
+        {Encode all columns\\{\scriptsize (per-stream competition)}};
+        \draw[arrow] (sort) -- (enc);
+
+        % Decision
+        \node[decision, below=0.7cm of enc] (cmp) {size $<$ best?};
+        \draw[arrow] (enc) -- node[right, label] {\texttt{total\_len()}} (cmp);
+
+        % Discard stub (short dead-end, no back-arrow)
+        \draw[thick] (cmp.west) -- ++(-1.0,0)
+        node[above, label] {no: discard};
+
+        % Yes arrow exits loop box downward
+        \node[coordinate, below=0.5cm of cmp] (yes_exit) {};
+        \draw[arrow] (cmp) -- node[right, label] {yes: update} (yes_exit);
+
+        % --- Dashed iteration box ---
+        \node[draw, dashed, rounded corners=4pt,
+        inner xsep=18pt, inner ysep=14pt,
+        fit=(sort)(enc)(cmp)] (loop) {};
+        \node[anchor=north west, font=\small\itshape, text=gray]
+        at (loop.north west) {for each strategy in candidates};
+
+        % --- Output ---
+        \node[output, below=1.4cm of cmp] (best)
+        {Keep smallest\\%
+            {\scriptsize\texttt{best.into\_layer\_bytes()}}};
+        \draw[arrow] (yes_exit) -- (best);
+    \end{tikzpicture}
+    \caption{Multi-strategy sort competition.
+        Shared-dictionary string groups are computed once and reused across all trials.
+        The encoder collects candidate sort strategies, pruning spatial strategies via the bounding-box heuristic for large, widely-spread layers.
+        For each candidate, the layer is cloned, sorted, and columnarized via \texttt{from\_tile}; the columnar data is then encoded with per-stream integer competitions.
+        The encoding with the smallest \texttt{total\_len()} is retained}
+    \label{fig:sort_competition}
+\end{figure}
 
 To avoid wasting trials on unpromising strategies, a \emph{bounding-box heuristic} skips spatial sorting on large layers whose features are too spatially dispersed for locality clustering to help.
 Specifically, for layers with more than \texttt{SORT\_TRIAL\_THRESHOLD = 512} features, the spatial trials are pruned when the first-vertex bounding box covers more than \texttt{SPATIAL\_HELP\_COVERAGE = 80\%} of the tile extent on \emph{both} axes (implemented in \texttt{sort.rs::spatial\_sort\_likely\_to\_help}).
