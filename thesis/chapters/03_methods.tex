@@ -95,7 +95,12 @@ The MIR also drives the default stripping pass, which compares property values a
         test/.style={box, fill=gray!12},
         arrow/.style={-{Stealth[length=2.5mm]}, thick},
         query/.style={-{Stealth[length=2.5mm]}, thick, densely dashed},
-        validation/.style={label, text=red},
+        validation/.style={
+            ultra thick,
+            red,
+            ->,
+            every edge node/.append style={text=red}
+        },
         label/.style={font=\scriptsize\itshape, text=gray},
     ]
         % ── Codegen pipeline (top row) ──
