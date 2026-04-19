@@ -868,6 +868,41 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
         \label{fig:arch_dec}
     \end{subfigure}
     \hfill
+    \begin{subfigure}[t]{0.45\linewidth}
+        \centering
+        \begin{tikzpicture}[
+            box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
+                        minimum width=2.0cm, font=\small, align=center},
+            encode/.style={box, fill=orange!10},
+            enc/.style={box, fill=yellow!12, minimum width=1.6cm},
+            io/.style={font=\small\ttfamily},
+            arrow/.style={-Stealth, thick},
+            lbl/.style={font=\scriptsize\itshape, text=gray},
+            node distance=1.2cm,
+        ]
+            % Main pipeline on centre line (x=0)
+            \node[io]     (write)   {impl Write};
+            \node[encode, below=of write]   (encoded) {Encoded*};
+            \node[encode, below=1.4cm of encoded] (staged)  {Staged*};
+            \node[encode, below=of staged]  (tile)    {Tile*};
+
+            % *Encoder off-centre towards the middle (left side)
+            \node[enc] at (-3.5, -2.5) (encnode) {*Encoder};
+
+            \draw[arrow] (tile)    -- node[right, lbl, align=left] {convert to\\columnar} (staged);
+            \draw[arrow] (staged)  -- node[right, lbl, align=left] {fully encode to\\wire-ready format} (encoded);
+            \draw[arrow] (encoded) -- node[right, lbl] {zero-copy} (write);
+
+            % Phantom to balance bounding box
+            \path (3.5, 0);
+
+            % Encoder arrows
+            \draw[-Stealth, thick, densely dashed] (staged.west) -| (encnode.south);
+            \draw[-Stealth, thick, densely dashed] (encnode.north) |- (encoded.west);
+        \end{tikzpicture}
+        \caption{Encoding pipeline}
+        \label{fig:arch_enc_sub}
+    \end{subfigure}
     \caption{Encoder and decoder data-flow in \texttt{mlt-core}.
     \emph{Decoding}~\subref{fig:arch_dec}: an input \texttt{\&[u8]} slice is zero-copy parsed into a \texttt{<Name>} container whose columns are held as \texttt{LazyParsed<Raw*,\,Parsed*>} variants, decoded on demand and cached; columnar data is then converted to row-oriented \texttt{Tile*} features.
     \emph{Encoding}~\subref{fig:arch_enc_sub}: row-oriented \texttt{Tile*} features are converted to columnar \texttt{Staged*} data, fully encoded to wire-ready \texttt{Encoded*} byte buffers via \texttt{*Encoder} types that implement the multi-strategy competition, and written to an \texttt{impl Write} sink via a final zero-copy step.
