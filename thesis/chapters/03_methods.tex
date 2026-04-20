@@ -768,7 +768,7 @@ The pruning operations, applied in order, are:
     ]
         % ── Row 1: style-side and data-side inputs ──
         \node[style] (sopt) {Style optimisations\\{\scriptsize (\cref{sub_expression_optimisations,sub_structural_optimisations})}};
-        \node[data, right=1.5cm of sopt] (stats) {Tile statistics};
+        \node[data, right of sopt] (stats) {Tile statistics};
 
         % ── Row 2: advisory (centred below inputs) ──
         \node[both] (adv) right of sopt
