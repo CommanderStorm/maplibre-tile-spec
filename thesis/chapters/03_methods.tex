@@ -766,28 +766,30 @@ The pruning operations, applied in order, are:
         arrow/.style={-Stealth, thick},
         lbl/.style={font=\scriptsize\itshape, text=gray},
     ]
-        % Top row
+        % ── Row 1: style-side and data-side inputs ──
         \node[style] (sopt) {Style optimisations\\{\scriptsize (\cref{sub_expression_optimisations,sub_structural_optimisations})}};
-        \node[data, right=1.0cm of sopt] (stats) {Tile statistics};
+        \node[data, right=1.5cm of sopt] (stats) {Tile statistics};
 
-        % Advisory — centred between the two top nodes
-        \node[both] (adv) at ($(sopt.south)!0.5!(stats.south) + (0,-1.2cm)$) {Tile pruning advisory};
-        \draw[arrow] (sopt) -- node[above left, lbl] {optimised style} (adv);
-        \draw[arrow] (stats) -- node[above right, lbl] {property/geometry stats} (adv);
+        % Cascade brace — above the inputs, out of the arrows' way
+        \draw[decorate, decoration={brace, amplitude=5pt}, thick, gray]
+            (sopt.north west) -- (stats.north east)
+            node[midway, above=6pt, font=\scriptsize, text=gray, align=center]
+            {cascade: fewer live layers $\to$ fewer referenced properties $\to$ smaller tiles};
 
-        % Bottom row — aligned to advisory centre with adequate spacing
-        \node[data, left=1.2cm of adv, yshift=-1.2cm] (mvt) {\ac{MVT} tile};
-        \node[data, below=1.2cm of adv] (prune) {Prune \& transform};
-        \node[data, right=1.2cm of adv, yshift=-1.2cm] (mlt) {\ac{MLT} tile};
+        % ── Row 2: advisory (centred below inputs) ──
+        \node[both] (adv) at ($(sopt.south)!0.5!(stats.south) + (0,-1.4)$)
+            {Tile pruning advisory};
+        \draw[arrow] (sopt) -- node[left, lbl] {optimised style} (adv);
+        \draw[arrow] (stats) -- node[right, lbl] {property/geometry stats} (adv);
+
+        % ── Row 3: MVT → prune → MLT ──
+        \node[data, below=1.4cm of adv] (prune) {Prune \& transform};
+        \node[data, left=1.4cm of prune] (mvt) {\ac{MVT} tile};
+        \node[data, right=1.4cm of prune] (mlt) {\ac{MLT} tile};
 
         \draw[arrow] (adv) -- (prune);
         \draw[arrow] (mvt) -- (prune);
         \draw[arrow] (prune) -- node[above, lbl] {re-encode} (mlt);
-
-        % Cascade brace — horizontal, spanning the top row
-        \draw[decorate, decoration={brace, amplitude=5pt, mirror}, thick, gray]
-            ($(sopt.south west)+(0,-0.15)$) -- ($(stats.south east)+(0,-0.15)$)
-            node[midway, below=7pt, font=\scriptsize, text=gray, align=center] {cascade: fewer live layers $\to$\\fewer referenced properties $\to$ smaller tiles};
     \end{tikzpicture}
     \caption{Style-driven tile shaving pipeline.  The optimised style and tile statistics jointly produce a pruning advisory.  Each \ac{MVT} tile is pruned according to the advisory, transformed, and re-encoded as \ac{MLT}.  Style-level dead layer elimination cascades into smaller advisories and thus smaller tiles}
     \label{fig:tile_shaving_pipeline}
@@ -1057,7 +1059,7 @@ The \ac{MLT} format supports shared dictionaries where multiple string columns r
 The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \texttt{name:en}, \texttt{name:de}), which misses semantic overlaps (e.g., \texttt{class} and \texttt{subclass} in OpenMapTiles share many values).
 
 \begin{sloppypar}
-    The Rust encoder replaces prefix matching with MinHash-based similarity clustering~\cite{broder1997resemblance}.
+    The Rust encoder replaces prefix matching with -based similarity clustering~\cite{broder1997resemblance}.
     For each string column, two MinHash sketches of \texttt{MINHASH\_PERMUTATIONS = 128} permutations are computed: one over exact string values and one over byte trigrams (3-byte sliding windows).
     The choice of 128 permutations corresponds to an expected standard error of approximately $1/\sqrt{128} \approx 8.8\%$ on the Jaccard estimate, which is adequate for the binary accept/reject decision of the clustering step.
     The trigram sketch captures partial overlap between columns whose values are substrings or morphological variants of each other.
@@ -1084,15 +1086,13 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             % ═══ Top-left (Step 1): Column value table ═══
             \node[stepbox] (tbl) {%
                 \begin{tabular}{@{}l l@{}}
-                    \toprule
                     \textbf{Column} & \textbf{Distinct values (sample)} \\
                     \midrule
                     \texttt{name:de}  & Straßburg, Freiburg, Mühlhausen, \ldots \\
                     \texttt{name:fr}  & Strasbourg, Fribourg, Mulhouse, \ldots \\
                     \texttt{class}    & motorway, trunk, primary, rail, \ldots \\
                     \texttt{subclass} & motorway, trunk, primary, link, \ldots \\
-                    \texttt{maxspeed} & 30, 50, 80, 120, \ldots \\
-                    \bottomrule
+                    \texttt{maxspeed} & 30, 50, 80, 120, \ldots
                 \end{tabular}%
             };
             \node[steplabel, above=1pt of tbl] {\circled{1} Column vocabularies};
@@ -1100,7 +1100,6 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             % ═══ Top-right (Step 2): MinHash sketch generation ═══
             \node[stepbox, right=0.8cm of tbl, anchor=west] (hash) {%
                 \begin{tabular}{@{}l c c@{}}
-                    \toprule
                     \textbf{Column} & \textbf{Exact sketch} & \textbf{Trigram sketch} \\
                     \midrule
                     \texttt{name:de}  & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
@@ -1108,7 +1107,6 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
                     \texttt{class}    & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
                     \texttt{subclass} & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
                     \texttt{maxspeed} & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
-                    \bottomrule
                 \end{tabular}%
             };
             \node[steplabel, above=1pt of hash] {\circled{2} MinHash signatures (128 permutations each)};
