@@ -916,7 +916,7 @@ The encoder trials multiple sort strategies on the same data and retains the enc
 The implemented strategies and their rationale are:
 
 \begin{enumerate}
-    \item \textbf{Unsorted}: the original MVT feature order is preserved.
+    \item \textbf{Unsorted}: the original feature order is preserved.
     \item \textbf{Spatial (Morton/Z-order)}: features are sorted by the Z-order curve index of their first vertex, computed via bit-interleaving.  Fast to compute; provides reasonable spatial locality.
     \item \textbf{Spatial (Hilbert)}: features are sorted by the Hilbert curve index of their first vertex.  Slower to compute than Morton but achieves superior spatial locality, as the Hilbert curve avoids the long jumps inherent in the Z-order curve's recursive structure~\cite{moonAnalysisClusteringProperties2001}.
     \item \textbf{ID}: features are sorted by feature ID in ascending order.
