@@ -913,7 +913,7 @@ Reordering features within a layer permutes every parallel column --- geometry, 
 Different orderings favour different encoding schemes: spatial orderings cluster nearby geometries and their correlated properties, improving \ac{RLE} run lengths; ID ordering produces sequential integer sequences amenable to delta-\acs{RLE}.
 
 The encoder trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count.
-The implemented strategies are:
+The implemented strategies and their rationale are:
 
 \begin{enumerate}
     \item \textbf{Unsorted}: the original MVT feature order is preserved.
