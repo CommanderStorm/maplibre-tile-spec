@@ -848,13 +848,13 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             \node[io]     (u8)     {\&[u8]};
             \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
                 {\texttt{enum <Name> \{}\\[1pt]\quad\texttt{Raw(Raw*),}\\[0pt]\quad\texttt{Parsed(Parsed*),}\\[1pt]\texttt{\}}};
-            \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse\\lazy decoding} (name);
+            \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse} (name);
             \node[decode, below=of name] (tile)   {Tile*};
             \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
 
             % Decoder off-centre towards the middle (right side)
             \node[dec, right=3.5cm of name.center, anchor=center] (decnode)
-            {Decoder\\{\scriptsize reusable buffers,}\\{\scriptsize memory budget}};
+            {Decoder\\{\scriptsize reusable buffers,}\\{\scriptsize memory budget}\\{\scriptsize lazy decoding}};
             \draw[-Stealth, thick, densely dashed]
             ($(name.north) + (1,0)$) -- ++(0,0.8) -| (decnode.north);
             \draw[-Stealth, thick, densely dashed]
