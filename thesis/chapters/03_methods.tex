@@ -866,7 +866,7 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             % Decoder arrows
         \end{tikzpicture}
         \caption{Decoding pipeline: An input \texttt{\&[u8]} slice is zero-copy parsed into a \texttt{<Name>} container whose columns are held as \texttt{Raw,\,Parsed} variants, decoded on demand. columnar data can then be converted to row-oriented \texttt{Tile*} features as needed.}
-        \label{fig:arch_dec}
+        \label{fig:arch_dec_sub}
     \end{subfigure}
     \hfill
     \begin{subfigure}[t]{0.45\linewidth}
@@ -904,7 +904,7 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
         \caption{Encoding pipeline: Row-oriented \texttt{Tile*} features are converted to columnar \texttt{Staged*} data, fully encoded to wire-ready \texttt{Encoded*} byte buffers via \texttt{*Encoder} types that implement the multi-strategy competition, and written to an \texttt{impl Write} sink via a final zero-copy step.}
         \label{fig:arch_enc_sub}
     \end{subfigure}
-    \caption{Encoder~\subref{fig:arch_enc} and decoder~\subref{fig:arch_dec} data-flow in \texttt{mlt-core}}
+    \caption{Encoder~\subref{fig:arch_enc_sub} and decoder~\subref{fig:arch_dec_sub} data-flow in \texttt{mlt-core}}
     \label{fig:arch_enc}
 \end{figure}
 
