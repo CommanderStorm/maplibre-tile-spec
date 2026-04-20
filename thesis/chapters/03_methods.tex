@@ -848,24 +848,20 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             \node[io]     (u8)     {\&[u8]};
             \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
                 {\texttt{enum <Name> \{}\\[1pt]\quad\texttt{Raw(Raw*),}\\[0pt]\quad\texttt{Parsed(Parsed*),}\\[1pt]\texttt{\}}};
-            \node[decode, below=of name]   (tile)   {Tile*};
+            \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse\\lazy decoding} (name);
+            \node[decode, below=of name] (tile)   {Tile*};
+            \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
 
             % Decoder off-centre towards the middle (right side)
-            \node[dec, align=center] at (3.5, -1.4) (decnode)
+            \node[dec, align=center] at (4.5, -1.4) (decnode)
                 {Decoder\\{\scriptsize reusable buffers,}\\{\scriptsize memory budget}};
-
-            \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse;\\columns decoded\\lazily} (name);
-            \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
+                \draw[-Stealth, thick, densely dashed] (u8.east) -| (decnode.north);
+                \draw[-Stealth, thick, densely dashed] (decnode.south) |- (name.east);
 
             % Phantom to balance bounding box
             \path (-3.5, 0);
 
-            % Decoder arrows: from <Name> top (offset right) up to Decoder,
-            % from Decoder down to <Name> bottom (offset right)
-            \draw[-Stealth, thick, densely dashed]
-                ($(name.north)+(0.6,0)$) |- (decnode.west);
-            \draw[-Stealth, thick, densely dashed]
-                (decnode.west |- name.south) -- ($(name.south)+(0.6,0)$);
+            % Decoder arrows
         \end{tikzpicture}
         \caption{Decoding pipeline}
         \label{fig:arch_dec}
