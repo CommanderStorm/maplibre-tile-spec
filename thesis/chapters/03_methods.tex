@@ -853,12 +853,12 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
 
             % Decoder off-centre towards the middle (right side)
-            \node[dec, align=center] at (3.5, -3) (decnode)
-                {Decoder\\{\scriptsize reusable buffers,}\\{\scriptsize memory budget}};
+            \node[dec, right=3.5cm of name.center, anchor=center] (decnode)
+            {Decoder\\{\scriptsize reusable buffers,}\\{\scriptsize memory budget}};
             \draw[-Stealth, thick, densely dashed]
-            (name.east) -- ++(0.8,0) -- ++(0,0.5) -- (decnode.west);
+            (name.north) -- ++(0.8,0) -- ++(0,0.5) -- (decnode.north);
             \draw[-Stealth, thick, densely dashed]
-            (decnode.west) -- ++(-0.8,0) -- ++(0,-0.5) -- (name.east);
+            (decnode.south) -- ++(-0.8,0) -- ++(0,-0.5) -- (name.south);
 
             % Phantom to balance bounding box
             \path (-3.5, 0);
