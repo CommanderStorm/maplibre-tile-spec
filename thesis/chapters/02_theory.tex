@@ -53,13 +53,13 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
         arrow/.style={-Stealth, thick},
         label/.style={font=\scriptsize\itshape, fill=white},
     ]
-        % ── Map Renderer (top) ──
+        % Map Renderer (top)
         \node[renderer] (renderer) {Map Renderer};
 
-        % ── Tile Server ──
+        % Tile Server
         \node[server, below=2.6cm of renderer] (server) {Tile Server};
 
-        % ── Arrows from server to renderer with resource labels ──
+        % Arrows from server to renderer with resource labels
         \coordinate (s1) at ($(server.north)!0.25!(server.north east)$);
         \coordinate (s2) at ($(server.north)!0.75!(server.north east)$);
         \coordinate (s3) at ($(server.north)!0.25!(server.north west)$);
@@ -70,12 +70,12 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
         \draw[arrow] (s1) -- node[label] {sprites} (s1 |- renderer.south);
         \draw[arrow] (s2) -- node[label] {fonts}   (s2 |- renderer.south);
 
-        % ── "over the network" brace ──
+        % "over the network" brace
         \draw[decorate, decoration={brace, amplitude=6pt}, thick]
             ([xshift=4pt]renderer.south east) -- ([xshift=4pt]server.north east)
             node[midway, right=10pt, font=\scriptsize\itshape] {over the network};
 
-        % ── Data Source (bottom) ──
+        % Data Source (bottom)
         \node[datasource, below=1.2cm of server] (datasource) {Data Source};
 
         \draw[arrow] (datasource.north) -- node[label] {convert to serving-friendly representation} (server.south);

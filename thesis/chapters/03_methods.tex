@@ -104,7 +104,7 @@ The MIR also drives the default stripping pass, which compares property values a
             every edge node/.append style={text=red}
         },
     ]
-        % ── Codegen pipeline (top row) ──
+        % Codegen pipeline (top row)
         \node[src]  (v8)     {\texttt{v8.json}};
         \node[mir,  right=of v8]   (parsed) {ParsedSpec};
         \node[mir,  right=of parsed] (mir)    {MIR};
@@ -114,7 +114,7 @@ The MIR also drives the default stripping pass, which compares property values a
         \draw[arrow] (parsed) -- node[above, label] {normalise} (mir);
         \draw[arrow] (mir)    -- node[above, label] {generate} (serial);
 
-        % ── Data pipeline (bottom row) ──
+        % Data pipeline (bottom row)
         \node[src, below=2.5cm of v8] (proto) {Protobuf\\{\scriptsize (\acs{MVT})}};
         \node[data, right=of proto] (mvt) {MVTLayer};
         \node[data, right=of mvt]   (scan) {DataScanner};
@@ -620,14 +620,14 @@ Sort-key synthesis is only applied to layer types that support the \texttt{*-sor
         label/.style={font=\scriptsize\itshape, text=gray},
         check/.style={font=\scriptsize, text=black!70},
     ]
-        % ── Input layers (left) ──
+        % Input layers (left)
         \node[layer, fill=red!12]   (l0) {line:\\ \texttt{filter: ["get", "class"] == "motorway"}\\\texttt{line-color: \#e892a2}\\\texttt{line-width: 3}};
         \node[layer, fill=orange!12, below=0.5cm of l0] (l1) {line:\\\texttt{filter: ["get", "class"] == "primary"}\\\texttt{line-color: \#fcd6a4}\\\texttt{line-width: 2}};
         \node[layer, fill=yellow!15, below=0.5cm of l1] (l2) {line:\\\texttt{filter: ["get", "class"] == "secondary"}\\\texttt{line-color: \#f7fabf}\\\texttt{line-width: 1.5}};
 
         \node[above=0.15cm of l0, font=\small\bfseries] {Input: 3 adjacent line layers};
 
-        % ── Phase annotations (middle) ──
+        % Phase annotations (middle)
         \node[right=1.4cm of l0, check, text width=4.2cm] (p1) {%
             \textbf{Phase 1} — Candidate check\\[2pt]
             same type and source,
@@ -643,7 +643,7 @@ Sort-key synthesis is only applied to layer types that support the \texttt{*-sor
             all zoom ranges identical\\
             $\Rightarrow$ no guards needed};
 
-        % ── Output (right) ──
+        % Output (right)
         \node[merged, fill=green!8, right=1.4cm of p2, text width=6.0cm] (out) {%
             \textbf{Merged line layer}\\[3pt]
             \texttt{filter:}\\
@@ -664,7 +664,7 @@ Sort-key synthesis is only applied to layer types that support the \texttt{*-sor
 
         \node[above=0.15cm of out, font=\small\bfseries] {Output: 1 merged layer};
 
-        % ── Arrows ──
+        % Arrows
         \draw[arrow] (l0.east) -- (p1.west);
         \draw[arrow] (l1.east) -- (p2.west);
         \draw[arrow] (l2.east) -- (p3.west);
@@ -768,15 +768,14 @@ The pruning operations, applied in order, are:
     ]
         % ── Row 1: style-side and data-side inputs ──
         \node[style] (sopt) {Style optimisations\\{\scriptsize (\cref{sub_expression_optimisations,sub_structural_optimisations})}};
-        \node[data, right of sopt] (stats) {Tile statistics};
+        \node[data, right=1cm of sopt] (stats) {Tile statistics};
 
-        % ── Row 2: advisory (centred below inputs) ──
-        \node[both] (adv) right of sopt
-            {Tile pruning advisory};
+        % Row 2: advisory (centred below inputs)
+        \node[both] (adv) right=1cm of sopt {Tile pruning advisory};
         \draw[arrow] (sopt) -- node[left, lbl] {optimised style} (adv);
         \draw[arrow] (stats) -- node[right, lbl] {property/geometry stats} (adv);
 
-        % ── Row 3: MVT → prune → MLT ──
+        % Row 3: MVT → prune → MLT
         \node[data, below=1.4cm of adv] (prune) {Prune \& transform};
         \node[data, left=1.4cm of prune] (mvt) {\ac{MVT} tile};
         \node[data, right=1.4cm of prune] (mlt) {\ac{MLT} tile};
@@ -942,16 +941,16 @@ Property-based sort strategies were considered but are not included in the curre
         label/.style={font=\scriptsize\itshape, text=gray},
         annot/.style={font=\scriptsize, text=gray, align=left},
         ]
-        % --- Input ---
+        % Input
         \node[input] (layer) {\texttt{TileLayer01}};
 
-        % --- Prep: group_string_properties ---
+        % Prep: group_string_properties
         \node[prep, below=0.7cm of layer] (grp)
         {\texttt{group\_string\_properties()}};
         \draw[arrow] (layer) -- (grp);
         \node[annot, right=0.3cm of grp] {computed once,\\reused across trials};
 
-        % --- Prep: collect_sort_strategies ---
+        % Prep: collect_sort_strategies
         \node[prep, below=0.7cm of grp] (coll)
         {\texttt{collect\_sort\_strategies()}};
         \draw[arrow] (grp) -- (coll);
@@ -960,7 +959,7 @@ Property-based sort strategies were considered but are not included in the curre
             \textsc{and} ($n{<}512$ \textsc{or} bbox ok);\\%
             +Id if cfg};
 
-        % --- Loop body (nodes first, then fit box) ---
+        % Loop body (nodes first, then fit box)
         % Sort + columnarize
         \node[stage, below=1.4cm of coll] (sort)
         {Sort + columnarize\\%
@@ -984,14 +983,14 @@ Property-based sort strategies were considered but are not included in the curre
         \node[coordinate, below=0.5cm of cmp] (yes_exit) {};
         \draw[arrow] (cmp) -- node[right, label] {yes: update} (yes_exit);
 
-        % --- Dashed iteration box ---
+        % Dashed iteration box
         \node[draw, dashed, rounded corners=4pt,
         inner xsep=18pt, inner ysep=14pt,
         fit=(sort)(enc)(cmp)] (loop) {};
         \node[anchor=north west, font=\small\itshape, text=gray]
         at (loop.north west) {for each strategy in candidates};
 
-        % --- Output ---
+        % Output
         \node[output, below=1.4cm of cmp] (best)
         {Keep smallest\\%
             {\scriptsize\texttt{best.into\_layer\_bytes()}}};
