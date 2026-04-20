@@ -771,7 +771,7 @@ The pruning operations, applied in order, are:
         \node[data, right=1.5cm of sopt] (stats) {Tile statistics};
 
         % ── Row 2: advisory (centred below inputs) ──
-        \node[both] (adv) at ($(sopt.south)!0.5!(stats.south) + (0,-1.4)$)
+        \node[both] (adv) right of sopt
             {Tile pruning advisory};
         \draw[arrow] (sopt) -- node[left, lbl] {optimised style} (adv);
         \draw[arrow] (stats) -- node[right, lbl] {property/geometry stats} (adv);
