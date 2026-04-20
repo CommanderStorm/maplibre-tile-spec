@@ -865,7 +865,7 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
 
             % Decoder arrows
         \end{tikzpicture}
-        \caption{Decoding pipeline}
+        \caption{Decoding pipeline. An input \texttt{\&[u8]} slice is zero-copy parsed into a \texttt{<Name>} container whose columns are held as \texttt{Raw,\,Parsed} variants, decoded on demand. columnar data can then be converted to row-oriented \texttt{Tile*} features as needed.}
         \label{fig:arch_dec}
     \end{subfigure}
     \hfill
@@ -905,7 +905,7 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
         \label{fig:arch_enc_sub}
     \end{subfigure}
     \caption{Encoder and decoder data-flow in \texttt{mlt-core}.
-    \emph{Decoding}~\subref{fig:arch_dec}: an input \texttt{\&[u8]} slice is zero-copy parsed into a \texttt{<Name>} container whose columns are held as \texttt{LazyParsed<Raw*,\,Parsed*>} variants, decoded on demand and cached; columnar data is then converted to row-oriented \texttt{Tile*} features.
+    \emph{Decoding}~\subref{fig:arch_dec}:
     \emph{Encoding}~\subref{fig:arch_enc_sub}: row-oriented \texttt{Tile*} features are converted to columnar \texttt{Staged*} data, fully encoded to wire-ready \texttt{Encoded*} byte buffers via \texttt{*Encoder} types that implement the multi-strategy competition, and written to an \texttt{impl Write} sink via a final zero-copy step.
     The \texttt{Raw*}/\texttt{Parsed*}/\texttt{Staged*}/\texttt{Encoded*}/\texttt{Tile*} families share a common \texttt{<Name>} stem and can be in either an encoded or decoded state, which keeps encoder, decoder, and in-place re-encoding on a single type hierarchy}
     \label{fig:arch_enc}
