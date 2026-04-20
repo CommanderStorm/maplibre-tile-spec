@@ -860,9 +860,12 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             % Phantom to balance bounding box
             \path (-3.5, 0);
 
-            % Decoder arrows
-            \draw[-Stealth, thick, densely dashed] (u8.east) -| (decnode.north);
-            \draw[-Stealth, thick, densely dashed] (decnode.south) |- (name.east);
+            % Decoder arrows: from <Name> top (offset right) up to Decoder,
+            % from Decoder down to <Name> bottom (offset right)
+            \draw[-Stealth, thick, densely dashed]
+                ($(name.north)+(0.6,0)$) |- (decnode.west);
+            \draw[-Stealth, thick, densely dashed]
+                (decnode.west |- name.south) -- ($(name.south)+(0.6,0)$);
         \end{tikzpicture}
         \caption{Decoding pipeline}
         \label{fig:arch_dec}
