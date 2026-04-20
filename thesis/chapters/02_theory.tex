@@ -74,12 +74,12 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
         % ── "over the network" brace ──
         \draw[decorate, decoration={brace, amplitude=6pt}, thick]
             ([xshift=4pt]renderer.south east) -- ([xshift=4pt]server.north east)
-            node[midway, right=10pt, font=\scriptsize\itshape, text=gray] {over the network};
+            node[midway, right=10pt, font=\scriptsize\itshape] {over the network};
 
         % ── Data Source (bottom) ──
         \node[datasource, below=1.2cm of server] (datasource) {Data Source};
 
-        \draw[arrow] (datasource.north) -- node[right, label] {convert to serving-friendly representation} (server.south);
+        \draw[arrow] (datasource.north) -- node[label] {convert to serving-friendly representation} (server.south);
     \end{tikzpicture}
     \caption{Basic building blocks of a map rendering stack. Data is taken from a data source, converted into a simplified format (for example a spatial index), and served to a client. The visual appearance is defined by a style and supported by fonts and sprites for text and icons.}
     \label{fig:basic-arch}

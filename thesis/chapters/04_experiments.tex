@@ -353,7 +353,7 @@ Format & Zoom~4 & Zoom~7 & Zoom~13 \\
 Speedup (vs.\ gzip) & $8.3\times$ & $5.3\times$ & $4.6\times$ \\
 \bottomrule
 \end{tblr}
-\caption{Full-decode latency for \ac{MLT}-Rust vs.\ \ac{MVT} on OpenMapTiles fixture tiles, measured by Criterion micro-benchmarks (\texttt{decoding\_e2e.rs}, 100~samples per cell).
+\caption{Full-decode latency for \ac{MLT}-Rust vs.\ \ac{MVT} on OpenMapTiles fixture tiles, measured by Criterion micro-benchmarks (100~samples per cell).
 \ac{MLT}-Rust achieves \numrange{96}{134}\,MiB/s decode throughput vs.\ \numrange{15}{23}\,MiB/s for \ac{MVT}+gzip (measured over wire-format input size)}
 \label{tab:decode_throughput}
 \end{table}
@@ -607,16 +607,16 @@ The four stages have different cost profiles.
 \paragraph{Cost-control mechanisms}
 Several mechanisms in the encoder keep $C_\text{enc}$ bounded even with a multi-strategy competition.
 \emph{Bounding-box pruning} (\cref{sub_encoding_strategies}) skips Hilbert and Morton trials for large, spatially dispersed layers, removing the two most expensive candidates from the outer loop whenever they are unlikely to help.
-\emph{Data profiling} (\texttt{encoder/\allowbreak stream/\allowbreak optimizer.rs}) samples a contiguous mid-stream window to rule out logical encodings that cannot possibly win before any full encode pass is run, reducing the per-stream candidate set from the na\"ive worst case of eight to an average of two to three fully executed trials.
-\emph{\ac{FSST} warm-start caching} (\texttt{fsst\_cache} in the string encoder, \texttt{mlt\allowbreak-core/\allowbreak src/\allowbreak encoder/\allowbreak property/\allowbreak strings.rs}) trains a symbol table exactly once per distinct unique-value set and reuses it across every sort-strategy trial, so the trained compressor is not rebuilt when the same column is re-encoded under a different feature ordering; the same applies to Morton dictionary metadata and HyperLogLog vertex-uniqueness sketches.
+\emph{Data profiling} samples a contiguous mid-stream window to rule out logical encodings that cannot possibly win before any full encode pass is run, reducing the per-stream candidate set from the na\"ive worst case of eight to an average of two to three fully executed trials.
+\emph{\ac{FSST} warm-start caching} trains a symbol table exactly once per distinct unique-value set and reuses it across every sort-strategy trial, so the trained compressor is not rebuilt when the same column is re-encoded under a different feature ordering; the same applies to Morton dictionary metadata and HyperLogLog vertex-uniqueness sketches.
 \emph{Scratch-buffer recycling} in the writer reuses temporary arrays for delta computation, run counting, and bit packing across streams and across sort trials, so per-stream work does not allocate at all in the steady state.
-Finally, the \emph{\ac{RAII} alternatives guard} (\texttt{Encoder::\allowbreak try\_alternatives} in \texttt{mlt\allowbreak-core/\allowbreak src/\allowbreak encoder/\allowbreak writer.rs}) realises the inner competition as a stack of savepoints into the encoder's output buffers: each candidate writes directly into the final buffer positions, the smallest winner is committed in place, and the losers are rolled back simply by resetting the buffer cursor - no candidate bytes are ever copied, and nesting (per-stream competition inside a sort-strategy trial) is supported by pushing additional savepoints.
+Finally, the \emph{\ac{RAII} alternatives guard} realises the inner competition as a stack of savepoints into the encoder's output buffers: each candidate writes directly into the final buffer positions, the smallest winner is committed in place, and the losers are rolled back simply by resetting the buffer cursor - no candidate bytes are ever copied, and nesting (per-stream competition inside a sort-strategy trial) is supported by pushing additional savepoints.
 This is what makes the multi-strategy approach affordable: the cost of trialling $k$ candidates is $k$ encode passes plus $O(1)$ bookkeeping, not $k$ encode passes plus $k$ full buffer clones.
 
 \paragraph{Amortisation and headline numbers}
 Taken together, the cost-control mechanisms increase preprocessing cost compared to a fixed-plan encoder by roughly a factor of three to five (there are four sort strategies and two-to-four viable per-stream candidates after profiling), but this is paid once per tileset build and amortised over every subsequent tile request.
 On the Germany OpenMapTiles tileset (\num{256516} tiles, zoom~0-14), a single-threaded run of \texttt{mlt convert} takes wall-clock time on the order of tens of minutes on the development machine; this is perfectly acceptable for an offline build stage and, on the development hardware, is dominated by per-tile I/O rather than encoder CPU work.
-A per-pass breakdown of these costs, including the fraction of time spent in each of the four terms of \cref{eq:cost_model}, is left for future work because the existing profile infrastructure (\texttt{hotpath::measure} annotations in \texttt{mlt-core}) is not yet wired into an evaluation harness that records per-pass wall-clock time in a format comparable to the rendering benchmarks elsewhere in this chapter.
+A per-pass breakdown of these costs, including the fraction of time spent in each of the four terms of \cref{eq:cost_model}, is left for future work because the existing profile infrastructure is not yet wired into an evaluation harness that records per-pass wall-clock time in a format comparable to the rendering benchmarks elsewhere in this chapter.
 
 \subsection{Complexity Metrics}\label{sub_combined_complexity}
 

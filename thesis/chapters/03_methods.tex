@@ -356,7 +356,7 @@ Correlation between map-style predicates (e.g.\ \texttt{class} and \texttt{subcl
 To illustrate how expression passes compose, \cref{fig:expr_before_after} shows two representative transformations.
 In the first, two equality tests within an \texttt{any} node are factored and rewritten to a compact \texttt{in} expression.
 In the second, filter-to-property constant propagation resolves a data-driven \texttt{match} to a literal by substituting a constraint extracted from the layer's filter.
-Both examples are drawn from the optimiser's test suite (\texttt{style-optimizer/tests/constant\_fold.rs}).
+Both examples are drawn from the optimiser's test suite.
 
 \begin{figure}[htbp]
 \centering
@@ -479,7 +479,7 @@ Because the thesis requires visually lossless transformations, the metadata refi
     This rule fires unconditionally.
     \item \textbf{\texttt{maxzoom} is asymmetric.}
     The refinement pass tightens the layer's \texttt{maxzoom} to the last data-carrying zoom $z^{*}$ only when $z^{*}$ is strictly less than the \emph{source's} \texttt{maxzoom}; otherwise, the layer's tiles at $z^{*}$ will be overzoomed to produce higher zoom levels, and the layer remains rendered beyond $z^{*}$.
-    This condition is checked explicitly in the implementation (c.f.\ \texttt{metadata.rs}: \texttt{if data\_max < source\_maxzoom}).
+    This condition is checked explicitly in the implementation.
 \end{enumerate}
 The zoom-folding rule that collapses zoom comparisons in filters is similarly one-sided: only \texttt{minzoom} is used as a lower bound for the fold, because a layer's effective \texttt{maxzoom} is not an upper bound on the camera zoom once overzooming is considered.
 The source-zoom-tightening pass follows the same principle: it tightens a source's \texttt{maxzoom} only as far as the maximum \texttt{maxzoom} of any layer referencing it, which already respects the overzoom rule above, and it never tightens below the source's declared bounds.
@@ -823,7 +823,7 @@ The final wire format consists of three concatenated sections per layer: a heade
 
 The Rust-based encoder reformulates the encoding problem as a \emph{multi-strategy competition} inspired by profile-guided optimisations in compilers: rather than committing to a single encoding plan, the encoder tries multiple strategies, measures the output size of each, and selects the smallest result.
 This competition operates at two nested levels: an \emph{outer loop} that trials multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
-The inner competition criterion is deliberately \emph{single-objective}: the winning candidate is the one with the smallest encoded \texttt{total\_len()} (cf.\ the criteria at \texttt{encoder/optimizer.rs:117} and \texttt{:168}, and the ordered candidate list in \texttt{encoder/stream/optimizer.rs:133-167}).
+The inner competition criterion is deliberately \emph{single-objective}: the winning candidate is the one with the smallest encoded \texttt{total\_len()}.
 Multi-axis trade-offs --- between transfer size, decoding latency, rendering throughput, and preprocessing cost --- are not resolved inside the encoder; they are deliberately deferred to the outer ablation layer, where deployment-specific weightings are applied in the post-hoc Pareto analysis of \cref{sec_exp_pareto}.
 
 The inner competition uses an \emph{alternatives} mechanism implemented as an RAII guard pattern: each candidate encoding writes its output into the encoder's buffers, and the guard commits only the smallest candidate.
@@ -911,8 +911,10 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
 \paragraph{Outer loop: sort-strategy competition}
 Reordering features within a layer permutes every parallel column --- geometry, IDs, and all properties --- simultaneously.
 Different orderings favour different encoding schemes: spatial orderings cluster nearby geometries and their correlated properties, improving \ac{RLE} run lengths; ID ordering produces sequential integer sequences amenable to delta-\acs{RLE}.
+Which ordering wins depends on the value distributions and cardinalities of the specific layer: a layer dominated by a single repeated property value may benefit most from spatial clustering, while a layer with sequential IDs and high-cardinality properties may favour ID ordering.
+Because this balance shifts across layers, zoom levels, and tilesets, no single ordering dominates universally, and the choice cannot be resolved statically.
 
-The encoder trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count.
+The encoder therefore trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count.
 The implemented strategies and their rationale are:
 
 \begin{enumerate}
@@ -1008,14 +1010,14 @@ Property-based sort strategies were considered but are not included in the curre
 \end{figure}
 
 To avoid wasting trials on unpromising strategies, a \emph{bounding-box heuristic} skips spatial sorting on large layers whose features are too spatially dispersed for locality clustering to help.
-Specifically, for layers with more than \texttt{SORT\_TRIAL\_THRESHOLD = 512} features, the spatial trials are pruned when the first-vertex bounding box covers more than \texttt{SPATIAL\_HELP\_COVERAGE = 80\%} of the tile extent on \emph{both} axes (implemented in \texttt{sort.rs::spatial\_sort\_likely\_to\_help}).
+Specifically, for layers with more than \texttt{SORT\_TRIAL\_THRESHOLD = 512} features, the spatial trials are pruned when the first-vertex bounding box covers more than \texttt{SPATIAL\_HELP\_COVERAGE = 80\%} of the tile extent on \emph{both} axes.
 Small layers (below the threshold) are always trialled, since the absolute cost of an extra encoding pass is negligible for them.
 
 \paragraph{Inner loop: per-stream encoding competition}\label{sub_stream_competition}
 Within each sort-strategy trial, every integer data stream is subject to an independent encoding competition.
 Each candidate pairs a \emph{logical} encoding (Plain, Delta, \ac{RLE}, or DeltaRle) with a \emph{physical} encoding (\ac{VarInt} or \ac{FastPFOR}~\cite{fastpfor}).
 The na\"ive approach --- encoding every combination and comparing --- would be prohibitively expensive for large tiles.
-Instead, a \emph{data profiler} (\texttt{encoder/stream/optimizer.rs}) samples a contiguous block taken from the middle of the stream: streams with at most \texttt{MIN\_SAMPLE = 512} values are profiled in full, and longer streams are profiled over $\lfloor |s| / 100 \rfloor$ values clamped to $[\texttt{MIN\_SAMPLE},\, \texttt{MAX\_SAMPLE}]$ with \texttt{MAX\_SAMPLE = \num{16384}}.
+Instead, a \emph{data profiler} samples a contiguous block taken from the middle of the stream: streams with at most \texttt{MIN\_SAMPLE = 512} values are profiled in full, and longer streams are profiled over $\lfloor |s| / 100 \rfloor$ values clamped to $[\texttt{MIN\_SAMPLE},\, \texttt{MAX\_SAMPLE}]$ with \texttt{MAX\_SAMPLE = \num{16384}}.
 The contiguous mid-stream window is chosen over a random sample because \ac{RLE} run lengths and delta-bit-width statistics are destroyed by permutation, and because the middle of a spatially or ID-sorted stream is a representative point away from the boundary artefacts at the ends.
 The profiler computes four metrics in a single pass:
 
@@ -1046,7 +1048,7 @@ String columns are competed across four strategies, reflecting the two orthogona
     \item \textbf{\ac{FSST} + Dictionary}: \ac{FSST} applied to a deduplicated dictionary, combining both deduplication and byte-level compression.
 \end{enumerate}
 
-A viability probe ensures that \ac{FSST} is only attempted when the symbol-table overhead (up to \qty{2040}{\byte}) is likely to be recouped: columns below \texttt{FSST\_OVERHEAD\_THRESHOLD = \num{2048}}~raw bytes are excluded, and a trial compression on a sample of up to \texttt{FSST\_SAMPLE\_STRINGS = 256} strings is evaluated before committing (\texttt{encoder/property/strings.rs}).
+A viability probe ensures that \ac{FSST} is only attempted when the symbol-table overhead (up to \qty{2040}{\byte}) is likely to be recouped: columns below \texttt{FSST\_OVERHEAD\_THRESHOLD = \num{2048}}~raw bytes are excluded, and a trial compression on a sample of up to \texttt{FSST\_SAMPLE\_STRINGS = 256} strings is evaluated before committing.
 Trained \ac{FSST} compressors are cached by column name in a \texttt{HashMap} and reused across all sort-strategy trials, avoiding redundant training.
 A \emph{pruning variant} of the \ac{FSST} compressor removes symbols whose observed frequency in the trial compression falls below a viability threshold, shrinking the stored symbol table at no additional decoder cost.
 
@@ -1182,14 +1184,14 @@ Structural patterns (sequential, constant) are discovered by the same data profi
 \paragraph{Encoder cost amortisation}
 The multi-trial approach is made affordable through warm-start caching: \ac{FSST} compressors, Morton metadata, and vertex-strategy decisions are computed once and reused across sort trials.
 Scratch buffers grow on first use and are recycled without re-allocation.
-The alternatives mechanism itself is implemented as an RAII stack of \texttt{AltSession} guards (\texttt{encoder/writer.rs}): each candidate writes into a sub-range of the encoder's buffers, and when the session's \texttt{Drop} impl fires, it retains only the bytes of the smallest candidate and rolls the buffer cursor back for the others.
+The alternatives mechanism itself is implemented as an RAII stack of \texttt{AltSession} guards: each candidate writes into a sub-range of the encoder's buffers, and when the session's \texttt{Drop} impl fires, it retains only the bytes of the smallest candidate and rolls the buffer cursor back for the others.
 Nesting is supported explicitly, so the inner per-stream competition can resolve before the enclosing sort-strategy trial commits.
 
 \paragraph{Encoder correctness validation}
 \begin{sloppypar}
     Because \ac{FastPFOR} explicitly disclaims input validation and the encoder performs narrowing, run-encoding, and dictionary rebuilds that each have independent failure modes, the encoder is validated by a multi-layer test harness:
     (i)~an in-tree proptest suite covering every \texttt{IntEncoder} variant, with round-trip assertions across the full representable range of the selected physical type;
-    (ii)~a libFuzzer harness (\texttt{mlt\allowbreak-core/\allowbreak fuzz/\allowbreak fuzz\_targets/\allowbreak decoded\_layer.rs}) that fuzzes full \texttt{DecodedLayer} round-trips, with a corpus accumulated over previous runs;
+    (ii)~a libFuzzer harness that fuzzes full \texttt{DecodedLayer} round-trips, with a corpus accumulated over previous runs;
     (iii)~snapshot tests via \texttt{insta} for the per-stream profiler's candidate lists, pinning the pruning heuristics to known-good outputs; and
     (iv)~the pixel-exact visual validation described in \cref{sec_visual_correctness}, which exercises the full decode path against a known-good baseline.
 \end{sloppypar}
