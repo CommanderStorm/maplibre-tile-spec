@@ -853,7 +853,7 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
 
             % Decoder off-centre towards the middle (right side)
-            \node[dec, align=center] at (4.5, -1.4) (decnode)
+            \node[dec, align=center] at (3.5, 0) (decnode)
                 {Decoder\\{\scriptsize reusable buffers,}\\{\scriptsize memory budget}};
                 \draw[-Stealth, thick, densely dashed] (u8.east) -| (decnode.north);
                 \draw[-Stealth, thick, densely dashed] (decnode.south) |- (name.east);
