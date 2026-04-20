@@ -888,14 +888,14 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             \node[encode, below=of staged]  (tile)    {Tile*};
 
             % *Encoder off-centre towards the middle (left side)
-            \node[enc] at ($(staged)!0.5!(encoded) + (3.5,0)$) (encnode) {*Encoder\\{\scriptsize reusable buffers,}\\{\scriptsize caching}};
+            \node[enc] at ($(staged)!0.5!(encoded) + (-2.5,0)$) (encnode) {*Encoder\\{\scriptsize reusable buffers,}\\{\scriptsize caching}};
 
             \draw[arrow] (tile)    -- node[right, lbl, align=left] {convert to\\columnar} (staged);
             \draw[arrow] (staged)  -- node[right, lbl, align=left] {fully encode to\\wire-ready format} (encoded);
             \draw[arrow] (encoded) -- node[right, lbl] {zero-copy} (write);
 
             % Phantom to balance bounding box
-            \path (3.5, 0);
+            \path (2.5, 0);
 
             % Encoder arrows
             \draw[-Stealth, thick, densely dashed] (staged.west) -| (encnode.south);
