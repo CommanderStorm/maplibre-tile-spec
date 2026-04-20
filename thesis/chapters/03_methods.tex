@@ -770,12 +770,6 @@ The pruning operations, applied in order, are:
         \node[style] (sopt) {Style optimisations\\{\scriptsize (\cref{sub_expression_optimisations,sub_structural_optimisations})}};
         \node[data, right=1.5cm of sopt] (stats) {Tile statistics};
 
-        % Cascade brace — above the inputs, out of the arrows' way
-        \draw[decorate, decoration={brace, amplitude=5pt}, thick, gray]
-            (sopt.north west) -- (stats.north east)
-            node[midway, above=6pt, font=\scriptsize, text=gray, align=center]
-            {cascade: fewer live layers $\to$ fewer referenced properties $\to$ smaller tiles};
-
         % ── Row 2: advisory (centred below inputs) ──
         \node[both] (adv) at ($(sopt.south)!0.5!(stats.south) + (0,-1.4)$)
             {Tile pruning advisory};
