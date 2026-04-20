@@ -60,11 +60,11 @@ The effect is amplified by fixpoint iteration: a single successful fold can casc
 
 \paragraph{Size reduction vs.\ rendering improvement}
 Passes that primarily reduce serialised style size - default stripping, colour minification - show smaller rendering improvements but contribute meaningfully to transfer size under compression.
-A smaller style reduces the time to first render because the JSON must be fetched, decompressed, and parsed before the renderer can begin.
+This primarily benefits time to first render (discussed in \cref{sub_combined_marginal}).
 The distinction between raw, gzip, and Brotli reductions is notable: some rewrites (e.g., \texttt{any}$\to$\texttt{in}) increase raw token count while decreasing compressed size, because the repetitive structure of \texttt{in} operand lists compresses well.
 
 \paragraph{Fixpoint convergence}
-In practice, most styles converge within two to three fixpoint iterations; the eight-iteration cap is never reached.
+Confirming the design expectation (\cref{sub_pipeline}), all styles converged within two to three fixpoint iterations.
 Styles with deeply nested expressions (e.g., Americana, which uses complex label logic) sit at the upper end of this range.
 
 \paragraph{Stats-driven passes require full coverage}
@@ -176,7 +176,7 @@ A future extension could detect cases where merged symbol layers produce identic
 Dead layer elimination has a second-order effect beyond reducing per-frame draw calls: each eliminated layer removes its property references from the tile pruning advisory computed in the data-level pipeline (\cref{sub_tile_shaving}).
 If a removed layer was the sole consumer of a property column, that column is stripped from every tile at encoding time.
 Similarly, metadata refinement's tightened zoom bounds cause the advisory to mark additional zoom levels as unused for a given source-layer, potentially eliminating entire tiles.
-This cascade --- from style-level dead elimination and metadata refinement through advisory shrinkage into smaller tiles --- is the thesis's central architectural finding, quantified in \cref{sec_exp_mlt}.
+This cascade is the thesis's central architectural finding; it is characterised fully in \cref{sub_mlt_discussion} and quantified in \cref{sub_mlt_results}.
 
 
 \section{Experiment 3: Data-Level Optimisations}\label{sec_exp_mlt}
@@ -233,7 +233,7 @@ Sparse overview tiles at low zoom exercise the advisory's zoom-level pruning; de
 
 \subsection{Results: Style-Driven Cascade}\label{sub_mlt_results}
 
-The central finding of this experiment is the cascade from style-level optimisations into data-level savings: dead layer elimination and metadata refinement (\cref{sec_exp_structural}) reduce the pruning advisory, which in turn reduces the data that must be encoded.
+The central finding of this experiment is the style-to-data cascade previewed in \cref{sub_structural_discussion}: style-level optimisations narrow the pruning advisory, yielding measurably smaller tiles.
 The following paragraphs quantify this cascade before turning to the encoding evaluation.
 
 \paragraph{Interaction between style and data optimisations}
@@ -747,7 +747,7 @@ The qualitative claims elsewhere in the thesis (\cref{sub_combined_discussion}'s
 
 \section{Visual Correctness Validation}\label{sec_visual_correctness}
 
-A fundamental requirement of the optimiser is that all transformations are visually lossless: the optimised style and tile data must produce the same rendered output as the unoptimised baseline within the quantification of the visual-equivalence constraint in \cref{sec_problem_statement}.
+A fundamental requirement of the optimiser is visual losslessness --- the optimised output must satisfy the equivalence constraint formalised in \cref{sec_problem_statement}.
 To validate this property, a systematic pixel-comparison test was conducted using pixelmatch, a pixel-level image comparison library that reports the number of differing pixels between two renderings with a configurable per-pixel colour tolerance.
 For each of the 15 benchmark styles, the baseline and optimised renderings were compared at integer zoom levels 0-14 across all 18 scenarios, with both axis-aligned (no pitch, no bearing) and a fixed pitched view.
 The comparison uses MapLibre GL~JS's Node-side software rasteriser rather than a GPU backend; this is a deliberate choice that trades realism for determinism: a software rasteriser produces bit-identical output across machines, whereas GPU backends diverge on subpixel rounding, fragment-shader precision, and mipmap selection even when all other inputs are held fixed.

@@ -1,7 +1,6 @@
 \chapter{Theoretical Background}\label{ch_theoretical_background}
 
-The related work survey identified that existing tools operate on individual optimisation dimensions - tile data pruning, encoding, or style cleanup - but none composes them into a joint pipeline, and none draws systematically on compiler or database optimisation theory.
-Building such a pipeline requires foundations from several fields: the map rendering architecture that defines what is being optimised, the compiler techniques whose analogues drive the expression-level passes, the query optimisation concepts that inform filter rewriting and predicate reordering, and the columnar encoding strategies that underpin the data-level passes.
+The gap identified in \cref{ch_related_work} --- no existing tool composes style rewrites with data-level pruning into a joint pipeline --- calls for foundations from several fields: the map rendering architecture that defines what is being optimised, the compiler techniques whose analogues drive the expression-level passes, the query optimisation concepts that inform filter rewriting and predicate reordering, and the columnar encoding strategies that underpin the data-level passes.
 
 This chapter introduces these foundations in the order in which the optimiser consumes them.
 \cref{sec_map_rendering_approaches} describes the map rendering process and its resource pipeline.

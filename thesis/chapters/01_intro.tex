@@ -36,7 +36,7 @@ The main contributions of this thesis are:
 \begin{enumerate}
     \item A \textbf{two-phase style optimisation pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering) and structural passes (dead layer elimination, metadata refinement, layer merging), modeled on peephole optimisers and query planners from the compiler and database literature.
 
-    \item \textbf{Style-driven tile shaving} that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data - enabling a cascade where style-level dead layer elimination reduces the pruning advisory, which in turn reduces the data that must be encoded.
+    \item \textbf{Style-driven tile shaving} that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data --- creating a cascade from style-level changes into smaller encoded tiles (\cref{sub_mlt_discussion}).
 
     \item An \textbf{automatic encoding strategy selection} for the MapLibre Tiles (MLT) columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies, adapting to the changed data characteristics that emerge after style-driven shaving alters value distributions and column cardinalities.
 
@@ -46,17 +46,8 @@ The main contributions of this thesis are:
 \section{Outline}\label{sec_outline}
 
 The remainder of this thesis is structured as follows.
-
-\cref{ch_related_work} surveys existing work across four areas - tile data pruning (vtshaver, vt-optimizer, Tippecanoe), tile encoding and format innovation (MVT, MLT, columnar compression), style-level tooling (migration utilities, CSS minification analogues), and rendering performance benchmarking - and identifies the gap that motivates the co-optimisation approach: no existing system composes style rewrites with data-level pruning into a single pipeline.
-
-\cref{ch_theoretical_background} establishes the foundations the optimiser builds on.
-It introduces the map rendering architecture and its resource pipeline (tiles, styles, fonts, sprites), surveys compiler optimisation techniques (peephole rewriting, constant folding, fixpoint iteration) and query optimisation concepts (predicate pushdown, selectivity reordering) whose analogues are applied to style expressions and filters, describes the columnar encoding and compression schemes used at the tile level, and formalises the multi-objective optimisation problem that the methods chapter addresses.
-
-\cref{ch_methods} presents the design and implementation of the optimiser itself.
-It describes the two-phase pipeline - expression-level passes on raw JSON followed by structural passes on typed Rust representations generated from the MapLibre style specification - and details each individual pass: constant folding, algebraic simplification, stats-driven folding, dead layer elimination, metadata refinement, and layer merging.
-The chapter then extends the pipeline to the data level with style-driven tile shaving and automatic encoding strategy selection for the MLT columnar format, and concludes with the benchmarking methodology, including scenario design and the cumulative ablation protocol.
-
-\cref{ch_experiments} evaluates the optimiser through three experiments that mirror the pipeline's structure: expression-level optimisations (eight passes evaluated in cumulative ablation order), structural optimisations (six passes with inter-pass dependency analysis), and data-level optimisations (demonstrating the cascade from style-level dead layer elimination through tile shaving into smaller tiles, and evaluating how automatic encoding strategy selection delivers the shaved data to the wire).
-A cross-style generalisation study across 15 styles tests robustness beyond the deep benchmarking corpus, and a combined analysis quantifies the full pipeline's end-to-end effect on tile volume, load time, and rendering stability.
-
-\cref{ch_conclusion} revisits the three research questions in light of the experimental evidence, summarises the cascade effect between style-level and data-level optimisations as the central architectural finding, discusses limitations, and identifies directions for future work including symbol layer merging, runtime re-encoding, and formal multi-objective search.
+\cref{ch_related_work} surveys tile data pruning, encoding formats, style-level tooling, and rendering benchmarking, identifying the gap that motivates a joint style-data optimiser.
+\cref{ch_theoretical_background} establishes the compiler, database, and encoding foundations that the optimiser draws on, and formalises the visual-equivalence-constrained optimisation problem.
+\cref{ch_methods} presents the two-phase pipeline --- expression-level rewrites and structural passes --- together with style-driven tile shaving, automatic encoding strategy selection, and the cumulative ablation methodology.
+\cref{ch_experiments} evaluates each optimisation level in isolation and combined, tests generalisation across 15 styles, and quantifies the full pipeline's end-to-end effect on tile volume, load time, and rendering stability.
+\cref{ch_conclusion} revisits the research questions, summarises the key findings, and identifies directions for future work.

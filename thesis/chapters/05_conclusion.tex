@@ -8,31 +8,25 @@ This chapter draws together the findings: it summarises the contributions, disti
 The main contributions are:
 
 \begin{enumerate}
-    \item \textbf{Two-phase style optimisations} (47 expression-level rewrites, 6 structural passes).
-    Expression simplification proved most valuable as an \emph{enabler}: constant folding and algebraic simplification reduced filters to forms that dead elimination and layer merging could exploit, producing the largest rendering gains by cutting per-frame layer and draw-call counts.
+    \item The \textbf{two-phase style pipeline} (\cref{sec_contributions}) proved most effective as an enabler: expression-level simplifications cascaded into forms that structural passes could exploit, with constant folding and dead elimination together accounting for the largest per-pass rendering gains (\cref{sub_combined_marginal}).
 
-    \item \textbf{Style-driven tile shaving} demonstrated a cascade effect: each style layer removed by dead elimination shrank the pruning advisory, which in turn eliminated entire columns and tiles from the encoded output.
+    \item \textbf{Style-driven tile shaving} (\cref{sec_contributions}) produced the cascade documented in \cref{sub_mlt_discussion}: dead elimination narrowed the pruning advisory enough to eliminate entire property columns and tiles from the encoded output.
 
-    \item \textbf{Automatic encoding strategy selection} for the \ac{MLT} format reduced tile volume by \qty{28}{\percent} over the fixed-plan \ac{MLT}-Java baseline and by \qty{12}{\percent} over gzip-compressed \ac{MVT}, with the advantage preserved even against zstd-22.
+    \item The \textbf{automatic encoding strategy selection} for the \ac{MLT} format closed the gap that the fixed-plan Java encoder left open: the Rust encoder's per-stream profiling and sort-strategy competition reduced tile volume by \qty{28}{\percent} over the Java baseline, and this advantage persisted under every wire compressor tested --- including zstd-22, the strongest in the comparison (\cref{tab:mvt_mlt_comparison}).
 
-    \item \textbf{Empirical evaluation} across 15 styles, 18 scenarios, and 17 cumulative ablation steps.
-    The full pipeline reduced total tile volume by \qty{15}{\percent} (\qty{3.07}{\giga\byte} $\to$ \qty{2.61}{\giga\byte}), improved load times by \qtyrange{1}{33}{\percent} for most scenarios, and held FPS stability within \qty{\pm 1}{\percent}.
+    \item The \textbf{empirical evaluation} (\cref{ch_experiments}) confirmed that the three optimisation categories are complementary: expression and structural passes dominate rendering-throughput improvements, while data-level passes dominate load-time improvements, with the full pipeline reducing total tile volume by \qty{15}{\percent} and improving end-to-end load times by \qtyrange{71}{75}{\percent} on the two styles benchmarked with tile data.
 \end{enumerate}
 
 \section{Key Findings}
 
 Three architectural insights emerged from the evaluation that go beyond the quantitative results reported in \cref{ch_experiments}.
 
-\emph{First}, the cascade effect --- style simplification makes data optimisations more effective --- is the central finding.
-Each style layer removed by dead elimination shrinks the pruning advisory, which eliminates entire property columns and even whole source-layers from the encoded tile.
+\emph{First}, the cascade effect (\cref{sub_mlt_discussion}) --- style simplification narrows the pruning advisory, which shrinks the encoded tiles --- is the central finding.
 The pipeline is more effective than applying either level in isolation, and any evaluation that benchmarks data-level or style-level optimisations alone will understate the combined benefit.
 For the geospatial community this means that style authoring and tile encoding should no longer be treated as independent concerns: the two interact, and tooling that exploits the interaction can recover substantial transfer and rendering savings without any change to the underlying data or the renderer.
 
-\emph{Second}, different optimisation categories address different bottlenecks in the rendering pipeline.
-Structural passes (dead elimination, layer merging) reduce per-frame draw-call overhead and dominate the rendering-throughput improvements.
-Data-level passes (tile shaving, columnar re-encoding) reduce transfer size and dominate the load-time improvements.
-Expression passes serve primarily as \emph{enablers}, simplifying filters into forms that structural and data-level passes can exploit.
-This decomposition matters for deployment decisions: a mobile deployment on a constrained network should prioritise tile shaving and re-encoding, whereas a desktop deployment bottlenecked by draw calls benefits most from structural passes alone.
+\emph{Second}, the three-mechanism decomposition identified in \cref{sub_combined_discussion} has deployment implications: structural passes dominate rendering-throughput improvements, data-level passes dominate load-time improvements, and expression passes serve primarily as enablers.
+A mobile deployment on a constrained network should prioritise tile shaving and re-encoding, whereas a desktop deployment bottlenecked by draw calls benefits most from structural passes alone.
 
 \emph{Third}, the compiler-optimisation framing --- peephole rewriting, fixpoint iteration, dead code elimination --- transfers effectively to the map-style domain.
 The 47 rewrite rules are individually simple, yet their composition through fixpoint iteration achieves globally significant simplification across styles of widely varying complexity (raw reductions of \qtyrange{10}{71}{\percent} across the Maputnik generalisation corpus).

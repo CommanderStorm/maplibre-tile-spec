@@ -2,7 +2,7 @@
 
 The preceding chapters established that no existing tool jointly optimises map styles and tile data, and introduced the compiler, database, and encoding techniques whose analogues make such joint optimisation possible.
 This chapter applies those foundations to the design and implementation of a concrete optimiser: a standalone Rust tool that consumes a MapLibre style~JSON document and, optionally, tile-level statistics, and produces a semantically equivalent style together with optimised tile data.
-All transformations are \emph{visually lossless}: the optimised output must produce pixel-identical rendering for every tile at every zoom level, satisfying the visual equivalence constraint formalised in \cref{sec_problem_statement}.
+All transformations satisfy the visual-equivalence constraint formalised in \cref{sec_problem_statement}: the optimised output is pixel-identical to the original at every zoom level.
 
 \section{Scope}\label{sec_scope}
 

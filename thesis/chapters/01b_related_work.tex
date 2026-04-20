@@ -1,14 +1,12 @@
 \chapter{Related Work}\label{ch_related_work}
 
-The introduction identified a gap between how map styles and tile data are prepared today: styles are tuned for visual appearance while tiles are encoded with general-purpose content and compression, and no existing open-source system exploits the interaction between the two.
+\Cref{ch_introduction} identified a gap between style authoring and tile data preparation --- two concerns that remain independent in all existing open-source tooling.
 Before developing an optimiser that bridges this gap, this chapter surveys the state of the art along four dimensions that correspond to the levels at which the optimiser will operate.
 \cref{sec_rw_tile_data} reviews existing approaches to tile data pruning and schema design.
 \cref{sec_rw_tile_encoding} covers tile encoding formats and columnar compression techniques.
 \cref{sec_rw_style_optimisations} examines the limited prior work on style-level optimisation.
 \cref{sec_rw_benchmarking} surveys rendering performance benchmarking methodologies.
 For each area, the discussion identifies what existing tools achieve and where they fall short, building toward the composite gap that motivates the co-optimisation approach developed in this thesis.
-
-For each category, the relevant tools and publications are discussed, and the gap that this thesis addresses is identified.
 
 \section{Tile Data Optimisation}\label{sec_rw_tile_data}
 
