@@ -888,7 +888,7 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             \node[encode, below=of staged]  (tile)    {Tile*};
 
             % *Encoder off-centre towards the middle (left side)
-            \node[enc] at (-3.5, -2.5) (encnode) {*Encoder\\{\scriptsize reusable buffers,}\\{\scriptsize caching}};
+            \node[enc] at ($(staged)!0.5!(encoded) + (0,0.3)$) (encnode) {*Encoder\\{\scriptsize reusable buffers,}\\{\scriptsize caching}};
 
             \draw[arrow] (tile)    -- node[right, lbl, align=left] {convert to\\columnar} (staged);
             \draw[arrow] (staged)  -- node[right, lbl, align=left] {fully encode to\\wire-ready format} (encoded);
