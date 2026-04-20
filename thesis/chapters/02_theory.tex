@@ -66,10 +66,10 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
         \coordinate (s3) at ($(server.north)!0.25!(server.north west)$);
         \coordinate (s4) at ($(server.north)!0.75!(server.north west)$);
 
-        \draw[arrow] (s4) -- node[right, label] {style}   (s4 |- renderer.south);
-        \draw[arrow] (s3) -- node[right, label] {tiles}   (s3 |- renderer.south);
-        \draw[arrow] (s1) -- node[right, label] {sprites} (s1 |- renderer.south);
-        \draw[arrow] (s2) -- node[right, label] {fonts}   (s2 |- renderer.south);
+        \draw[arrow] (s4) -- node[label] {style}   (s4 |- renderer.south);
+        \draw[arrow] (s3) -- node[label] {tiles}   (s3 |- renderer.south);
+        \draw[arrow] (s1) -- node[label] {sprites} (s1 |- renderer.south);
+        \draw[arrow] (s2) -- node[label] {fonts}   (s2 |- renderer.south);
 
         % ── "over the network" brace ──
         \draw[decorate, decoration={brace, amplitude=6pt}, thick]
