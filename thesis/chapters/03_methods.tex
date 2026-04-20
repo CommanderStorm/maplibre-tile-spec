@@ -1090,9 +1090,9 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
                     \midrule
                     \texttt{name:de}  & Straßburg, Freiburg, Mühlhausen, \ldots \\
                     \texttt{name:fr}  & Strasbourg, Fribourg, Mulhouse, \ldots \\
-                    \texttt{class}    & motorway, trunk, primary, rail, \ldots \\
-                    \texttt{subclass} & motorway, trunk, primary, link, \ldots \\
-                    \texttt{maxspeed} & 30, 50, 80, 120, \ldots
+                    \texttt{class}    & motorway, trunk, rail, \ldots \\
+                    \texttt{subclass} & motorway, trunk, link, \ldots \\
+                    \texttt{maxspeed} & 30, 50, 80, \ldots
                 \end{tabular}%
             };
             \node[steplabel, above=1pt of tbl] {\circled{1} Column vocabularies};
@@ -1109,7 +1109,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
                     \texttt{maxspeed} & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
                 \end{tabular}%
             };
-            \node[steplabel, above=1pt of hash] {\circled{2} MinHash signatures (128 permutations each)};
+            \node[steplabel, above=1pt of hash] {\circled{2} MinHash signatures (128 permutations)};
 
             % ═══ Bottom-left (Step 4): Union-Find result ═══
             \node[stepbox, below=0.8cm of tbl, cmp, anchor=north] (res) {%
