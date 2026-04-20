@@ -855,8 +855,10 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
             % Decoder off-centre towards the middle (right side)
             \node[dec, align=center] at (3.5, -3) (decnode)
                 {Decoder\\{\scriptsize reusable buffers,}\\{\scriptsize memory budget}};
-            \draw[-Stealth, thick, densely dashed] (name.north) -| (decnode.north);
-            \draw[-Stealth, thick, densely dashed] (decnode.south) -| (name.south);
+            \draw[-Stealth, thick, densely dashed]
+            (name.east) -- ++(0.8,0) -- ++(0,0.5) -- (decnode.west);
+            \draw[-Stealth, thick, densely dashed]
+            (decnode.west) -- ++(-0.8,0) -- ++(0,-0.5) -- (name.east);
 
             % Phantom to balance bounding box
             \path (-3.5, 0);
