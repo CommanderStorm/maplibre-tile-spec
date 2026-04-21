@@ -742,19 +742,7 @@ The advisory captures the following per source-layer:
     When IDs are unused, the entire ID column is stripped.
 \end{itemize}
 
-\noindent The pruning advisory is applied to each \ac{MVT} tile before encoding.
-The pruning operations, applied in order, are:
-
-\begin{enumerate}
-    \item Remove entire source-layers not referenced by any style layer.
-    \item For each remaining layer:
-    \begin{enumerate}
-        \item Filter features by geometry type: remove features whose geometry type is unused at the current zoom level.
-        \item Filter features by property values: remove features with unused categorical values.
-        \item Strip unused properties: rebuild the property key-value table to include only referenced properties.
-        \item Strip feature IDs when not needed.
-    \end{enumerate}
-\end{enumerate}
+\noindent The pruning advisory is applied to each \ac{MVT} tile before encoding (\cref{fig:tile_shaving_pipeline}).
 
 \begin{figure}[htbp]
     \centering
@@ -765,13 +753,15 @@ The pruning operations, applied in order, are:
         both/.style={box, fill=green!10, minimum width=2.8cm},
         arrow/.style={-Stealth, thick},
         lbl/.style={font=\scriptsize\itshape, text=gray},
+        steps/.style={rectangle, draw, dashed, rounded corners=2pt, font=\small,
+                      align=left, inner sep=6pt, text=black!80},
     ]
         % ── Row 1: style-side and data-side inputs ──
         \node[style] (sopt) {Style optimisations\\{\scriptsize (\cref{sub_expression_optimisations,sub_structural_optimisations})}};
         \node[data, right=1cm of sopt] (stats) {Tile statistics};
 
-        % Row 2: advisory (centred below inputs)
-        \node[both] (adv) right=1cm of sopt {Tile pruning advisory};
+        % Row 2: advisory
+        \node[both, right=1cm of stats] (adv) {Tile pruning advisory};
         \draw[arrow] (sopt) -- node[left, lbl] {optimised style} (adv);
         \draw[arrow] (stats) -- node[right, lbl] {property/geometry stats} (adv);
 
@@ -783,6 +773,18 @@ The pruning operations, applied in order, are:
         \draw[arrow] (adv) -- (prune);
         \draw[arrow] (mvt) -- (prune);
         \draw[arrow] (prune) -- node[above, lbl] {re-encode} (mlt);
+
+        % Pruning steps annotation
+        \node[steps, below=0.8cm of prune] (ops) {%
+            \textbf{Pruning operations (in order):}\\[2pt]
+            1.\;Remove entire source-layers not referenced by any style layer.\\
+            2.\;For each remaining layer:\\
+            \quad a.\;Filter features by geometry type at current zoom.\\
+            \quad b.\;Filter features by unused categorical property values.\\
+            \quad c.\;Strip unused properties from the key-value table.\\
+            \quad d.\;Strip feature IDs when not needed.%
+        };
+        \draw[dashed, gray] (prune) -- (ops);
     \end{tikzpicture}
     \caption{Style-driven tile shaving pipeline.  The optimised style and tile statistics jointly produce a pruning advisory.  Each \ac{MVT} tile is pruned according to the advisory, transformed, and re-encoded as \ac{MLT}.  Style-level dead layer elimination cascades into smaller advisories and thus smaller tiles}
     \label{fig:tile_shaving_pipeline}
