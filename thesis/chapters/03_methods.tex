@@ -984,9 +984,9 @@ Property-based sort strategies were considered but are not included in the curre
         \draw[arrow] (upd.west) -- ++(-2.4,0) |- (more.west);
 
         % No: discard, loop back
-        \draw[arrow] (cmp.east) -- ++(2.0,0)
+        \draw[arrow] (cmp.west) -- ++(2.0,0)
             node[above, label, pos=0.4] {no}
-            |- (more.east);
+            |- (more.west);
 
         % Exit loop
         \node[output, right=2.2cm of more] (best)
