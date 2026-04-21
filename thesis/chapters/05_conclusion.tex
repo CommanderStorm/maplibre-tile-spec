@@ -22,14 +22,14 @@ The main contributions are:
 
 Three architectural insights emerged from the evaluation that go beyond the quantitative results reported in \cref{ch_experiments}.
 
-\emph{First}, the cascade effect (\cref{sub_mlt_discussion}) --- style simplification narrows the pruning advisory, which shrinks the encoded tiles --- is the central finding.
+\emph{First}, the cascade effect (\cref{sub_mlt_discussion}) - style simplification narrows the pruning advisory, which shrinks the encoded tiles - is the central finding.
 The pipeline is more effective than applying either level in isolation, and any evaluation that benchmarks data-level or style-level optimisations alone will understate the combined benefit.
 For the geospatial community this means that style authoring and tile encoding should no longer be treated as independent concerns: the two interact, and tooling that exploits the interaction can recover substantial transfer and rendering savings without any change to the underlying data or the renderer.
 
 \emph{Second}, the three-mechanism decomposition identified in \cref{sub_combined_discussion} has deployment implications: structural passes dominate rendering-throughput improvements, data-level passes dominate load-time improvements, and expression passes serve primarily as enablers.
 A mobile deployment on a constrained network should prioritise tile shaving and re-encoding, whereas a desktop deployment bottlenecked by draw calls benefits most from structural passes alone.
 
-\emph{Third}, the compiler-optimisation framing --- peephole rewriting, fixpoint iteration, dead code elimination --- transfers effectively to the map-style domain.
+\emph{Third}, the compiler-optimisation framing - peephole rewriting, fixpoint iteration, dead code elimination - transfers effectively to the map-style domain.
 The 47 rewrite rules are individually simple, yet their composition through fixpoint iteration achieves globally significant simplification across styles of widely varying complexity (raw reductions of \qtyrange{10}{71}{\percent} across the Maputnik generalisation corpus).
 This suggests that other declarative rendering specifications (CSS, SVG filters, shader graphs) may benefit from the same approach: a small rule set applied to fixpoint, followed by structural passes that exploit the simplified form.
 
@@ -55,7 +55,7 @@ The preprocessing-cost model in \cref{sub_preprocessing_cost} decomposes the tot
 The multi-strategy competition increases re-encoding cost by roughly a factor of three to five over a fixed-plan encoder, but this cost is paid once per tileset build and amortised over every subsequent tile request; the \ac{RAII} alternatives guard, warm-start \ac{FSST} caching, and scratch-buffer recycling keep the absolute cost of each additional trial low enough that the full pipeline still runs in tens of minutes on the Germany OpenMapTiles tileset on a single-threaded desktop workstation.
 On the tradeoff axis, transfer-size reduction is the most robust gain (style-level gzip reductions of \qtyrange{3}{47}{\percent}, median ${\sim}$\qty{8}{\percent}; tile-level volume reduction of \qty{12.4}{\percent} for \ac{MLT}-Rust vs.\ \ac{MVT} under gzip).
 Decoding latency, measured via Criterion micro-benchmarks on the OpenMapTiles fixtures (\cref{tab:decode_throughput}), shows that the \ac{MLT}-Rust decoder achieves \numrange{4.6}{8.3}$\times$ higher full-decode throughput than \ac{MVT}+gzip across zoom levels 4, 7, and 13.
-Rendering throughput (FPS) is reported in \cref{sub_combined_ablation} and shows \qty{\pm 1}{\percent} stability, affected almost entirely by the structural passes rather than by the data-level passes --- confirming that data-style co-optimisation is not a single knob but a set of complementary mechanisms that each address a different bottleneck.
+Rendering throughput (FPS) is reported in \cref{sub_combined_ablation} and shows \qty{\pm 1}{\percent} stability, affected almost entirely by the structural passes rather than by the data-level passes - confirming that data-style co-optimisation is not a single knob but a set of complementary mechanisms that each address a different bottleneck.
 Energy consumption is not measured directly (the benchmark host is a desktop workstation rather than a battery-constrained device), but the transfer-size and frame-rate results are well-established proxies on mobile targets and the qualitative discussion in \cref{sub_combined_discussion} translates them into the expected battery-life direction.
 
 \section{Future Work}\label{sec_conclusion_future_work}
@@ -74,7 +74,7 @@ Several directions remain open:
     \item \textbf{Serving-time applicability}: the current pipeline assumes offline batch processing, which is impractical for dynamic tile sources (e.g., PostGIS-backed tile servers with frequently updated data).
     Not all passes require offline processing, however.
     The style optimiser operates on the style alone and can run at deployment time (when the style is published) rather than at tile-build time.
-    The tile pruning advisory could potentially be applied as a lightweight per-request filter at serving time, since it reduces to column selection and predicate evaluation --- operations that tile servers already perform for other purposes.
+    The tile pruning advisory could potentially be applied as a lightweight per-request filter at serving time, since it reduces to column selection and predicate evaluation - operations that tile servers already perform for other purposes.
     The encoding strategy competition, by contrast, requires access to the full column to profile and is inherently a batch operation; its results could be cached per schema and reused across tile requests.
     Characterising which passes are applicable at serving time and measuring their overhead on a request-critical path would extend the pipeline's applicability to dynamic tile sources.
 \end{itemize}
