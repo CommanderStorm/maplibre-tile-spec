@@ -952,7 +952,6 @@ Property-based sort strategies were considered but are not included in the curre
         \node[prep, below=0.7cm of layer] (grp)
         {\texttt{group\_string\_properties()}};
         \draw[arrow] (layer) -- (grp);
-        \node[annot, right=0.3cm of grp] {computed once,\\reused across trials};
 
         % Prep: collect_sort_strategies
         \node[prep, below=0.7cm of grp] (coll)
@@ -960,7 +959,7 @@ Property-based sort strategies were considered but are not included in the curre
         \draw[arrow] (grp) -- (coll);
         \node[annot, right=0.3cm of coll] {Unsorted always;\\%
             +Morton/Hilbert if cfg\\%
-            \textsc{and} ($n{<}512$ \textsc{or} bbox ok);\\%
+            \textsc{and} ($n{<}512$ \textsc{or} bbox indicates effectiveness);\\%
             +Id if cfg};
 
         % Loop body (nodes first, then fit box)
