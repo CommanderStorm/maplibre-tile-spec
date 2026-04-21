@@ -398,12 +398,7 @@ def compute_frontier(variants: pd.DataFrame, cost_axis: str) -> pd.DataFrame:
 def write_frontier_plot(
     out_path: Path, frontier_df: pd.DataFrame, cost_axis: str, styles: list[str]
 ) -> None:
-    """Write a multi-panel PDF scatter plot, one panel per style.
-
-    Only a PDF is written; the thesis includes the PDF directly via
-    ``\\includegraphics{figures/pareto_per_style.pdf}`` and does not
-    reference a PNG copy.
-    """
+    """Write a multi-panel PDF scatter plot, one panel per style."""
     if frontier_df.empty or not styles:
         return
     n = len(styles)
