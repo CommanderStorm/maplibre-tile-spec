@@ -13,7 +13,7 @@ The main contributions are:
 
     \item \textbf{Style-driven tile shaving} (\cref{sec_contributions}) produced the cascade documented in \cref{sub_mlt_discussion}: dead elimination narrowed the pruning advisory enough to eliminate entire property columns and tiles from the encoded output.
 
-    \item The \textbf{automatic encoding strategy selection} for the \ac{MLT} format closed the gap that the fixed-plan Java encoder left open: the Rust encoder's per-stream profiling and sort-strategy competition reduced tile volume by \qty{28}{\percent} over the Java baseline, and this advantage persisted under every wire compressor tested --- including zstd-22, the strongest in the comparison (\cref{tab:mvt_mlt_comparison}).
+    \item The \textbf{automatic encoding strategy selection} for the \ac{MLT} format closed the gap that the fixed-plan Java encoder left open: the Rust encoder's per-stream profiling and sort-strategy competition reduced tile volume by \qty{28}{\percent} over the Java baseline, and this advantage persisted under every wire compressor tested (\cref{tab:mvt_mlt_comparison}).
 
     \item The \textbf{empirical evaluation} (\cref{ch_experiments}) confirmed that the three optimisation categories are complementary: expression and structural passes dominate rendering-throughput improvements, while data-level passes dominate load-time improvements, with the full pipeline reducing total tile volume by \qty{15}{\percent} and improving end-to-end load times by \qtyrange{71}{75}{\percent} on the two styles benchmarked with tile data.
 \end{enumerate}
