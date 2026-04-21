@@ -993,10 +993,10 @@ Property-based sort strategies were considered but are not included in the curre
         % no's
         \draw[arrow] (cmp.west) ++(0,0) -- ++(3.4,0)
         node[above, label, pos=0.15] {no}
-        |- (more.east);
+        |- (more.west);
         \draw[arrow] (more.west) ++(0,0) -- ++(3.4,0)
             node[above, label, pos=0.15] {no}
-            |- (best.east);
+            |- (best.west);
     \end{tikzpicture}
     \caption{Multi-strategy sort competition.
         Shared-dictionary string groups are computed once and reused across all trials.
