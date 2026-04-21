@@ -991,10 +991,10 @@ Property-based sort strategies were considered but are not included in the curre
             {\scriptsize\texttt{best.into\_layer\_bytes()}}};
 
         % no's
-        \draw[arrow] (cmp.east) -- ++(2.0,0)
-        node[above, label, pos=0.4] {noop}
+        \draw[arrow] (cmp.west) ++(0,0) -- ++(3.4,0)
+        node[above, label, pos=0.15] {no}
         |- (more.east);
-        \draw[arrow] (more.south) ++(0,0) -- ++(3.4,0)
+        \draw[arrow] (more.wests) ++(0,0) -- ++(3.4,0)
             node[above, label, pos=0.15] {no}
             |- (best.east);
     \end{tikzpicture}
