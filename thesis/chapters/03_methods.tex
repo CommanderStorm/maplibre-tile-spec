@@ -957,10 +957,6 @@ Property-based sort strategies were considered but are not included in the curre
         \node[prep, below=0.7cm of grp] (coll)
         {\texttt{collect\_sort\_strategies()}};
         \draw[arrow] (grp) -- (coll);
-        \node[annot, right=0.3cm of coll] {Unsorted always;\\%
-            +Morton/Hilbert if cfg\\%
-            \textsc{and} ($n{<}512$ \textsc{or} bbox indicates effective distribution);\\%
-            +Id if cfg};
 
         % Loop body (nodes first, then fit box)
         % Sort + columnarize
