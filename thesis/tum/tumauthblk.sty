@@ -13,7 +13,6 @@
 % and all files in that bundle must be distributed together.
 %
 %
-% ----------------------------------------------------------------------------
 %
 % The development version of the bundle can be found at
 %
@@ -21,7 +20,6 @@
 %
 % for those people who are interested.
 %
-% ----------------------------------------------------------------------------
 %
 % Version history:
 % v1.0 2020/10/01 Initial version.
@@ -33,7 +31,6 @@
 
 
 % .:: Required packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{etoolbox}
 \RequirePackage{graphicx}
@@ -45,7 +42,6 @@
 
 
 % .:: Handling affiliations
-% ----------------------------------------------------------------------------
 
 \newcounter{AffilCount}
 
@@ -79,7 +75,6 @@
 
 
 % .:: Handling authors
-% ----------------------------------------------------------------------------
 
 \newcounter{AuthorCount}
 
@@ -136,7 +131,6 @@
 
 
 % .:: Handling e-mail addresses
-% ----------------------------------------------------------------------------
 
 % set e-mail address for current author
 \newcommand{\email}[1]{\pgfkeys{/TUM/authors/\theAuthorCount/email=#1}}
@@ -160,7 +154,6 @@
 
 
 % .:: Handling ORCIDs
-% ----------------------------------------------------------------------------
 
 % set ORCID for current author
 \newcommand{\orcid}[1]{\pgfkeys{/TUM/authors/\theAuthorCount/orcid=#1}}
@@ -174,7 +167,6 @@
 
 
 % .:: Process package options
-% ----------------------------------------------------------------------------
 
 \pgfqkeys{/TUM/authblk}{
   printmail/.is choice,

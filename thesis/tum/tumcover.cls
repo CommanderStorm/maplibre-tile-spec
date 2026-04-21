@@ -12,7 +12,6 @@
 % and all files in that bundle must be distributed together.
 %
 %
-% ----------------------------------------------------------------------------
 %
 % The development version of the bundle can be found at
 %
@@ -20,7 +19,6 @@
 %
 % for those people who are interested.
 %
-% ----------------------------------------------------------------------------
 %
 % Version history:
 % v2.0 2021/04/19 Initial version.
@@ -30,7 +28,6 @@
 
 
 % .:: Load required packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{pgfkeys}
 \RequirePackage{pgfopts}
@@ -38,7 +35,6 @@
 
 
 % .:: Package options for tumcover class
-% ----------------------------------------------------------------------------
 
 % print debug info to logfile
 \typeout{Global options before any option parsing.}
@@ -84,7 +80,6 @@
 
 
 % .:: Load base class
-% ----------------------------------------------------------------------------
 
 % load 'xcolor' package with 'table' option for compatibility with 'tumcolors'
 \PassOptionsToPackage{table}{xcolor}
@@ -100,7 +95,6 @@
 
 
 % .:: Load TUM packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{tumbase}
 \RequirePackage{tumcolors}
@@ -114,7 +108,6 @@
 
 
 % .:: Font setup
-% ----------------------------------------------------------------------------
 
 % configure base font size
 \KOMAoptions{fontsize=\the\@tum@fontsize@base@}
@@ -123,7 +116,6 @@
 
 
 % .:: Definition of TUM cover areas
-% ----------------------------------------------------------------------------
 
 % newer versions of the bookcover class define a 'wrapwidth'
 % define and set \wrapwidth to 0pt if it was not defined
@@ -198,7 +190,6 @@
 
 
 % .:: Default content of cover areas
-% ----------------------------------------------------------------------------
 
 \renewcommand{\maketitle}{
   \bookcovercomponent{normal}{TUM logo area}{%
@@ -230,7 +221,6 @@
 
 
 % .:: Set default PDF metadata
-% ----------------------------------------------------------------------------
 
 % avoid opening of bookmarks tree in pdf viewer
 \hypersetup{

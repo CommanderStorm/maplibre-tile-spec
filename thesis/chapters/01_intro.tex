@@ -36,7 +36,7 @@ The main contributions of this thesis are:
 \begin{enumerate}
     \item A \textbf{two-phase style optimisation pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering) and structural passes (dead layer elimination, metadata refinement, layer merging), modeled on peephole optimisers and query planners from the compiler and database literature.
 
-    \item \textbf{Style-driven tile shaving} that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data --- creating a cascade from style-level changes into smaller encoded tiles (\cref{sub_mlt_discussion}).
+    \item \textbf{Style-driven tile shaving} that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data - creating a cascade from style-level changes into smaller encoded tiles (\cref{sub_mlt_discussion}).
 
     \item An \textbf{automatic encoding strategy selection} for the MapLibre Tiles (MLT) columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies, adapting to the changed data characteristics that emerge after style-driven shaving alters value distributions and column cardinalities.
 
@@ -48,6 +48,6 @@ The main contributions of this thesis are:
 The remainder of this thesis is structured as follows.
 \cref{ch_related_work} surveys tile data pruning, encoding formats, style-level tooling, and rendering benchmarking, identifying the gap that motivates a joint style-data optimiser.
 \cref{ch_theoretical_background} establishes the compiler, database, and encoding foundations that the optimiser draws on, and formalises the visual-equivalence-constrained optimisation problem.
-\cref{ch_methods} presents the two-phase pipeline --- expression-level rewrites and structural passes --- together with style-driven tile shaving, automatic encoding strategy selection, and the cumulative ablation methodology.
+\cref{ch_methods} presents the two-phase pipeline - expression-level rewrites and structural passes - together with style-driven tile shaving, automatic encoding strategy selection, and the cumulative ablation methodology.
 \cref{ch_experiments} evaluates each optimisation level in isolation and combined, tests generalisation across 15 styles, and quantifies the full pipeline's end-to-end effect on tile volume, load time, and rendering stability.
 \cref{ch_conclusion} revisits the research questions, summarises the key findings, and identifies directions for future work.

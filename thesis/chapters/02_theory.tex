@@ -1,6 +1,6 @@
 \chapter{Theoretical Background}\label{ch_theoretical_background}
 
-The gap identified in \cref{ch_related_work} --- no existing tool composes style rewrites with data-level pruning into a joint pipeline --- calls for foundations from several fields: the map rendering architecture that defines what is being optimised, the compiler techniques whose analogues drive the expression-level passes, the query optimisation concepts that inform filter rewriting and predicate reordering, and the columnar encoding strategies that underpin the data-level passes.
+The gap identified in \cref{ch_related_work} - no existing tool composes style rewrites with data-level pruning into a joint pipeline - calls for foundations from several fields: the map rendering architecture that defines what is being optimised, the compiler techniques whose analogues drive the expression-level passes, the query optimisation concepts that inform filter rewriting and predicate reordering, and the columnar encoding strategies that underpin the data-level passes.
 
 This chapter introduces these foundations in the order in which the optimiser consumes them.
 \cref{sec_map_rendering_approaches} describes the map rendering process and its resource pipeline.
@@ -531,7 +531,7 @@ The estimate is unbiased with variance $O(1/k)$~\cite{broder1997resemblance}.
 \section{Multi-Objective Optimisation}\label{sec_multi_objective_optimisations}
 
 Map rendering optimisation is inherently multi-objective: reducing tile size, minimising load time, maximising rendering throughput, and controlling memory consumption are competing goals.
-Such problems can be formulated as \acsp{MOOP}, where the set of \emph{Pareto-optimal} solutions --- configurations for which no objective can be improved without worsening another --- forms the \emph{Pareto front}~\cite{pareto1896cours}.
+Such problems can be formulated as \acsp{MOOP}, where the set of \emph{Pareto-optimal} solutions - configurations for which no objective can be improved without worsening another - forms the \emph{Pareto front}~\cite{pareto1896cours}.
 A range of algorithms exist for approximating the Pareto front~\cite{debFastElitistMultiobjective2002,zitzlerIndicatorBasedSelection2004,qingfuzhangMOEAMultiobjectiveEvolutionary2007}.
 This thesis does not embed a \ac{MOOP} search algorithm; instead, it uses Pareto dominance as a post-hoc analysis tool over the cumulative-ablation result space (\cref{sec_exp_pareto}), restricted to the two axes whose signal exceeds the benchmark noise floor.
 
@@ -545,7 +545,7 @@ According to Jain~\cite{jainArtComputerSystems1991}, a good evaluation must star
 In the context of web maps, the candidate metrics span a range from deployment-critical on battery-constrained targets to directly user-visible on the desktop:
 
 \begin{itemize}
-    \item \textbf{Power consumption} in Watts, which is relevant for mobile devices and battery-powered systems.  This thesis does not measure power consumption --- no RAPL counters, battery deltas, or external power meters are used, as the benchmark host is a desktop workstation rather than a battery-constrained mobile device.  Power is listed here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets: cellular radio energy is proportional to data volume, and GPU active time scales with draw-call count.  No quantitative energy claim is made in this thesis; the qualitative energy discussion in \cref{ch_experiments} is limited to stating the expected direction of the effect.
+    \item \textbf{Power consumption} in Watts, which is relevant for mobile devices and battery-powered systems.  This thesis does not measure power consumption - no RAPL counters, battery deltas, or external power meters are used, as the benchmark host is a desktop workstation rather than a battery-constrained mobile device.  Power is listed here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets: cellular radio energy is proportional to data volume, and GPU active time scales with draw-call count.  No quantitative energy claim is made in this thesis; the qualitative energy discussion in \cref{ch_experiments} is limited to stating the expected direction of the effect.
     \item \textbf{Resource utilisation}, such as CPU load, GPU utilisation, and memory consumption to have pointers where further optimisations is possible.
     \item \textbf{Latency and responsiveness}, measuring the time between initiating an operation (for example zooming) and the first visible result.
     \item \textbf{Throughput}, typically measured in \acp{FPS} or frame time, describing how many frames can be rendered per second.

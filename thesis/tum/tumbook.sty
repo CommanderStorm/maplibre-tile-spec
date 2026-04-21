@@ -12,7 +12,6 @@
 % and all files in that bundle must be distributed together.
 %
 %
-% ----------------------------------------------------------------------------
 %
 % The development version of the bundle can be found at
 %
@@ -20,7 +19,6 @@
 %
 % for those people who are interested.
 %
-% ----------------------------------------------------------------------------
 %
 % Version history:
 % v2.0 2021/04/19 Initial version.
@@ -30,7 +28,6 @@
 
 
 % .:: Load required packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{enumitem}
 \RequirePackage{etoolbox}
@@ -42,7 +39,6 @@
 
 
 % .:: Additional placeholders
-% ----------------------------------------------------------------------------
 
 % thesis degree
 \newcommand{\theDegree}{}
@@ -76,7 +72,6 @@
 
 
 % .:: Captions for title page elements
-% ----------------------------------------------------------------------------
 
 \provideName{\theUniversityNameDativ}{Technical University of
   Munich}{Technischen Universität München}
@@ -100,7 +95,6 @@
 
 
 % .:: Elements for cover page
-% ----------------------------------------------------------------------------
 
 \newcommand{\theTUMTitleBlock}{{
     \raggedright\noindent
@@ -124,7 +118,6 @@
 
 
 % .:: Elements for student thesis page
-% ----------------------------------------------------------------------------
 
 \newcommand{\theTUMStudentFineprintBlock}{{
     \usekomafont{TUM.thesispage}\raggedright\noindent
@@ -149,7 +142,6 @@
 
 
 % .:: Elements for phd thesis page
-% ----------------------------------------------------------------------------
 
 \newcommand{\theTUMPhDFineprintBlock}{{
     \usekomafont{TUM.thesispage}\raggedright\noindent
@@ -183,7 +175,6 @@
 
 
 % .:: Font setup
-% ----------------------------------------------------------------------------
 
 \setkomafont{title}{\sffamily\Huge\bfseries}
 \setkomafont{subtitle}{\sffamily\LARGE\mdseries}
@@ -194,7 +185,6 @@
 
 
 % .:: Set default values of title elements according to tumuser.sty
-% ----------------------------------------------------------------------------
 
 \author{%
   \ifdefempty{\theAuthorTitlePrefix}{}{\theAuthorTitlePrefix\ }%
@@ -204,7 +194,6 @@
 
 
 % .:: Set default PDF metadata
-% ----------------------------------------------------------------------------
 
 \AtBeginDocument{
   \def\@tum@pdftitle@{\@title\ifdefempty{\@subtitle}{}{~-~\@subtitle}}

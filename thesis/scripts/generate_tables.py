@@ -20,9 +20,7 @@ from collections import defaultdict
 from pathlib import Path
 from statistics import median
 
-# ---------------------------------------------------------------------------
 # Paths
-# ---------------------------------------------------------------------------
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 THESIS_DIR = SCRIPT_DIR.parent
@@ -30,9 +28,7 @@ ROOT = THESIS_DIR.parent
 INPUT_DIR = ROOT.parent / "maplibre-optimizer" / "tests" / "bench" / "results"
 OUTPUT_DIR = SCRIPT_DIR / "data"
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 EXCLUDED_STYLES = {"americana"}
 FULL_PIPELINE_STYLES = {"fiord", "liberty"}
@@ -139,9 +135,7 @@ SUMMARY_ORDER: list[str] = [
 ]
 
 
-# ---------------------------------------------------------------------------
 # Data loading
-# ---------------------------------------------------------------------------
 
 
 def load_jsonl(input_dir: Path) -> list[dict]:
@@ -185,9 +179,7 @@ def filter_latest_session(records: list[dict]) -> list[dict]:
     return filtered
 
 
-# ---------------------------------------------------------------------------
 # Aggregation
-# ---------------------------------------------------------------------------
 
 
 def parse_variant(variant: str) -> tuple[int, str]:
@@ -234,9 +226,7 @@ def aggregate_steps(records: list[dict], style: str) -> list[dict]:
     return steps
 
 
-# ---------------------------------------------------------------------------
 # CSV writers
-# ---------------------------------------------------------------------------
 
 PER_STYLE_HEADER = ["step", "pass", "rawB", "gzipB", "brotliB", "loadMs", "fps", "layers"]
 SUMMARY_HEADER = ["style", "grp", "baseGzip", "optGzip", "reduction", "deltaLoad", "deltaFps", "isBold", "midruleBefore"]
@@ -412,9 +402,7 @@ def write_marginal_csv(path: Path, all_steps: dict[str, list[dict]]) -> None:
         w.writerows(rows)
 
 
-# ---------------------------------------------------------------------------
 # Main
-# ---------------------------------------------------------------------------
 
 
 def main() -> int:
@@ -437,7 +425,7 @@ def main() -> int:
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # -- 1a. Per-style ablation CSVs -------------------------------------------
+    # 1a. Per-style ablation CSVs
     print("\nPer-style ablation CSVs:")
     for style_id in APPENDIX_ORDER:
         if style_id not in all_steps:
@@ -452,7 +440,7 @@ def main() -> int:
             f"final gzip={steps[-1]['gzip_bytes']}"
         )
 
-    # -- 1b. Summary CSV -------------------------------------------------------
+    # 1b. Summary CSV
     print("\nSummary CSV:")
     write_summary_csv(OUTPUT_DIR / "per_style_summary.csv", all_steps)
 
@@ -477,7 +465,7 @@ def main() -> int:
                 pct = (base_load - final_load) / base_load * 100
                 print(f"  {sid} load reduction: {pct:.1f}% ({base_load:.0f} → {final_load:.0f} ms)")
 
-    # -- 1c. Marginal contribution CSV -----------------------------------------
+    # 1c. Marginal contribution CSV
     print("\nMarginal contribution CSV:")
     write_marginal_csv(OUTPUT_DIR / "marginal_contribution.csv", all_steps)
 

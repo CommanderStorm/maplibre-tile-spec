@@ -12,7 +12,6 @@
 % and all files in that bundle must be distributed together.
 %
 %
-% ----------------------------------------------------------------------------
 %
 % The development version of the bundle can be found at
 %
@@ -20,7 +19,6 @@
 %
 % for those people who are interested.
 %
-% ----------------------------------------------------------------------------
 %
 % Version history:
 % v1.0 2020/10/01 Initial version.
@@ -32,7 +30,6 @@
 
 
 % .:: Load required packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{pgfkeys}
 \RequirePackage{pgfopts}
@@ -42,7 +39,6 @@
 
 
 % .:: Package options for tumbeamer class
-% ----------------------------------------------------------------------------
 
 % print debug info to logfile
 \typeout{Global options before any option parsing.}
@@ -95,7 +91,6 @@
 
 
 % .:: Load base class
-% ----------------------------------------------------------------------------
 
 % store classoptionslist
 \let\@tum@classoptions@backup@\@classoptionslist
@@ -118,7 +113,6 @@
 
 
 % .:: Load TUM packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{tumbase}
 \RequirePackage{tumcolors}
@@ -131,7 +125,6 @@
 
 
 % .:: Basic setup
-% ----------------------------------------------------------------------------
 
 \newlength{\@tum@logoheight@}
 \setlength{\@tum@logoheight@}{5.6mm}
@@ -169,7 +162,6 @@
 
 
 % .:: Font setup
-% ----------------------------------------------------------------------------
 
 \setbeamerfont{title}{size=\LARGE, series=\bfseries}
 \setbeamerfont{subtitle}{size=\large, series=\bfseries}
@@ -203,7 +195,6 @@
 
 
 % .:: Color setup
-% ----------------------------------------------------------------------------
 
 \setbeamercolor{itemize item}{fg=TUMBlue, bg=}
 \setbeamercolor{itemize subitem}{parent=itemize item}
@@ -279,7 +270,6 @@
 
 
 % .:: Custom backgrounds
-% ----------------------------------------------------------------------------
 
 \newlength{\@tum@titlewidth@}
 \newlength{\@tum@authorwidth@}
@@ -383,7 +373,6 @@
 
 
 % .:: Custom title page
-% ----------------------------------------------------------------------------
 
 \newlength{\@tum@frametitleskip@}
 
@@ -460,7 +449,6 @@
 
 
 % .:: Custom header and footer
-% ----------------------------------------------------------------------------
 
 \newlength{\@tum@headheight@}
 \newlength{\@tum@footheight@}
@@ -586,7 +574,6 @@
 
 
 % .:: Custom frame title
-% ----------------------------------------------------------------------------
 
 \defbeamertemplate{frametitle}{TUM default}{
   % remove excess vertical space and add precise space
@@ -638,7 +625,6 @@
 
 
 % .:: Custom part pages
-% ----------------------------------------------------------------------------
 
 \defbeamertemplate{part page}{TUM toc}{
   \frametitle{\partname~\insertromanpartnumber:\;\insertpart}
@@ -680,7 +666,6 @@
 
 
 % .:: Custom section pages
-% ----------------------------------------------------------------------------
 
 \defbeamertemplate{section page}{TUM toc}{
   \frametitle{Outline}
@@ -716,7 +701,6 @@
 
 
 % .:: Custom ToC
-% ----------------------------------------------------------------------------
 
 \newlength{\@tum@tocsecsymbol@}
 \newlength{\@tum@tocsecnumber@}
@@ -766,7 +750,6 @@
 
 
 % .:: Custom itemize, enumerate, and description
-% ----------------------------------------------------------------------------
 
 \setbeamertemplate{itemize item}{$\blacksquare$}
 \setbeamertemplate{itemize subitem}{$\square$}
@@ -799,7 +782,6 @@
 
 
 % .:: Frame style manipulation
-% ----------------------------------------------------------------------------
 
 % user command to load a particular frame style
 \newcommand{\TUMframestyle}[1]{
@@ -855,7 +837,6 @@
 
 
 % .:: Predefined frame styles
-% ----------------------------------------------------------------------------
 
 % keys that store title page options
 \pgfqkeys{/TUM/beamer/setup/title page}{
@@ -1256,7 +1237,6 @@
 
 
 % .:: Set default PDF metadata
-% ----------------------------------------------------------------------------
 
 \AtEndPreamble{
   \hypersetup{

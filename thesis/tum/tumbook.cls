@@ -12,7 +12,6 @@
 % and all files in that bundle must be distributed together.
 %
 %
-% ----------------------------------------------------------------------------
 %
 % The development version of the bundle can be found at
 %
@@ -20,7 +19,6 @@
 %
 % for those people who are interested.
 %
-% ----------------------------------------------------------------------------
 %
 % Version history:
 % v2.0 2021/04/19 Initial version.
@@ -30,7 +28,6 @@
 
 
 % .:: Load required packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{pgfkeys}
 \RequirePackage{pgfopts}
@@ -38,7 +35,6 @@
 
 
 % .:: Package options for tumbook class
-% ----------------------------------------------------------------------------
 
 % print debug info to logfile
 \typeout{Global options before any option parsing.}
@@ -86,7 +82,6 @@
 
 
 % .:: Load base class
-% ----------------------------------------------------------------------------
 
 \PassOptionsToClass{bibliography=totoc,index=totoc,numbers=noenddot}{scrbook}
 \PassOptionsToClass{\@classoptionslist}{scrbook}
@@ -99,7 +94,6 @@
 
 
 % .:: Load TUM packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{tumbase}
 \RequirePackage{tumcolors}
@@ -116,7 +110,6 @@
 
 
 % .:: General layout settings
-% ----------------------------------------------------------------------------
 
 \ifbool{@tum@print@headmarks@}{
   \RedeclarePageStyleAlias{TUM.insidepage}{TUM.insidepage.headmarks}
@@ -134,7 +127,6 @@
 
 
 % .:: Default book layout (e.g. for Lecture notes)
-% ----------------------------------------------------------------------------
 
 \newlength{\@tum@cover@title@height@}
 
@@ -212,7 +204,6 @@
 
 
 % .:: Student thesis layout (for bachelor and master thesis)
-% ----------------------------------------------------------------------------
 
 \newcommand{\@tum@thesispage@student@}{%
   \noindent\@tum@threeliner@[\theChairName]{\theDepartmentName}
@@ -253,7 +244,6 @@
 
 
 % .:: PhD thesis layout
-% ----------------------------------------------------------------------------
 
 \newcommand{\@tum@thesispage@phd@}{%
   \begin{otherlanguage}{ngerman}
@@ -276,7 +266,6 @@
 
 
 %  .:: maketitle command
-% ----------------------------------------------------------------------------
 
 \renewcommand{\maketitle}{%
   % store currently defined page style
@@ -294,7 +283,6 @@
 
 
 % .:: Set default PDF metadata
-% ----------------------------------------------------------------------------
 
 % open bookmarks tree, use SinglePage layout for onesided documents
 % and use TwoPageRight layout for twosided documents

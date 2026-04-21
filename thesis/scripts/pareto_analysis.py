@@ -62,9 +62,7 @@ from plotly.subplots import make_subplots
 # Pareto figures as well.
 from generate_plots import LAYOUT_DEFAULTS, SOURCE_COLORS
 
-# ---------------------------------------------------------------------------
 # Axes
-# ---------------------------------------------------------------------------
 
 # Candidate axes considered for the frontier. Only ``gzip_bytes`` passes
 # the noise-floor bar; the other three are measured for the noise report
@@ -138,9 +136,7 @@ def parse_variant(variant: str) -> VariantId:
     return VariantId(mode="cumulative", step_num=-1, pass_name=variant)
 
 
-# ---------------------------------------------------------------------------
 # Data loading
-# ---------------------------------------------------------------------------
 
 
 def load_jsonl(input_dir: Path) -> pd.DataFrame:
@@ -212,9 +208,7 @@ def filter_latest_session_per_style(df: pd.DataFrame) -> tuple[pd.DataFrame, dic
     return filtered, session_log
 
 
-# ---------------------------------------------------------------------------
 # Noise decomposition
-# ---------------------------------------------------------------------------
 
 
 _EMPTY_NOISE_ROW = {
@@ -318,9 +312,7 @@ def write_noise_csv(path: Path, report: pd.DataFrame) -> None:
         w.writerows(rows)
 
 
-# ---------------------------------------------------------------------------
 # Aggregation and frontier
-# ---------------------------------------------------------------------------
 
 
 def build_variant_table(df: pd.DataFrame) -> pd.DataFrame:
@@ -400,9 +392,7 @@ def compute_frontier(variants: pd.DataFrame, cost_axis: str) -> pd.DataFrame:
     return result
 
 
-# ---------------------------------------------------------------------------
 # Plotting
-# ---------------------------------------------------------------------------
 
 
 def write_frontier_plot(
@@ -497,9 +487,7 @@ def write_frontier_plot(
         print(f"warning: could not write frontier image: {exc}", file=sys.stderr)
 
 
-# ---------------------------------------------------------------------------
 # Main
-# ---------------------------------------------------------------------------
 
 
 def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:

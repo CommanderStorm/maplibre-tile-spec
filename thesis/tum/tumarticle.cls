@@ -12,7 +12,6 @@
 % and all files in that bundle must be distributed together.
 %
 %
-% ----------------------------------------------------------------------------
 %
 % The development version of the bundle can be found at
 %
@@ -20,7 +19,6 @@
 %
 % for those people who are interested.
 %
-% ----------------------------------------------------------------------------
 %
 % Version history:
 % v1.0 2020/10/01 Initial version.
@@ -32,7 +30,6 @@
 
 
 % .:: Load required packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{placeins}
 \RequirePackage{pgfkeys}
@@ -40,13 +37,11 @@
 
 
 % .:: Package options for tumarticle class
-% ----------------------------------------------------------------------------
 
 \ProcessPgfOptions{/TUM/article}
 
 
 % .:: Load base class
-% ----------------------------------------------------------------------------
 
 % print debug info to logfile
 \typeout{Global options before any option parsing.}
@@ -66,7 +61,6 @@
 
 
 % .:: Load TUM packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{tumbase}
 \RequirePackage{tumcolors}
@@ -81,7 +75,6 @@
 
 
 % .:: Layout
-% ----------------------------------------------------------------------------
 
 % page style for the title page including the TUM logo and headline
 \DeclareNewPageStyleByLayers{TUM.article.titlepage}{%
@@ -103,7 +96,6 @@
 
 
 % .:: Fonts
-% ----------------------------------------------------------------------------
 
 % title block fonts
 \setkomafont{title}{\sffamily\LARGE\bfseries}
@@ -120,7 +112,6 @@
 
 
 % .:: Custom title
-% ----------------------------------------------------------------------------
 
 \renewcommand{\@maketitle}{
   \newpage
@@ -150,17 +141,15 @@
 
 
 % .:: Custom abstract
-% ----------------------------------------------------------------------------
 
 \renewenvironment{abstract}{%
   \fontfamily{phv}\selectfont
   \setlength{\parindent}{0mm}
   \textcolor{TUMBlue}{\textbf{\abstractname}}
-  \normalfont\textcolor{black}{---}}{}
+  \normalfont\textcolor{black}{-}}{}
 
 
 % .:: Set default PDF metadata
-% ----------------------------------------------------------------------------
 
 \AtBeginDocument{
   \def\@tum@pdftitle@{\@title\ifdefempty{\@subtitle}{}{~-~\@subtitle}}

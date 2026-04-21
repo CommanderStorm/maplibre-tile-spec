@@ -12,7 +12,6 @@
 % and all files in that bundle must be distributed together.
 %
 %
-% ----------------------------------------------------------------------------
 %
 % The development version of the bundle can be found at
 %
@@ -20,7 +19,6 @@
 %
 % for those people who are interested.
 %
-% ----------------------------------------------------------------------------
 %
 % Version history:
 % v2.0 2021/04/19 Initial version.
@@ -30,7 +28,6 @@
 
 
 % .:: Load base class
-% ----------------------------------------------------------------------------
 
 % print debug info to logfile
 \typeout{Global options before any option parsing.}
@@ -48,7 +45,6 @@
 
 
 % .:: Load TUM packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{tumbase}
 \RequirePackage{tumcolors}
@@ -60,14 +56,12 @@
 
 
 % .:: Load required packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{calc}
 \RequirePackage{hyperref}
 
 
 % .:: Package options for tumletter class
-% ----------------------------------------------------------------------------
 
 \newif\if@tum@hidelinks@
 
@@ -93,7 +87,6 @@
 
 
 % .:: Layout
-% ----------------------------------------------------------------------------
 
 % activate the TUM letter pagestyle
 \renewcommand*{\letterpagestyle}{TUM.letterpage}
@@ -231,7 +224,6 @@
 
 
 % .:: Footer content
-% ----------------------------------------------------------------------------
 
 % KOMA variables to store the content of the four footer columns
 \newkomavar{tum.footer.col1}
@@ -350,7 +342,6 @@
 
 
 % .:: Captions for Enclosures and bank information
-% ----------------------------------------------------------------------------
 
 \provideName{\enclname}{encl.}{Anlage}
 \provideName{\taxidname}{Tax~ID}{Steuer-Nr.}
@@ -358,7 +349,6 @@
 
 
 % .:: Set default values of KOMA Variables according to tumuser.sty
-% ----------------------------------------------------------------------------
 
 % author contact information
 \setkomavar{fromname}{%
@@ -383,7 +373,6 @@
 
 
 % .:: Set default PDF metadata
-% ----------------------------------------------------------------------------
 
 \provideName{\@tum@letterto@}{Letter to}{Brief an}
 

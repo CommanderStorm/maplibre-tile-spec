@@ -34,15 +34,15 @@
 \ExplSyntaxOff
 
 % Noise-table percentage cell
-\newcommand{\fmtnoisepct}[1]{\ifblank{#1}{---}{#1\,\%}}
+\newcommand{\fmtnoisepct}[1]{\ifblank{#1}{-}{#1\,\%}}
 
 % Axis name in monospace (handles underscores via \detokenize)
 \NewDocumentCommand{\fmtaxis}{m}{\texttt{\detokenize{#1}}}
 
 % Optional value or dash
-\newcommand{\fmtopt}[1]{\ifblank{#1}{---}{#1}}
+\newcommand{\fmtopt}[1]{\ifblank{#1}{-}{#1}}
 
-% --- Per-style ablation table macro ---
+% - Per-style ablation table macro -
 % #1 = style_id (for filename), #2 = display name
 \NewDocumentCommand{\perstyleablation}{mm}{%
   \subsection{Style: #2}%

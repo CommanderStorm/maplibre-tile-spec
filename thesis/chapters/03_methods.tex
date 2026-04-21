@@ -200,7 +200,7 @@ The following sections present the passes in each category; many are analogous t
 
 Every pass must satisfy the visual-equivalence constraint of \cref{sec_problem_statement}: the optimised output $(S', T')$ must produce pixel-identical rendering for every viewing state.
 For expression-level passes, this is witnessed by the termination measure $\mu(S)$ (\cref{eq:termination_measure}): each rewrite strictly reduces $\mu$ while preserving expression semantics.
-For structural passes, soundness is argued per-pass in the paragraphs below --- dead elimination preserves equivalence because it only removes layers that produce no visible output; metadata refinement preserves equivalence because it only tightens bounds that the renderer would enforce anyway (with the overzoom asymmetry detailed below); layer merging preserves equivalence via the three invariants of \cref{sub_structural_optimisations}.
+For structural passes, soundness is argued per-pass in the paragraphs below - dead elimination preserves equivalence because it only removes layers that produce no visible output; metadata refinement preserves equivalence because it only tightens bounds that the renderer would enforce anyway (with the overzoom asymmetry detailed below); layer merging preserves equivalence via the three invariants of \cref{sub_structural_optimisations}.
 For data-level passes, the pruning advisory removes only data that no live style layer references, so the rendering function $R$ receives the same effective input.
 
 \subsection{Expression-Level Optimisations}\label{sub_expression_optimisations}
@@ -712,17 +712,17 @@ The pipeline operates in three stages that mirror the structure of a database qu
 \begin{enumerate}
     \item \textbf{Style-driven tile shaving} (\cref{sub_tile_shaving}): the optimised style is analysed to produce a \emph{tile pruning advisory} that specifies, per source-layer and zoom level, which properties, geometry types, and property values to retain.
     Tiles are pruned according to this advisory before encoding.
-    \item \textbf{Data transformations} (\cref{sub_data_transforms}): remaining data is transformed to improve compressibility --- categorical string properties are replaced by frequency-ordered integers (\emph{string interning}), and features are reordered to exploit spatial or categorical locality.
+    \item \textbf{Data transformations} (\cref{sub_data_transforms}): remaining data is transformed to improve compressibility - categorical string properties are replaced by frequency-ordered integers (\emph{string interning}), and features are reordered to exploit spatial or categorical locality.
     \item \textbf{Encoding strategy selection} (\cref{sub_encoding_strategies}): the pruned, transformed data is re-encoded into \ac{MLT} using a multi-strategy competition that automatically profiles each data stream and selects the most compact encoding.
 \end{enumerate}
 
 \noindent Stage~1 is the key \emph{style-data bridge}: the optimised style from the expression-level and structural phases determines what data survives, and the cascade from dead layer elimination through advisory shrinkage into smaller tiles is the concrete mechanism by which style-level and data-level optimisations compose.
-Stages~2 and~3 adapt to the statistical properties of the surviving data --- properties that change after shaving removes columns and features, altering value distributions and cardinalities.
-The profiler-driven candidate pruning in Stage~3 responds to these changes automatically: its viability tests --- \texttt{rle\_is\_viable} (average run length $\geq 2.0$), \texttt{delta\_is\_beneficial} (delta bit-width sum less than raw), \texttt{delta\_rle\_is\_viable} (delta-stream run length $\geq 2.0$) --- operate on the actual stream statistics, so a column whose distinct-value count drops after shaving naturally presents longer runs and triggers more compact encoding candidates.
+Stages~2 and~3 adapt to the statistical properties of the surviving data - properties that change after shaving removes columns and features, altering value distributions and cardinalities.
+The profiler-driven candidate pruning in Stage~3 responds to these changes automatically: its viability tests - \texttt{rle\_is\_viable} (average run length $\geq 2.0$), \texttt{delta\_is\_beneficial} (delta bit-width sum less than raw), \texttt{delta\_rle\_is\_viable} (delta-stream run length $\geq 2.0$) - operate on the actual stream statistics, so a column whose distinct-value count drops after shaving naturally presents longer runs and triggers more compact encoding candidates.
 
 \subsubsection{Style-Driven Tile Shaving}\label{sub_tile_shaving}
 
-The bridge between style-level and data-level optimisations is the \emph{tile pruning advisory} --- a structured report that captures, for each source-layer and zoom level, exactly what the rendering style needs.
+The bridge between style-level and data-level optimisations is the \emph{tile pruning advisory} - a structured report that captures, for each source-layer and zoom level, exactly what the rendering style needs.
 The advisory is computed from the \emph{optimised} style (after all expression and structural passes) together with tile statistics.
 This ordering is critical: style-level dead layer elimination, metadata refinement, and layer merging reduce the set of live style layers, which in turn reduces the set of referenced properties and geometry types in the advisory.
 The preceding style optimisations thus \emph{cascade} into data-level savings.
@@ -797,7 +797,7 @@ The advisory captures the following per source-layer:
 After pruning, two data transformations improve compressibility before encoding.
 
 \paragraph{String property interning}
-Categorical string properties --- such as road class, land-use type, or administrative level --- are replaced by frequency-ordered integer indices.
+Categorical string properties - such as road class, land-use type, or administrative level - are replaced by frequency-ordered integer indices.
 The interning table is derived from the tile statistics: all distinct values of a string property are sorted by descending frequency, and each value is assigned a sequential integer starting from~0.
 The most common value receives index~0, the second most common receives~1, and so on.
 
@@ -811,7 +811,7 @@ This rewriting ensures that the optimised style remains consistent with the tran
 
 \paragraph{Feature reordering}
 The order of features within a tile layer affects the compressibility of every parallel column.
-The encoder explores multiple feature orderings --- spatial (Hilbert/Morton curve of first vertex), ID-based, and property-based (grouping by a low-cardinality attribute) --- and retains the ordering that produces the smallest encoded output.
+The encoder explores multiple feature orderings - spatial (Hilbert/Morton curve of first vertex), ID-based, and property-based (grouping by a low-cardinality attribute) - and retains the ordering that produces the smallest encoded output.
 This is described in detail in \cref{sub_encoding_strategies}.
 
 \subsubsection{Automatic Encoding Strategy Selection}\label{sub_encoding_strategies}
@@ -823,7 +823,7 @@ The final wire format consists of three concatenated sections per layer: a heade
 The Rust-based encoder reformulates the encoding problem as a \emph{multi-strategy competition} inspired by profile-guided optimisations in compilers: rather than committing to a single encoding plan, the encoder tries multiple strategies, measures the output size of each, and selects the smallest result.
 This competition operates at two nested levels: an \emph{outer loop} that trials multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
 The inner competition criterion is deliberately \emph{single-objective}: the winning candidate is the one with the smallest encoded \texttt{total\_len()}.
-Multi-axis trade-offs --- between transfer size, decoding latency, rendering throughput, and preprocessing cost --- are not resolved inside the encoder; they are deliberately deferred to the outer ablation layer, where deployment-specific weightings are applied in the post-hoc Pareto analysis of \cref{sec_exp_pareto}.
+Multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - are not resolved inside the encoder; they are deliberately deferred to the outer ablation layer, where deployment-specific weightings are applied in the post-hoc Pareto analysis of \cref{sec_exp_pareto}.
 
 The inner competition uses an \emph{alternatives} mechanism implemented as an RAII guard pattern: each candidate encoding writes its output into the encoder's buffers, and the guard commits only the smallest candidate.
 This avoids copying: the winning candidate's bytes are already positioned correctly in the output buffers, and losing candidates are simply rolled back by resetting buffer positions.
@@ -908,7 +908,7 @@ The mechanism supports nesting (inner competitions resolve before the enclosing 
 \end{figure}
 
 \paragraph{Outer loop: sort-strategy competition}
-Reordering features within a layer permutes every parallel column --- geometry, IDs, and all properties --- simultaneously.
+Reordering features within a layer permutes every parallel column - geometry, IDs, and all properties - simultaneously.
 Different orderings favour different encoding schemes: spatial orderings cluster nearby geometries and their correlated properties, improving \ac{RLE} run lengths; ID ordering produces sequential integer sequences amenable to delta-\acs{RLE}.
 Which ordering wins depends on the value distributions and cardinalities of the specific layer: a layer dominated by a single repeated property value may benefit most from spatial clustering, while a layer with sequential IDs and high-cardinality properties may favour ID ordering.
 Because this balance shifts across layers, zoom levels, and tilesets, no single ordering dominates universally, and the choice cannot be resolved statically.
@@ -1004,7 +1004,7 @@ The thresholds were experimentally derived from Germany-wide OpenMapTiles.
 \paragraph{Inner loop: per-stream encoding competition}\label{sub_stream_competition}
 Within each sort-strategy trial, every integer data stream is subject to an independent encoding competition.
 Each candidate pairs a \emph{logical} encoding (Plain, Delta, \ac{RLE}, or DeltaRle) with a \emph{physical} encoding (\ac{VarInt} or \ac{FastPFOR}~\cite{fastpfor}).
-The na\"ive approach --- encoding every combination and comparing --- would be prohibitively expensive for large tiles.
+The na\"ive approach - encoding every combination and comparing - would be prohibitively expensive for large tiles.
 Instead, a \emph{data profiler} samples a contiguous block taken from the middle of the stream: streams with at most $512$ values are profiled in full, and longer streams are profiled over $\lfloor |s| / 100 \rfloor$ values clamped to $[512,\, 16384]$.
 The contiguous mid-stream window is chosen over a random sample because \ac{RLE} run lengths and delta-bit-width statistics are destroyed by permutation, and because the middle of a spatially or ID-sorted stream is a representative point away from the boundary artefacts at the ends.
 The profiler computes four metrics in a single pass:
@@ -1104,7 +1104,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
                 \quad{\scriptsize trigrams detected cross-language overlap}\\[4pt]
                 \fbox{\strut\texttt{class}, \texttt{subclass}}\\[1pt]
                 \quad{\scriptsize exact values detected semantic overlap}\\[4pt]
-                \texttt{maxspeed} --- singleton, individual dictionary\\[1pt]
+                \texttt{maxspeed} - singleton, individual dictionary\\[1pt]
                 \quad{\scriptsize no overlap with any string column}%
             };
             \node[steplabel, above=1pt of res] {\circled{4} Union-Find clustering};
@@ -1158,7 +1158,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
 \paragraph{Geometry and ID encoding}
 Geometry vertices are encoded as either \emph{componentwise deltas} (CWD) or \emph{Morton-code dictionaries}.
 CWD encodes each vertex as the delta from the previous vertex, producing a single interleaved stream $[x_0, y_0, \Delta x_1, \Delta y_1, \ldots]$ that is then compressed via the per-stream integer competition.
-The Morton-code dictionary approach computes a Z-order code for each unique vertex pair, stores the deduplicated codes as a sorted dictionary, and references them via per-vertex offset indices --- producing two streams (offsets and dictionary deltas) instead of one.
+The Morton-code dictionary approach computes a Z-order code for each unique vertex pair, stores the deduplicated codes as a sorted dictionary, and references them via per-vertex offset indices - producing two streams (offsets and dictionary deltas) instead of one.
 The encoder tries both strategies (when the coordinate range permits Morton encoding, i.e., both axes fit within 16~bits after shifting) and retains the smaller result.
 Feature IDs are encoded through the same per-stream integer competition as other integer columns, using an explicit \texttt{IdWidth} tag (\texttt{Id32} or \texttt{Id64}) to select the physical word width.
 The \ac{FastPFOR} codec operates on 32-bit blocks by construction, so only 32-bit ID streams and property columns reach it; 64-bit streams fall back to \ac{VarInt} (the \ac{VarInt} candidate list covers both widths).

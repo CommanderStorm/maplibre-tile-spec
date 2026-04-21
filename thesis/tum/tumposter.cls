@@ -13,7 +13,6 @@
 % and all files in that bundle must be distributed together.
 %
 %
-% ----------------------------------------------------------------------------
 %
 % The development version of the bundle can be found at
 %
@@ -21,7 +20,6 @@
 %
 % for those people who are interested.
 %
-% ----------------------------------------------------------------------------
 %
 % Version history:
 % v2.0 2021/04/19 Initial version.
@@ -31,7 +29,6 @@
 
 
 % .:: Load base class
-% ----------------------------------------------------------------------------
 
 % print debug info to logfile
 \typeout{Global options before any option parsing.}
@@ -53,7 +50,6 @@
 
 
 % .:: Load TUM packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{tumbase}
 \RequirePackage{tumcolors}
@@ -76,7 +72,6 @@
 
 
 % .:: Font sizes
-% ----------------------------------------------------------------------------
 
 \setkomafont{title}{\usekomafont{TUM.H1}}
 \setkomafont{subtitle}{\usekomafont{TUM.H2}}
@@ -97,7 +92,6 @@
 
 
 % .:: Poster title
-% ----------------------------------------------------------------------------
 
 % provide a boolean switch to print or omit affiliation lines in title
 \newbool{@tum@poster@printaffil@}
@@ -122,7 +116,6 @@
 
 
 % .:: Poster layout
-% ----------------------------------------------------------------------------
 
 % posters always use the titlepage pagestyle
 \pagestyle{TUM.titlepage}
@@ -143,7 +136,6 @@
 
 
 % .:: Sanity checks for column number and base font size
-% ----------------------------------------------------------------------------
 
 % maximum columns according to the TUM CD PowerPoint templates
 \ifbool{@tum@landscape@}{
@@ -185,7 +177,6 @@
 
 
 % .:: Macro and keys to configure poster style
-% ----------------------------------------------------------------------------
 
 % tex length to store the vertical and horizontal space between poster boxes
 \newlength{\TUMposterboxsep}
@@ -275,7 +266,6 @@
 
 
 % .:: Use [H] as default float placement to work properly inside boxes
-% ----------------------------------------------------------------------------
 
 \RequirePackage{float}
 \floatplacement{figure}{H}
@@ -283,7 +273,6 @@
 
 
 % .:: Set default PDF metadata
-% ----------------------------------------------------------------------------
 
 \AtBeginDocument{
   \def\@tum@pdftitle@{\@title\ifdefempty{\@subtitle}{}{~-~\@subtitle}}

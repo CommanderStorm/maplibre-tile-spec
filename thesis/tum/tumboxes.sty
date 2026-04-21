@@ -12,7 +12,6 @@
 % and all files in that bundle must be distributed together.
 %
 %
-% ----------------------------------------------------------------------------
 %
 % The development version of the bundle can be found at
 %
@@ -20,7 +19,6 @@
 %
 % for those people who are interested.
 %
-% ----------------------------------------------------------------------------
 %
 % Version history:
 % v1.0 2020/10/01 Initial version.
@@ -31,7 +29,6 @@
 
 
 % .:: Required packages
-% ----------------------------------------------------------------------------
 
 \RequirePackage{pgfkeys}
 \RequirePackage{pgfopts}
@@ -40,7 +37,6 @@
 
 
 % .:: Package options
-% ----------------------------------------------------------------------------
 
 \newlength{\@tum@rulewidth@}
 
@@ -62,7 +58,6 @@
 
 
 % .:: TUM Box styles
-% ----------------------------------------------------------------------------
 
 \pgfqkeys{/tcb}{
   TUMBox/.style = {
@@ -179,7 +174,6 @@
 
 
 % .:: TUM Box macros
-% ----------------------------------------------------------------------------
 
 \newtcolorbox{TUMBox}[2][TUMBlue]{
   TUMBox = #1, title = #2
@@ -199,7 +193,6 @@
 
 
 % .:: Highlight Box
-% ----------------------------------------------------------------------------
 
 \newcommand{\@tum@hlsize@}{.09\dimexpr\f@size pt\relax}
 
@@ -214,7 +207,6 @@
 
 
 % .:: Redefine beamer blocks to use TUMBox
-% ----------------------------------------------------------------------------
 
 %\begin{noindent}
 \@ifclassloaded{beamer}{

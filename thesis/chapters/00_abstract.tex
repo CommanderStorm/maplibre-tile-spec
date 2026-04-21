@@ -3,7 +3,7 @@ Interactive web maps built on vector tiles face a complex performance landscape:
 Despite this, style authoring and tile data preparation have traditionally been treated as independent concerns, leaving the interaction between the two unexploited.
 
 This work designs and implements a standalone optimiser that operates in two phases.
-Expression-level passes apply 47 rewrite rules---constant folding, algebraic simplification, stats-driven folding from tile statistics, and selectivity-based predicate reordering---all applied to the style's JSON expressions via fixpoint iteration.
+Expression-level passes apply 47 rewrite rules - constant folding, algebraic simplification, stats-driven folding from tile statistics, and selectivity-based predicate reordering - all applied to the style's JSON expressions via fixpoint iteration.
 Structural passes then transform typed representations of the style document, performing dead layer elimination, metadata refinement, layer merging, and cleanup.
 Beyond the style, the optimiser bridges into data-level optimisations through style-driven tile shaving, which computes a pruning advisory from the optimised style to remove unused properties, geometry types, and feature values from tile data before re-encoding into the columnar MapLibre Tiles format with automatic encoding strategy selection.
 

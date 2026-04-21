@@ -33,9 +33,7 @@ from statistics import median
 import numpy as np
 from scipy import stats
 
-# ---------------------------------------------------------------------------
 # Paths
-# ---------------------------------------------------------------------------
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 THESIS_DIR = SCRIPT_DIR.parent
@@ -43,9 +41,7 @@ ROOT = THESIS_DIR.parent
 INPUT_DIR = ROOT.parent / "maplibre-optimizer" / "tests" / "bench" / "results"
 OUTPUT_DIR = SCRIPT_DIR / "data"
 
-# ---------------------------------------------------------------------------
 # Constants
-# ---------------------------------------------------------------------------
 
 EXCLUDED_STYLES = {"americana"}
 
@@ -130,9 +126,7 @@ KEY_CLAIMS = [
 ]
 
 
-# ---------------------------------------------------------------------------
 # Data loading (same logic as generate_tables.py)
-# ---------------------------------------------------------------------------
 
 
 def load_jsonl(input_dir: Path) -> list[dict]:
@@ -183,9 +177,7 @@ def parse_variant(variant: str) -> tuple[int, str]:
     return 0, "baseline"
 
 
-# ---------------------------------------------------------------------------
 # Bootstrap CI computation
-# ---------------------------------------------------------------------------
 
 
 def bootstrap_ci(
@@ -245,9 +237,7 @@ def wilcoxon_test(baseline: np.ndarray, treatment: np.ndarray) -> float | None:
         return None
 
 
-# ---------------------------------------------------------------------------
 # Main analysis
-# ---------------------------------------------------------------------------
 
 
 def collect_values(
@@ -373,9 +363,7 @@ def main() -> int:
         w.writerows(rows)
     print(f"\nCSV written to {csv_path}")
 
-    # ---------------------------------------------------------------------------
     # Summary diagnostics: statistical significance of key claims
-    # ---------------------------------------------------------------------------
 
     print("\n" + "=" * 72)
     print("STATISTICAL SIGNIFICANCE DIAGNOSTICS")

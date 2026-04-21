@@ -12,7 +12,6 @@
 % and all files in that bundle must be distributed together.
 %
 %
-% ----------------------------------------------------------------------------
 %
 % The development version of the bundle can be found at
 %
@@ -20,7 +19,6 @@
 %
 % for those people who are interested.
 %
-% ----------------------------------------------------------------------------
 %
 % Version history:
 % v1.0 2020/10/01 Initial version.
@@ -33,7 +31,6 @@
 
 
 % .:: Required packages
-% ----------------------------------------------------------------------------
 
 % suppress small foot height warning
 \RequirePackage{silence}
@@ -48,7 +45,6 @@
 
 
 % .:: Package options for paper size and orientation
-% ----------------------------------------------------------------------------
 
 % length to store tum logo height
 \newlength{\@tum@logoheight@}
@@ -171,7 +167,6 @@
 
 
 % .:: Package options for page layout
-% ----------------------------------------------------------------------------
 
 % keys and macros to store layout settings
 \pgfqkeys{/TUM/page}{
@@ -254,7 +249,6 @@
 
 
 % .:: Definition of helper macros for headlines and footlines
-% ----------------------------------------------------------------------------
 
 % macro to configure color of TUM headline
 \newcommand{\@tum@headline@color@}{TUMBlue}
@@ -297,7 +291,6 @@
 
 
 % .:: KOMA script layers for TUM Corporate design headers
-% ----------------------------------------------------------------------------
 
 \DeclareNewLayer[everypage, oneside, background, head,
   addwidth = \@tum@marginpar@ + \@tum@marginparsep@,
@@ -346,7 +339,6 @@
 
 
 % .:: KOMA script layers for TUM Corporate design footers
-% ----------------------------------------------------------------------------
 
 \DeclareNewLayer[everypage, oneside, background, foot,
   addwidth = \@tum@marginpar@ + \@tum@marginparsep@,
@@ -387,7 +379,6 @@
 
 
 % .:: KOMA script layers for background colors
-% ----------------------------------------------------------------------------
 
 \DeclareNewLayer[everypage, background,
   width=\paperwidth, height=\paperheight,
@@ -415,7 +406,6 @@
 
 
 % .:: Definition of pagestyles using KOMA script layers
-% ----------------------------------------------------------------------------
 
 % title pagestyles (only header, no page numbers)
 \DeclareNewPageStyleByLayers[
@@ -483,7 +473,6 @@
 
 
 % .:: Keys to manipulate pagestyles
-% ----------------------------------------------------------------------------
 
 % keys to add and remove headline layers to and from pagestyles
 \pgfqkeys{/TUM/page}{
@@ -532,7 +521,6 @@
 
 
 % .:: Process package options
-% ----------------------------------------------------------------------------
 
 % set default options
 \pgfqkeys{/TUM/page}{
@@ -552,7 +540,6 @@
 
 
 % .:: Default configuration for KOMA-Script classes
-% ----------------------------------------------------------------------------
 
 % configure the base font size if a KOMA-Script class was loaded
 \ifdef{\KOMAClassName}{\KOMAoptions{fontsize=\the\@tum@fontsize@base@}}{}
