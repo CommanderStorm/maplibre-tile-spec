@@ -756,13 +756,13 @@ The advisory captures the following per source-layer:
         steps/.style={rectangle, draw, dashed, rounded corners=2pt, font=\small,
                       align=left, inner sep=6pt, text=black!80},
     ]
-        % ── Row 1: style-side and data-side inputs ──
+        % Row 1: style-side and data-side inputs
         \node[style] (sopt) {Style optimisations\\{\scriptsize (\cref{sub_expression_optimisations,sub_structural_optimisations})}};
-        \node[data, right=1cm of sopt] (stats) {Tile statistics};
 
         % Row 2: advisory
-        \node[both, right=1cm of stats] (adv) {Tile pruning advisory};
+        \node[both, right=1cm of sopt] (adv) {Tile pruning advisory};
         \draw[arrow] (sopt) -- node[left, lbl] {optimised style} (adv);
+        \node[data, right=1cm of adv(stats) {Tile statistics};
         \draw[arrow] (stats) -- node[right, lbl] {property/geometry stats} (adv);
 
         % Row 3: MVT → prune → MLT
