@@ -1003,7 +1003,7 @@ The thresholds were experimentally derived from Germany-wide OpenMapTiles.
 
 \paragraph{Inner loop: per-stream encoding competition}\label{sub_stream_competition}
 Within each sort-strategy trial, every integer data stream is subject to an independent encoding competition.
-Each candidate pairs a \emph{logical} encoding (Plain, Delta, \ac{RLE}, or DeltaRle) with a \emph{physical} encoding (\ac{VarInt} or \ac{FastPFOR}~\cite{fastpfor}).
+Each candidate pairs a \emph{logical} encoding (Plain, Delta, \ac{RLE}, or DeltaRle) with a \emph{physical} encoding (\ac{VarInt} or \ac{FastPFOR}~\cite{lemireDecodingBillionsIntegers2015}).
 The na\"ive approach - encoding every combination and comparing - would be prohibitively expensive for large tiles.
 Instead, a \emph{data profiler} samples a contiguous block taken from the middle of the stream: streams with at most $512$ values are profiled in full, and longer streams are profiled over $\lfloor |s| / 100 \rfloor$ values clamped to $[512,\, 16384]$.
 The contiguous mid-stream window is chosen over a random sample because \ac{RLE} run lengths and delta-bit-width statistics are destroyed by permutation, and because the middle of a spatially or ID-sorted stream is a representative point away from the boundary artefacts at the ends.
@@ -1031,7 +1031,7 @@ String columns are competed across four strategies, reflecting the two orthogona
     The length stream is itself subject to the integer encoding competition.
     \item \textbf{Dictionary}: a deduplicated corpus with per-string offset indices.
     Effective when many features share the same string value (e.g., road names that repeat across tiles).
-    \item \textbf{\ac{FSST}}~\cite{boncz2020fsst}: a lightweight, random-access string compressor that learns a symbol table of up to~255 frequent byte sequences and replaces occurrences with single-byte codes.
+    \item \textbf{\ac{FSST}}~\cite{bonczFSSTFastRandom2020}: a lightweight, random-access string compressor that learns a symbol table of up to~255 frequent byte sequences and replaces occurrences with single-byte codes.
     The symbol table is stored once per column; the compressed corpus remains directly scannable without decompression.
     \item \textbf{\ac{FSST} + Dictionary}: \ac{FSST} applied to a deduplicated dictionary, combining both deduplication and byte-level compression.
 \end{enumerate}
@@ -1045,7 +1045,7 @@ The \ac{MLT} format supports shared dictionaries where multiple string columns r
 The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \texttt{name:en}, \texttt{name:de}), which misses semantic overlaps (e.g., \texttt{class} and \texttt{subclass} in OpenMapTiles share many values).
 
 \begin{sloppypar}
-    The Rust encoder replaces prefix matching with -based similarity clustering~\cite{broder1997resemblance}.
+    The Rust encoder replaces prefix matching with -based similarity clustering~\cite{broderResemblanceContainmentDocuments1998}.
     For each string column, two MinHash sketches of \texttt{MINHASH\_PERMUTATIONS = 128} permutations are computed: one over exact string values and one over byte trigrams (3-byte sliding windows).
     The choice of 128 permutations corresponds to an expected standard error of approximately $1/\sqrt{128} \approx 8.8\%$ on the Jaccard estimate, which is adequate for the binary accept/reject decision of the clustering step.
     The trigram sketch captures partial overlap between columns whose values are substrings or morphological variants of each other.

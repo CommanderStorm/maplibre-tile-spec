@@ -16,7 +16,7 @@ Mapbox developed \texttt{vtshaver}~\cite{mapboxVtshaverTileShaving2018}, a C++/N
 This reduces tile size and decoding cost, but \texttt{vtshaver} operates exclusively on the data side:
 it does not modify the style itself and therefore cannot simplify filter expressions, merge redundant layers, or reduce per-frame rendering overhead.
 
-Mapbox also offers \emph{style-optimized vector tiles} as a proprietary server-side feature~\cite{mapboxStyleOptimizedTiles}: when a tile request includes style metadata, the server analyses the style's sources, filters, and zoom ranges, then strips all data not visible for that style.
+Mapbox also offers \emph{style-optimized vector tiles} as a proprietary server-side feature~\cite{StyleoptimizedVectorTiles}: when a tile request includes style metadata, the server analyses the style's sources, filters, and zoom ranges, then strips all data not visible for that style.
 This is the closest commercial precedent for style-data co-optimisations, but it is opaque, closed-source, and API-only - it cannot be extended, audited, or deployed independently.
 The exact set of optimisations is not disclosed and given that MapBox does not have a open research stance (their terms of service explicitly forbid this), reverse-engineering would likely be illegal\footnote{\url{https://media.ccc.de/v/36c3-11089-reflections_on_the_new_reverse_engineering_law}}.
 
@@ -24,38 +24,38 @@ Vilardaga built \texttt{vt-optimizer}~\cite{vilardagaVtoptimizerVectorTile2023},
 The tool also provides an inspection mode that checks conformance to Mapbox's recommended tile size limits (\qty{50}{\kilo\byte} average, \qty{500}{\kilo\byte} maximum).
 However, the optimisations are limited to visibility-based pruning; the tool does not perform expression-level rewrites, cross-layer merging, or data-driven constant folding.
 
-Tippecanoe~\cite{tippecanoe} is the standard open-source tool for building vector tilesets from large GeoJSON or FlatGeobuf collections.
+Tippecanoe~\cite{FeltTippecanoe2026} is the standard open-source tool for building vector tilesets from large GeoJSON or FlatGeobuf collections.
 It implements several data-level optimisations heuristics: feature dropping based on density budgets (\texttt{--drop-densest-as-needed}), polygon coalescing at low zoom levels, Visvalingam line simplification, and attribute exclusion.
 These heuristics are effective but purely data-driven: Tippecanoe has no knowledge of which style will render the tiles and therefore cannot tailor its decisions to the rendering workload.
 
 At a higher level of abstraction, tile schemas themselves embody data-level design decisions.
 The OpenMapTiles schema~\cite{VectorTilesAre2025} defines which attributes are included at which zoom levels for OpenStreetMap data.
 Wallner et al.~\cite{wallnerOpenSourceVector2022} describe a PostGIS-based pipeline for dynamic vector tile creation with runtime geometry simplification and MVT encoding for spatial data infrastructures.
-Tile generators such as Planetiler~\cite{planetiler} and Tilemaker~\cite{tilemaker} apply schema-aware rules during the initial tile build step, and Protomaps basemap~\cite{protomaps} ships a style-specific schema in which column selection is effectively hard-coded into the tile generator.
+Tile generators such as Planetiler~\cite{OnthegomapPlanetiler2026} and Tilemaker~\cite{TilemakerDIYVector} apply schema-aware rules during the initial tile build step, and Protomaps basemap~\cite{brandonProtomaps} ships a style-specific schema in which column selection is effectively hard-coded into the tile generator.
 These systems define the data that enters the pipeline; the optimisations in this thesis operate downstream, on the data and style that emerge from such pipelines, and do not require re-running the generator.
 
 A complementary framing connects tile shaving directly to relational query processing.
-The transformations developed in \cref{ch_methods} that compute a tile pruning advisory from the style and apply it to the tile data are a form of \emph{projection pushdown}~\cite{graefe1993query}: the rendering style is the \enquote{query} (specifying which columns, geometry types, and property values it reads), the tile set is the \enquote{base relation}, and the advisory is the pushdown plan that moves the projection and predicate evaluation upstream of the wire format.
-Columnar analytical systems built on Parquet~\cite{vohra2016apache} or ORC rely on precisely this pushdown to avoid reading unreferenced columns, and modern query engines extend the pushdown with predicate filters~\cite{abadiDesignImplementationModern2013}.
+The transformations developed in \cref{ch_methods} that compute a tile pruning advisory from the style and apply it to the tile data are a form of \emph{projection pushdown}~\cite{graefeQueryEvaluationTechniques1993}: the rendering style is the \enquote{query} (specifying which columns, geometry types, and property values it reads), the tile set is the \enquote{base relation}, and the advisory is the pushdown plan that moves the projection and predicate evaluation upstream of the wire format.
+Columnar analytical systems built on Parquet~\cite{vohraPracticalHadoopEcosystem2016} or ORC rely on precisely this pushdown to avoid reading unreferenced columns, and modern query engines extend the pushdown with predicate filters~\cite{abadiDesignImplementationModern2013}.
 The thesis's contribution is to lift this DB-internal optimisations across the network boundary between the tile server and the MapLibre renderer, treating the declarative style as a readable query plan.
 This framing does not appear in prior map-rendering work - neither \texttt{vtshaver} nor \texttt{vt-optimizer} positions its pruning as query-engine pushdown, and neither tool composes with style-level rewrites to enlarge the pushdown.
 
 \section{Tile Encoding and Format Innovation}\label{sec_rw_tile_encoding}
 
-The dominant wire format for vector tiles is the Mapbox Vector Tile (MVT) specification~\cite{MapboxVectorTileSpec}, which uses Protocol Buffers~\cite{ProtocolBuffers} to encode features in a row-oriented layout.
+The dominant wire format for vector tiles is the Mapbox Vector Tile (MVT) specification~\cite{Vectortilespec21Master}, which uses Protocol Buffers~\cite{ProtocolBuffers} to encode features in a row-oriented layout.
 MVT's row orientation means that accessing a single property column requires scanning the entire feature table, and its protobuf encoding does not exploit the statistical properties of individual columns.
 
 Tremmel and Zink~\cite{tremmelMapLibreTileNext2025} introduced the MapLibre Tile (MLT) format, a columnar alternative that achieves 2--6$\times$ tile size reduction over MVT.
-MLT uses column-oriented storage with lightweight compression - delta encoding, run-length encoding, dictionary encoding, and \ac{FSST}~\cite{boncz2020fsst} - and is designed for GPU-accelerated processing.
+MLT uses column-oriented storage with lightweight compression - delta encoding, run-length encoding, dictionary encoding, and \ac{FSST}~\cite{bonczFSSTFastRandom2020} - and is designed for GPU-accelerated processing.
 However, their work does not consider styles: the encoding strategy is chosen without knowledge of which properties the renderer will actually access, leaving potential for further size reduction through style-aware pruning before encoding.
 
 The encoding techniques used in MLT draw on a rich literature in columnar database compression.
-Lemire and Boytsov~\cite{fastpfor} introduced \ac{SIMD}-vectorised integer compression (\ac{FastPFOR}) achieving billions of integers per second in decompression throughput.
-Boncz et al.~\cite{boncz2020fsst} developed \ac{FSST}, a lightweight string compression scheme using a static symbol table that supports random access without decompressing surrounding data.
+Lemire and Boytsov~\cite{lemireDecodingBillionsIntegers2015} introduced \ac{SIMD}-vectorised integer compression (\ac{FastPFOR}) achieving billions of integers per second in decompression throughput.
+Boncz et al.~\cite{bonczFSSTFastRandom2020} developed \ac{FSST}, a lightweight string compression scheme using a static symbol table that supports random access without decompressing surrounding data.
 Kuschewski et al.~\cite{kuschewskiBtrBlocksEfficientColumnar2023} demonstrated with BtrBlocks that cascading multiple encoding schemes (including \ac{FSST}, bit-packing, \ac{RLE}, and dictionary encoding) with automatic per-block strategy selection achieves 2.2$\times$ faster scans than Parquet.
 The general finding that no single encoding is universally optimal - and that data-driven strategy selection is necessary - motivates the multi-strategy encoding competition developed in this thesis.
 
-Gaffuri~\cite{gaffuriTowardWebMapping2012} presented one of the earliest academic treatments of vector tile architecture for web maps, proposing a framework integrating tiling, spatial indexing, and generalisation for multi-scale data.
+Gaffuri~\cite{gaffuriWebMappingVector2012} presented one of the earliest academic treatments of vector tile architecture for web maps, proposing a framework integrating tiling, spatial indexing, and generalisation for multi-scale data.
 
 \section{Style Optimisation}\label{sec_rw_style_optimisations}
 
@@ -110,8 +110,8 @@ Tool / Work & Style & Data & Encoding & Co-opt. & Eval. \\
 \midrule
 \texttt{vtshaver}~\cite{mapboxVtshaverTileShaving2018}                 & --     & \checkmark & --         & --         & --         \\
 \texttt{vt-optimizer}~\cite{vilardagaVtoptimizerVectorTile2023}        & partial & \checkmark & --         & --         & --         \\
-Mapbox style-opt.\ tiles~\cite{mapboxStyleOptimizedTiles}              & --     & \checkmark & --         & partial    & --         \\
-Tippecanoe~\cite{tippecanoe}                                           & --     & \checkmark & --         & --         & --         \\
+Mapbox style-opt.\ tiles~\cite{StyleoptimizedVectorTiles}              & --     & \checkmark & --         & partial    & --         \\
+Tippecanoe~\cite{FeltTippecanoe2026}                                           & --     & \checkmark & --         & --         & --         \\
 Tremmel \& Zink~\cite{tremmelMapLibreTileNext2025}                     & --     & --         & \checkmark & --         & \checkmark \\
 \texttt{remove-defaults} (Stamen)                                      & partial & --        & --         & --         & --         \\
 Hague et al.~\cite{hagueCSSMinificationConstraint2019}                 & \checkmark$^*$ & -- & --         & --         & \checkmark \\

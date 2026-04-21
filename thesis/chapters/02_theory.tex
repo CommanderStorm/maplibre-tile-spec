@@ -25,7 +25,7 @@ OpenLayers~\cite{OpenLayers} uses Canvas~2D as its primary renderer, rasterising
 This avoids the complexity of GPU pipeline management and shader compilation, but rendering throughput is CPU-bound and does not benefit from hardware-accelerated geometry processing.
 Like SVG, Canvas~2D is limited to 2D views without pitch or rotation.
 
-\item \begin{sloppypar}\textbf{Low-level 3D Graphics APIs} like WebGL~\cite{WebGLLowLevel3D2011}, WebGPU~\cite{WebGPU}, OpenGL~\cite{OpenGL4Reference}, Metal~\cite{incMetalOverview}, Vulkan~\cite{HomeVulkanCross}, DirectX~\cite{DirectXSpecs}, etc.\ for rendering 3D graphics as shown by mapbox~\cite{MapboxMapsNavigation}, maplibre~\cite{maplibreMapLibre}, deck.gl~\cite{HomeDeckgl}, here~\cite{HERETechnologiesWorlds} and many more.
+\item \begin{sloppypar}\textbf{Low-level 3D Graphics APIs} like WebGL~\cite{Getwebglorg}, WebGPU~\cite{WebGPU}, OpenGL~\cite{OpenGL4Reference}, Metal~\cite{incMetalOverview}, Vulkan~\cite{HomeVulkanCross}, DirectX~\cite{DirectXSpecs}, etc.\ for rendering 3D graphics as shown by mapbox~\cite{MapboxMapsNavigation}, maplibre~\cite{maplibreMapLibre}, deck.gl~\cite{HomeDeckgl}, here~\cite{HERETechnologiesWorlds} and many more.
 This allows a more complex 3D-based rendering with pitch, yaw, and roll.
 Due to having better hardware access, these APIs can render more complex scenes with better performance.\end{sloppypar}
 \end{itemize}
@@ -87,7 +87,7 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
 There are several approaches to delivering client-side rendered vector maps.
 
 Styles, sprites, and fonts are typically served from a file server or \ac{CDN} and require little processing.
-In some cases, parts of these resources may be generated dynamically - for example, to support complex text shaping for Arabic, Hebrew, Indic, or Japanese scripts as described by Wipfli~\cite{ComplexTextPlugin} for MapLibre or Lengyel~\cite{ADecadeOfSlug} for SLUG.
+In some cases, parts of these resources may be generated dynamically - for example, to support complex text shaping for Arabic, Hebrew, Indic, or Japanese scripts as described by Wipfli~\cite{wipfliComplexTextPlugin2025} for MapLibre or Lengyel~\cite{lengelDecadeSlug} for SLUG.
 This processing currently usually handled ahead of time on the server-side.
 
 Tiles, by contrast, can be stored and accessed using three major approaches:
@@ -210,10 +210,10 @@ The following formats are used for encoding and transferring data to the client:
     \item \textbf{Analysis-focused formats} such as FlatGeoBuf, GeoParquet, and GeoArrow are optimised for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
     They support random access and columnar scans but do not follow the tiled spatial access pattern required by interactive map renderers and are therefore not considered further in this work.
 
-    \item \textbf{GeoJSON}~\cite{rfc7946} is a JSON-based geospatial interchange format.
+    \item \textbf{GeoJSON}~\cite{butlerGeoJSONFormat2016} is a JSON-based geospatial interchange format.
     Its human-readable structure makes it useful for debugging and small overlays, but its verbosity - text-encoded coordinates and repeated property keys per feature - makes it impractical for the continuous tile streaming required by interactive map renderers.
 
-    \item \textbf{\acf{MVT}}~\cite{MapboxVectorTileSpec} is the dominant vector tile format, adopted as a \emph{de~facto} standard across open-source map renderers including MapLibre.
+    \item \textbf{\acf{MVT}}~\cite{Vectortilespec21Master} is the dominant vector tile format, adopted as a \emph{de~facto} standard across open-source map renderers including MapLibre.
     It uses \acp{PBF}~\cite{ProtocolBuffers} as its wire format and stores features in a \emph{row-oriented} layout:
 \begin{itemize}
     \item each feature carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
@@ -245,7 +245,7 @@ Three architectural approaches to map styling have been established:
     \item \begin{sloppypar}\textbf{Client-side declarative} styles, as used by MapLibre~\cite{maplibreMapLibre} and Mapbox~\cite{MapboxMapsNavigation}, transmit a machine-readable style document to the client, which interprets the style at render time.
     This enables dynamic restyling, data-driven visualisation, and interactive features such as hover effects and click queries without regenerating tiles.\end{sloppypar}
 
-    \item \textbf{Callback-based} styling, as proposed by Gleo~\cite{ortegaGleoWebGLMap} or Navara~\cite{navara}, replace declarative rules with imperative callbacks that the application registers with the renderer.
+    \item \textbf{Callback-based} styling, as proposed by Gleo~\cite{ortegaGleoWebGLMap} or Navara~\cite{Navara}, replace declarative rules with imperative callbacks that the application registers with the renderer.
     This offers maximum flexibility but makes static analysis and automatic optimisations impossible, since the styling logic is opaque to the rendering engine.
 \end{itemize}
 
@@ -333,13 +333,13 @@ for (const sourceLayerId in layerFamilies) {
 \section{Compiler Optimisation Techniques}\label{sec_compiler_optimisations}
 
 The style expressions used by map renderers such as MapLibre are, in essence, small programs: they contain conditionals (\texttt{case}, \texttt{match}), boolean operators (\texttt{all}, \texttt{any}), arithmetic, and data access (\texttt{get}, \texttt{has}).
-Optimising these expressions draws directly on techniques developed over decades in compiler construction~\cite{ahoCompilersPrinciplesTechniques2006}.
+Optimising these expressions draws directly on techniques developed over decades in compiler construction~\cite{ahoCompilersPrinciplesTechniques2007}.
 This section introduces the foundational concepts applied in \cref{ch_methods}.
 
 \subsection{Peephole Optimisation}
 
 \begin{sloppypar}
-A \emph{peephole optimiser} examines a small, fixed-size window of code (the \enquote{peephole}) and applies local pattern-matching rewrites that replace instruction sequences with shorter or faster equivalents~\cite{davidsonImprovingInstructionSelection1984}.
+A \emph{peephole optimiser} examines a small, fixed-size window of code (the \enquote{peephole}) and applies local pattern-matching rewrites that replace instruction sequences with shorter or faster equivalents~\cite{davidsonCodeSelectionObject1984}.
 Each rewrite rule is independent: it matches a local pattern and emits a replacement, without requiring knowledge of the surrounding program.
 The simplicity of individual rules is offset by their composition through repeated application - many small, local improvements accumulate into significant global optimisations.
 \end{sloppypar}
@@ -352,7 +352,7 @@ A post-order visitor walks the expression tree and attempts to apply each rule a
 
 \subsection{Constant Folding and Propagation}
 
-\emph{Constant folding} evaluates expressions whose operands are all compile-time constants, replacing the expression with its result~\cite{ahoCompilersPrinciplesTechniques2006}.
+\emph{Constant folding} evaluates expressions whose operands are all compile-time constants, replacing the expression with its result~\cite{ahoCompilersPrinciplesTechniques2007}.
 For example, the expression $3 + 5$ is replaced by $8$.
 In a style context, a comparison such as \texttt{["==",~2,~3]} can be evaluated at optimisations time and replaced by \texttt{false}.
 \emph{Constant propagation} extends this idea by tracking the known values of variables through the program's control flow and substituting them at their use sites.
@@ -362,14 +362,14 @@ A more powerful variant, \acf{SCCP}, combines constant propagation with dead bra
 
 \subsection{Dead Code Elimination}
 
-\acf{DCE} removes program statements whose results are never used or whose control-flow paths are unreachable~\cite{ahoCompilersPrinciplesTechniques2006}.
+\acf{DCE} removes program statements whose results are never used or whose control-flow paths are unreachable~\cite{ahoCompilersPrinciplesTechniques2007}.
 Two common forms are \emph{unreachable code elimination}, which removes code that can never be executed (e.g., code after a guaranteed return, or branches guarded by a statically false condition), and \emph{dead store elimination}, which removes assignments to variables that are never subsequently read.
 
 In the map-style domain, dead code elimination corresponds to removing style layers that can never produce visible output - because their filter is unsatisfiable, their geometry type does not match the data, or their paint properties render them invisible (e.g., zero opacity at all zoom levels).
 
 \subsection{Algebraic Simplification}
 
-\emph{Algebraic simplification} applies mathematical identities to reduce expression complexity without changing semantics~\cite{ahoCompilersPrinciplesTechniques2006}.
+\emph{Algebraic simplification} applies mathematical identities to reduce expression complexity without changing semantics~\cite{ahoCompilersPrinciplesTechniques2007}.
 Common algebraic rules include:
 
 \begin{itemize}
@@ -390,7 +390,7 @@ A single traversal is therefore generally insufficient.
 
 \begin{sloppypar}
 \emph{Fixpoint iteration} addresses this by applying the entire rule set repeatedly until no rule fires - that is, until the expression reaches a \emph{fixpoint} at which no further rewrites apply.
-For a monotone transformation $f$ on a finite domain, the sequence $x,\, f(x),\, f(f(x)),\, \ldots$ is guaranteed to converge~\cite{ahoCompilersPrinciplesTechniques2006}.
+For a monotone transformation $f$ on a finite domain, the sequence $x,\, f(x),\, f(f(x)),\, \ldots$ is guaranteed to converge~\cite{ahoCompilersPrinciplesTechniques2007}.
 In practice, convergence is rapid: most programs stabilise within a small number of iterations, and a conservative upper bound on iterations serves as a safety limit.
 \end{sloppypar}
 
@@ -402,7 +402,7 @@ Techniques from relational query optimisations therefore apply directly.
 
 \subsection{Cost-Based Query Optimisation}
 
-A \emph{cost-based query optimiser} selects among semantically equivalent query execution plans by estimating the cost of each plan and choosing the cheapest~\cite{selinger1979access}.
+A \emph{cost-based query optimiser} selects among semantically equivalent query execution plans by estimating the cost of each plan and choosing the cheapest~\cite{selingerAccessPathSelection1979}.
 The pioneering System~R optimiser introduced this approach for SQL queries, estimating costs based on I/O operations and CPU time.
 
 The key insight is that the \emph{order} in which predicates are evaluated affects performance even when the final result is identical.
@@ -412,7 +412,7 @@ For disjunction ($p_1 \lor p_2 \lor \cdots \lor p_n$), the opposite ordering is 
 \subsection{Selectivity Estimation}
 
 Estimating the expected fraction of records satisfying a predicate is known as \emph{selectivity estimation}.
-Selinger et~al.~\cite{selinger1979access} introduced the foundational formulas for estimating selectivity under the \emph{independence assumption} - the assumption that attribute values in different columns are statistically independent.
+Selinger et~al.~\cite{selingerAccessPathSelection1979} introduced the foundational formulas for estimating selectivity under the \emph{independence assumption} - the assumption that attribute values in different columns are statistically independent.
 
 For a single equality predicate $A = v$ on a column with $d$ distinct values, the estimated selectivity is $s = 1/d$ (uniform distribution assumption).
 When value-frequency histograms are available, the estimate improves to $s = \mathit{freq}(v) / N$, where $N$ is the total number of records.
@@ -422,7 +422,7 @@ Compound predicates are estimated by combining individual selectivities:
     s(p_1 \lor p_2) &= 1 - (1 - s(p_1))(1 - s(p_2))
 \end{align*}
 
-The independence assumption is known to be inaccurate when columns are correlated, but it provides a computationally cheap approximation that is effective in practice~\cite{selinger1979access}.
+The independence assumption is known to be inaccurate when columns are correlated, but it provides a computationally cheap approximation that is effective in practice~\cite{selingerAccessPathSelection1979}.
 More sophisticated estimators - such as multi-dimensional histograms or sampling-based methods - improve accuracy at higher computational cost.
 Map-style filters are in fact known to violate independence: in OpenMapTiles, for example, \texttt{class} and \texttt{subclass} are strongly correlated by schema design (every value of \texttt{subclass} implies a constrained set of \texttt{class} values), as are \texttt{admin\_level} and \texttt{maritime}.
 A joint-distribution estimator would therefore give tighter bounds, but the selectivity signal used in this thesis is consumed only by a \emph{reordering} heuristic - not by a cost-based plan chooser - and reordering is monotone in the ordering of the individual selectivities rather than in their absolute values.
@@ -464,7 +464,7 @@ Several encoding schemes exploit structural properties of integer sequences:
     \item \textbf{\acf{RLE}} replaces consecutive runs of identical values with (value, count) pairs.
     It is most effective for columns with low cardinality and clustered values - for example, a road-class column sorted by class produces long runs of identical values.
 
-    \item \textbf{\acf{FastPFOR}} is a block-based encoding that partitions the input into fixed-size blocks (typically 128 or 256 values), computes the minimum bit width needed to represent most values in each block, and packs them at that width~\cite{fastpfor}.
+    \item \textbf{\acf{FastPFOR}} is a block-based encoding that partitions the input into fixed-size blocks (typically 128 or 256 values), computes the minimum bit width needed to represent most values in each block, and packs them at that width~\cite{lemireDecodingBillionsIntegers2015}.
     Exceptional values that exceed the frame width are stored in a separate patch list.
     This scheme achieves near-optimal bit packing for blocks where most values have similar magnitude, while gracefully handling outliers.
 \end{itemize}
@@ -481,7 +481,7 @@ Two complementary compression strategies address different aspects of string red
     This is effective when many features share the same string value (e.g., thousands of features with \texttt{class = "residential"}).
     The integer indices are themselves amenable to the integer encoding schemes described above.
 
-    \item \textbf{\acf{FSST}}~\cite{boncz2020fsst} is a lightweight, block-oriented string compressor that learns a \emph{symbol table} of up to 255 frequent byte sequences from the input corpus and replaces occurrences with single-byte codes.
+    \item \textbf{\acf{FSST}}~\cite{bonczFSSTFastRandom2020} is a lightweight, block-oriented string compressor that learns a \emph{symbol table} of up to 255 frequent byte sequences from the input corpus and replaces occurrences with single-byte codes.
     Unlike general-purpose compressors such as LZ77 or zstd, \ac{FSST} preserves random access: each compressed string can be decompressed independently without context from prior strings.
     The symbol table is stored once (up to \qty{2040}{\byte}) and amortised over all strings in the column.
     \ac{FSST} and dictionary encoding can be combined: applying \ac{FSST} to the deduplicated dictionary strings compresses both the unique values and the byte-level redundancy within them.
@@ -514,7 +514,7 @@ For tile data, features are assigned a curve index based on their first vertex c
 When multiple string columns share overlapping vocabularies, storing a single shared dictionary can reduce overhead compared to per-column dictionaries.
 Identifying which columns share sufficient overlap is a set similarity problem.
 
-\emph{MinHash}~\cite{broder1997resemblance} is a locality-sensitive hashing technique that efficiently estimates the \emph{Jaccard similarity} between two sets $A$ and $B$:
+\emph{MinHash}~\cite{broderResemblanceContainmentDocuments1998} is a locality-sensitive hashing technique that efficiently estimates the \emph{Jaccard similarity} between two sets $A$ and $B$:
 \begin{equation}\label{eq:jaccard}
     J(A, B) = \frac{|A \cap B|}{|A \cup B|}.
 \end{equation}
@@ -525,14 +525,14 @@ The Jaccard similarity is then estimated as:
     \hat{J}(A, B) = \frac{1}{k} \sum_{i=1}^{k} \mathbf{1}\bigl[\mathit{sig}_i(A) = \mathit{sig}_i(B)\bigr],
 \end{equation}
 where $\mathbf{1}[\cdot]$ is the indicator function.
-The estimate is unbiased with variance $O(1/k)$~\cite{broder1997resemblance}.
+The estimate is unbiased with variance $O(1/k)$~\cite{broderResemblanceContainmentDocuments1998}.
 
 
 \section{Multi-Objective Optimisation}\label{sec_multi_objective_optimisations}
 
 Map rendering optimisation is inherently multi-objective: reducing tile size, minimising load time, maximising rendering throughput, and controlling memory consumption are competing goals.
-Such problems can be formulated as \acsp{MOOP}, where the set of \emph{Pareto-optimal} solutions - configurations for which no objective can be improved without worsening another - forms the \emph{Pareto front}~\cite{pareto1896cours}.
-A range of algorithms exist for approximating the Pareto front~\cite{debFastElitistMultiobjective2002,zitzlerIndicatorBasedSelection2004,qingfuzhangMOEAMultiobjectiveEvolutionary2007}.
+Such problems can be formulated as \acsp{MOOP}, where the set of \emph{Pareto-optimal} solutions - configurations for which no objective can be improved without worsening another - forms the \emph{Pareto front}~\cite{paretoCoursDEconomiePolitique1896}.
+A range of algorithms exist for approximating the Pareto front~\cite{debFastElitistMultiobjective2002,zitzlerIndicatorBasedSelectionMultiobjective2004,qingfuzhangMOEAMultiobjectiveEvolutionary2007}.
 This thesis does not embed a \ac{MOOP} search algorithm; instead, it uses Pareto dominance as a post-hoc analysis tool over the cumulative-ablation result space (\cref{sec_exp_pareto}), restricted to the two axes whose signal exceeds the benchmark noise floor.
 
 

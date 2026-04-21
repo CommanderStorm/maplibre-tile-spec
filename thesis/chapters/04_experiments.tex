@@ -204,7 +204,7 @@ Two problems remain open after the style-level optimisations of Experiments~1 an
     Existing \ac{MLT} encoders apply uniform encoding strategies across all columns, disregarding the statistical properties of individual fields.
     After style-driven shaving removes columns and features, the remaining data has different statistical properties: fewer distinct property values (longer \ac{RLE} runs), more homogeneous distributions (better delta encoding), and smaller string vocabularies (more effective dictionary compression).
     An encoder that adapts to these changed characteristics - through the profiler-driven candidate pruning described in \cref{sub_encoding_strategies} - can capture savings that a fixed-strategy encoder leaves on the table.
-    Furthermore, safety-critical libraries such as FastPFor~\cite{fastpfor} explicitly disclaim input validation, necessitating the multi-layer correctness validation described in \cref{sub_data_optimisations}.
+    Furthermore, safety-critical libraries such as FastPFor~\cite{lemireDecodingBillionsIntegers2015} explicitly disclaim input validation, necessitating the multi-layer correctness validation described in \cref{sub_data_optimisations}.
 \end{enumerate}
 
 \subsection{Evaluation Design}\label{sub_mlt_evaluation}
@@ -384,12 +384,12 @@ This observation connects data-level optimisations to the multi-objective framew
 \paragraph{Cache fragmentation trade-off}
 A direct operational consequence of style-dependent tiles is that shared \ac{CDN} caching is partially defeated: two styles that served identical tiles under \ac{MVT} now fetch distinct shaved variants, and a \ac{CDN} must either key its cache on (tile, style) pairs or accept that a hit on one style is a miss on another.
 The break-even point depends on the ratio of per-style rendering cost savings to the amplified origin fetch rate.
-For deployments where a single style dominates traffic, style-driven shaving is strictly beneficial; for multi-tenant tile servers hosting dozens of styles, shaving should be applied per style and the resulting tile variants cached independently (the approach of Mapbox's closed-source \enquote{style-optimized vector tiles} service~\cite{mapboxStyleOptimizedTiles}).
+For deployments where a single style dominates traffic, style-driven shaving is strictly beneficial; for multi-tenant tile servers hosting dozens of styles, shaving should be applied per style and the resulting tile variants cached independently (the approach of Mapbox's closed-source \enquote{style-optimized vector tiles} service~\cite{StyleoptimizedVectorTiles}).
 A hybrid strategy - serving raw \ac{MVT} for uncommon styles and shaved \ac{MLT} for a small set of \enquote{canonical} styles - captures most of the per-tile savings while bounding cache-key explosion.
 This thesis does not evaluate the cache-fragmentation trade-off empirically, as the benchmark harness measures a single origin and client rather than a \ac{CDN} fleet; it is called out as a known deployment consideration.
 
 \paragraph{Geometry simplification is out of scope}
-A complementary direction not explored by this thesis is geometry-level pruning - coordinate precision reduction, Visvalingam or Douglas-Peucker simplification, and polygon topology coalescing - which is the principal lever used by upstream generators such as Tippecanoe~\cite{tippecanoe} and Planetiler~\cite{planetiler}.
+A complementary direction not explored by this thesis is geometry-level pruning - coordinate precision reduction, Visvalingam or Douglas-Peucker simplification, and polygon topology coalescing - which is the principal lever used by upstream generators such as Tippecanoe~\cite{FeltTippecanoe2026} and Planetiler~\cite{OnthegomapPlanetiler2026}.
 These techniques typically deliver larger absolute savings than attribute-column pruning, but they interact non-trivially with style-defined visual thresholds (line width, dash pattern length, label anchor placement) and would violate the pixel-identity soundness criterion established in \cref{sec_problem_statement}.
 Style-driven geometry simplification - choosing a simplification tolerance that is demonstrably below the smallest visible feature at each zoom level - is an interesting direction for future work but is not pursued here.
 The thesis therefore quantifies the size reductions achievable \emph{without} touching geometry at all, which understates the total optimisations headroom a production pipeline could reach by composing this work with an upstream simplifier.
