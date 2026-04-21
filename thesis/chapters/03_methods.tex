@@ -168,7 +168,7 @@ These styles are evaluated using static analysis only (style size, complexity me
 Tile data is sourced from \ac{OSM} via Planetiler or the German government.
 Both sources are consumed through the standard Web Mercator XYZ tiling scheme used by MapLibre, so all zoom-level reasoning in the thesis assumes this grid; BasemapDE is accessed through its XYZ-compatible endpoint rather than its native \acs{WMTS} grid, ensuring that the optimiser's tile indexing is uniform across the corpus.
 Only for \ac{OSM} is the underlying data fully available, so only for this source can tile statistics be collected at a sample rate of~1.0.
-To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs with the latency and download speed of a 4G internet connection according to Rusan et al.~\cite{rusan4gPacketLatency} ($\text{size} / 30\frac{Mb}{s} + 25ms$).
+To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs with the latency and download speed of a 4G internet connection according to Rusan et al.~\cite{rusanAssessmentPacketLatency2015} ($\text{size} / 30\frac{Mb}{s} + 25ms$).
 This eliminates network variability and guarantees that every ablation step operates on identical tile data (after an initial, discarded run).
 
 \subsection{Geographic and Use-Case Scenarios}\label{sub_scenarios}
@@ -331,7 +331,7 @@ Only plain scalar values are stripped; expression-valued properties are never re
 For variadic boolean expressions (\texttt{all}, \texttt{any}), predicates are reordered by estimated selectivity to exploit short-circuit evaluation.
 For \texttt{all} (conjunction), predicates are sorted by ascending selectivity (the predicate most likely to be false is evaluated first).
 For \texttt{any} (disjunction), predicates are sorted by descending selectivity (the predicate most likely to be true is evaluated first).
-The selectivity estimation formulas follow the independence assumption introduced by Selinger et al.~\cite{selinger1979access}.
+The selectivity estimation formulas follow the independence assumption introduced by Selinger et al.~\cite{selingerAccessPathSelection1979}.
 Let $N$ denote the total number of features in the source layer, and $\mathrm{freq}(v)$ the number of features where property~$p$ equals~$v$:
 \begin{equation}\label{eq:selectivity}
     \begin{aligned}
@@ -349,7 +349,7 @@ Compound predicates are estimated under the standard independence assumption:
     \mathrm{sel}(\texttt{any}) = 1 - \prod_i \bigl(1 - \mathrm{sel}(p_i)\bigr).
 \end{equation}
 
-\noindent The independence assumption is known to be imprecise for correlated predicates~\cite{selinger1979access}, but as discussed in \cref{sec_query_optimisations} the selectivity signal here is consumed only by a reordering heuristic, not by a cost-based plan chooser: what matters is the \emph{ordering} of predicates by selectivity, not their absolute values.
+\noindent The independence assumption is known to be imprecise for correlated predicates~\cite{selingerAccessPathSelection1979}, but as discussed in \cref{sec_query_optimisations} the selectivity signal here is consumed only by a reordering heuristic, not by a cost-based plan chooser: what matters is the \emph{ordering} of predicates by selectivity, not their absolute values.
 Correlation between map-style predicates (e.g.\ \texttt{class} and \texttt{subclass} in OpenMapTiles) distorts the absolute selectivities but rarely inverts their relative ordering, so the cheap estimator suffices.
 
 \paragraph{Concrete examples}

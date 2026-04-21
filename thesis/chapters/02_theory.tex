@@ -21,7 +21,7 @@ The map view is rendered using one of the following approaches:
 Using SVGs means one is limited to a 2D rendering approach due to not having a camera.\end{sloppypar}
 
 \item \textbf{Canvas 2D} is the HTML5 \texttt{<canvas>} immediate-mode drawing API.
-OpenLayers~\cite{OpenLayers} uses Canvas~2D as its primary renderer, rasterising vector features on the CPU rather than submitting them to the GPU.
+OpenLayers~\cite{OpenLayersWelcome} uses Canvas~2D as its primary renderer, rasterising vector features on the CPU rather than submitting them to the GPU.
 This avoids the complexity of GPU pipeline management and shader compilation, but rendering throughput is CPU-bound and does not benefit from hardware-accelerated geometry processing.
 Like SVG, Canvas~2D is limited to 2D views without pitch or rotation.
 
