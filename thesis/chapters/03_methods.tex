@@ -999,7 +999,7 @@ Property-based sort strategies were considered but are not included in the curre
 To avoid wasting trials on unpromising strategies, a \emph{bounding-box heuristic} skips spatial sorting on large layers whose features are too spatially dispersed for locality clustering to help.
 Specifically, for layers with more than \texttt{512} features, the spatial trials are pruned when the first-vertex bounding box covers more than \texttt{80\%} of the tile extent on \emph{both} axes.
 Small layers (below the threshold) are always trialled, since the absolute cost of an extra encoding pass is negligible for them.
-The thresholds were
+The thresholds were experimentally derived from Germany-wide OpenMapTiles.
 
 \paragraph{Inner loop: per-stream encoding competition}\label{sub_stream_competition}
 Within each sort-strategy trial, every integer data stream is subject to an independent encoding competition.
