@@ -992,9 +992,7 @@ Property-based sort strategies were considered but are not included in the curre
         \node[output, right=2.2cm of more] (best)
         {Emit smallest encoding\\%
             {\scriptsize\texttt{best.into\_layer\_bytes()}}};
-        \draw[arrow] (more.east) --
-            node[above, label, pos=0.15] {no}
-            |- (best.west);
+        \draw[arrow] (more.east) -- node[above, label, pos=0.15] {no} -- (best.west);
     \end{tikzpicture}
     \caption{Multi-strategy sort competition.
         Shared-dictionary string groups are computed once and reused across all trials.
