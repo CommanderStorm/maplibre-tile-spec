@@ -931,7 +931,7 @@ Property-based sort strategies were considered but are not included in the curre
 \begin{figure}[htbp]
     \centering
     \begin{tikzpicture}[
-        node distance=0.6cm,
+        node distance=0.7cm,
         box/.style={rectangle, draw, rounded corners=2pt, minimum width=4.2cm,
             minimum height=0.65cm, font=\small, align=center},
         input/.style={box, fill=gray!15},
@@ -943,57 +943,58 @@ Property-based sort strategies were considered but are not included in the curre
         output/.style={box, fill=green!15},
         arrow/.style={-Stealth, thick},
         label/.style={font=\scriptsize\itshape, text=gray},
-        annot/.style={font=\scriptsize, text=gray, align=left},
         ]
         % Input
         \node[input] (layer) {\texttt{TileLayer01}};
 
         % Prep: group_string_properties
-        \node[prep, below=0.7cm of layer] (grp)
+        \node[prep, below=of layer] (grp)
         {\texttt{group\_string\_properties()}};
         \draw[arrow] (layer) -- (grp);
 
         % Prep: collect_sort_strategies
-        \node[prep, below=0.7cm of grp] (coll)
+        \node[prep, below=of grp] (coll)
         {\texttt{collect\_sort\_strategies()}};
         \draw[arrow] (grp) -- (coll);
 
-        % Loop body (nodes first, then fit box)
+        % Loop guard
+        \node[decision, below=1.0cm of coll] (more) {more strategies?};
+        \draw[arrow] (coll) -- (more);
+
         % Sort + columnarize
-        \node[stage, below=1.4cm of coll] (sort)
+        \node[stage, below=1.0cm of more] (sort)
         {Sort + columnarize\\%
             {\scriptsize\texttt{from\_tile(clone, sort, \&groups)}}};
-        \draw[arrow] (coll) -- (sort);
+        \draw[arrow] (more) -- node[right, label] {yes} (sort);
 
         % Encode
-        \node[encoder, below=0.7cm of sort] (enc)
+        \node[encoder, below=of sort] (enc)
         {Encode all columns\\{\scriptsize (per-stream competition)}};
         \draw[arrow] (sort) -- (enc);
 
-        % Decision
-        \node[decision, below=0.7cm of enc] (cmp) {size $<$ best?};
+        % Compare
+        \node[decision, below=of enc] (cmp) {size $<$ best?};
         \draw[arrow] (enc) -- node[right, label] {\texttt{total\_len()}} (cmp);
 
-        % Discard stub (short dead-end, no back-arrow)
-        \draw[thick] (cmp.west) -- ++(-1.0,0)
-        node[above, label] {no: discard};
+        % Yes: update best, then loop back
+        \node[stage, below=0.8cm of cmp] (upd) {Update best};
+        \draw[arrow] (cmp) -- node[right, label] {yes} (upd);
 
-        % Yes arrow exits loop box downward
-        \node[coordinate, below=0.5cm of cmp] (yes_exit) {};
-        \draw[arrow] (cmp) -- node[right, label] {yes: update} (yes_exit);
+        % Loop-back from update
+        \draw[arrow] (upd.west) -- ++(-2.4,0) |- (more.west);
 
-        % Dashed iteration box
-        \node[draw, dashed, rounded corners=4pt,
-        inner xsep=18pt, inner ysep=14pt,
-        fit=(sort)(enc)(cmp)] (loop) {};
-        \node[anchor=north west, font=\small\itshape, text=gray]
-        at (loop.north west) {for each strategy in candidates};
+        % No: discard, loop back
+        \draw[arrow] (cmp.east) -- ++(2.0,0)
+            node[above, label, pos=0.4] {no}
+            |- (more.east);
 
-        % Output
-        \node[output, below=1.4cm of cmp] (best)
-        {Keep smallest\\%
+        % Exit loop
+        \node[output, right=2.2cm of more] (best)
+        {Emit smallest encoding\\%
             {\scriptsize\texttt{best.into\_layer\_bytes()}}};
-        \draw[arrow] (yes_exit) -- (best);
+        \draw[arrow] (more.south) ++(0,0) -- ++(3.4,0)
+            node[above, label, pos=0.15] {no}
+            |- (best.east);
     \end{tikzpicture}
     \caption{Multi-strategy sort competition.
         Shared-dictionary string groups are computed once and reused across all trials.
