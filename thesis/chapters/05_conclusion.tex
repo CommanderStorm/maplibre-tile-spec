@@ -8,10 +8,10 @@ This chapter draws together the findings: it summarises the contributions, disti
 The main contributions are:
 
 \begin{enumerate}
-    \item The \textbf{two-phase style pipeline} (\cref{sec_contributions}) proved most effective as an enabler: expression-level simplifications cascaded into forms that structural passes could exploit, with constant folding and dead elimination together accounting for the largest per-pass rendering gains (\cref{sub_combined_marginal}).
+    \item The \textbf{two-phase style pipeline} (\cref{sub_pipeline}) proved most effective as an enabler: expression-level simplifications cascaded into forms that structural passes could exploit, with constant folding and dead elimination together accounting for the largest per-pass rendering gains (\cref{sub_combined_marginal}).
     Some passes, such as the default removal passes had both positive and negative effects on the metrics measured, but not to an significant enough extent that \ac{MOOP} would be a significant factor.
 
-    \item \textbf{Style-driven tile shaving} (\cref{sec_contributions}) produced the cascade documented in \cref{sub_mlt_discussion}: dead elimination narrowed the pruning advisory enough to eliminate entire property columns and tiles from the encoded output.
+    \item \textbf{Style-driven tile shaving} (\cref{sub_tile_shaving}) produced the cascade documented in \cref{sub_mlt_discussion}: dead elimination narrowed the pruning advisory enough to eliminate entire property columns and tiles from the encoded output.
 
     \item The \textbf{automatic encoding strategy selection} for the \ac{MLT} format closed the gap that the fixed-plan Java encoder left open: the Rust encoder's per-stream profiling and sort-strategy competition reduced tile volume by \qty{28}{\percent} over the Java baseline, and this advantage persisted under every wire compressor tested (\cref{tab:mvt_mlt_comparison}).
 
