@@ -761,10 +761,10 @@ The advisory captures the following per source-layer:
 
         % Row 2: advisory
         \node[both, right=1cm of sopt] (adv) {Tile pruning advisory};
-        \draw[arrow] (stats) -- node[right, lbl] {property/geometry stats} (adv);
+        \draw[arrow] (sopt) -- node[left, lbl] {optimised style} (adv);
 
         \node[data, right=1cm of sopt] (stats) {Tile statistics};
-        \draw[arrow] (sopt) -- node[left, lbl] {optimised style} (adv);
+        \draw[arrow] (stats) -- node[right, lbl] {property/geometry stats} (adv);
 
         % Row 3:
 
