@@ -985,9 +985,7 @@ Property-based sort strategies were considered but are not included in the curre
         \draw[arrow] (cmp.west) -| ($(more.west)+(-4cm,0)$) |- (more.west);
 
         % Exit loop
-        \node[output, right=2.2cm of more] (best)
-        {Emit smallest encoding\\%
-            {\scriptsize\texttt{best.into\_layer\_bytes()}}};
+        \node[output, right=2.2cm of more] (best) {Emit smallest encoding\\{\scriptsize\texttt{best.into\_layer\_bytes()}}};
         \draw[arrow] (more.east) -- node[above, label] {no} (best.west);
     \end{tikzpicture}
     \caption{Multi-strategy sort competition.
@@ -999,7 +997,7 @@ Property-based sort strategies were considered but are not included in the curre
 \end{figure}
 
 To avoid wasting trials on unpromising strategies, a \emph{bounding-box heuristic} skips spatial sorting on large layers whose features are too spatially dispersed for locality clustering to help.
-Specifically, for layers with more than \texttt{SORT\_TRIAL\_THRESHOLD = 512} features, the spatial trials are pruned when the first-vertex bounding box covers more than \texttt{SPATIAL\_HELP\_COVERAGE = 80\%} of the tile extent on \emph{both} axes.
+Specifically, for layers with more than \texttt{512} features, the spatial trials are pruned when the first-vertex bounding box covers more than \texttt{80\%} of the tile extent on \emph{both} axes.
 Small layers (below the threshold) are always trialled, since the absolute cost of an extra encoding pass is negligible for them.
 
 \paragraph{Inner loop: per-stream encoding competition}\label{sub_stream_competition}
