@@ -738,7 +738,7 @@ The cumulative-trajectory points are monotonically non-increasing in \texttt{gzi
 \subsection{Discussion}\label{sub_pareto_discussion}
 
 Across the benchmark corpus, baseline-to-final cumulative gzip reductions range from roughly \qty{3}{\percent} on already-compact styles (\texttt{bright}, \texttt{liberty}) to \qty{24}{\percent} on verbose styles (\texttt{klokan-basic}, \texttt{osm-bright}, \texttt{toner}), and the isolated-mode frontier exposes which single pass captures the largest share of that reduction per style.
-The rendering-performance, decoding-latency, energy, and memory axes are not answered by this frontier because within-cell noise is of the same order as cross-variant signal (\cref{tab:pareto_noise}); decoding latency is instead addressed via isolated micro-benchmarks in \cref{sub_decode_throughput}, and the remaining axes are addressed at end-to-end granularity in \cref{sub_combined_ablation}.
+The rendering-performance, decoding-latency, energy, and memory axes are not answered by this frontier because within-cell noise is of the same order as cross-variant signal (\cref{tab:pareto_noise}); decoding latency is instead addressed via isolated micro-benchmarks in \cref{tab:decode_throughput}, and the remaining axes are addressed at end-to-end granularity in \cref{sub_combined_ablation}.
 The qualitative claims elsewhere in the thesis (\cref{sub_combined_discussion}'s mobile-battery discussion, \cref{sub_preprocessing_cost}'s cost model) remain authoritative on those axes because they operate on baseline-versus-full-pipeline aggregates where the effect size exceeds the noise floor.
 
 
