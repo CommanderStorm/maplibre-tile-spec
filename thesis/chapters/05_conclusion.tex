@@ -9,6 +9,7 @@ The main contributions are:
 
 \begin{enumerate}
     \item The \textbf{two-phase style pipeline} (\cref{sec_contributions}) proved most effective as an enabler: expression-level simplifications cascaded into forms that structural passes could exploit, with constant folding and dead elimination together accounting for the largest per-pass rendering gains (\cref{sub_combined_marginal}).
+    Some passes, such as the default removal passes had both positive and negative effects on the metrics measured, but not to an significant enough extent that pareto optimality would be a significant factor.
 
     \item \textbf{Style-driven tile shaving} (\cref{sec_contributions}) produced the cascade documented in \cref{sub_mlt_discussion}: dead elimination narrowed the pruning advisory enough to eliminate entire property columns and tiles from the encoded output.
 
