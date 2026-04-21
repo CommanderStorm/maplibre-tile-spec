@@ -718,7 +718,7 @@ The pipeline operates in three stages that mirror the structure of a database qu
 
 \noindent Stage~1 is the key \emph{style-data bridge}: the optimised style from the expression-level and structural phases determines what data survives, and the cascade from dead layer elimination through advisory shrinkage into smaller tiles is the concrete mechanism by which style-level and data-level optimisations compose.
 Stages~2 and~3 adapt to the statistical properties of the surviving data --- properties that change after shaving removes columns and features, altering value distributions and cardinalities.
-The profiler-driven candidate pruning in Stage~3 (\texttt{DataProfile::prune\_candidates} in \texttt{encoder/\allowbreak stream/\allowbreak optimizer.rs}) responds to these changes automatically: its viability tests --- \texttt{rle\_is\_viable} (average run length $\geq 2.0$), \texttt{delta\_is\_beneficial} (delta bit-width sum less than raw), \texttt{delta\_rle\_is\_viable} (delta-stream run length $\geq 2.0$) --- operate on the actual stream statistics, so a column whose distinct-value count drops after shaving naturally presents longer runs and triggers more compact encoding candidates.
+The profiler-driven candidate pruning in Stage~3 responds to these changes automatically: its viability tests --- \texttt{rle\_is\_viable} (average run length $\geq 2.0$), \texttt{delta\_is\_beneficial} (delta bit-width sum less than raw), \texttt{delta\_rle\_is\_viable} (delta-stream run length $\geq 2.0$) --- operate on the actual stream statistics, so a column whose distinct-value count drops after shaving naturally presents longer runs and triggers more compact encoding candidates.
 
 \subsubsection{Style-Driven Tile Shaving}\label{sub_tile_shaving}
 
@@ -964,7 +964,7 @@ Property-based sort strategies were considered but are not included in the curre
         % Sort + columnarize
         \node[stage, below=1.0cm of more] (sort)
         {Sort + columnarize\\%
-            {\scriptsize\texttt{from\_tile(clone, sort, \&groups)}}};
+            {\scriptsize\texttt{from\_tile(clone, sort, groups)}}};
         \draw[arrow] (more) -- node[right, label] {yes} (sort);
 
         % Encode

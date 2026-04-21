@@ -373,7 +373,7 @@ This cascade --- from style simplification through advisory shrinkage to tile re
 
 \paragraph{The encoder as delivery mechanism}
 The multi-strategy competition is not an independent contribution but the \emph{delivery mechanism} for the cascade.
-After shaving has removed unused columns and features, the remaining data has different statistical properties: fewer distinct property values produce longer \ac{RLE} runs (detected by \texttt{DataProfile::rle\_is\_viable} in \texttt{encoder/\allowbreak stream/\allowbreak optimizer.rs}), smaller value ranges improve delta encoding (detected by \texttt{delta\_is\_beneficial}), and smaller string vocabularies shrink dictionaries and improve \ac{FSST} compression ratios (probed by \texttt{fsst\_try\_train} in \texttt{encoder/\allowbreak property/\allowbreak strings.rs}).
+After shaving has removed unused columns and features, the remaining data has different statistical properties: fewer distinct property values produce longer \ac{RLE} runs.
 The competition matters \emph{more} after shaving because the data distributions have changed in ways that favour compact encodings --- which is why the encoder belongs in this thesis rather than in a standalone encoder paper.
 
 \paragraph{Style-dependent tile sizes}
