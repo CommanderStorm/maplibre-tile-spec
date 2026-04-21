@@ -761,11 +761,11 @@ The advisory captures the following per source-layer:
 
         % Row 2: advisory
         \node[both, right=2.5cm of sopt] (adv) {Tile pruning advisory};
-        \draw[arrow] (sopt) -- node[left, lbl] {optimised style} (adv);
+        \draw[arrow] (sopt) -- node[above, lbl] {optimised style} (adv);
 
         % Row 3:
         \node[data, right=2.5cm of adv] (stats) {Tile statistics};
-        \draw[arrow] (stats) -- node[right, lbl] {property/geometry stats} (adv);
+        \draw[arrow] (stats) -- node[above, lbl] {property/geometry stats} (adv);
 
         % Row 3: MVT → prune → MLT
         \node[data, below=2cm of adv] (prune) {Prune \& transform};
