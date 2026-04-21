@@ -768,9 +768,9 @@ The advisory captures the following per source-layer:
         \draw[arrow] (stats) -- node[right, lbl] {property/geometry stats} (adv);
 
         % Row 3: MVT → prune → MLT
-        \node[data, below=1.4cm of adv] (prune) {Prune \& transform};
-        \node[data, left=1.4cm of prune] (mvt) {\ac{MVT} tile};
-        \node[data, right=1.4cm of prune] (mlt) {\ac{MLT} tile};
+        \node[data, below=2cm of adv] (prune) {Prune \& transform};
+        \node[data, left=2cm of prune] (mvt) {\ac{MVT} tile};
+        \node[data, right=2cm of prune] (mlt) {\ac{MLT} tile};
 
         \draw[arrow] (adv) -- (prune);
         \draw[arrow] (mvt) -- (prune);
