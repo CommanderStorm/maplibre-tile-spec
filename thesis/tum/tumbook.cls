@@ -102,7 +102,6 @@
 \RequirePackage{tumcaptions}
 \RequirePackage{tumpage}
 \RequirePackage{tumfonts}
-\RequirePackage{tumboxes}
 \RequirePackage{tumuser}
 
 % load book package with common macros for tumbook and tumcover
