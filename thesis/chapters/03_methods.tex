@@ -1005,7 +1005,7 @@ The thresholds were experimentally derived from Germany-wide OpenMapTiles.
 Within each sort-strategy trial, every integer data stream is subject to an independent encoding competition.
 Each candidate pairs a \emph{logical} encoding (Plain, Delta, \ac{RLE}, or DeltaRle) with a \emph{physical} encoding (\ac{VarInt} or \ac{FastPFOR}~\cite{fastpfor}).
 The na\"ive approach --- encoding every combination and comparing --- would be prohibitively expensive for large tiles.
-Instead, a \emph{data profiler} samples a contiguous block taken from the middle of the stream: streams with at most \texttt{MIN\_SAMPLE = 512} values are profiled in full, and longer streams are profiled over $\lfloor |s| / 100 \rfloor$ values clamped to $[\texttt{MIN\_SAMPLE},\, \texttt{MAX\_SAMPLE}]$ with \texttt{MAX\_SAMPLE = \num{16384}}.
+Instead, a \emph{data profiler} samples a contiguous block taken from the middle of the stream: streams with at most \texttt{MIN\_SAMPLE = 512} values are profiled in full, and longer streams are profiled over $\lfloor |s| / 100 \rfloor$ values clamped to $[512,\, 16384]$.
 The contiguous mid-stream window is chosen over a random sample because \ac{RLE} run lengths and delta-bit-width statistics are destroyed by permutation, and because the middle of a spatially or ID-sorted stream is a representative point away from the boundary artefacts at the ends.
 The profiler computes four metrics in a single pass:
 
