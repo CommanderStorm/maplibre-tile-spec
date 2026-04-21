@@ -760,11 +760,11 @@ The advisory captures the following per source-layer:
         \node[style] (sopt) {Style optimisations\\{\scriptsize (\cref{sub_expression_optimisations,sub_structural_optimisations})}};
 
         % Row 2: advisory
-        \node[both, right=1cm of sopt] (adv) {Tile pruning advisory};
+        \node[both, right=2.5cm of sopt] (adv) {Tile pruning advisory};
         \draw[arrow] (sopt) -- node[left, lbl] {optimised style} (adv);
 
         % Row 3:
-        \node[data, right=1cm of sopt] (stats) {Tile statistics};
+        \node[data, right=2.5cm of adv] (stats) {Tile statistics};
         \draw[arrow] (stats) -- node[right, lbl] {property/geometry stats} (adv);
 
         % Row 3: MVT → prune → MLT
