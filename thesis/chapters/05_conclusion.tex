@@ -25,7 +25,7 @@ Three architectural insights emerged from the evaluation that go beyond the quan
 \emph{First}, the cascade effect (\cref{sub_mlt_discussion}) - style simplification narrows the pruning advisory, which shrinks the encoded tiles - is the central finding.
 The pipeline is more effective than applying either level in isolation, and any evaluation that benchmarks data-level or style-level optimisations alone will understate the combined benefit.
 For the geospatial community this means that style authoring and tile encoding can be treated as correlated concerns: the two interact, and tooling that exploits the interaction can recover some transfer and rendering savings without any change to the underlying data or the renderer.
-For FPS ($200\%$) and transfer size ($20\%$) this effect is significant, while for load time it is not as significant at $1\%$.
+For FPS ($200\%$) and transfer size ($37\%$) this effect is significant, while for load time it is not as significant at $1\%$.
 
 \emph{Second}, the three-mechanism decomposition identified in \cref{sub_combined_discussion} has deployment implications: structural passes dominate rendering-throughput improvements, data-level passes dominate load-time improvements, and expression passes serve primarily as enablers.
 A mobile deployment on a constrained network should prioritise tile shaving and re-encoding, whereas a desktop deployment bottlenecked by draw calls benefits most from structural passes alone.
