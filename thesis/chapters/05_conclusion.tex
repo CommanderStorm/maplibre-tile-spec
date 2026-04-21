@@ -32,7 +32,6 @@ A mobile deployment on a constrained network should prioritise tile shaving and 
 
 \emph{Third}, the compiler-optimisation framing - peephole rewriting, fixpoint iteration, dead code elimination - transfers effectively to the map-style domain.
 The 47 rewrite rules are individually simple, yet their composition through fixpoint iteration achieves globally significant simplification across styles of widely varying complexity (raw reductions of \qtyrange{10}{71}{\percent} across the Maputnik generalisation corpus).
-This suggests that other declarative rendering specifications (CSS, SVG filters, shader graphs) may benefit from the same approach: a small rule set applied to fixpoint, followed by structural passes that exploit the simplified form.
 
 \section{Research Questions Revisited}\label{sec_rq_revisited}
 
