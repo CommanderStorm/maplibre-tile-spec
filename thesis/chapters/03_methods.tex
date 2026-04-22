@@ -1107,7 +1107,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
                 \texttt{maxspeed} - singleton, individual dictionary\\[1pt]
                 \quad{\scriptsize no overlap with any string column}%
             };
-            \node[steplabel, above=1pt of res] {\circled{4} Union-Find clustering};
+            \node[steplabel, below=1pt of res] {\circled{4} Union-Find clustering};
 
             % Bottom-right (Step 3): Pairwise Jaccard
             \node[stepbox, below=0.8cm of hash, cmp, text width=6.2cm, anchor=north] (sim) {%
