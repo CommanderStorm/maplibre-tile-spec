@@ -1098,7 +1098,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             \node[steplabel, above=1pt of hash] {\circled{2} MinHash signatures (128 permutations)};
 
             % Bottom-left (Step 4): Union-Find result
-            \node[stepbox, below=0.8cm of tbl, cmp, anchor=north] (res) {%
+            \node[stepbox, cmp, anchor=north] at ($(tbl |- hash)$)  (res) {%
                 \textbf{Shared dictionary groups:}\\[3pt]
                 \fbox{\strut\texttt{name:de}, \texttt{name:fr}}\\[1pt]
                 \quad{\scriptsize trigrams detected cross-language overlap}\\[4pt]
