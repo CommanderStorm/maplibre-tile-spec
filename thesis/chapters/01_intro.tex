@@ -18,9 +18,9 @@ This thesis investigates automatic, style- and data-driven co-optimisation for M
 Three research questions guide the work:
 
 \begin{enumerate}[label=\textbf{R\arabic*}]
-    \item To what extent \textbf{can automatic data and style co-optimisation reduce map tile size and improve rendering performance}?
+    \item To what extent \textbf{can automatic data and style co-optimisation improve rendering performance and reduce map tile size}?
     \item \textbf{Which techniques} - such as expression simplification, dead layer elimination, layer merging, tile shaving, and columnar re-encoding - \textbf{are most effective}, \textbf{and how do they interact}?
-    \item \textbf{How expensive are these optimisations} in terms of preprocessing time, and what are the \textbf{tradeoffs between transfer size, decoding latency, and rendering throughput}?
+    \item \textbf{How expensive are these optimisations} in terms of preprocessing time, and what are the \textbf{tradeoffs between decoding latency, rendering throughput, and transfer size}?
 \end{enumerate}
 
 To answer these questions, the thesis designs and implements a standalone optimiser that consumes a MapLibre style JSON document and, optionally, tile-level statistics, and produces a semantically equivalent style whose rendering performance is measurably improved - together with optimised tile data.
@@ -36,7 +36,7 @@ The main contributions of this thesis are:
 \begin{enumerate}
     \item A \textbf{two-phase style optimisation pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering) and structural passes (dead layer elimination, metadata refinement, layer merging), modeled on peephole optimisers and query planners from the compiler and database literature.
 
-    \item \textbf{Style-driven tile shaving} that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data - creating a cascade from style-level changes into smaller encoded tiles (\cref{sub_mlt_discussion}).
+    \item \textbf{Style-driven tile shaving} that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data - creating a cascade from style-level changes into faster decoding and smaller encoded tiles (\cref{sub_mlt_discussion}).
 
     \item An \textbf{automatic encoding strategy selection} for the MapLibre Tiles (MLT) columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies, adapting to the changed data characteristics that emerge after style-driven shaving alters value distributions and column cardinalities.
 

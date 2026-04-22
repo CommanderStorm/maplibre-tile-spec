@@ -156,10 +156,8 @@ def plot_encoder_comparison_per_zoom(df: pd.DataFrame) -> None:
         height=600,
     )
     fig.update_xaxes(title_text="Zoom level", dtick=2, row=2)
-    fig.update_yaxes(type="log", row=1, col=1, title_text="Total size (bytes)")
-    fig.update_yaxes(type="log", row=2, col=1, title_text="Total size (bytes)")
-    fig.update_yaxes(type="log", row=1, col=2)
-    fig.update_yaxes(type="log", row=2, col=2)
+    fig.update_yaxes(row=1, col=1, title_text="Total size (bytes)")
+    fig.update_yaxes(row=2, col=1, title_text="Total size (bytes)")
 
     export_figure(fig, "encoder_comparison_per_zoom")
 
@@ -559,46 +557,40 @@ def load_bench_jsonl(paths: list[Path]) -> pd.DataFrame | None:
 
 
 def plot_interaction(df: pd.DataFrame) -> None:
-    """Bar chart showing style-only, shaving-only, and style+shaving reductions.
+    """Bar chart showing shaving-only vs style+shaving tile-data reductions.
 
-    If the combined bar exceeds the sum of the two individual bars, the
-    optimisations are synergistic."""
+    Uses tile_bytes (mbtiles file size) to measure actual tile data impact.
+    If the combined bar exceeds the shaving-only bar, style optimisation
+    narrows the advisory and produces a measurable cascade effect."""
     print("Generating interaction_plot…")
 
-    # Compute median gzip_bytes per config across all (style, scenario) pairs
-    medians = df.groupby(["config", "style", "scenario"])["gzip_bytes"].median().reset_index()
+    # Compute median tile_bytes per config across all (style, scenario) pairs
+    medians = df.groupby(["config", "style", "scenario"])["tile_bytes"].median().reset_index()
 
     # Pivot to get one column per config
-    baseline = medians[medians.config == "1: MVT baseline"].groupby("style")["gzip_bytes"].median()
-    style_only = medians[medians.config == "2: Style-only"].groupby("style")["gzip_bytes"].median()
-    shave_only = medians[medians.config == "3: Shaving-only"].groupby("style")["gzip_bytes"].median()
-    combined = medians[medians.config == "4: Style+shaving"].groupby("style")["gzip_bytes"].median()
+    baseline = medians[medians.config == "1: MVT baseline"].groupby("style")["tile_bytes"].median()
+    shave_only = medians[medians.config == "3: Shaving-only"].groupby("style")["tile_bytes"].median()
+    combined = medians[medians.config == "4: Style+shaving"].groupby("style")["tile_bytes"].median()
 
     styles = sorted(baseline.index)
     if not styles:
         print("  (skipped — not enough config data)")
         return
 
-    style_pct = [(1 - style_only.get(s, baseline[s]) / baseline[s]) * 100 for s in styles]
     shave_pct = [(1 - shave_only.get(s, baseline[s]) / baseline[s]) * 100 for s in styles]
     combined_pct = [(1 - combined.get(s, baseline[s]) / baseline[s]) * 100 for s in styles]
-    sum_pct = [s + h for s, h in zip(style_pct, shave_pct)]
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(name="Style-only", x=styles, y=style_pct,
-                         marker_color=CONFIG_COLORS["2: Style-only"]))
-    fig.add_trace(go.Bar(name="Shaving-only", x=styles, y=shave_pct,
+    fig.add_trace(go.Bar(name="Shaving-only (baseline advisory)", x=styles, y=shave_pct,
                          marker_color=CONFIG_COLORS["3: Shaving-only"]))
-    fig.add_trace(go.Bar(name="Style+shaving (actual)", x=styles, y=combined_pct,
+    fig.add_trace(go.Bar(name="Style+shaving (optimised advisory)", x=styles, y=combined_pct,
                          marker_color=CONFIG_COLORS["4: Style+shaving"]))
-    fig.add_trace(go.Scatter(name="Sum of individual", x=styles, y=sum_pct,
-                             mode="markers", marker=dict(symbol="diamond", size=10, color="black")))
 
     fig.update_layout(
         **LAYOUT_DEFAULTS,
         barmode="group",
         xaxis=dict(title="Style"),
-        yaxis=dict(title="% Gzip Size Reduction vs Baseline"),
+        yaxis=dict(title="% Tile Data Reduction vs Baseline"),
         legend=dict(x=0.02, y=0.98, bgcolor="rgba(255,255,255,0.8)"),
     )
     export_figure(fig, "interaction_plot")

@@ -20,7 +20,7 @@ Expression passes are evaluated in cumulative ablation order: unary simplificati
 The first seven passes correspond to ablation steps~1-7 in the benchmark harness.
 Selectivity reordering (step~16) is evaluated separately as it requires tile statistics.
 
-Metrics reported include style size (raw, gzip, Brotli), load time, frames per second, frame time percentiles, and \ac{AST} complexity (node count, maximum depth).
+Metrics reported include load time, frames per second, frame time percentiles, \ac{AST} complexity (node count, maximum depth), and style size (raw, gzip, Brotli).
 
 \subsection{Results}\label{sub_expr_results}
 
@@ -403,8 +403,18 @@ The competition matters \emph{more} after shaving because the data distributions
 
 \paragraph{Style-dependent tile sizes}
 A consequence of style-driven shaving is that different styles produce different tile sizes from the same source data.
-A minimal basemap that renders only roads and labels produces much smaller tiles than a full-coverage style that renders buildings, land use, and points of interest.
+To quantify this variation, we ran the full shaving pipeline (optimise with all passes, generate pruning advisory, apply advisory as \ac{MVT}) on the same Germany tileset (\qty{3.07}{\giga\byte}, OpenMapTiles schema, zoom levels 0--14) for each of the 11 \ac{OMT}-compatible styles in the benchmark corpus.
+\cref{fig:tile_shave_per_style} shows the results: tile-data reductions range from \qty{19.8}{\percent} (Bright) to \qty{46.3}{\percent} (Toner), with a median of \qty{29.0}{\percent}.
+Styles that reference fewer source-layers and property columns - such as Toner (monochrome, road/water/boundary only) and Americana (focused on shield and label rendering) - leave more tile data unused, enabling the advisory to strip more columns and features.
+Conversely, broad-coverage styles like Bright and OSM~Bright reference most of the tileset's property columns, limiting the shaving headroom.
 This observation connects data-level optimisations to the multi-objective framework of \cref{ch_theoretical_background}: there is no single optimal tile - the optimal encoding depends on the rendering style, which is a design choice.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{figures/tile_shave_per_style}
+    \caption{Tile-data reduction from style-driven \ac{MVT} shaving across 11 \ac{OMT}-compatible styles, applied to the same \qty{3.07}{\giga\byte} Germany tileset.  Styles that reference fewer source-layers and properties achieve larger reductions}
+    \label{fig:tile_shave_per_style}
+\end{figure}
 
 \paragraph{Cache fragmentation trade-off}
 A direct operational consequence of style-dependent tiles is that shared \ac{CDN} caching is partially defeated: two styles that served identical tiles under \ac{MVT} now fetch distinct shaved variants, and a \ac{CDN} must either key its cache on (tile, style) pairs or accept that a hit on one style is a miss on another.
@@ -494,9 +504,10 @@ Simple styles with fewer than 50 layers offer limited optimisations headroom - t
 The scatter plot (\cref{fig:cross_style_complexity_scatter}) quantifies this relationship.
 
 \paragraph{Passes that require statistics are not evaluated}
-Because the generalisation corpus does not include tile data, stats-driven passes (dead elimination with geometry-type matching, stats-driven constant folding, selectivity reordering) and data-level optimisations (tile shaving, re-encoding) cannot be applied.
+Because the generalisation corpus does not include tile data, stats-driven passes (dead elimination with geometry-type matching, stats-driven constant folding, selectivity reordering) and data-level optimisations (tile shaving, re-encoding) cannot be applied to the Maputnik styles.
 The reported reductions therefore represent a \emph{lower bound} on the full optimisations potential.
 Extrapolating from the deep corpus, where stats-driven passes add \qtyrange{10}{20}{\percent} additional reduction on top of static passes, the true optimisations potential for these styles is likely higher.
+For the 11 \ac{OMT}-compatible styles in the deep corpus, tile shaving was evaluated separately against the Germany tileset (\cref{fig:tile_shave_per_style}), confirming that data-level reductions generalise across styles.
 
 \paragraph{Edge cases}
 A small number of styles in the corpus show negligible reductions ($< 1\%$).
@@ -798,11 +809,10 @@ The tile data uses only OpenMapTiles and BasemapDE schemas; other schemas with d
 The 15 benchmark styles, while diverse, may not represent all style authoring patterns encountered in production deployments.
 
 \paragraph{End-to-end data-level coverage}
-The full pipeline - style optimisations through tile shaving to \ac{MLT} re-encoding - is benchmarked end-to-end on only 2 of the 15 styles (fiord and liberty).
-This limitation arises because tile statistics at a sample rate of~1.0 require access to the underlying tile data, which is available only for \ac{OSM}-based tilesets accessed via a local \texttt{.mbtiles} file.
-The remaining 13 styles either reference \ac{OSM} data through remote tile servers (where a full scan is impractical) or use the BasemapDE schema served via \acs{WMTS} (where the underlying data is not accessible for re-encoding).
-The two styles that are benchmarked end-to-end represent different points in the complexity spectrum - fiord is a compact basemap (48 layers) and liberty is a detailed multi-source style (111 layers) - but they share the OpenMapTiles schema, so the property-reference profile driving the tile pruning advisory is similar for both.
-Styles with substantially different property-reference patterns (e.g., BasemapDE styles that reference \texttt{funktion} and \texttt{objart} columns absent from OpenMapTiles) would produce different shaving advisories and potentially different cascade magnitudes.
+The full rendering pipeline - style optimisations through tile shaving to \ac{MLT} re-encoding - is benchmarked end-to-end on only 2 of the 15 styles (fiord and liberty), because rendering benchmarks require a running tile proxy and browser automation.
+However, the tile-shaving step alone (advisory generation and \ac{MVT} pruning, without rendering) was verified across all 11 \ac{OMT}-compatible styles on the same Germany tileset (\cref{fig:tile_shave_per_style}), confirming that the shaving effectiveness generalises across styles with reductions from \qty{19.8}{\percent} to \qty{46.3}{\percent}.
+The remaining limitation is that tile statistics at a sample rate of~1.0 require access to the underlying tile data, which is available only for \ac{OSM}-based tilesets accessed via a local \texttt{.mbtiles} file.
+BasemapDE styles that reference \texttt{funktion} and \texttt{objart} columns absent from OpenMapTiles would produce different shaving advisories and potentially different cascade magnitudes.
 The style-only results (Experiments~1-2) cover all 15 styles and are not affected by this limitation.
 
 \paragraph{Construct validity}
