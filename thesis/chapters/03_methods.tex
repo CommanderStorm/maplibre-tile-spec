@@ -1096,9 +1096,33 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
                 \end{tabular}%
             };
             \node[steplabel, above=1pt of hash] {\circled{2} MinHash signatures (128 permutations)};
+            
+            % Bottom-right (Step 3): Pairwise Jaccard
+            \node[stepbox, below=0.8cm of hash, cmp, text width=6.2cm, anchor=north] (sim) {%
+            	$\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| \,/\, 128$\quad for each sketch\\[3pt]
+            	\texttt{name:de} vs.\ \texttt{name:fr}:\\
+            	\quad $\hat{J}_{\text{exact}}\!=\!0.14$\enspace
+            	$\hat{J}_{\text{tri}}\!=\!\mathbf{0.35}$
+            	\;$\Rightarrow$ $0.35 > \tau$ \;\checkmark\\[1pt]
+            	\quad{\scriptsize because shared trigrams (Str, \ldots)}\\[2pt]
+            	\texttt{class} vs.\ \texttt{subclass}:\\
+            	\quad $\hat{J}_{\text{exact}}\!=\!0.45$\enspace
+            	$\hat{J}_{\text{tri}}\!=\!\mathbf{0.57}$
+            	\;$\Rightarrow$ $0.57 > \tau$ \;\checkmark\\[1pt]
+            	\quad{\scriptsize 5 shared values (motorway, trunk, primary, \ldots)}\\[2pt]
+            	\texttt{name:de} vs.\ \texttt{class}:\\
+            	\quad $\hat{J}_{\text{exact}}\!=\!0.00$\enspace
+            	$\hat{J}_{\text{tri}}\!=\!0.01$
+            	\;$\Rightarrow$ $0.01 < \tau$ \;$\times$\\[2pt]
+            	\texttt{maxspeed} vs.\ \emph{all others}:\\
+            	\quad $\hat{J}_{\text{exact}}\!=\!0.00$\enspace
+            	$\hat{J}_{\text{tri}}\!=\!0.00$
+            	\;$\Rightarrow$ $0.00 < \tau$ \;$\times$%
+            };
+            \node[steplabel, below=1pt of sim] {\circled{3} Pairwise comparison ($\tau = 0.075$)};
 
             % Bottom-left (Step 4): Union-Find result
-            \node[stepbox, cmp, anchor=north] at ($(tbl |- hash)$)  (res) {%
+            \node[stepbox, cmp] at ($(tbl |- sim)$)  (res) {%
                 \textbf{Shared dictionary groups:}\\[3pt]
                 \fbox{\strut\texttt{name:de}, \texttt{name:fr}}\\[1pt]
                 \quad{\scriptsize trigrams detected cross-language overlap}\\[4pt]
@@ -1108,30 +1132,6 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
                 \quad{\scriptsize no overlap with any string column}%
             };
             \node[steplabel, below=1pt of res] {\circled{4} Union-Find clustering};
-
-            % Bottom-right (Step 3): Pairwise Jaccard
-            \node[stepbox, below=0.8cm of hash, cmp, text width=6.2cm, anchor=north] (sim) {%
-                $\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| \,/\, 128$\quad for each sketch\\[3pt]
-                \texttt{name:de} vs.\ \texttt{name:fr}:\\
-                \quad $\hat{J}_{\text{exact}}\!=\!0.14$\enspace
-                $\hat{J}_{\text{tri}}\!=\!\mathbf{0.35}$
-                \;$\Rightarrow$ $0.35 > \tau$ \;\checkmark\\[1pt]
-                \quad{\scriptsize because shared trigrams (Str, \ldots)}\\[2pt]
-                \texttt{class} vs.\ \texttt{subclass}:\\
-                \quad $\hat{J}_{\text{exact}}\!=\!0.45$\enspace
-                $\hat{J}_{\text{tri}}\!=\!\mathbf{0.57}$
-                \;$\Rightarrow$ $0.57 > \tau$ \;\checkmark\\[1pt]
-                \quad{\scriptsize 5 shared values (motorway, trunk, primary, \ldots)}\\[2pt]
-                \texttt{name:de} vs.\ \texttt{class}:\\
-                \quad $\hat{J}_{\text{exact}}\!=\!0.00$\enspace
-                $\hat{J}_{\text{tri}}\!=\!0.01$
-                \;$\Rightarrow$ $0.01 < \tau$ \;$\times$\\[2pt]
-                \texttt{maxspeed} vs.\ \emph{all others}:\\
-                \quad $\hat{J}_{\text{exact}}\!=\!0.00$\enspace
-                $\hat{J}_{\text{tri}}\!=\!0.00$
-                \;$\Rightarrow$ $0.00 < \tau$ \;$\times$%
-            };
-            \node[steplabel, below=1pt of sim] {\circled{3} Pairwise comparison ($\tau = 0.075$)};
 
             % Arrows (clockwise)
             \draw[arrow] (tbl) -- node[above, font=\scriptsize\itshape] {hash} (hash);
