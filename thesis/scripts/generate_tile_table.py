@@ -8,7 +8,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 CSV_PATH = SCRIPT_DIR / "data" / "tile_sizes.csv"
 OUT_PATH = SCRIPT_DIR / "data" / "tile_sizes_per_zoom.csv"
 
-SOURCES = ["MVT", "MLT-Java", "MLT-Rust", "MLT-Rust-shaved"]
+SOURCES = ["MVT", "MVT-shaved", "MLT-Java", "MLT-Rust", "MLT-Rust-shaved"]
 
 
 def main() -> None:
@@ -29,7 +29,7 @@ def main() -> None:
     total_tiles = 0
 
     out_rows: list[list] = []
-    header = ["zoom", "tiles", "mvtBytes", "mltJavaBytes", "mltRustBytes", "mltShavedBytes", "deltaPct", "isTotal"]
+    header = ["zoom", "tiles", "mvtBytes", "mvtShavedBytes", "mltJavaBytes", "mltRustBytes", "mltShavedBytes", "deltaPct", "isTotal"]
 
     for z in zooms:
         vals = {s: data.get((s, z), 0) for s in SOURCES}
@@ -41,13 +41,13 @@ def main() -> None:
         mvt = vals["MVT"]
         delta = (vals["MLT-Rust-shaved"] - mvt) / mvt * 100 if mvt > 0 else 0
         out_rows.append([
-            z, tc, mvt, vals["MLT-Java"], vals["MLT-Rust"],
+            z, tc, mvt, vals["MVT-shaved"], vals["MLT-Java"], vals["MLT-Rust"],
             vals["MLT-Rust-shaved"], f"{delta:.1f}", 0,
         ])
 
     delta_total = (totals["MLT-Rust-shaved"] - totals["MVT"]) / totals["MVT"] * 100
     out_rows.append([
-        "Total", total_tiles, totals["MVT"], totals["MLT-Java"],
+        "Total", total_tiles, totals["MVT"], totals["MVT-shaved"], totals["MLT-Java"],
         totals["MLT-Rust"], totals["MLT-Rust-shaved"],
         f"{delta_total:.1f}", 1,
     ])

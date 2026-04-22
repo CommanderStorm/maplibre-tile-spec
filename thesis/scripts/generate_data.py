@@ -28,12 +28,10 @@ OUTPUT_DIR = SCRIPT_DIR / "data"
 
 SOURCES = {
     "MVT": ROOT / "data" / "germany.mbtiles",
+    "MVT-shaved": ROOT / "data" / "mvt-shaved" / "germany.mbtiles",
     "MLT-Java": ROOT / "java" / "germany.mlt.mbtiles",
     "MLT-Rust": ROOT / "data" / "germany-mlt.mbtiles",
-    "MLT-Rust-shaved": (
-        ROOT.parent / "maplibre-optimizer" / "tests" / "bench" / "results"
-        / "_bench_advisory_output" / "output.mbtiles"
-    ),
+    "MLT-Rust-shaved": ROOT / "data" / "mlt-shaved" / "germany.mbtiles",
 }
 
 COMPRESSORS = {

@@ -1069,7 +1069,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             stepbox/.style={draw, rounded corners=3pt, inner sep=5pt, font=\scriptsize},
             steplabel/.style={font=\scriptsize\bfseries},
             ]
-            % ═══ Top-left (Step 1): Column value table ═══
+            % Top-left (Step 1): Column value table
             \node[stepbox] (tbl) {%
                 \begin{tabular}{@{}l l@{}}
                     \textbf{Column} & \textbf{Distinct values (sample)} \\
@@ -1083,7 +1083,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             };
             \node[steplabel, above=1pt of tbl] {\circled{1} Column vocabularies};
 
-            % ═══ Top-right (Step 2): MinHash sketch generation ═══
+            % Top-right (Step 2): MinHash sketch generation
             \node[stepbox, right=0.8cm of tbl, anchor=west] (hash) {%
                 \begin{tabular}{@{}l c c@{}}
                     \textbf{Column} & \textbf{Exact sketch} & \textbf{Trigram sketch} \\
@@ -1097,7 +1097,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             };
             \node[steplabel, above=1pt of hash] {\circled{2} MinHash signatures (128 permutations)};
 
-            % ═══ Bottom-left (Step 4): Union-Find result ═══
+            % Bottom-left (Step 4): Union-Find result
             \node[stepbox, below=0.8cm of tbl, cmp, anchor=north] (res) {%
                 \textbf{Shared dictionary groups:}\\[3pt]
                 \fbox{\strut\texttt{name:de}, \texttt{name:fr}}\\[1pt]
@@ -1109,7 +1109,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             };
             \node[steplabel, above=1pt of res] {\circled{4} Union-Find clustering};
 
-            % ═══ Bottom-right (Step 3): Pairwise Jaccard ═══
+            % Bottom-right (Step 3): Pairwise Jaccard
             \node[stepbox, below=0.8cm of hash, cmp, text width=6.2cm, anchor=north] (sim) {%
                 $\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| \,/\, 128$\quad for each sketch\\[3pt]
                 \texttt{name:de} vs.\ \texttt{name:fr}:\\
@@ -1133,7 +1133,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             };
             \node[steplabel, above=1pt of sim] {\circled{3} Pairwise comparison ($\tau = 0.075$)};
 
-            % ═══ Arrows (clockwise) ═══
+            % Arrows (clockwise)
             \draw[arrow] (tbl) -- node[above, font=\scriptsize\itshape] {hash} (hash);
             \draw[arrow] (hash) -- (sim);
             \draw[arrow] (sim) -- node[above, font=\scriptsize\itshape] {$>\!\tau$?} (res);
