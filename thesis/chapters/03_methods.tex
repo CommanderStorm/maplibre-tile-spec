@@ -1049,7 +1049,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
     For each string column, two MinHash sketches of $128$ permutations are computed: one over exact string values and one over byte trigrams (3-byte sliding windows).
     The choice of 128 permutations corresponds to an expected standard error of approximately $1/\sqrt{128} \approx 8.8\%$ on the Jaccard estimate, which is adequate for the binary accept/reject decision of the clustering step.
     The trigram sketch captures partial overlap between columns whose values are substrings or morphological variants of each other.
-    Pairwise Jaccard similarity is estimated as $\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| / 128$ for each sketch type, and the maximum of the two estimates is taken.
+    Pairwise Jaccard similarity is estimated as $\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| / 128$ for each sketch type, and the maximum of two estimates is taken.
     Columns whose similarity exceeds \texttt{7.5\%} are unified via a Union-Find structure (union by size); the low threshold reflects that even small vocabulary overlap reduces the marginal cost of adding a column to an existing dictionary.
     Groups with fewer than two members are discarded.
     The threshold and similarity mode were selected via a sweep over $[2.5\%, 20\%]$ under three similarity modes (\emph{hybrid} taking $\max(\textit{exact}, \textit{trigram})$, \emph{only-trigram}, \emph{only-exact}), applied to the Germany OpenMapTiles tileset and measuring the total encoded size after clustering (\cref{fig:minhash_sweep}; the sweep harness is \texttt{scripts/generate\_minhash\_sweep.py}, which patches the threshold constant, rebuilds the encoder, and re-encodes the tileset for each cell).
