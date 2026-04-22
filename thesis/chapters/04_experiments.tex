@@ -132,7 +132,7 @@ AST complexity tells a similar per-style story: Fiord's expression nodes drop by
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/complexity_layer_count.pdf}
-    \caption{Layer count across cumulative ablation steps. Dead elimination and layer merging produce the largest reductions}
+    \caption{Layer count across cumulative ablation steps on the liberty style showing a representative behavior that only layer merging reduces the amount of layers. Dead elimination usually is unable to entirely remove layers because styles are usually designed to show parts of the map and thus cannot be safely removed.}
     \label{fig:complexity_layer_count}
 \end{figure}
 
