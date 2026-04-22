@@ -1046,7 +1046,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
 
 \begin{sloppypar}
     The Rust encoder replaces prefix matching with -based similarity clustering~\cite{broderResemblanceContainmentDocuments1998}.
-    For each string column, two MinHash sketches of \texttt{MINHASH\_PERMUTATIONS = 128} permutations are computed: one over exact string values and one over byte trigrams (3-byte sliding windows).
+    For each string column, two MinHash sketches of $128$ permutations are computed: one over exact string values and one over byte trigrams (3-byte sliding windows).
     The choice of 128 permutations corresponds to an expected standard error of approximately $1/\sqrt{128} \approx 8.8\%$ on the Jaccard estimate, which is adequate for the binary accept/reject decision of the clustering step.
     The trigram sketch captures partial overlap between columns whose values are substrings or morphological variants of each other.
     Pairwise Jaccard similarity is estimated as $\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| / 128$ for each sketch type, and the maximum of the two estimates is taken.
