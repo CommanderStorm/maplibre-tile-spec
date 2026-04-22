@@ -270,14 +270,21 @@ Bootstrap \qty{95}{\percent} confidence intervals confirm that the full-pipeline
 After shaving determines what data survives, the encoding stage determines whether the cascade's savings reach the wire.
 The multi-strategy competition described in \cref{sub_encoding_strategies} adapts to the shaved data's characteristics - fewer distinct values, more homogeneous distributions, smaller dictionaries - because its profiler-driven candidate pruning responds to actual stream statistics rather than fixed encoding plans.
 
-\cref{fig:size_total_per_zoom} plots total tile size per zoom level across the five configurations; the vertical gap between \enquote{style-only} and \enquote{style+shaving} is the cascade effect of style-level dead elimination and metadata refinement on the tile data, while the gap between \enquote{style+shaving} and \enquote{style+shaving+MLT} is the contribution of the Rust encoder's strategy selection on top of the shaved content.
+\cref{fig:shaving_effectiveness_per_zoom} plots total tile size per zoom level for both \ac{MVT} and \ac{MLT}-Rust, with and without shaving via the Liberty advisory.
+The gap between each format and its shaved counterpart quantifies the data removed by the pruning advisory; the gap between \ac{MVT}-shaved and \ac{MLT}-Rust-shaved quantifies the additional contribution of columnar encoding on the already-pruned data.
+Both formats benefit from shaving across all compression schemes, confirming that the advisory operates on the data itself rather than relying on format-specific redundancy.
 \cref{fig:compression_ratio_per_zoom} reframes the same evidence as a ratio against the \ac{MVT} baseline, adding the Tremmel \& Zink \ac{MLT}-Java encoder for comparison: the \ac{MLT}-Rust curves remain at roughly $0.6$-$0.8\times$ \ac{MVT} throughout the zoom range, whereas the \ac{MLT}-Java curves drift above $1.0\times$ at several zoom levels under brotli/zstd, underscoring that the gains attributed to the \ac{MLT} format in this thesis come almost entirely from the encoder-side strategy competition and not from the columnar format alone.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\linewidth]{figures/size_total_per_zoom}
-    \caption{Total tile size per zoom level across configurations~1-5.  The gap between \enquote{style-only} (config~2) and \enquote{style+shaving} (config~4) quantifies the cascade effect; the gap between config~4 and config~5 quantifies the contribution of MLT encoding optimisations}
-    \label{fig:size_total_per_zoom}
+    \includegraphics[width=\linewidth]{figures/shaving_effectiveness_per_zoom}
+    \caption{Total tile size per zoom level for unshaved and shaved variants of
+      both \ac{MVT} and \ac{MLT}-Rust, using the Liberty advisory.  The gap
+      between each format and its shaved counterpart quantifies the data removed
+      by the pruning advisory; the gap between \ac{MVT}-shaved and
+      \ac{MLT}-Rust-shaved quantifies the additional contribution of columnar
+      encoding}
+    \label{fig:shaving_effectiveness_per_zoom}
 \end{figure}
 
 \begin{figure}[htbp]
@@ -288,25 +295,41 @@ The multi-strategy competition described in \cref{sub_encoding_strategies} adapt
 \end{figure}
 
 \paragraph{Isolating the contribution of the Rust encoder's strategy selection}
-To separate the contribution of the multi-strategy competition (this work) from that of the \ac{MLT} format as proposed by Tremmel and Zink~\cite{tremmelMapLibreTileNext2025}, \cref{tab:mvt_mlt_comparison} reports the total encoded size of the Germany OpenMapTiles tileset (zoom~0-14, \num{256516} tiles) under three encoders - \ac{MVT} (the row-oriented protobuf baseline), \ac{MLT}-Java (the reference columnar encoder from Tremmel and Zink, used as the \ac{MLT} baseline), and \ac{MLT}-Rust (this thesis' encoder with sort-strategy competition, per-stream profiling, and shared-dictionary clustering) - and across four wire compressions (none, gzip-9, Brotli-11, zstd-22).
+To separate the contribution of the multi-strategy competition (this work) from that of the \ac{MLT} format as proposed by Tremmel and Zink~\cite{tremmelMapLibreTileNext2025}, \cref{fig:encoder_comparison} reports both a per-zoom breakdown and the total encoded size of the Germany OpenMapTiles tileset (zoom~0-14, \num{256516} tiles) under three encoders - \ac{MVT} (the row-oriented protobuf baseline), \ac{MLT}-Java (the reference columnar encoder from Tremmel and Zink, used as the \ac{MLT} baseline), and \ac{MLT}-Rust (this thesis' encoder with sort-strategy competition, per-stream profiling, and shared-dictionary clustering) - and across four wire compressions (none, gzip-9, Brotli-11, zstd-22).
 
-\begin{table}[htbp]
+\begin{figure}[htbp]
 \centering
-\begin{tblr}{colspec={l r r r r}, rows={font=\small}, row{1}={font=\small\bfseries}}
-\toprule
-Encoder & Plain (GB) & gzip (GB) & Brotli (GB) & zstd (GB) \\
-\midrule
-\ac{MVT}              & 4.24 & 3.08 & 3.13 & 3.16 \\
-\ac{MLT}-Java baseline & 4.26 & 3.54 & 3.57 & 3.60 \\
-\ac{MLT}-Rust (this work) & 3.06 & 2.70 & 2.72 & 2.75 \\
-\midrule
-$\Delta$ Rust vs.\ Java (\%) & $-28.3$ & $-23.8$ & $-23.7$ & $-23.6$ \\
-$\Delta$ Rust vs.\ \ac{MVT} (\%) & $-27.9$ & $-12.3$ & $-13.1$ & $-12.9$ \\
-\bottomrule
-\end{tblr}
-\caption{Total Germany OpenMapTiles tileset size (zoom 0-14, \num{256516} tiles) for the three encoders under four wire compressions.  The \ac{MLT}-Java column reports the baseline published in~\cite{tremmelMapLibreTileNext2025}; the \ac{MLT}-Rust column reports the Rust encoder developed in this thesis.  Raw CSV in \texttt{thesis/scripts/data/tile\_sizes.csv}}
-\label{tab:mvt_mlt_comparison}
-\end{table}
+    \begin{subfigure}[t]{\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/encoder_comparison_per_zoom}
+        \caption{Per-zoom total tile size for the three encoders under four wire compressions}
+        \label{fig:encoder_comparison_per_zoom}
+    \end{subfigure}
+
+    \vspace{1em}
+
+    \begin{subfigure}[t]{\linewidth}
+        \centering
+        \begin{tblr}{colspec={l r r r r}, rows={font=\small}, row{1}={font=\small\bfseries}}
+        \toprule
+        Encoder & Plain (GB) & gzip (GB) & Brotli (GB) & zstd (GB) \\
+        \midrule
+        \ac{MVT}              & 4.24 & 3.08 & 3.13 & 3.16 \\
+        \ac{MLT}-Java baseline & 4.26 & 3.54 & 3.57 & 3.60 \\
+        \ac{MLT}-Rust (this work) & 3.06 & 2.70 & 2.72 & 2.75 \\
+        \midrule
+        $\Delta$ Rust vs.\ Java (\%) & $-28.3$ & $-23.8$ & $-23.7$ & $-23.6$ \\
+        $\Delta$ Rust vs.\ \ac{MVT} (\%) & $-27.9$ & $-12.3$ & $-13.1$ & $-12.9$ \\
+        \bottomrule
+        \end{tblr}
+        \caption{Total tileset size for the three encoders under four wire compressions.
+          The \ac{MLT}-Java column reports the baseline published in~\cite{tremmelMapLibreTileNext2025};
+          the \ac{MLT}-Rust column reports the Rust encoder developed in this thesis}
+        \label{tab:mvt_mlt_comparison}
+    \end{subfigure}
+\caption[Encoder comparison: per-zoom breakdown and total tileset size]{Encoder comparison for the Germany OpenMapTiles tileset (zoom~0-14, \num{256516} tiles).  Raw CSV in \texttt{thesis/scripts/data/tile\_sizes.csv}}
+\label{fig:encoder_comparison}
+\end{figure}
 
 Three observations emerge.
 \emph{First}, under no wire compression the Rust encoder reduces the \ac{MLT}-Java baseline by \qty{28.3}{\percent}, confirming that the sort-strategy competition, per-stream profiler, and shared-dictionary clustering add substantial savings over a columnar encoder that simply picks a fixed encoding plan.
