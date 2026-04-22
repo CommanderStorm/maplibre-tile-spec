@@ -96,37 +96,13 @@ This thesis complements them by introducing a cumulative ablation methodology th
 
 \section{Positioning}\label{sec_rw_positioning}
 
-\cref{tab:related_work_comparison} summarises how the related work covers different optimisations dimensions.
+In summary, existing work addresses individual optimisation dimensions in isolation.
+Data-level tools such as \texttt{vtshaver}, \texttt{vt-optimizer}, and Tippecanoe prune tile content but leave the style untouched.
+Conversely, Stamen's default-stripping tool and the CSS merging work by Hague et al.\ operate purely on style rules without considering the underlying data.
+Tremmel and Zink advance tile encoding with the columnar MLT format yet select encoding strategies without style knowledge.
+The benchmarking studies by Netek et al., Balla and Gede, and Rechsteiner establish measurement baselines but evaluate systems rather than optimisation passes.
+Mapbox's proprietary style-optimised tiles are the only precedent that couples style and data, but the approach is closed-source and cannot be inspected, extended, or independently deployed.
 
-\begin{table}[htbp]
-\centering
-\resizebox{\textwidth}{!}{\begin{tblr}{
-  colspec = {l c c c c c},
-  rows = {font=\small},
-  row{1} = {font=\small\bfseries},
-}
-\toprule
-Tool / Work & Style & Data & Encoding & Co-opt. & Eval. \\
-\midrule
-\texttt{vtshaver}~\cite{mapboxVtshaverTileShaving2018}                 & --     & \checkmark & --         & --         & --         \\
-\texttt{vt-optimizer}~\cite{vilardagaVtoptimizerVectorTile2023}        & partial & \checkmark & --         & --         & --         \\
-Mapbox style-opt.\ tiles~\cite{StyleoptimizedVectorTiles}              & --     & \checkmark & --         & partial    & --         \\
-Tippecanoe~\cite{FeltTippecanoe2026}                                           & --     & \checkmark & --         & --         & --         \\
-Tremmel \& Zink~\cite{tremmelMapLibreTileNext2025}                     & --     & --         & \checkmark & --         & \checkmark \\
-\texttt{remove-defaults} (Stamen)                                      & partial & --        & --         & --         & --         \\
-Hague et al.~\cite{hagueCSSMinificationConstraint2019}                 & \checkmark$^*$ & -- & --         & --         & \checkmark \\
-Netek et al.~\cite{netekPerformanceTestingVector2020}                  & --     & --         & --         & --         & \checkmark \\
-Balla \& Gede~\cite{ballaVectorDataRendering2025}                      & --     & --         & --         & --         & \checkmark \\
-Rechsteiner~\cite{rechsteinerPerformancevergleichOpenSourceVectorTilesServerloesungenZur2024} & -- & -- & -- & -- & \checkmark \\
-\midrule
-This thesis                                                    & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
-\bottomrule
-\end{tblr}}
-\caption{Coverage of optimisations dimensions in related work. \enquote{Style} = style-level optimisations, \enquote{Data} = tile data pruning, \enquote{Encoding} = wire format innovation, \enquote{Co-opt.} = joint style-data optimisations, \enquote{Eval.} = systematic empirical evaluation. $^*$CSS domain, not map styles.}
-\label{tab:related_work_comparison}
-\end{table}
-
-As the table shows, existing tools address individual optimisations dimensions but none combines all four.
-Critically, no existing open-source tool performs \emph{joint} optimisations of style and data: using tile statistics to simplify the style, and using the simplified style to prune the data, creating a cascade where each side makes the other more effective.
-This thesis fills this gap by applying compiler and database optimisations techniques - peephole rewriting, constant folding, dead code elimination, selectivity-based predicate reordering, and profile-guided encoding selection - to the map style and tile data as a unified optimisations target.
+Critically, no existing open-source tool performs \emph{joint} optimisation of style and data: using tile statistics to simplify the style, and using the simplified style to prune the data, creating a feedback loop where each side makes the other more effective.
+This thesis fills the gap by applying compiler and database optimisation techniques -- peephole rewriting, constant folding, dead code elimination, selectivity-based predicate reordering, and profile-guided encoding selection -- to the map style and tile data as a unified optimisation target, and by evaluating the result through a cumulative ablation methodology that isolates each pass's contribution.
 The following chapter introduces the theoretical foundations that these techniques draw on: the map rendering architecture that defines the optimisation target, the compiler and query optimisation concepts that inform the rewrite rules, and the encoding strategies that underpin the data-level passes.
