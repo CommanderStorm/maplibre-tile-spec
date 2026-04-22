@@ -595,7 +595,8 @@ The propagation also intentionally ignores \texttt{["feature-state", \ldots]} re
 
 \emph{Phase~2} (match-pattern detection) checks whether all filters within a candidate group match the pattern \texttt{["==",~["get",~P],~literal]} on the same property~$P$.
 If so, the merged filter is a compact \texttt{match} expression rather than a verbose \texttt{case} chain, and merged paint/layout properties also use \texttt{match} with the same discriminator.
-This pattern is common in practice: road styles frequently define separate layers for motorway, trunk, primary, secondary, and tertiary, differing only in width and colour.
+This pattern is common in practice: road styles frequently define separate layers for motorway, trunk, primary, secondary, and tertiary, differing only in width, colour and layering.
+Additionally, for casig roads for one road there are usually two layers.
 
 \emph{Phase~3} (zoom-tolerant merging) handles layers whose zoom ranges differ slightly.
 Rather than rejecting the merge, it wraps each sub-filter with zoom guards (\texttt{[">=",\allowbreak~["zoom"],\allowbreak~lo]}, \texttt{["<=",\allowbreak~["zoom"],\allowbreak~hi]}) and uses the union of all zoom ranges as the merged layer's bounds.
