@@ -92,7 +92,7 @@ The ordering of structural passes is significant, and several inter-pass depende
 Metadata refinement relies on zoom predicates appearing in canonical form - e.g., \texttt{[">=",\allowbreak{} ["zoom"],\allowbreak{} 10]} rather than \texttt{["!",\allowbreak{} ["<",\allowbreak{} ["zoom"],\allowbreak{} 10]]}.
 The expression simplification pass (De~Morgan, double-negation elimination) normalises such patterns, and constant folding may collapse compound zoom guards into a single predicate.
 Without this normalisation, the metadata refinement pass would fail to recognise many zoom predicates.
-The alternative would be to have an unnessarily complex structural pass.
+The alternative would be to have an more complex structural pass.
 \end{sloppypar}
 
 \paragraph{Dead elimination before layer merging}
