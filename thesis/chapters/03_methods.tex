@@ -58,7 +58,7 @@ Fixpoint iteration in the expression phase is necessary because rewrites compose
 The cap of eight iterations provides a defensive safety margin; in practice, most styles converge within two to three iterations, and no style in either the deep benchmarking corpus or the Maputnik generalisation corpus has ever reached the cap.
 
 A notable cross-phase optimisations is \emph{filter-to-property constant propagation}.
-During the typed structural phase, equality constraints are extracted from a layer's filter expression (e.g.\ if the filter asserts \texttt{["==",~["get",~"class"],\ldots]}, then the property \texttt{class} is known to equal \texttt{"primary"} for all features passing the filter).
+During the typed structural phase, equality constraints are extracted from a layer's filter expression (e.g.\ if the filter asserts \texttt{["==",~["get",~"class"],~"primary"]}, then the property \texttt{class} is known to equal \texttt{"primary"} for all features passing the filter).
 These constraints are propagated into the layer's paint and layout expressions, replacing \texttt{["get",~"class"]} references with the known literal value.
 This enables further constant folding within paint ramp expressions that branch on the same property, collapsing \texttt{match} and \texttt{case} arms that are unreachable given the filter constraint.
 The propagation operates within a single layer (intra-procedural, in compiler terminology) and extracts constraints from \texttt{all}, equality, \texttt{has}, \texttt{in}, and range predicates.
