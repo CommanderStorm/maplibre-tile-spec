@@ -93,7 +93,7 @@ AXIS_VERDICTS: dict[str, str] = {
 # Frontier-plot colours. The accent comes from the shared thesis palette
 # (``generate_plots.SOURCE_COLORS``); the dominated marker colour is a
 # neutral grey that doesn't need to live in the palette.
-FRONTIER_COLOUR = SOURCE_COLORS["MLT-Java"]  # rose
+FRONTIER_COLOUR = SOURCE_COLORS["MLT-Java"]  # orange
 DOMINATED_COLOUR = "#BBBBBB"
 DOMINATED_OUTLINE = "#666666"
 

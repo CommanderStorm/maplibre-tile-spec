@@ -31,13 +31,13 @@ FORMATS = ["png", "pdf"]
 FIG_WIDTH = 700
 FIG_HEIGHT = 400
 
-# Match thesis palette (Tol muted)
-BAR_COLOR = "#332288"       # indigo
-BAR_COLOR_ALT = "#88CCEE"   # cyan
+# Match thesis palette
+BAR_COLOR = "#5E94D4"       # light blue
+BAR_COLOR_ALT = "#8F81EA"   # purple
 
 LAYOUT_DEFAULTS = dict(
     template="plotly_white",
-    font=dict(size=12),
+    font=dict(family="Helvetica, Arial, sans-serif", size=12),
     margin=dict(l=110, r=60, t=40, b=60),
 )
 

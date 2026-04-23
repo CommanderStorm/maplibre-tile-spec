@@ -29,11 +29,11 @@ FIG_HEIGHT = 450
 
 # Colorblind-friendly palette (Tol muted)
 SOURCE_COLORS = {
-    "MVT": "#332288",              # indigo
-    "MVT-shaved": "#88CCEE",       # cyan (Tol muted)
-    "MLT-Java": "#CC6677",         # rose
-    "MLT-Rust": "#44AA99",         # teal
-    "MLT-Rust-shaved": "#117733",  # green (Tol muted)
+    "MVT": "#5E94D4",              # light blue
+    "MVT-shaved": "#8F81EA",       # purple
+    "MLT-Java": "#F7811E",         # orange
+    "MLT-Rust": "#9FBA36",         # green
+    "MLT-Rust-shaved": "#B55CA5",  # pink
 }
 
 COMPRESSION_DASHES = {
@@ -45,7 +45,7 @@ COMPRESSION_DASHES = {
 
 LAYOUT_DEFAULTS = dict(
     template="plotly_white",
-    font=dict(size=12),
+    font=dict(family="Helvetica, Arial, sans-serif", size=12),
     margin=dict(l=70, r=30, t=40, b=60),
 )
 
@@ -249,9 +249,9 @@ def plot_compression_ratio_per_zoom(df: pd.DataFrame) -> None:
 
 
 MODE_COLORS = {
-    "hybrid": "#44AA99",      # teal
-    "only-trigram": "#CC6677", # rose
-    "only-plain": "#332288",   # indigo
+    "hybrid": "#9FBA36",       # green
+    "only-trigram": "#F7811E",  # orange
+    "only-plain": "#5E94D4",   # light blue
 }
 
 
@@ -380,11 +380,11 @@ def plot_waterfall_loadMs() -> None:
         elif d <= 0:
             bases.append(running + d)
             heights.append(abs(d))
-            colors.append("#44AA99")  # teal = improvement
+            colors.append("#9FBA36")  # green = improvement
         else:
             bases.append(running)
             heights.append(d)
-            colors.append("#CC6677")  # rose = regression
+            colors.append("#F7811E")  # orange = regression
         running += d
 
     fig = go.Figure()
@@ -449,7 +449,7 @@ def plot_marginal_loadMs() -> None:
         deltas.append(m)
         err_lo.append(m - lo)
         err_hi.append(hi - m)
-        colors.append("#44AA99" if m <= 0 else "#CC6677")
+        colors.append("#9FBA36" if m <= 0 else "#F7811E")
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -525,11 +525,11 @@ CONFIG_MAP = {
 }
 
 CONFIG_COLORS = {
-    "1: MVT baseline": "#332288",
-    "2: Style-only": "#CC6677",
-    "3: Shaving-only": "#88CCEE",
-    "4: Style+shaving": "#44AA99",
-    "5: Style+shaving+MLT": "#117733",
+    "1: MVT baseline": "#5E94D4",
+    "2: Style-only": "#F7811E",
+    "3: Shaving-only": "#8F81EA",
+    "4: Style+shaving": "#9FBA36",
+    "5: Style+shaving+MLT": "#B55CA5",
 }
 
 
