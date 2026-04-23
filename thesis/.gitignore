@@ -8,3 +8,4 @@
 *.bcf
 *.synctex*
 *.png
+scripts/__pycache__
