@@ -9,3 +9,9 @@
 *.synctex*
 *.png
 scripts/__pycache__
+*.bbl
+*.blg
+*.lot
+*.lof
+main.pdf
+*.run.xml
