@@ -360,7 +360,7 @@ Both examples are drawn from the optimiser's test suite.
 
 \begin{figure}[htbp]
 \centering
-\begin{minipage}[t]{0.48\linewidth}
+\begin{minipage}[t]{\linewidth}
 \textbf{Before} (distributive factoring + \texttt{any}$\to$\texttt{in}):\par\smallskip
 \begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize,frame=single]
 ["any",
@@ -369,23 +369,23 @@ Both examples are drawn from the optimiser's test suite.
   ["all", ["has","name"],
           ["==",["get","class"],"rail"]]]
 \end{lstlisting}
-\textbf{After:}\par\smallskip
-\begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize,frame=single]
-["all",
-  ["has","name"],
-  ["in",["get","class"],
-        ["literal",["road","rail"]]]]
-\end{lstlisting}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\linewidth}
 \textbf{Before} (filter-to-property propagation):\par\smallskip
 \begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize,frame=single]
 filter: ["==",["get","class"],"road"]
 paint:
-  fill-color:
-    ["match",["get","class"],
-      "road","#333",
-      "rail","#666","#999"]
+fill-color:
+["match",["get","class"],
+"road","#333",
+"rail","#666","#999"]
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{\linewidth}
+\textbf{After:}\par\smallskip
+\begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize,frame=single]
+	["all",
+	["has","name"],
+	["in",["get","class"],
+	["literal",["road","rail"]]]]
 \end{lstlisting}
 \textbf{After:}\par\smallskip
 \begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize,frame=single]
