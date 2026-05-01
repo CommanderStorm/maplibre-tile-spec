@@ -43,8 +43,6 @@ jobs:
         env:
           HOTPATH_OUTPUT_FORMAT: json
           HOTPATH_OUTPUT_PATH: /tmp/metrics/head_timing.json
-        # DEMO: pessimize head encoding so the size-diff comment shows a
-        # clearly visible degradation against the (default-encoded) base.
         run: |
           cargo run --release -p mlt --features='__hotpath,__hotpath-alloc' -- \
             convert --sort none --no-shared-dict \
