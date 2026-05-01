@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "rust/**"
+      - ".github/workflows/hotpath-profile.yml"
 
 permissions:
   contents: read
@@ -42,9 +43,12 @@ jobs:
         env:
           HOTPATH_OUTPUT_FORMAT: json
           HOTPATH_OUTPUT_PATH: /tmp/metrics/head_timing.json
+        # DEMO: pessimize head encoding so the size-diff comment shows a
+        # clearly visible degradation against the (default-encoded) base.
         run: |
           cargo run --release -p mlt --features='__hotpath,__hotpath-alloc' -- \
-            convert /tmp/benchmark-tiles/ /tmp/mlt-head-out/
+            convert --sort none --no-shared-dict \
+            /tmp/benchmark-tiles/ /tmp/mlt-head-out/
 
       - name: Head per-tile sizes
         run: just rust::compress-db-statistics /tmp/mlt-head-out /tmp/metrics/head_sizes.db
