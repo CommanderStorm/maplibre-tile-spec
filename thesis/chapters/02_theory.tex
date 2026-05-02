@@ -7,7 +7,7 @@ This chapter introduces these foundations in the order in which the optimiser co
 \cref{sec_compiler_optimisations} surveys compiler optimisation techniques - peephole rewriting, constant folding, and fixpoint iteration - whose analogues are applied to style expressions.
 \cref{sec_query_optimisations} presents query optimisation concepts - predicate pushdown and selectivity estimation - used for filter rewriting and reordering.
 \cref{sec_data_encoding} covers the columnar encoding and compression schemes employed at the tile level.
-\cref{sec_multi_objective_optimisations} discusses multi-objective optimisation, \cref{sec_benchmarking} covers benchmarking methodology, and \cref{sec_problem_statement} formalises the optimisation problem that \cref{ch_methods} addresses.
+\cref{sec_benchmarking} covers benchmarking methodology, and \cref{sec_problem_statement} formalises the optimisation problem that \cref{ch_methods} addresses.
 
 \section{Map Rendering Approaches}\label{sec_map_rendering_approaches}
 
@@ -428,6 +428,23 @@ Map-style filters are in fact known to violate independence: in OpenMapTiles, fo
 A joint-distribution estimator would therefore give tighter bounds, but the selectivity signal used in this thesis is consumed only by a \emph{reordering} heuristic - not by a cost-based plan chooser - and reordering is monotone in the ordering of the individual selectivities rather than in their absolute values.
 The independence-estimator error therefore propagates into the quality of the short-circuit ordering but never into the correctness of the rewritten style, which makes the cheap estimator an acceptable engineering choice for this use case.
 
+\subsection{Materialized Views}\label{sub_materialized_views}
+
+A \emph{materialized view} is a derived relation whose contents are precomputed from a query over base tables and stored for fast access~\cite{guptaMaintenanceMaterializedViews1995}.
+When the base data changes, the materialized view must be updated - either by full recomputation or by \emph{incremental view maintenance} (IVM), which propagates only the delta.
+The cascade developed in this thesis has a direct structural analogue: the tile set is the base relation, the rendering style is the view definition, and the shaved tile is the materialized view.
+When the style changes (e.g., a layer is removed by dead elimination), the pruning advisory changes, which in turn changes the shaved output - precisely the IVM problem of maintaining a derived dataset under view-definition changes.
+The future direction of serving-time applicability (\cref{sec_conclusion_future_work}) - applying the advisory as a per-request filter rather than a batch operation - is a form of virtual (non-materialized) view evaluation.
+
+\subsection{Partial Evaluation and Superoptimization}\label{sub_partial_eval}
+
+\emph{Partial evaluation} (also called program specialization) transforms a program with respect to known static inputs, producing a residual program that depends only on the remaining dynamic inputs~\cite{jonesPartialEvaluationAutomatic1993}.
+The style optimiser performs partial evaluation of the rendering function: the style (static input) is known at optimisation time, while tile data (dynamic input) varies at runtime.
+Filter-to-property constant propagation (\cref{sub_structural_optimisations}) is a textbook instance: an equality constraint in the filter (static) is substituted into paint expressions, collapsing data-dependent branches that can never be reached given the known filter.
+
+The encoding strategy competition (\cref{sub_encoding_strategies}) is more accurately characterised as \emph{superoptimization}~\cite{massalinSuperoptimizerLookingShortest1987}: the encoder exhaustively evaluates all candidate strategies over the actual data and retains the smallest result, rather than using profile data to guide a heuristic decision as in classical profile-guided optimization.
+The distinction matters: profile-guided optimization may make suboptimal choices; the competition is optimal over its search space.
+
 
 \section{Data Encoding and Compression}\label{sec_data_encoding}
 
@@ -528,14 +545,6 @@ where $\mathbf{1}[\cdot]$ is the indicator function.
 The estimate is unbiased with variance $O(1/k)$~\cite{broderResemblanceContainmentDocuments1998}.
 
 
-\section{Multi-Objective Optimisation}\label{sec_multi_objective_optimisations}
-
-Map rendering optimisation is inherently multi-objective: reducing tile size, minimising load time, maximising rendering throughput, and controlling memory consumption are competing goals.
-Such problems can be formulated as \acsp{MOOP}, where the set of \emph{Pareto-optimal} solutions - configurations for which no objective can be improved without worsening another - forms the \emph{Pareto front}~\cite{paretoCoursDEconomiePolitique1896}.
-A range of algorithms exist for approximating the Pareto front~\cite{debFastElitistMultiobjective2002,zitzlerIndicatorBasedSelectionMultiobjective2004,qingfuzhangMOEAMultiobjectiveEvolutionary2007}.
-This thesis does not embed a \ac{MOOP} search algorithm; instead, it uses Pareto dominance as a post-hoc analysis tool over the cumulative-ablation result space (\cref{sec_exp_pareto}), restricted to the two axes whose signal exceeds the benchmark noise floor.
-
-
 \section{Benchmarking}\label{sec_benchmarking}
 
 Benchmarking refers to the systematic measurement of system performance using controlled workloads and standardized metrics.
@@ -592,9 +601,18 @@ Fixpoint iteration terminates because each successful rule application strictly 
     \mu(S) = (n_{\mathrm{AST}}(S),\, d_{\max}(S),\, n_{\mathrm{lit}}(S))
 \end{equation}
 ordered lexicographically, where $n_{\mathrm{AST}}$ is the total number of \ac{AST} nodes in all expressions of $S$, $d_{\max}$ is the maximum expression nesting depth, and $n_{\mathrm{lit}}$ is the number of non-literal nodes.
-All peephole rules either reduce $n_{\mathrm{AST}}$ (e.g.\ constant folding, boolean absorption, dead-branch elimination), keep $n_{\mathrm{AST}}$ unchanged but strictly reduce $d_{\max}$ (e.g.\ boolean flattening), or keep both unchanged but strictly reduce $n_{\mathrm{lit}}$ (e.g.\ redundant coercion removal).
-The two potential exceptions - \texttt{any}$\to$\texttt{in} merging and predicate reordering - are either strictly monotone in the measure (\texttt{any}$\to$\texttt{in} reduces $n_{\mathrm{AST}}$ because the merged \texttt{in} has fewer nodes than the original chain of equalities) or semantically idempotent after one application (selectivity reordering sorts predicates into a canonical order).
-Because $\mu$ is bounded below by $(0, 0, 0)$ and strictly decreases on each productive iteration, the fixpoint is reached in finitely many steps.
-The implementation adds a conservative hard cap of \texttt{NORMALIZE\_FOLD\_FIXPOINT\_CAP = 8} iterations as a defensive safeguard against future rules that might violate the monotonicity invariant above.
+The majority of peephole rules strictly reduce $\mu$: they either reduce $n_{\mathrm{AST}}$ (e.g.\ constant folding, boolean absorption, dead-branch elimination), keep $n_{\mathrm{AST}}$ unchanged but strictly reduce $d_{\max}$ (e.g.\ boolean flattening), or keep both unchanged but strictly reduce $n_{\mathrm{lit}}$ (e.g.\ redundant coercion removal).
+Two further rules - \texttt{any}$\to$\texttt{in} merging and predicate reordering - are either strictly monotone in the measure (\texttt{any}$\to$\texttt{in} reduces $n_{\mathrm{AST}}$ because the merged \texttt{in} has fewer nodes than the original chain of equalities) or semantically idempotent after one application (selectivity reordering sorts predicates into a canonical order).
+
+Two rules can \emph{temporarily increase} $n_{\mathrm{AST}}$ within a single iteration.
+De~Morgan's law transforms \texttt{["!",\allowbreak["any",\allowbreak A,\allowbreak B]]} (4~nodes) into \texttt{["all",\allowbreak["!",\allowbreak A],\allowbreak["!",\allowbreak B]]} (5~nodes), and distributive factoring may introduce boolean identity elements in vacuous-remainder cases.
+In both cases, subsequent rules within the same or next iteration typically compensate: boolean flattening reduces nesting depth, and constant folding absorbs the identity elements, so the net effect across iterations is a decrease in $\mu$.
+In the general case, however, compensating rules are not guaranteed to fire (e.g., when De~Morgan produces negated predicates that admit no further simplification at the top level of a filter).
+The implementation therefore imposes a hard cap of \texttt{NORMALIZE\_FOLD\_FIXPOINT\_CAP\,=\,8} iterations, which is the formal termination guarantee; in practice, all styles in the benchmark corpus converge within three iterations.
+Together, the bounded-below measure for the majority of rules and the hard cap guarantee that the fixpoint is reached in finitely many steps.
+
+The rewrite system is not confluent: the first matching rule fires (table iteration order defines implicit priority), and selectivity reordering depends on data-dependent statistics.
+Different rule orderings could therefore yield different but visually equivalent output.
+Visual equivalence - the soundness criterion of~(\ref{eq:visual_equivalence}) - is preserved regardless, because every individual rule preserves expression semantics.
 
 With these theoretical tools in place - the rendering architecture that defines the optimisation target, the compiler and database techniques that supply the rewrite strategies, the encoding schemes that govern the data level, and the formal problem statement that constrains correctness - the following chapter presents the concrete design and implementation of the optimiser.

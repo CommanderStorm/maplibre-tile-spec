@@ -36,9 +36,9 @@ SOURCES = {
 
 COMPRESSORS = {
     "plain": lambda data: data,
-    "gzip": lambda data: gzip.compress(data, compresslevel=6),
-    "brotli": lambda data: brotli.compress(data, quality=4),
-    "zstd": lambda data: zstandard.ZstdCompressor(level=3).compress(data),
+    "gzip": lambda data: gzip.compress(data, compresslevel=9),
+    "brotli": lambda data: brotli.compress(data, quality=11),
+    "zstd": lambda data: zstandard.ZstdCompressor(level=22).compress(data),
 }
 
 CSV_HEADER = [

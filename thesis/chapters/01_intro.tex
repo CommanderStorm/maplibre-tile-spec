@@ -34,9 +34,9 @@ The optimised output must produce pixel-identical rendering for every tile at ev
 The main contributions of this thesis are:
 
 \begin{enumerate}
-    \item A \textbf{two-phase style optimisation pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering) and structural passes (dead layer elimination, metadata refinement, layer merging), modeled on peephole optimisers and query planners from the compiler and database literature.
+    \item A \textbf{three-level optimisation pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering), structural passes (dead layer elimination, metadata refinement, layer merging), and data-level transformations (tile shaving, encoding strategy selection), modeled on peephole optimisers and query planners from the compiler and database literature.
 
-    \item \textbf{Style-driven tile shaving} that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data - creating a cascade from style-level changes into faster decoding and smaller encoded tiles (\cref{sub_mlt_discussion}).
+    \item \textbf{Style-driven tile shaving} that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data.  Tile shaving is the dominant contributor to load-time improvements; style-level passes assist by narrowing the advisory, though the interaction is additive rather than synergistic (\cref{sub_mlt_discussion}).
 
     \item An \textbf{automatic encoding strategy selection} for the MapLibre Tiles (MLT) columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies, adapting to the changed data characteristics that emerge after style-driven shaving alters value distributions and column cardinalities.
 

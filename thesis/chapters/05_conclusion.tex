@@ -1,6 +1,6 @@
 \chapter{Conclusion}\label{ch_conclusion}
 
-The experiments in the preceding chapter evaluated each optimisation level in isolation and then measured their combined effect, revealing that the cascade from style simplification through tile shaving to columnar re-encoding is more effective than applying either level in isolation.
+The experiments in the preceding chapter evaluated each optimisation level in isolation and then measured their combined effect, revealing that tile shaving and columnar re-encoding dominate the load-time improvements while style-level passes provide modest, additive contributions.
 This chapter draws together the findings: it summarises the contributions, distils the key insights, revisits the three research questions posed in \cref{sec_research_goals}, and identifies directions for future work.
 
 \section{Summary of Contributions}
@@ -8,54 +8,54 @@ This chapter draws together the findings: it summarises the contributions, disti
 The main contributions are:
 
 \begin{enumerate}
-    \item The \textbf{two-phase style pipeline} (\cref{sub_pipeline}) proved most effective as an enabler: expression-level simplifications cascaded into forms that structural passes could exploit, with constant folding and dead elimination together accounting for the largest per-pass rendering gains (\cref{sub_combined_marginal}).
-    Some passes, such as the default removal passes had both positive and negative effects on the metrics measured, but not to an significant enough extent that \ac{MOOP} would be a significant factor.
+    \item The \textbf{three-level optimisation pipeline} (\cref{sub_pipeline}) proved most effective as an enabler: expression-level simplifications cascaded into forms that structural passes could exploit, with constant folding and dead elimination together accounting for the largest per-pass rendering gains (\cref{sub_combined_marginal}).
+    Some passes, such as the default removal passes had both positive and negative effects on the metrics measured, but not to a significant enough extent to alter the overall trend.
 
-    \item \textbf{Style-driven tile shaving} (\cref{sub_tile_shaving}) produced the cascade documented in \cref{sub_mlt_discussion}: dead elimination narrowed the pruning advisory enough to eliminate entire property columns and tiles from the encoded output.
+    \item \textbf{Style-driven tile shaving} (\cref{sub_tile_shaving}) is the dominant contributor to load-time and transfer-size improvements.  Dead elimination narrows the pruning advisory, enabling elimination of property columns and tiles from the encoded output, though the interaction with style-level passes is additive rather than synergistic (\cref{sub_mlt_discussion}).
 
     \item The \textbf{automatic encoding strategy selection} for the \ac{MLT} format closed the gap that the fixed-plan Java encoder left open: the Rust encoder's per-stream profiling and sort-strategy competition reduced tile volume by \qty{28}{\percent} over the Java baseline, and this advantage persisted under every wire compressor tested (\cref{tab:mvt_mlt_comparison}).
 
-    \item The \textbf{empirical evaluation} (\cref{ch_experiments}) confirmed that the three optimisation categories are complementary: expression and structural passes dominate rendering-throughput improvements, while data-level passes dominate load-time improvements, with the full pipeline reducing total tile volume by \qty{15}{\percent} and improving end-to-end load times by \qtyrange{71}{75}{\percent} on the two styles benchmarked with tile data.
+    \item The \textbf{empirical evaluation} (\cref{ch_experiments}) confirmed that the three optimisation categories are complementary: expression and structural passes dominate rendering-throughput improvements, while data-level passes dominate load-time improvements, with the full pipeline reducing total tile volume by \qty{28}{\percent} (\qty{12}{\percent} over gzip-compressed \ac{MVT}) and improving end-to-end load times by \qtyrange{71}{75}{\percent} on the two styles benchmarked with tile data.
 \end{enumerate}
 
 \section{Key Findings}
 
 Three architectural insights emerged from the evaluation that go beyond the quantitative results reported in \cref{ch_experiments}.
 
-\emph{First}, the cascade effect (\cref{sub_mlt_discussion}) - style simplification narrows the pruning advisory, which shrinks the encoded tiles - is the central finding.
-The pipeline is more effective than applying either level in isolation, and any evaluation that benchmarks data-level or style-level optimisations alone will understate the combined benefit.
-For the geospatial community this means that style authoring and tile encoding can be treated as correlated concerns: the two interact, and tooling that exploits the interaction can recover some transfer and rendering savings without any change to the underlying data or the renderer.
-For FPS ($200\%$) and transfer size ($37\%$) this effect is significant, while for load time it is not as significant at $1\%$.
+\emph{First}, tile shaving dominates the load-time and transfer-size improvements (\cref{sub_mlt_discussion}).
+Style-level passes simplify the advisory computation and provide modest rendering improvements, but the aggregate data shows no super-additive interaction: the combined style+shaving reduction is approximately the sum of the individual reductions.
+For the geospatial community this means that tile shaving and encoding strategy selection are the primary levers; style-level passes are useful enablers that improve code quality and provide small rendering gains, rather than co-equal partners in a synergistic pipeline.
+For FPS (\qtyrange{162}{213}{\percent}) and transfer size (\qty{36}{\percent}) the full pipeline's effect is significant, while the incremental contribution of style-level passes over shaving alone is modest.
 
-\emph{Second}, the three-mechanism decomposition identified in \cref{sub_combined_discussion} has deployment implications: structural passes dominate rendering-throughput improvements, data-level passes dominate load-time improvements, and expression passes serve primarily as enablers.
+\emph{Second}, three plausible improvement channels (inferred from proxy metrics, not direct per-mechanism instrumentation) have deployment implications: structural passes dominate rendering-throughput improvements, data-level passes dominate load-time improvements, and expression passes serve primarily as enablers.
 A mobile deployment on a constrained network should prioritise tile shaving and re-encoding, whereas a desktop deployment bottlenecked by draw calls benefits most from structural passes alone.
 
 \emph{Third}, the compiler-optimisation framing - peephole rewriting, fixpoint iteration, dead code elimination - transfers effectively to the map-style domain.
-The 47 rewrite rules are individually simple, yet their composition through fixpoint iteration achieves globally significant simplification across styles of widely varying complexity (raw reductions of \qtyrange{10}{71}{\percent} across the Maputnik generalisation corpus).
+The rewrite rules (\cref{tab:all_rewrite_rules}) are individually simple, yet their composition through fixpoint iteration achieves globally significant simplification across styles of widely varying complexity (raw reductions of \qtyrange{10}{71}{\percent} across the Maputnik generalisation corpus).
 
 \section{Research Questions Revisited}\label{sec_rq_revisited}
 
 The three research questions posed in \cref{sec_research_goals} can now be answered directly from the experiments in \cref{ch_experiments}.
 
 \paragraph{R1 - To what extent can automatic data and style co-optimisations reduce map tile size and improve rendering performance?}
-Style-level evaluation across all 15 styles and 18 scenarios shows style-gzip reductions of \qtyrange{3}{47}{\percent} (median ${\sim}$\qty{8}{\percent}) and \ac{FPS} stability within \qty{\pm 1}{\percent} of baseline.
-At the tile-data level, full-pipeline benchmarks on the two styles evaluated end-to-end (Fiord and Liberty) show a total tile volume reduction of roughly \qty{15}{\percent} (from \qty{3.07}{\giga\byte} to \qty{2.61}{\giga\byte} on the Germany OpenMapTiles tileset) and load-time improvements of \qtyrange{71}{75}{\percent} (\cref{sub_combined_ablation}).
+Style-level evaluation across all 15 styles and 18 scenarios shows style-gzip reductions of \qtyrange{3}{47}{\percent} (median ${\sim}$\qty{8}{\percent}).
+At the tile-data level, full-pipeline benchmarks on the two styles evaluated end-to-end (Fiord and Liberty) show a total tile volume reduction of \qty{28}{\percent} (from \qty{4.24}{\giga\byte} to \qty{3.06}{\giga\byte} on the Germany OpenMapTiles tileset), \qty{12}{\percent} over gzip-compressed \ac{MVT}, and load-time improvements of \qtyrange{71}{75}{\percent} (\cref{sub_combined_ablation}).
 The gains are not uniform: verbose institutional styles with hundreds of layers benefit far more than already-compact basemaps, and scenarios dominated by overview zoom levels benefit more than those dominated by street-level panning (\cref{sub_combined_marginal}).
-The quantitative answer to R1 is therefore \enquote{yes, meaningfully, but in a style- and scenario-dependent way}, with the style-driven cascade into tile shaving and the Rust encoder's strategy competition accounting for most of the tile-size reduction, and dead elimination plus layer merging accounting for most of the frame-rate and load-time reductions.
+The quantitative answer to R1 is therefore \enquote{yes, meaningfully, but in a style- and scenario-dependent way}, with tile shaving and the Rust encoder's strategy competition accounting for most of the tile-size and load-time reduction, and dead elimination plus layer merging accounting for most of the frame-rate improvements.  The load-time claim of \qtyrange{71}{75}{\percent} is established for only two styles (Fiord and Liberty); the remaining styles are evaluated at the style level only, and tile-shaving effectiveness varies from \qty{19.8}{\percent} to \qty{46.3}{\percent} across styles.
 
 \paragraph{R2 - Which techniques are most effective, and how do they interact?}
 The cumulative ablation in \cref{sub_combined_ablation} and the per-style results in \cref{app_per_style} rank the passes by marginal contribution and show three clusters.
 \emph{First}, constant folding (including stats-driven folding) and expression simplification dominate the expression-level reductions because they simplify filters into forms that the structural passes can exploit, and because a single successful fold cascades through enclosing expressions.
 \emph{Second}, dead elimination and layer merging dominate the structural-level reductions because they reduce the per-frame draw-call count directly; they are also strongly synergistic, because dead elimination removes gaps between mergeable layers that would otherwise prevent the merge pass from recognising adjacency.
-\emph{Third}, data-level optimisations operate on a different axis: tile shaving reduces transfer size by cascading the optimised style's property and value references into a pruning advisory, and the \ac{MLT} encoder's sort-strategy and per-stream competition reduces encoded size on top of that.
-The three clusters interact through the \emph{cascade effect} documented in \cref{sub_mlt_results}: style-level dead elimination shrinks the pruning advisory, which shrinks the tiles, which shrinks both the transfer time and the decoder's work - so evaluating any one category in isolation understates its contribution.
+\emph{Third}, data-level optimisations operate on a different axis: tile shaving reduces transfer size by using the optimised style's property and value references to build a pruning advisory, and the \ac{MLT} encoder's sort-strategy and per-stream competition reduces encoded size on top of that.
+Style-level dead elimination narrows the pruning advisory, which can shrink tiles further, but the aggregate data shows this interaction is additive rather than synergistic.
 
 \paragraph{R3 - How expensive are these optimisations in terms of preprocessing time, and what are the tradeoffs between decoding latency, rendering throughput, and transfer size?}
 The preprocessing-cost model in \cref{sub_preprocessing_cost} decomposes the total cost into four additive stages (style optimisations, statistics collection, advisory computation, \ac{MLT} re-encoding) and shows that the dominant term is re-encoding.
 The multi-strategy competition increases re-encoding cost by roughly a factor of three to five over a fixed-plan encoder, but this cost is paid once per tileset build and amortised over every subsequent tile request; the \ac{RAII} alternatives guard, warm-start \ac{FSST} caching, and scratch-buffer recycling keep the absolute cost of each additional trial low enough that the full pipeline still runs in tens of minutes on the Germany OpenMapTiles tileset on a single-threaded desktop workstation.
 On the tradeoff axis, decoding latency improvement is the most dramatic gain: the \ac{MLT}-Rust decoder achieves \numrange{4.6}{8.3}$\times$ higher full-decode throughput than \ac{MVT}+gzip across zoom levels 4, 7, and 13 (\cref{tab:decode_throughput}).
 Transfer-size reduction is the most reliably measurable axis (deterministic under compression), but for style-level passes it primarily affects initial load; tile-level volume reduction (\qty{12.4}{\percent} for \ac{MLT}-Rust vs.\ \ac{MVT} under gzip) has the larger sustained impact as tiles are fetched continuously.
-Rendering throughput (FPS) is reported in \cref{sub_combined_ablation} and shows \qty{\pm 1}{\percent} stability, affected almost entirely by the structural passes rather than by the data-level passes - confirming that data-style co-optimisation is not a single knob but a set of complementary mechanisms that each address a different bottleneck.
+Rendering throughput (FPS) for style-only optimisations varies by style (median change ${\sim}$\qty{3}{\percent}, range \qtyrange{-4}{13}{\percent}), affected almost entirely by the structural passes rather than by the data-level passes - confirming that the multi-level pipeline is a set of complementary mechanisms that each address a different bottleneck, with tile shaving carrying the dominant share of load-time improvement.
 Energy consumption is not measured directly (the benchmark host is a desktop workstation rather than a battery-constrained device), but the transfer-size and frame-rate results are well-established proxies on mobile targets and the qualitative discussion in \cref{sub_combined_discussion} translates them into the expected battery-life direction.
 
 \section{Future Work}\label{sec_conclusion_future_work}
@@ -65,12 +65,11 @@ Several directions remain open:
 \begin{itemize}
     \item \textbf{Symbol layer merging}: the current implementation excludes symbol layers from merging because it would disrupt collision detection. Investigating collision-aware merging strategies could yield additional layer count reductions on label-heavy styles.
     \item \textbf{Runtime re-encoding}: the current tile encoding pipeline is offline. Exploring on-the-fly MVT-to-MLT re-encoding at the tile server or \ac{CDN} edge could make the encoding optimisations available without a full tile rebuild.
-    \item \textbf{Multi-objective optimisations}: the post-hoc Pareto analysis in \cref{sec_exp_pareto} reports a two-axis size-cost frontier over the measured pass configurations (cumulative trajectory plus isolated mode).
-    Its deliberate scope is the result of a noise-floor decomposition that showed the timing-derived axes (\texttt{loadMs}, \texttt{meanFrameMs}, \texttt{peakHeapMB}, and a CPU-time energy proxy) could not support per-step frontier claims at the current sample size.
-    Extending the frontier to those axes requires either a substantial increase in run count per cell (on the order of $5$-$10\times$), a dedicated benchmark host with reduced thermal variability, or renderer-internal instrumentation that isolates decoder time from the surrounding fetch-and-paint work - and most likely some combination of all three.
-    Beyond reducing noise, a formal \ac{MOOP} search over the full pass-permutation and internal-knob space would extend the analysis layer with a true search procedure rather than a reading of already-measured data, and is out of scope for this thesis.
     \item \textbf{Broader style coverage}: extending the evaluation to proprietary and commercial styles (Mapbox Streets, Google Maps style equivalents) would strengthen the generalisability claims.
     \item \textbf{Client-side integration}: integrating the optimised \ac{MLT} decoder into MapLibre GL~JS and measuring end-to-end improvements in a production deployment.
+    \item \textbf{Fractional-zoom visual correctness testing}: the current pixelmatch harness tests integer zoom levels only. Metadata refinement and zoom-bounded ramp folding operate on fractional zoom thresholds, and bugs are most likely to appear between integer zooms. Adding fractional-zoom samples (e.g., $z + 0.25$, $z + 0.5$, $z + 0.75$) would strengthen the soundness argument.
+    \item \textbf{Preprocessing cost measurement}: the 3--5$\times$ cost multiplier from the multi-strategy competition is estimated analytically, not measured empirically. Reporting wall-clock time for the Germany tileset under single-threaded and multi-threaded configurations, together with a per-stage breakdown, would complete the R3 evaluation.
+    \item \textbf{MinHash threshold sensitivity}: the MinHash similarity threshold ($\tau = 7.5\%$) was tuned on the Germany OpenMapTiles tileset but the sweep range and sensitivity curve are not reported. Characterising how total tileset size varies with $\tau$ (e.g., from 5\% to 15\%) would validate the choice.
     \item \textbf{Serving-time applicability}: the current pipeline assumes offline batch processing, which is impractical for dynamic tile sources (e.g., PostGIS-backed tile servers with frequently updated data).
     Not all passes require offline processing, however.
     The style optimiser operates on the style alone and can run at deployment time (when the style is published) rather than at tile-build time.
