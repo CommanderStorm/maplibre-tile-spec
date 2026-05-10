@@ -359,7 +359,7 @@ Properties whose value equals the specification default are removed.
 The defaults are derived from the code-generated Rust types: each property's default is known from the upstream \texttt{v8.json}.
 Only plain scalar values are stripped; expression-valued properties are never removed, even if they would evaluate to the default at all zoom levels, to avoid the risk of changing renderer behaviour when the expression's mere presence affects layout (e.g.\ \texttt{text-radial-offset} suppresses \texttt{text-offset} regardless of its value).
 
-\paragraph{Selectivity reordering}
+\paragraph{Selectivity reordering}\label{sec_seletivity_reordering}
 For variadic boolean expressions (\texttt{all}, \texttt{any}), predicates are reordered by estimated selectivity to exploit short-circuit evaluation.
 For \texttt{all} (conjunction), predicates are sorted by ascending selectivity (the predicate most likely to be false is evaluated first).
 For \texttt{any} (disjunction), predicates are sorted by descending selectivity (the predicate most likely to be true is evaluated first).
@@ -551,8 +551,8 @@ Cleanup runs after metadata refinement because refinement may render filters tri
 \paragraph{Layer merging}
 Layer merging identifies adjacent layers of the same type with identical paint and layout properties (modulo filter differences) and merges them into a single layer.
 The motivation is that fewer layers means fewer rendering passes: the renderer processes layers sequentially, and each layer incurs setup cost (binding textures, configuring blend state, submitting draw calls).
-\Cref{lst:painter_loop} shows the renderer's main loop: the painter iterates the layer list twice--once top-to-bottom for the opaque pass and once bottom-to-top for the translucent pass--issuing a \texttt{renderLayer} call for each layer.
-Every eliminated layer therefore removes one iteration from each pass.
+\Cref{lst:painter_loop} shows the two render-pass loops the painter runs over \texttt{layerIds}: the opaque pass walks them top-to-bottom (\texttt{currentLayer} from \texttt{layerIds.length - 1} down to \texttt{0}), the translucent pass walks them bottom-to-top, and each iteration of either loop dispatches one \texttt{this.renderLayer(...)} call.
+Each layer eliminated by the merge therefore shortens \texttt{layerIds} by one entry and removes exactly one \texttt{renderLayer} dispatch from each pass.
 
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS painter render loop (\texttt{src/render/painter.ts:559-596})},label=lst:painter_loop]
 // src/render/painter.ts:559-566 - opaque pass (top-to-bottom)
@@ -580,7 +580,7 @@ The merging algorithm proceeds in three phases.
 A property is mergeable if, according to the MIR field metadata, it supports feature-driven expressions (i.e.\ its \texttt{expression.feature} flag is \texttt{true}, meaning it can vary per feature within a layer) and is not a zoom ramp (\texttt{interpolate} or \texttt{step} over \texttt{["zoom"]}), which must remain at the top level of a property expression and cannot be nested inside a \texttt{case}/\texttt{match} wrapper.
 Camera-only properties (such as \texttt{line-dasharray} or \texttt{*-translate}) must be uniform across all layers in a merge group, since they cannot be conditioned on feature attributes.
 Layer types that support sort keys (\texttt{fill}, \texttt{line}, \texttt{circle}, \texttt{fill-extrusion}) are candidates; \texttt{symbol} layers are excluded because MapLibre's collision detection algorithm operates per-layer, and merging symbol layers would alter which labels can suppress each other, changing the rendered output.
-\Cref{lst:placement} shows the per-layer processing: each symbol layer receives its own \texttt{LayerPlacement} instance, which is created at the start of the layer and destroyed at its boundary, while the underlying \texttt{Placement} object (and its \texttt{CollisionIndex}) is shared across all layers.
+\Cref{lst:placement} shows the per-layer processing: \texttt{new LayerPlacement(layer)} (marked \texttt{// per-layer scope}) constructs a fresh instance when a symbol layer's placement begins, and \texttt{delete this.\_inProgressLayer} (marked \texttt{// layer boundary}) tears it down before the next layer starts; the underlying \texttt{Placement} object (and its \texttt{CollisionIndex}) is shared across all layers via \texttt{this.placement}, which is what makes the \texttt{LayerPlacement} scope per-layer rather than global.
 Symbols from earlier layers are fully placed before later layers begin, so layer ordering determines placement priority; merging two symbol layers into one would interleave their symbols within a single \texttt{LayerPlacement}, changing which symbols take priority and therefore altering collision outcomes.
 
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS per-layer symbol placement (\texttt{src/style/pauseable\_placement.ts:90-127})},label=lst:placement]
@@ -621,7 +621,7 @@ Invariant~(3) is guaranteed by the exclusion of symbol layers from the candidate
 \paragraph{Scope of filter-to-property propagation}
 The filter-to-property constant propagation pass extracts equality constraints from a layer's filter and substitutes them into the layer's paint and layout expressions.
 Its soundness depends on a MapLibre evaluation-order invariant: the filter is evaluated first, and paint/layout expressions are only evaluated for features that passed the filter.
-\Cref{lst:bucket_populate} shows this invariant in the \texttt{FillBucket.populate} method: the filter is applied first, and only features that pass it proceed to bucket construction where paint and layout expressions are evaluated.
+\Cref{lst:bucket_populate} shows this invariant in the \texttt{FillBucket.populate} method: the early \texttt{if (!this.layers[0].\_featureFilter.filter(\dots)) continue;} guard rejects a feature before any paint or layout expression is evaluated, so any equality constraint extracted from the filter is guaranteed to hold for every feature that reaches the subsequent \texttt{bucketFeatures.push} and can be safely substituted into the layer's paint/layout expressions.
 This holds for the data-driven expression variants used across all MapLibre versions this thesis targets (\texttt{match}, \texttt{case}, \texttt{get}, etc.).
 
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS bucket populate method showing filter-first evaluation (\texttt{src/data/bucket/fill\_bucket.ts:84-106})},label=lst:bucket_populate]
@@ -756,7 +756,7 @@ Pass & Data & Description [compiler analogy] \\
 \midrule
 Tile shaving             & full scan & Encode only the properties, layers, and geometry types that the style actually references [tree shaking] \\
 Transparent re-encoding  & full scan & Re-encode \ac{MVT} tiles into the \ac{MLT} format [instruction set translation] \\
-Compression optimisations & full scan & Apply column-aware compression strategies based on data characteristics [profile-guided optimisations] \\
+Compression optimisations & full scan & Apply column-aware compression strategies based on data characteristics [\ac{PGO} optimisations] \\
 \bottomrule
 \end{tblr}
 \caption{Data-level optimisations techniques.}
@@ -880,7 +880,8 @@ The pruned and transformed data is re-encoded into the \ac{MLT} columnar format.
 The re-encoding proceeds in three stages: (1)~the row-oriented \ac{MVT} features are converted into an owned columnar representation (\texttt{StagedLayer01}), with separate arrays for each property column, the geometry vertex buffer, and the feature ID column; (2)~the columnar data is optionally reordered according to the sort strategy competition; (3)~each column is independently encoded using the per-stream encoding competition.
 The final wire format consists of three concatenated sections per layer: a header (layer name, tile extent, column count), a metadata section (column types, encoding descriptors), and a data section (the encoded streams).
 
-The Rust-based encoder reformulates the encoding problem as a \emph{multi-strategy competition} inspired by profile-guided optimisation in compilers~\cite{changUsingProfileInformation1991} and the instance-optimised systems vision of Kraska~\cite{kraskaInstanceOptimizedData2021}: rather than committing to a single encoding plan, the encoder uses the data distribution of each tile to try multiple strategies, measures the output size of each, and selects the smallest result.
+The Rust-based encoder reformulates the encoding problem as a \emph{multi-strategy competition} inspired by \ac{PGO} in compilers~\cite{changUsingProfileInformation1991} and the instance-optimised systems vision of Kraska~\cite{kraskaInstanceOptimizedData2021}:
+rather than committing to a single encoding plan, the encoder uses the data distribution of each tile to try multiple strategies, measures the output size of each, and selects the smallest result.
 This competition operates at two nested levels: an \emph{outer loop} that trials multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
 The inner competition criterion is deliberately \emph{single-objective}: the winning candidate is the one with the smallest encoded \texttt{total\_len()}.
 Multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - are not resolved inside the encoder; they are reported separately per metric in the ablation evaluation (\cref{ch_experiments}), where the contribution of each pass can be assessed against the deployment-relevant axis.

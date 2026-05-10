@@ -1,6 +1,6 @@
 \chapter{Theoretical Background}\label{ch_theoretical_background}
 
-The gap identified in \cref{ch_related_work} is that no existing tool composes style rewrites with data-level pruning into a joint pipeline. 
+The gap identified in \cref{ch_related_work} is that no existing tool composes style rewrites with data-level pruning into a joint pipeline.
 This calls for foundations from several fields.
 The map rendering architecture that defines what is being optimised, the compiler techniques whose analogues drive the expression-level passes, the query optimisation concepts that inform filter rewriting and predicate reordering, and the columnar encoding strategies that underpin the data-level passes.
 
@@ -110,9 +110,9 @@ Tiles, by contrast, can be stored and accessed using three major approaches:
 Dynamic data sources can be updated frequently by applying incremental diffs, whereas the other approaches typically require a full rebuild when the underlying data changes.
 At larger scales, in-memory caching of tiles via regional or \ac{CDN}-style infrastructure - combined with fallback to runtime-dynamic data - is essential for performance and cost.
 
-Although all of these resources can be optimised, tiles are usually the most critical due to their continuously streaming-int nature as a user moves the map.
+Although all of these resources can be optimised, tiles are usually the most critical due to their continuously streaming nature as a user moves the map.
 They usualy have a cumulatively higher data volume due to this, even though their individual tiles may be much smaller.
-All other resources depend on locale slightly (for example loading different Unicode ranges or fonts), but are generally only handled one time.
+All other resources may depend on locale slightly (for example loading different Unicode ranges or fonts), but are only handled one time.
 
 Real-world observations support this:
 the performance of highly optimised systems such as Microsoft Bing Maps differs significantly from less optimised deployments, such as basemap.de.
@@ -123,7 +123,7 @@ The following sections examine each resource in detail, focusing on the performa
 
 Fonts can be client rendered from a font file.
 This requires shipping a font renderer to the client, as neither native nor web targets have for example Harfbuzz as a feature.
-This also means that for some fonts up to \qty{30}{\mega\byte} of font data needs to be transferred.
+This also means that for some fonts up to \qty{131}{\mega\byte}\cite{FontThatIncludes} of font data needs to be transferred.
 
 For interactive use cases, this is prohibitive as the time to download this would be longer than acceptable.
 Some fonts need this shaping as they need to connect neigboring characters neatly, but Latin fonts do usually not.
@@ -146,7 +146,7 @@ Common open-source renderers like maplibre or source available renderers like ma
 \subsection{Tiles}\label{sec_tiles}
 
 Tiles are the primary data delivery mechanism for interactive web maps.
-Rather than transferring the entire dataset to the client, the map is partitioned into a regular grid of square tiles at discrete zoom levels following the widely adopted XYZ tiling scheme.
+Rather than transferring the entire dataset to the client, the map is partitioned into a regular grid of square tiles at discrete zoom levels following the XYZ tiling scheme.
 
 At zoom level~$z$, the world is subdivided into $2^z \times 2^z$ tiles, each identified by its column~$x$, row~$y$, and zoom level~$z$.
 Lower zoom levels cover large geographic areas with simplified geometry with higher zoom levels cover smaller areas with greater detail.
@@ -156,52 +156,41 @@ When a client requests a tile at a zoom level beyond the source's maximum, the r
 The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched, which means that a layer's effective visibility at a given camera zoom cannot be determined from filter or data bounds alone - it is a function of both the layer's filter and the source's \texttt{maxzoom}.
 This observation has direct consequences for any optimiser that rewrites zoom bounds, and is revisited in \cref{ch_methods}.
 In particular, tightening a layer's \texttt{maxzoom} is only sound when it accounts for overzoom: removing a layer at zoom~14 would suppress its rendering at zoom~15 and beyond if the source's maximum zoom is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.
-\Cref{lst:overzoom} shows the implementation: when overzoom parameters are present, the worker source substitutes a sliced version of the source's \texttt{maxzoom} tile.
-The slicing function rescales geometry coordinates into the target tile's coordinate space and clips to the tile extent, producing a synthetic tile from the nearest available data.
+\Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \texttt{maxzoom} tile: \textcircled{1}~rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/\texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}), and \textcircled{2}~clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
+Both operations consume the source's \texttt{maxzoom} tile as input; tightening that \texttt{maxzoom} removes the upstream tile the slicer rescales and clips, which is why the soundness rule above forbids any rewrite that does not preserve every layer's effective overzoom range.
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts:87-125})},label=lst:overzoom]
-export function sliceVectorTileLayer(sourceLayer: VectorTileLayerLike, maxZoomTileID: CanonicalTileID, targetTileID: CanonicalTileID): VectorTileLayerOverzoomed {
+\begin{lstlisting}[
+  language=TypeScript,
+  caption={Condensed MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts:87-125})},
+  label=lst:overzoom,
+  escapeinside={(*@}{@*)},
+]
+function sliceVectorTileLayer(sourceLayer, maxZoomTileID, targetTileID) {
     const {extent} = sourceLayer;
-    const dz = targetTileID.z - maxZoomTileID.z;
+    const dz    = targetTileID.z - maxZoomTileID.z;
     const scale = Math.pow(2, dz);
 
-    // Calculate the target tile's position within the source tile in target coordinate space
-    // This ensures all tiles share the same coordinate system
+    // Target tile's offset within the source tile, in target coords
     const offsetX = (targetTileID.x - maxZoomTileID.x * scale) * extent;
     const offsetY = (targetTileID.y - maxZoomTileID.y * scale) * extent;
 
-    const featureWrappers: VectorTileFeatureOverzoomed[] = [];
-    for (let index = 0; index < sourceLayer.length; index++) {
-        const feature: VectorTileFeatureLike = sourceLayer.feature(index);
+    for (const feature of sourceLayer) {
         let geometry = feature.loadGeometry();
-
-        // Transform all coordinates to target tile space
-        for (const ring of geometry) {
-            for (const point of ring) {
-                point.x = point.x * scale - offsetX;
-                point.y = point.y * scale - offsetY;
-            }
+        // (*@\textcircled{1}@*) Rescale each coordinate into the target tile's space
+        for (const ring of geometry) for (const p of ring) {
+            p.x = p.x * scale - offsetX;
+            p.y = p.y * scale - offsetY;
         }
-
-        const buffer = 128;
-        geometry = clipGeometry(geometry, feature.type, -buffer, -buffer, extent + buffer, extent + buffer);
-        if (geometry.length === 0) {
-            continue;
-        }
-
-        featureWrappers.push(new VectorTileFeatureOverzoomed(
-        feature.type,
-        geometry,
-        feature.properties,
-        feature.id,
-        extent
-        ));
+        // (*@\textcircled{2}@*) Clip to the target extent with a 128-unit overdraw buffer
+        geometry = clipGeometry(geometry, feature.type,
+                                -128, -128, extent + 128, extent + 128);
+        // ...emit feature with rescaled+clipped geometry
     }
-    return new VectorTileLayerOverzoomed(featureWrappers, sourceLayer.name, extent);
 }
 \end{lstlisting}
 
-No symmetric \enquote{underzoom} behaviour exists: if a source has no tile at a zoom lower than \texttt{minzoom}, the layer is simply not rendered there.
+No symmetric \enquote{underzoom} behaviour exists:
+If a source has no tile at a zoom lower than \texttt{minzoom}, the layer is  not rendered there.
 
 A \emph{vector tile} encodes map data in a compact binary format rather than as a pre-rendered image.
 Each tile is organised into \emph{source layers} (for example, roads, buildings, water), and each source layer contains a set of \emph{features}.
@@ -211,7 +200,7 @@ The following formats are used for encoding and transferring data to the client:
 
 \begin{itemize}
     \item \textbf{Raster tiles} deliver pre-rendered images (PNG, JPEG, WebP, Avif, JPEGXL) rather than vector geometry.
-    They require no client-side rendering logic but cannot be restyled, rotated at arbitrary angles, or queried interactively, as the visual representation is fixed at generation time.
+    They require no client-side rendering logic but cannot be restyled, rotated at arbitrary angles (beyond the affine transform imposed by globe mode), or queried interactively, as the visual representation is fixed at generation time.
 
     \item \textbf{Analysis-focused formats} such as FlatGeobuf~\cite{flatgeobuf2018}, GeoParquet~\cite{geoparquetSpec2024}, and GeoArrow are optimised for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
     They support random access and columnar scans but do not follow the tiled spatial access pattern required by interactive map renderers and are therefore not considered further in this work.
@@ -225,7 +214,7 @@ The following formats are used for encoding and transferring data to the client:
 \begin{itemize}
     \item each feature carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
     \item Geometry is encoded as a sequence of \texttt{MoveTo}, \texttt{LineTo}, and \texttt{ClosePath} commands with delta-encoded integer coordinates relative to the tile extent (typically \texttt{4096} units per tile edge).
-    This is also known as "turtle style"\footnote{\url{https://docs.python.org/3/library/turtle.html}}.
+    This is also known as "turtle style graphics"\footnote{\url{https://docs.python.org/3/library/turtle.html}} as an analogy to the \texttt{turtle} python module.
     \item The row-oriented layout means that accessing a single property column requires parsing past all other properties of the same feature, and that compression operates on the interleaved byte stream rather than on homogeneous data columns.
 \end{itemize}
 
@@ -236,7 +225,8 @@ The following formats are used for encoding and transferring data to the client:
     Tremmel et~al.\ report 2-6$\times$ tile size reductions over \ac{MVT} depending on data characteristics.\end{sloppypar}
 \end{itemize}
 
-Beyond the choice of tile format, a number of transfer-layer optimisations can improve delivery performance: utilising the approximately \qty{14}{\kilo\byte} TCP slow-start window as discussed by Nathaniel~\cite{WhyYourWebsite}, edge caching~\cite{BestPracticesMap}, HTTP/2 multiplexing~\cite{belsheHTTP2RFC2015} (and its QUIC-based successor HTTP/3~\cite{bishopHTTP3RFC2022} for lossy mobile networks), and modern content-encoding algorithms such as Zstandard~\cite{colletZstandardRFC2021} and Brotli~\cite{alakuijalaBrotliRFC2016} that achieve higher compression ratios than gzip's LZ77 foundation~\cite{zivUniversalAlgorithmSequential1977}.
+Beyond the choice of tile format, a number of transfer-layer optimisations can improve delivery performance:
+utilising the approximately \qty{14}{\kilo\byte} TCP slow-start window as discussed by Nathaniel~\cite{WhyYourWebsite}, edge caching~\cite{BestPracticesMap}, HTTP/2 multiplexing~\cite{belsheHTTP2RFC2015} (and its QUIC-based successor HTTP/3~\cite{bishopHTTP3RFC2022} for lossy mobile networks), and modern content-encoding algorithms such as Zstandard~\cite{colletZstandardRFC2021} and Brotli~\cite{alakuijalaBrotliRFC2016} that achieve higher compression ratios than gzip's LZ77 foundation~\cite{zivUniversalAlgorithmSequential1977}.
 Tile archive formats such as PMTiles~\cite{liuPMTiles2022} and COMTiles~\cite{tremmelCOMTilesCloudOptimized2023} address the container layer by enabling serverless, cloud-native tile delivery from a single file in blob storage.
 Since \ac{MVT} is the established baseline and \ac{MLT} aims to improve upon it, this thesis evaluates both formats and uses the transition from \ac{MVT} to \ac{MLT} as one of its data-level optimisations strategies.
 
@@ -251,6 +241,7 @@ Three architectural approaches to map styling have been established:
     This simplifies the client but prevents client-side restyling and limits interactivity.
 
     \item \begin{sloppypar}\textbf{Client-side declarative} styles, as used by MapLibre~\cite{maplibreMapLibre} and Mapbox~\cite{MapboxMapsNavigation}, transmit a machine-readable style document to the client, which interprets the style at render time.
+    This style can also be shipped with the code of the rendering engine to the client or partially constructed (e.g. road shields) there.
     This enables dynamic restyling, data-driven visualisation, and interactive features such as hover effects and click queries without regenerating tiles.\end{sloppypar}
 
     \item \textbf{Callback-based} styling, as proposed by Gleo~\cite{ortegaGleoWebGLMap} or Navara~\cite{Navara}, replace declarative rules with imperative callbacks that the application registers with the renderer.
@@ -262,7 +253,7 @@ This thesis focuses on client-side declarative styles, specifically the MapLibre
 The MapLibre style specification~\cite{MapLibreStyleSpec} defines a map's appearance as a JSON document with the following key components:
 
 \begin{itemize}
-    \item \textbf{Sources} declare where tile data comes from (a tile server URL, an MBTiles file, or inline GeoJSON) and at which zoom levels tiles are available (\texttt{minzoom}, \texttt{maxzoom}).
+    \item \textbf{Sources} declare where tile data comes from (tile server URL, or inline GeoJSON) and at which zoom levels tiles are available (\texttt{minzoom}, \texttt{maxzoom}).
 
     \item \textbf{Layers} are the central rendering unit.
     Each layer references a source and a \emph{source-layer} within that source, specifies a \emph{type} (\texttt{fill}, \texttt{line}, \texttt{circle}, \texttt{symbol}, \texttt{fill-extrusion}, \texttt{raster}, \texttt{background}, or \texttt{hillshade}) and carries a set of paint and layout properties that control its appearance.
@@ -288,6 +279,8 @@ isHidden(zoom: number = this.minzoom, roundMinZoom: boolean = false) {
 }
 \end{lstlisting}
 
+\Cref{lst:ishidden_usage} reproduces the two call-sites that establish those two stages: the worker calls \texttt{layer.isHidden(this.zoom, true)} and \texttt{continue}s before bucket creation, and the painter's \texttt{renderLayer} returns immediately on \texttt{layer.isHidden(this.transform.zoom)} before dispatching any \texttt{draw.fill}/\texttt{draw.line}/\texttt{draw.symbol} call.
+
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS usages of \texttt{isHidden}},label=lst:ishidden_usage]
 // src/source/worker_tile.ts:111 - worker skips bucket creation
 if (layer.isHidden(this.zoom, true)) continue;
@@ -304,34 +297,60 @@ renderLayer(painter, tileManager, layer, coords, renderOptions) {
 Filters and properties can be specified as literal constants, as \emph{zoom-dependent} expressions (varying with the camera zoom level via \texttt{interpolate} or \texttt{step} ramps), as \emph{data-driven} expressions (varying per feature based on property values via \texttt{match}, \texttt{case}, or \texttt{get} operators), or as a combination of both.
 The resulting expression trees can be deeply nested and may contain redundant or unreachable branches - characteristics that make them amenable to the same kinds of simplification and optimisations techniques used in compilers and database query planners.
 
-\Cref{lst:worker_pipeline} shows how these components interact in practice: MapLibre's worker thread parses a tile by iterating source layers, collecting features, checking \texttt{isHidden}, recalculating layer expressions at the current zoom, and populating buckets (which runs the filter and builds vertex data).
-Every optimisation in \cref{ch_methods} maps to a step in this pipeline.
+\Cref{lst:worker_pipeline} shows the worker's tile-parse pipeline as five named steps, marked inline as
+\textcircled{\scriptsize a}--\textcircled{\scriptsize e}.
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS worker tile processing pipeline (\texttt{src/source/worker\_tile.ts:85-127})},label=lst:worker_pipeline]
-// src/source/worker_tile.ts:85-127 - WorkerTile.parse()
- const layerFamilies = layerIndex.familiesBySource[this.source];
+Every optimisation in \cref{ch_methods} attaches to one of these steps:
+Merging layers reduces work for \textcircled{\scriptsize a}.
+Pruning features server-side makes \textcircled{\scriptsize b} not handle them.
+Tightening \texttt{minzoom}/\texttt{maxzoom} makes the
+\textcircled{\scriptsize c} guard true earlier.
+Pre-folding zoom-dependent constants reduces the work in \textcircled{\scriptsize d} while
+filter-to-property propagation simplifies the per-feature work inside
+\textcircled{\scriptsize e}.
+
+\begin{lstlisting}[
+    language=TypeScript,
+    escapeinside={(*@}{@*)},
+    caption={MapLibre GL-JS WorkerTile.parse processing pipeline (\texttt{src/source/worker\_tile.ts:85-127})},
+    label=lst:worker_pipeline
+]
+// (*@\textcircled{\scriptsize a}@*) Iterate source layers
+const layerFamilies = layerIndex.familiesBySource[this.source];
 for (const sourceLayerId in layerFamilies) {
     const sourceLayer = data.layers[sourceLayerId];
+
     if (!sourceLayer) {
         continue;
     }
+
     ...
+
     const sourceLayerIndex = sourceLayerCoder.encode(sourceLayerId);
+
+    // (*@\textcircled{\scriptsize b}@*) Collect raw features
     const features = [];
     for (let index = 0; index < sourceLayer.length; index++) {
         const feature = sourceLayer.feature(index);
         const id = featureIndex.getId(feature, sourceLayerId);
+
         features.push({feature, id, index, sourceLayerIndex});
     }
 
     for (const family of layerFamilies[sourceLayerId]) {
         const layer = family[0];
+
         ...
+
+        // (*@\textcircled{\scriptsize c}@*) Skip hidden layers
         if (layer.isHidden(this.zoom, true)) continue;
+
+        // (*@\textcircled{\scriptsize d}@*) Recalculate zoom-dependent expressions
         recalculateLayers(family, this.zoom, availableImages);
 
         const bucket = buckets[layer.id] = layer.createBucket({...});
 
+        // (*@\textcircled{\scriptsize e}@*) Filter features and build vertex data
         bucket.populate(features, options, this.tileID.canonical);
         featureIndex.bucketLayerIDs.push(family.map((l) => l.id));
     }
@@ -340,7 +359,8 @@ for (const sourceLayerId in layerFamilies) {
 
 \section{Compiler Optimisation Techniques}\label{sec_compiler_optimisations}
 
-The style expressions used by map renderers such as MapLibre are, in essence, small programs: they contain conditionals (\texttt{case}, \texttt{match}), boolean operators (\texttt{all}, \texttt{any}), arithmetic, and data access (\texttt{get}, \texttt{has}).
+The style expressions used by map renderers such as MapLibre are, in essence, small programs:
+they contain conditionals (\texttt{case}, \texttt{match}), boolean operators (\texttt{all}, \texttt{any}), arithmetic, and data access (\texttt{get}, \texttt{has}), variables (global state, local state, feature state).
 Optimising these expressions draws directly on techniques developed over decades in compiler construction~\cite{ahoCompilersPrinciplesTechniques2007}.
 This section introduces the foundational concepts applied in \cref{ch_methods}.
 
@@ -348,7 +368,8 @@ This section introduces the foundational concepts applied in \cref{ch_methods}.
 
 \begin{sloppypar}
 A \emph{peephole optimiser} examines a small, fixed-size window of code (the \enquote{peephole}) and applies local pattern-matching rewrites that replace instruction sequences with shorter or faster equivalents~\cite{davidsonCodeSelectionObject1984}.
-Each rewrite rule is independent: it matches a local pattern and emits a replacement, without requiring knowledge of the surrounding program.
+Each rewrite rule is independent:
+it matches a local pattern and emits a replacement, without requiring knowledge of the surrounding program.
 The simplicity of individual rules is offset by their composition through repeated application - many small, local improvements accumulate into significant global optimisations.
 \end{sloppypar}
 
@@ -393,31 +414,35 @@ A filter \texttt{["all", ["all", a, b], c]} is flattened to \texttt{["all", a, b
 
 \subsection{Fixpoint Iteration}\label{sub_fixpoint}
 
-Individual peephole rules may expose further optimisations opportunities: constant folding a subexpression may create a new constant parent, which in turn enables dead branch elimination.
+Individual peephole rules may expose further optimisations opportunities:
+constant folding a subexpression may create a new constant parent, which in turn enables dead branch elimination.
 A single traversal is therefore generally insufficient.
 
 \begin{sloppypar}
-\emph{Fixpoint iteration} addresses this by applying the entire rule set repeatedly until no rule fires --- that is, until the expression reaches a \emph{fixpoint} at which no further rewrites apply.
-The expression-level optimiser is, formally, a \emph{term rewriting system} (TRS): the style expressions are terms, and the peephole rules are rewrite rules applied modulo a traversal strategy~\cite{baaderTermRewritingAll1998}.
+\emph{Fixpoint iteration} addresses this by applying the entire rule set repeatedly until no rule fires - that is, until the expression reaches a \emph{fixpoint} at which no further rewrites apply.
+The expression-level optimiser is, formally, a \ac{TRS}: the style expressions are terms, and the peephole rules are rewrite rules applied modulo a traversal strategy~\cite{baaderTermRewritingAll1998}.
 For a monotone transformation $f$ on a finite domain, the sequence $x,\, f(x),\, f(f(x)),\, \ldots$ is guaranteed to converge~\cite{ahoCompilersPrinciplesTechniques2007}.
-In practice, convergence is rapid: most programs stabilise within a small number of iterations, and a conservative upper bound on iterations serves as a safety limit.
-The standard TRS notions of confluence (whether all rule-application sequences converge to the same normal form) and termination (whether all sequences reach a normal form) are revisited in the context of the concrete rewrite system in \cref{sub_expression_optimisations}.
-A closely parallel case study is Halide's term rewriting system: Newcomb et~al.~\cite{newcombVerifyingImprovingHalide2020} showed that Halide's DSL optimiser --- which, like this thesis's expression passes, applies a set of hand-written rewrite rules in a fixed order to simplify DSL expression trees --- suffers from the same confluence and termination concerns, and developed synthesis-based techniques to verify correctness and discover missing rules.
+In practice, convergence is rapid:
+most programs stabilise within a small number of iterations, and a conservative upper bound on iterations serves as a safety limit.
+The standard \ac{TRS} notions of confluence (whether all rule-application sequences converge to the same normal form) and termination (whether all sequences reach a normal form) are revisited in the context of the concrete rewrite system in \cref{sub_expression_optimisations}.
+A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcombVerifyingImprovingHalide2020} showed that Halide's \ac{DSL} optimiser - which, like this thesis's expression passes, applies a set of hand-written rewrite rules in a fixed order to simplify \ac{DSL} expression trees - suffers from the same confluence and termination concerns, and developed synthesis-based techniques to verify correctness and discover missing rules.
 \end{sloppypar}
 
 
 \subsection{Profile-Guided Optimisation}\label{sub_pgo}
 
-\emph{Profile-guided optimisation} (PGO) uses runtime execution profiles to specialise a program for its observed workload~\cite{changUsingProfileInformation1991}.
+\emph{\ac{PGO}} uses runtime execution profiles to specialise a program for its observed workload~\cite{changUsingProfileInformation1991}.
 Classical PGO instruments a program, collects execution frequencies and branch probabilities from representative inputs, and feeds this profile back into the compiler to guide inlining, code layout, and branch prediction hints.
-Arnold et~al.~\cite{arnoldSurveyAdaptiveOptimization2005} survey how virtual machines extend PGO to an \emph{adaptive} setting, where profiles are collected and optimisations applied continuously at runtime.
+Arnold et~al.~\cite{arnoldSurveyAdaptiveOptimization2005} survey how virtual machines extend \ac{PGO} to an \emph{adaptive} setting, where profiles are collected and optimisations applied continuously at runtime.
 
-The style optimiser performs an analogous form of PGO: tile-level statistics (value cardinalities, per-property frequency distributions, geometry-type counts) are the ``profile data,'' and the stats-driven folding pass uses this profile to specialise the style for the observed data distribution --- collapsing \texttt{match} arms whose values never occur in the tile census, tightening zoom bounds based on observed data ranges, and converting high-selectivity predicates into constants.
-The key difference from classical PGO is that the profile is exact (the tile census covers every feature in the tileset at a sample rate of~1.0) rather than sampled, and the optimisation target is a declarative style document rather than machine code.
+The style optimiser performs an analogous form of \ac{PGO}:
+tile-level statistics (value cardinalities, per-property frequency distributions, geometry-type counts) are the ``profile data,'' and the stats-driven folding pass uses this profile to specialise the style for the observed data distribution - collapsing \texttt{match} arms whose values never occur in the tile census, tightening zoom bounds based on observed data ranges, and converting high-selectivity predicates into constants.
+The key difference from classical \ac{PGO} is that the profile is exact (the tile census covers every feature in the tileset at a sample rate of~1.0) rather than sampled, and the optimisation target is a declarative style document rather than machine code.
 
 \section{Query Optimisation}\label{sec_query_optimisations}
 
-Style filters in map rendering are structurally equivalent to database query predicates: both select a subset of records (features) from a dataset (tile) based on attribute conditions.
+Style filters in map rendering are structurally equivalent to database query predicates:
+both select a subset of records (features) from a dataset (tile) based on attribute conditions.
 Techniques from relational query optimisations therefore apply directly.
 
 \subsection{Cost-Based Query Optimisation}
@@ -426,7 +451,7 @@ A \emph{cost-based query optimiser} selects among semantically equivalent query 
 The pioneering System~R optimiser introduced this approach for SQL queries, estimating costs based on I/O operations and CPU time.
 
 The key insight is that the \emph{order} in which predicates are evaluated affects performance even when the final result is identical.
-In a conjunction $p_1 \land p_2 \land \cdots \land p_n$ evaluated with short-circuit semantics, placing the predicate most likely to evaluate to \texttt{false} first minimises the expected number of evaluations - because once any predicate evaluates to \texttt{false}, the remaining predicates are skipped.
+In a conjunction $p_1 \land p_2 \land \cdots \land p_n$ evaluated with short-circuit semantics, placing the predicate most likely to evaluate to \texttt{false} first minimises the expected number of evaluations, because once any predicate evaluates to \texttt{false}, the remaining predicates are skipped.
 For disjunction ($p_1 \lor p_2 \lor \cdots \lor p_n$), the opposite ordering is optimal: the predicate most likely to be \texttt{true} should come first.
 
 \subsection{Selectivity Estimation}
@@ -443,29 +468,33 @@ Compound predicates are estimated by combining individual selectivities:
 \end{align*}
 
 The independence assumption is known to be inaccurate when columns are correlated, but it provides a computationally cheap approximation that is effective in practice~\cite{selingerAccessPathSelection1979}.
-More sophisticated estimators --- such as multi-dimensional histograms, sampling-based methods, or the lightweight graphical models proposed by Tzoumas et~al.~\cite{tzoumas2011lightweight} that capture inter-attribute correlations without the full cost of joint-distribution estimation --- improve accuracy at higher computational cost.
-Map-style filters are in fact known to violate independence: in OpenMapTiles, for example, \texttt{class} and \texttt{subclass} are strongly correlated by schema design (every value of \texttt{subclass} implies a constrained set of \texttt{class} values), as are \texttt{admin\_level} and \texttt{maritime}.
-A joint-distribution estimator would therefore give tighter bounds, but the selectivity signal used in this thesis is consumed only by a \emph{reordering} heuristic - not by a cost-based plan chooser - and reordering is monotone in the ordering of the individual selectivities rather than in their absolute values.
+More sophisticated estimators - such as multi-dimensional histograms, sampling-based methods, or the lightweight graphical models proposed by Tzoumas et~al.~\cite{tzoumas2011lightweight} that capture inter-attribute correlations without the full cost of joint-distribution estimation - improve accuracy at higher computational cost.
+
+Map-style filters are in fact known to violate independence:
+In OpenMapTiles, for example, \texttt{class} and \texttt{subclass} are strongly correlated by schema design (every value of \texttt{subclass} implies a constrained set of \texttt{class} values), as are \texttt{admin\_level} and \texttt{maritime}.
+A joint-distribution estimator, such as the one proposed in \cref{sec_seletivity_reordering} would therefore give tighter bounds, but the selectivity signal used in this thesis is consumed only by a \emph{reordering} heuristic - not by a cost-based plan chooser - and reordering is monotone in the ordering of the individual selectivities rather than in their absolute values.
 The independence-estimator error therefore propagates into the quality of the short-circuit ordering but never into the correctness of the rewritten style, which makes the cheap estimator an acceptable engineering choice for this use case.
 
 \subsection{Materialized Views}\label{sub_materialized_views}
 
 A \emph{materialized view} is a derived relation whose contents are precomputed from a query over base tables and stored for fast access~\cite{guptaMaintenanceMaterializedViews1995}.
-When the base data changes, the materialized view must be updated - either by full recomputation or by \emph{incremental view maintenance} (IVM), which propagates only the delta.
-The cascade developed in this thesis has a direct structural analogue: the tile set is the base relation, the rendering style is the view definition, and the shaved tile is the materialized view.
+When the base data changes, the materialized view must be updated - either by full recomputation or by \emph{incremental view maintenance}, which propagates only the delta.
+The cascade developed in this thesis has a direct structural analogue: 
+the tile set is the base relation, the rendering style is the view definition, and the shaved tile is the materialized view.
 When the style changes (e.g., a layer is removed by dead elimination), the pruning advisory changes, which in turn changes the shaved output - precisely the IVM problem of maintaining a derived dataset under view-definition changes.
+
 The future direction of serving-time applicability (\cref{sec_conclusion_future_work}) - applying the advisory as a per-request filter rather than a batch operation - is a form of virtual (non-materialized) view evaluation.
 
 \subsection{Partial Evaluation and Superoptimization}\label{sub_partial_eval}
 
 \emph{Partial evaluation} (also called program specialization) transforms a program with respect to known static inputs, producing a residual program that depends only on the remaining dynamic inputs~\cite{jonesPartialEvaluationAutomatic1993}.
 The style optimiser performs partial evaluation of the rendering function: the style (static input) is known at optimisation time, while tile data (dynamic input) varies at runtime.
-Filter-to-property constant propagation (\cref{sub_structural_optimisations}) is a textbook instance: an equality constraint in the filter (static) is substituted into paint expressions, collapsing data-dependent branches that can never be reached given the known filter.
+Filter-to-property constant propagation (\cref{sub_structural_optimisations}) is a textbook instance:
+an equality constraint in the filter (static) is substituted into paint expressions, collapsing data-dependent branches that can never be reached given the known filter.
 
-The encoding strategy competition (\cref{sub_encoding_strategies}) shares the spirit of \emph{superoptimization}~\cite{massalinSuperoptimizerLookingShortest1987} in that it exhaustively evaluates all candidate strategies over the actual data and retains the smallest result, rather than using profile data to guide a heuristic decision as in classical profile-guided optimisation (\cref{sub_pgo}).
+The encoding strategy competition (\cref{sub_encoding_strategies}) shares the spirit of \emph{superoptimization}~\cite{massalinSuperoptimizerLookingShortest1987} in that it exhaustively evaluates all candidate strategies over the actual data and retains the smallest result, rather than using profile data to guide a heuristic decision as in classical \ac{PGO} (\cref{sub_pgo}).
 Unlike true superoptimization, however, the candidate set is designer-specified (sort orders $\times$ encoding schemes) and the profiler prunes the search space before exhaustive evaluation; it is therefore more precisely characterised as \emph{exhaustive strategy selection} over a bounded candidate space.
 The approach is optimal over its search space but does not discover strategies outside it.
-
 
 \section{Data Encoding and Compression}\label{sec_data_encoding}
 
@@ -478,14 +507,15 @@ Traditional database systems store data in \emph{row-oriented} layouts, where al
 This layout is efficient for transactional workloads that access entire records, but wasteful for analytical queries that access only a few columns, as the entire record must be read to access any single attribute.
 
 \emph{Column-oriented} (columnar) storage transposes this layout, storing all values of a single attribute contiguously~\cite{abadiDesignImplementationModern2013}.
-The foundational system in this space is Dremel~\cite{melnikDremelInteractiveAnalysis2010}, which introduced the record shredding and assembly algorithm for nested columnar data using definition and repetition levels --- the same representation pattern that directly inspired Apache Parquet and, by extension, the columnar layout that \ac{MLT} adapts for tile data.
+The foundational system in this space is Dremel~\cite{melnikDremelInteractiveAnalysis2010}, which introduced the record shredding and assembly algorithm for nested columnar data using definition and repetition levels - the same representation pattern that directly inspired Apache Parquet and, by extension, the columnar layout that \ac{MLT} adapts for tile data.
 This has several advantages for read-heavy workloads.
 First, \emph{reduced I/O}: only the columns referenced by a query need to be read from disk or transferred over the network.
-Second, \emph{better compression}: values of the same type and semantic domain are stored together, exhibiting higher homogeneity and thus compressing more effectively than interleaved multi-type records.
+Second, \emph{better compression}: values of the same type and semantic domain are stored together, exhibiting higher local homogeneity and thus compressing more effectively than interleaved multi-type records.
 Third, \emph{vectorised processing}: columnar data enables \ac{SIMD}-style batch operations on arrays of values of the same type.
 
 In the context of vector tiles, the row-oriented \ac{MVT} format stores all properties of a feature together, whereas the columnar \ac{MLT} format stores each property as an independent column.
-The columnar layout allows per-column encoding strategies: a column of road classes can use dictionary encoding, while a column of building heights can use delta encoding, each chosen independently.
+The columnar layout allows per-column encoding strategies:
+a column of \texttt{road} classes can use dictionary encoding, while a column of building heights can use delta-rle encoding, each chosen independently.
 
 \subsection{Integer Encoding}\label{sub_integer_encoding}
 
@@ -508,10 +538,12 @@ Several encoding schemes exploit structural properties of integer sequences:
     This scheme achieves near-optimal bit packing for blocks where most values have similar magnitude, while gracefully handling outliers.
 \end{itemize}
 
-These encodings can be composed: delta encoding followed by \ac{RLE} (\emph{delta-\acs{RLE}}) is effective for sequences that are approximately sorted, as the delta transform produces long runs of small values (often zero for duplicate consecutive entries).
+These encodings can be composed:
+delta encoding followed by \ac{RLE} (\emph{delta-\acs{RLE}}) is effective for sequences that are approximately sorted, as the delta transform produces long runs of small values (often zero for duplicate consecutive entries).
 
-The question of which encoding to apply to a given column has been studied systematically: Abadi et~al.~\cite{abadiIntegratingCompressionExecution2006} proposed property-based selection rules, and Damme et~al.~\cite{dammeComprehensiveExperimentalSurvey2019} developed a cost-model-driven selection strategy that picks the encoding with the lowest expected cost for a given data distribution.
-The encoding competition in \cref{sub_encoding_strategies} takes an exhaustive rather than cost-model approach, trialling all candidate encodings and retaining the smallest output.
+The question of which encoding to apply to a given column has been studied systematically:
+Abadi et~al.~\cite{abadiIntegratingCompressionExecution2006} proposed property-based selection rules, and Damme et~al.~\cite{dammeComprehensiveExperimentalSurvey2019} developed a cost-model-driven selection strategy that picks the encoding with the lowest expected cost for a given data distribution.
+The encoding competition in \cref{sub_encoding_strategies} takes an exhaustive rather than cost-model approach, trialling a pruned set of candidate encodings and retaining the smallest output.
 
 \subsection{String Compression}\label{sub_string_compression}
 
@@ -524,14 +556,16 @@ Two complementary compression strategies address different aspects of string red
     The integer indices are themselves amenable to the integer encoding schemes described above.
 
     \item \textbf{\acf{FSST}}~\cite{bonczFSSTFastRandom2020} is a lightweight, block-oriented string compressor that learns a \emph{symbol table} of up to 255 frequent byte sequences from the input corpus and replaces occurrences with single-byte codes.
-    Unlike general-purpose compressors such as LZ77 or zstd, \ac{FSST} preserves random access: each compressed string can be decompressed independently without context from prior strings.
-    The symbol table is stored once (up to \qty{2040}{\byte}) and amortised over all strings in the column.
-    \ac{FSST} and dictionary encoding can be combined: applying \ac{FSST} to the deduplicated dictionary strings compresses both the unique values and the byte-level redundancy within them.
+    Unlike general-purpose compressors such as LZ77 or zstd, \ac{FSST} preserves random access, so each compressed string can be decompressed independently without context from prior strings.
+    The symbol table is stored once and amortised over all strings in the column.
+    \ac{FSST} and dictionary encoding can be combined.
+    This means that applying \ac{FSST} to the deduplicated dictionary strings compresses both the unique values and the byte-level redundancy within them.
 \end{itemize}
 
 \subsection{Space-Filling Curves}\label{sub_space_filling_curves}
 
-\emph{Space-filling curves} map multi-dimensional points to a one-dimensional ordering while preserving spatial locality: points that are close in two-dimensional space tend to receive nearby positions on the curve~\cite{moonAnalysisClusteringProperties2001}.
+\emph{Space-filling curves} map multi-dimensional points to a one-dimensional ordering while preserving spatial locality.
+Points that are close in two-dimensional space tend to receive nearby positions on the curve~\cite{moonAnalysisClusteringProperties2001}.
 This property is exploited in tile encoding to reorder features so that spatially adjacent features are stored contiguously, improving the effectiveness of delta and \ac{RLE} encoding on geometry and property columns.
 
 Two space-filling curves are commonly used:
@@ -568,7 +602,8 @@ The Jaccard similarity is then estimated as:
     \hat{J}(A, B) = \frac{1}{k} \sum_{i=1}^{k} \mathbf{1}\bigl[\mathit{sig}_i(A) = \mathit{sig}_i(B)\bigr],
 \end{equation}
 where $\mathbf{1}[\cdot]$ is the indicator function.
-The estimate is unbiased with variance $O(1/k)$~\cite{broderResemblanceContainmentDocuments1998}.
+
+The estimate is unbiased with variance $O(1/k)$~\cite{broderResemblanceContainmentDocuments1998}, so the accuracy is fine-tunable.
 
 
 \section{Benchmarking}\label{sec_benchmarking}
@@ -577,18 +612,18 @@ Benchmarking refers to the systematic measurement of system performance using co
 The purpose of benchmarking is to evaluate system behaviour, compare alternative implementations, and quantify the effects of optimisations.
 
 According to Jain~\cite{jainArtComputerSystems1991}, a good evaluation must start with selecting relevant metrics.
-Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that na\"ive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent JVM/engine invocations --- a principle that informs the bootstrap CI methodology used in this thesis.
-The bootstrap itself --- a resampling method for constructing confidence intervals without distributional assumptions --- was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1993} and is the specific statistical technique applied throughout this thesis's evaluation (\cref{ch_experiments}).
+Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that na\"ive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent JVM/engine invocations - a principle that informs the bootstrap CI methodology used in this thesis.
+The bootstrap itself - a resampling method for constructing confidence intervals without distributional assumptions - was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1993} and is the specific statistical technique applied throughout this thesis's evaluation (\cref{ch_experiments}).
 Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} codified twelve common pitfalls in reporting performance results; the evaluation in \cref{ch_experiments} follows their guidelines by reporting per-metric confidence intervals and separating throughput from latency measurements.
 In the context of web maps, the candidate metrics span a range from deployment-critical on battery-constrained targets to directly user-visible on the desktop:
 
 \begin{itemize}
-    \item \textbf{Power consumption} in Watts, which is relevant for mobile devices and battery-powered systems.  This thesis does not measure power consumption - no RAPL counters, battery deltas, or external power meters are used, as the benchmark host is a desktop workstation rather than a battery-constrained mobile device.  Power is listed here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets: cellular radio energy is proportional to data volume, and GPU active time scales with draw-call count.  No quantitative energy claim is made in this thesis; the qualitative energy discussion in \cref{ch_experiments} is limited to stating the expected direction of the effect.
     \item \textbf{Resource utilisation}, such as CPU load, GPU utilisation, and memory consumption to have pointers where further optimisations is possible.
     \item \textbf{Latency and responsiveness}, measuring the time between initiating an operation (for example zooming) and the first visible result.
     \item \textbf{Throughput}, typically measured in \acp{FPS} or frame time, describing how many frames can be rendered per second.
     \item \textbf{Frame stability}, which captures variations in frame time and identifies dropped frames or rendering stutters.
     \item \textbf{Network utilisation}, including transferred bytes, tile request rates, and bandwidth consumption.
+    \item \textbf{Power consumption} in Watts, which is relevant for mobile devices and battery-powered systems.  This thesis does not measure power consumption - no RAPL counters, battery deltas, or external power meters are used, as the benchmark host is a desktop workstation rather than a battery-constrained mobile device.  Power is listed here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets. Cellular radio energy is proportional to data volume, and GPU active time scales with draw-call count.
 \end{itemize}
 
 These can be benchmarked at different workload levels~\cite{jainArtComputerSystems1991}:
@@ -603,7 +638,9 @@ These can be benchmarked at different workload levels~\cite{jainArtComputerSyste
 The benchmark harness controls for network variability (via a caching proxy) and GPU variability (via hardware-accelerated rendering with ANGLE/Vulkan) to achieve reproducible results at the macro level.
 
 With these theoretical tools in place, the mapping from theory to the optimiser's three-level pipeline can be made explicit.
-The compiler techniques surveyed above --- peephole rewriting, constant folding, and fixpoint iteration --- supply the rewrite strategies for the expression-level passes that simplify individual style expressions without schema knowledge.
-The query-optimisation concepts --- predicate pushdown and selectivity estimation --- inform the structural passes and, critically, the pruning advisory that bridges style and data: the advisory is a pushdown plan derived from the optimised style, analogous to a query planner projecting only the columns a query reads.
-The encoding techniques --- columnar storage, integer coding, \ac{FSST}, and space-filling curves --- underpin the data-level passes that re-encode shaved tiles with automatic strategy selection.
+
+The compiler techniques surveyed above - peephole rewriting, constant folding, and fixpoint iteration - supply the rewrite strategies for the expression-level passes that simplify individual style expressions without schema knowledge.
+The query-optimisation concepts - predicate pushdown and selectivity estimation - inform the structural passes and, critically, the pruning advisory that bridges style and data: the advisory is a pushdown plan derived from the optimised style, analogous to a query planner projecting only the columns a query reads.
+The encoding techniques - columnar storage, integer coding, \ac{FSST}, and space-filling curves - underpin the data-level passes that re-encode shaved tiles with automatic strategy selection.
+
 The following chapter formalises the optimisation problem and applies these foundations to the concrete design and implementation of the optimiser.
