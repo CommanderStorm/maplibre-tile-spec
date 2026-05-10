@@ -60,40 +60,22 @@ Each pass preserves the visual-equivalence constraint formalised in \cref{sec_pr
 
 \subsection{Three-Level Optimisation Pipeline}\label{sub_pipeline}
 
-The optimiser is organised as a pipeline of passes at three levels of abstraction:
+\Cref{fig:system_architecture} sketches the optimiser system as a whole.
+At the centre sits the \emph{Optimiser}, a pipeline of passes at three levels of abstraction.
+Around it are three supporting components, each detailed in its own section: a code-generation front end (\cref{sub_codegen}) that produces typed Rust types from the upstream MapLibre style specification; a tile-statistics scanner (\cref{sub_tile_statistics}) that profiles \ac{MVT} tiles for the stats-driven and data-level passes and a validation harness - pixel-exact render tests plus a curated style corpus - that exercises both pipelines against the visual-equivalence guarantee of \cref{eq:visual_equivalence}.
+The three pass levels at the centre are:
 
 \begin{enumerate}
     \item \textbf{Expression passes} (\cref{sub_expression_optimisations}) operate directly on the JSON representation of style expressions, applying peephole rewrites, constant folding, and algebraic simplifications without deserialising the style into typed structures.
     They run to a fixpoint with a hard cap of eight iterations; in practice every style in the benchmarking and Maputnik corpora converges within two to three iterations, well below the cap, because human-authored styles tend to reuse a small repertoire of patterns.
     The formal termination measure and confluence discussion are given alongside the pass descriptions.
-    \item \textbf{Structural passes} (\cref{sub_structural_optimisations}) deserialise the style into typed Rust structures generated from the upstream MapLibre specification (\cref{sub_codegen}) and apply transformations that require cross-layer or cross-source reasoning -- dead layer elimination, metadata refinement, layer merging, and cleanup.
+    \item \textbf{Structural passes} (\cref{sub_structural_optimisations}) deserialise the style into the typed Rust spec produced by the codegen front end and apply transformations that require cross-layer or cross-source reasoning -- dead layer elimination, metadata refinement, layer merging, and cleanup.
     A cross-phase \emph{filter-to-property constant propagation} -- substituting equality constraints extracted from a layer's filter into that layer's paint and layout expressions -- bridges the expression and structural phases and is detailed in \cref{sub_structural_optimisations}.
     \item \textbf{Data passes} (\cref{sub_data_optimisations}) transform the served tile data via a style-driven pruning advisory and the conversion from \ac{MVT} to \ac{MLT}.
 \end{enumerate}
 
 \noindent The ordering is a deliberate resolution of the \emph{phase ordering problem}~\cite{clickCombiningAnalysesCombining1995}.
 Expression passes run first so that structural passes operate on already-simplified expressions, dead elimination precedes layer merging so that gaps left by removed layers expose new merging opportunities, and the data phase consumes the fully optimised style so that the pruning advisory reflects the final set of live layers and properties.
-
-\subsection{Code Generation from v8.json}\label{sub_codegen}
-
-Type-safe manipulation of style documents is central to the correctness guarantees of the structural passes.
-Rather than operating on raw JSON, the optimiser deserialises styles into Rust structures that are \emph{generated} from the upstream MapLibre GL~JS style specification.
-The generation pipeline proceeds in three stages.
-First, the machine-readable style specification published by the MapLibre project is \emph{decoded} into an internal representation.
-Second, the decoded data is \emph{normalised} into a stable intermediate representation that resolves cross-cutting concerns - layers combine data from multiple specification sections, expressions require special handling, and so forth.
-Third, the intermediate representation is consumed by a code emitter that \emph{generates} Rust source files with serialisation and deserialisation support.
-
-This pipeline ensures that every structural pass operates on types that faithfully mirror the specification, and that changes to the upstream spec can be incorporated by re-running the generator.
-The alternative - hand-written Rust types - would require manual synchronisation with specification changes and risk silent divergence.
-Due to oddities how the maplibre style specification is specified, a simpler version was not possible.
-The generated types include serialisation and deserialisation support, so the structural passes can round-trip through JSON without losing unknown fields that the generator has not yet modelled.
-
-The normalisation stage produces what we call the \texttt{MIR} (mid-level intermediate representation), which resolves cross-cutting concerns in the specification.
-For example, the upstream \texttt{v8.json} defines layer properties across multiple sections (paint, layout) and references expression operators in a separate section; the MIR collapses these into per-layer field definitions that include the property's type, default value, and expression capabilities (whether the property supports zoom-dependent, feature-dependent, or both kinds of expressions).
-
-This metadata is critical for structural passes.
-Layer merging queries the MIR to determine whether a differing paint property supports feature-driven expressions (and can therefore be wrapped in a \texttt{case}/\texttt{match} over the filter discriminator) or is camera-only (and must be uniform across merged layers).
-The MIR also drives the default stripping pass, which compares property values against the specification defaults encoded in the generated types.
 
 \begin{figure}[htbp]
     \centering
@@ -155,59 +137,28 @@ The MIR also drives the default stripping pass, which compares property values a
     \label{fig:system_architecture}
 \end{figure}
 
-\section{Gathering a Representative Sample}\label{sec_gathering_sample}
+\subsection{Code Generation from v8.json}\label{sub_codegen}
 
-Evaluating an optimiser requires both a diverse set of styles and realistic tile data.
-We employ a two-tier strategy.
+Type-safe manipulation of style documents is central to the correctness guarantees of the structural passes.
+Rather than operating on raw JSON, the optimiser deserialises styles into Rust structures that are \emph{generated} from the upstream MapLibre GL~JS style specification.
 
-\subsection{Benchmarking Corpus}\label{sub_deep_corpus}
+The generation pipeline proceeds in three stages:
+First, the machine-readable style specification published by the MapLibre project is \emph{decoded} into an internal representation.
+Second, the decoded data is \emph{normalised} into a stable intermediate representation that resolves cross-cutting concerns - layers combine data from multiple specification sections, expressions require special handling, and so forth.
+Third, the intermediate representation is consumed by a code emitter that \emph{generates} Rust source files with serialisation and deserialisation support.
 
-For rendering benchmarks that require tile data and animated camera scenarios, we curated a corpus of 15 publicly available styles that use the OpenMapTiles or BasemapDE schema:
+This pipeline ensures that every structural pass operates on types that faithfully mirror the specification, and that changes to the upstream spec can be incorporated by re-running the generator.
+The alternative - hand-written Rust types - would require manual synchronisation with specification changes and risk silent divergence.
+Due maplibre being specified in its own, json based \ac{DSL}, a simpler version was not possible.
+The generated types include serialisation and deserialisation support, so the structural passes can round-trip tested.
 
-\begin{itemize}
-    \item \textbf{4 OpenFreeMap styles}: liberty, bright, positron, fiord.
-    \item \textbf{7 OpenMapTiles community styles}: dark-matter, osm-bright, klokan-basic, toner, osm-liberty, americana, stadia-outdoors.
-    \item \textbf{4 Government and institutional styles}: ICGC~fosc, ICGC~gris, Basemap\-DE topo\-graphic, Basemap\-DE colour.
-\end{itemize}
+The normalisation stage produces what we call the \texttt{MIR} (mid-level intermediate representation), which resolves cross-cutting concerns in the specification.
+For example, the upstream \texttt{v8.json} defines layer properties across multiple sections (paint, layout) and references expression operators in a separate section; the MIR collapses these into per-layer field definitions that include the property's type, default value, and expression capabilities (whether the property supports zoom-dependent, feature-dependent, or both kinds of expressions).
 
-These styles span a range of complexity-from minimal basemaps with fewer than 50~layers to verbose institutional styles with several hundred layers-and exercise different subsets of the expression language.
-
-\subsection{Generalisation Corpus}\label{sub_generalisation_corpus}
-
-To assess whether optimisations gains generalise beyond the deep corpus, we collected 13 styles from the Maputnik style editor catalogue (two additional catalogue entries were unavailable at the time of measurement).
-These styles are evaluated using static analysis only (style size, complexity metrics, pass applicability) and do not require tile data.
-
-\subsection{Tile Data and Caching}\label{sub_tile_data}
-
-Tile data is sourced from \ac{OSM} via Planetiler or the German government.
-Both sources are consumed through the standard Web Mercator XYZ tiling scheme used by MapLibre, so all zoom-level reasoning in the thesis assumes this grid; BasemapDE is accessed through its XYZ-compatible endpoint rather than its native \acs{WMTS} grid, ensuring that the optimiser's tile indexing is uniform across the corpus.
-Only for \ac{OSM} is the underlying data fully available, so only for this source can tile statistics be collected at a sample rate of~1.0.
-To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs with the latency and download speed of a 4G internet connection according to Rusan et al.~\cite{rusanAssessmentPacketLatency2015} ($\text{size} / 30\frac{Mb}{s} + 25ms$).
-This eliminates network variability and guarantees that every ablation step operates on identical tile data (after an initial, discarded run).
-
-All compressed-size measurements throughout this thesis use maximum compression: gzip level~9, Brotli quality~11, and zstd level~22.
-This reflects the deployment scenario where tiles and styles are compressed once and served many times, so encoding cost is negligible relative to the number of requests served.
-
-\subsection{Geographic and Use-Case Scenarios}\label{sub_scenarios}
-
-The benchmark harness defines 18 scenarios drawn from a matrix of 15 geographic locations and 5 camera animation types:
-
-\begin{itemize}
-    \item \textbf{Locations} span high-density cities with Latin scripts (Munich, Berlin, Paris, New York, Rome), cities with non-Latin scripts (Tokyo, Beijing, Seoul, Cairo), and low-density or special nature regions (Black Forest, Amazon, Swiss Alps, Sahara, Venice, Stockholm Archipelago).
-    \item \textbf{Animations} exercise different rendering workloads:
-    \emph{zigzag} alternates zoom levels while panning;
-    \emph{spiral} traces a circle at constant zoom with rotating bearing;
-    \emph{zoomdrill} zooms from overview to street level and back;
-    \emph{pansweep} sweeps across a region at constant zoom;
-    \emph{bearingspin} rotates bearing at high pitch.
-\end{itemize}
-
-Each scenario is a specific (location, animation) pair.
-The full cross-product of 15 locations and 5 animations is 75 pairs, which is too expensive to run for every ablation step (each cell requires 15 repeat runs for statistical validity across 17 ablation steps and 15 styles, giving roughly $75 \times 15 \times 17 \times 15 = \num{286875}$ full animations).
-The 18 selected scenarios are chosen by stratified sampling so that every location appears at least once and every animation appears at least three times, and so that all combinations of density class (high/low) and script class (Latin/non-Latin) are represented.
-Within each stratum the specific (location, animation) pair is the one that exercises the most layers in the densest style in the corpus, ensuring that the sample is biased \emph{against} the null hypothesis of \enquote{no effect} - i.e.\ towards scenarios where any rendering-cost differences are most likely to be visible.
-This is a convenience sample by design:
-it is not claimed to be unbiased across all real-world usage patterns, but it is claimed to be a reasonable stress test of the optimiser across the dimensions (density, script, zoom trajectory, camera motion) that most plausibly interact with style and data-level optimisations.
+This metadata is critical for structural passes.
+Layer merging queries the MIR to determine whether a differing paint property supports feature-driven expressions (and can therefore be wrapped in a \texttt{case}/\texttt{match} over the filter discriminator) or is camera-only (and must be uniform across merged layers).
+The MIR also drives the default stripping pass, which compares property values against the specification defaults encoded in the generated types.
+The codegen pipeline corresponds to the top row of \cref{fig:system_architecture}.
 
 \section{Building Optimisations}\label{sec_building_optimisations}
 
@@ -1282,6 +1233,60 @@ Above this threshold, only the cardinality is retained, bounding memory consumpt
 Statistics can be collected at a configurable \emph{sample rate}.
 A sample rate of~1.0 (full census) is required for irreversible decisions such as dead layer elimination or property interning; lower sample rates are sufficient for selectivity estimation and reordering.
 This distinction is enforced by a sample-rate guard in the optimiser: passes that permanently remove data check that the sample rate is~1.0 before applying.
+
+\section{Gathering a Representative Sample}\label{sec_gathering_sample}
+
+Evaluating an optimiser requires both a diverse set of styles and realistic tile data.
+We employ a two-tier strategy.
+
+\subsection{Benchmarking Corpus}\label{sub_deep_corpus}
+
+For rendering benchmarks that require tile data and animated camera scenarios, we curated a corpus of 15 publicly available styles that use the OpenMapTiles or BasemapDE schema:
+
+\begin{itemize}
+    \item \textbf{4 OpenFreeMap styles}: liberty, bright, positron, fiord.
+    \item \textbf{7 OpenMapTiles community styles}: dark-matter, osm-bright, klokan-basic, toner, osm-liberty, americana, stadia-outdoors.
+    \item \textbf{4 Government and institutional styles}: ICGC~fosc, ICGC~gris, Basemap\-DE topo\-graphic, Basemap\-DE colour.
+\end{itemize}
+
+These styles span a range of complexity-from minimal basemaps with fewer than 50~layers to verbose institutional styles with several hundred layers-and exercise different subsets of the expression language.
+
+\subsection{Generalisation Corpus}\label{sub_generalisation_corpus}
+
+To assess whether optimisations gains generalise beyond the deep corpus, we collected 13 styles from the Maputnik style editor catalogue (two additional catalogue entries were unavailable at the time of measurement).
+These styles are evaluated using static analysis only (style size, complexity metrics, pass applicability) and do not require tile data.
+
+\subsection{Tile Data and Caching}\label{sub_tile_data}
+
+Tile data is sourced from \ac{OSM} via Planetiler or the German government.
+Both sources are consumed through the standard Web Mercator XYZ tiling scheme used by MapLibre, so all zoom-level reasoning in the thesis assumes this grid; BasemapDE is accessed through its XYZ-compatible endpoint rather than its native \acs{WMTS} grid, ensuring that the optimiser's tile indexing is uniform across the corpus.
+Only for \ac{OSM} is the underlying data fully available, so only for this source can tile statistics be collected at a sample rate of~1.0.
+To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs with the latency and download speed of a 4G internet connection according to Rusan et al.~\cite{rusanAssessmentPacketLatency2015} ($\text{size} / 30\frac{Mb}{s} + 25ms$).
+This eliminates network variability and guarantees that every ablation step operates on identical tile data (after an initial, discarded run).
+
+All compressed-size measurements throughout this thesis use maximum compression: gzip level~9, Brotli quality~11, and zstd level~22.
+This reflects the deployment scenario where tiles and styles are compressed once and served many times, so encoding cost is negligible relative to the number of requests served.
+
+\subsection{Geographic and Use-Case Scenarios}\label{sub_scenarios}
+
+The benchmark harness defines 18 scenarios drawn from a matrix of 15 geographic locations and 5 camera animation types:
+
+\begin{itemize}
+    \item \textbf{Locations} span high-density cities with Latin scripts (Munich, Berlin, Paris, New York, Rome), cities with non-Latin scripts (Tokyo, Beijing, Seoul, Cairo), and low-density or special nature regions (Black Forest, Amazon, Swiss Alps, Sahara, Venice, Stockholm Archipelago).
+    \item \textbf{Animations} exercise different rendering workloads:
+    \emph{zigzag} alternates zoom levels while panning;
+    \emph{spiral} traces a circle at constant zoom with rotating bearing;
+    \emph{zoomdrill} zooms from overview to street level and back;
+    \emph{pansweep} sweeps across a region at constant zoom;
+    \emph{bearingspin} rotates bearing at high pitch.
+\end{itemize}
+
+Each scenario is a specific (location, animation) pair.
+The full cross-product of 15 locations and 5 animations is 75 pairs, which is too expensive to run for every ablation step (each cell requires 15 repeat runs for statistical validity across 17 ablation steps and 15 styles, giving roughly $75 \times 15 \times 17 \times 15 = \num{286875}$ full animations).
+The 18 selected scenarios are chosen by stratified sampling so that every location appears at least once and every animation appears at least three times, and so that all combinations of density class (high/low) and script class (Latin/non-Latin) are represented.
+Within each stratum the specific (location, animation) pair is the one that exercises the most layers in the densest style in the corpus, ensuring that the sample is biased \emph{against} the null hypothesis of \enquote{no effect} - i.e.\ towards scenarios where any rendering-cost differences are most likely to be visible.
+This is a convenience sample by design:
+it is not claimed to be unbiased across all real-world usage patterns, but it is claimed to be a reasonable stress test of the optimiser across the dimensions (density, script, zoom trajectory, camera motion) that most plausibly interact with style and data-level optimisations.
 
 \section{Evaluation}\label{sec_evaluation}
 
