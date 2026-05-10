@@ -230,7 +230,7 @@ The evaluation uses a cumulative design with five configurations, each adding on
     \item \textbf{Style-only}: the optimised style from Experiments~1-2, served with unmodified \ac{MVT} tiles.
     \item \textbf{Shaving-only}: the original style with tile shaving applied (advisory-driven pruning of unused columns, geometry types, and property values), but without style optimisations.
     \item \textbf{Style + shaving}: the optimised style driving tile shaving - the combined configuration where dead layer elimination and metadata refinement may narrow the advisory relative to the unoptimised style.
-    \item \textbf{Style + shaving + MLT encoding}: the full pipeline - the encoding stage that delivers the shaved data to the wire via automatic encoding strategy selection (sort competition, per-stream profiling, string compression).
+    \item \textbf{Style + shaving + \ac{MLT} encoding}: the full pipeline - the encoding stage that delivers the shaved data to the wire via automatic encoding strategy selection (sort competition, per-stream profiling, string compression).
 \end{enumerate}
 
 \noindent Configurations~2-4 isolate the interaction effect: if the combined reduction of style+shaving exceeds the sum of style-only and shaving-only, the two optimisation categories are synergistic; if approximately equal, they compose additively; if less, they are partially redundant.
@@ -667,9 +667,9 @@ All four terms are paid \emph{once} per (style, tileset) build and are amortised
 \Cref{tab:preprocessing_cost} reports wall-clock time for each stage of the preprocessing pipeline on the Germany OpenMapTiles tileset (\num{255694} tiles after pruning, zoom 0--14), measured on an AMD Ryzen~7 3700X (8 cores / 16 threads), \qty{46}{\gibi\byte} RAM, NVMe SSD; median of three runs.
 \emph{Style optimisation} ($C_\text{style}$) and \emph{advisory computation} ($C_\text{adv}$) are negligible: Liberty's 90-layer style completes all passes in \qty{7.5}{\milli\second} and the advisory in \qty{1.1}{\milli\second}.
 \emph{Tile-statistics collection} ($C_\text{stats}$) takes \qty{57.4}{\second} for a single-threaded scan of all \num{256588} source tiles.
-\emph{Tile pruning and MVT re-encoding} ($C_\text{enc}$, MVT) takes \qty{15.6}{\second} using Rayon parallelism.
-\emph{\ac{MLT} encoding with sort-strategy competition} ($C_\text{enc}$, MLT auto) is the dominant term: \qty{5}{\minute}\,\qty{42}{\second} single-threaded, or \qty{47}{\second} with 16 threads.
-Without the competition ($C_\text{enc}$, MLT none), single-threaded encoding takes \qty{2}{\minute}\,\qty{55}{\second}.
+\emph{Tile pruning and \ac{MVT} re-encoding} ($C_\text{enc}$, MVT) takes \qty{15.6}{\second} using Rayon parallelism.
+\emph{\ac{MLT} encoding with sort-strategy competition} ($C_\text{enc}$, \ac{MLT} auto) is the dominant term: \qty{5}{\minute}\,\qty{42}{\second} single-threaded, or \qty{47}{\second} with 16 threads.
+Without the competition ($C_\text{enc}$, \ac{MLT} none), single-threaded encoding takes \qty{2}{\minute}\,\qty{55}{\second}.
 The measured overhead ratio of the full competition is therefore $342 / 175 = 1.95\times$ in CPU time --- substantially lower than the analytical 3--5$\times$ estimate, because the cost-control mechanisms described below eliminate most redundant work.
 
 \begin{table}[htbp]
@@ -681,10 +681,10 @@ Stage & Description & Wall-clock \\
 $C_\text{style}$ & Style optimisation (all passes, Liberty) & \qty{7.5}{\milli\second} \\
 $C_\text{stats}$ & Tile statistics (\num{256588} tiles, 1 thread) & \qty{57.4}{\second} \\
 $C_\text{adv}$ & Advisory computation & \qty{1.1}{\milli\second} \\
-$C_\text{enc}$ (MVT prune) & Tile pruning + MVT re-encode (16 threads) & \qty{15.6}{\second} \\
-$C_\text{enc}$ (MLT none, 1T) & MLT encoding, single strategy, 1 thread & \qty{175}{\second} \\
-$C_\text{enc}$ (MLT auto, 1T) & MLT encoding, full competition, 1 thread & \qty{342}{\second} \\
-$C_\text{enc}$ (MLT auto, 16T) & MLT encoding, full competition, 16 threads & \qty{46.7}{\second} \\
+$C_\text{enc}$ (\ac{MVT} prune) & Tile pruning + \ac{MVT} re-encode (16 threads) & \qty{15.6}{\second} \\
+$C_\text{enc}$ (\ac{MLT} none, 1T) & \ac{MLT} encoding, single strategy, 1 thread & \qty{175}{\second} \\
+$C_\text{enc}$ (\ac{MLT} auto, 1T) & \ac{MLT} encoding, full competition, 1 thread & \qty{342}{\second} \\
+$C_\text{enc}$ (\ac{MLT} auto, 16T) & \ac{MLT} encoding, full competition, 16 threads & \qty{46.7}{\second} \\
 \midrule
 Overhead factor & auto\,/\,none (single-threaded CPU time) & $1.95\times$ \\
 \bottomrule
@@ -705,7 +705,7 @@ This is what makes the multi-strategy approach affordable: the cost of trialling
 \paragraph{Amortisation and headline numbers}
 Taken together, the cost-control mechanisms reduce the measured overhead of the full sort-strategy competition to $1.95\times$ compared to a fixed-plan (single-strategy) encoder (\cref{tab:preprocessing_cost}) --- well below the na\"ive $4\times$ expectation from four candidate sort orders, confirming that bounding-box pruning, data profiling, and warm-start caching eliminate most redundant work.
 This cost is paid once per tileset build and amortised over every subsequent tile request.
-The total single-threaded pipeline time (statistics collection through MLT encoding with full competition) is under \qty{7}{\minute} on the Germany tileset; with 16-thread parallelism the end-to-end wall-clock time drops to approximately \qty{2}{\minute} --- perfectly acceptable for an offline build stage.
+The total single-threaded pipeline time (statistics collection through \ac{MLT} encoding with full competition) is under \qty{7}{\minute} on the Germany tileset; with 16-thread parallelism the end-to-end wall-clock time drops to approximately \qty{2}{\minute} --- perfectly acceptable for an offline build stage.
 
 \subsection{Complexity Metrics}\label{sub_combined_complexity}
 

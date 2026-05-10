@@ -1,6 +1,8 @@
 \chapter{Theoretical Background}\label{ch_theoretical_background}
 
-The gap identified in \cref{ch_related_work} - no existing tool composes style rewrites with data-level pruning into a joint pipeline - calls for foundations from several fields: the map rendering architecture that defines what is being optimised, the compiler techniques whose analogues drive the expression-level passes, the query optimisation concepts that inform filter rewriting and predicate reordering, and the columnar encoding strategies that underpin the data-level passes.
+The gap identified in \cref{ch_related_work} is that no existing tool composes style rewrites with data-level pruning into a joint pipeline. 
+This calls for foundations from several fields.
+The map rendering architecture that defines what is being optimised, the compiler techniques whose analogues drive the expression-level passes, the query optimisation concepts that inform filter rewriting and predicate reordering, and the columnar encoding strategies that underpin the data-level passes.
 
 This chapter introduces these foundations in the order in which the optimiser consumes them.
 \cref{sec_map_rendering_approaches} describes the map rendering process and its resource pipeline.
@@ -106,9 +108,10 @@ Tiles, by contrast, can be stored and accessed using three major approaches:
 \end{itemize}
 
 Dynamic data sources can be updated frequently by applying incremental diffs, whereas the other approaches typically require a full rebuild when the underlying data changes.
-At larger scales, in-memory caching of tiles via regional or \ac{CDN}-style infrastructure - combined with fallback to runtime-dynamic data - is essential for performance.
+At larger scales, in-memory caching of tiles via regional or \ac{CDN}-style infrastructure - combined with fallback to runtime-dynamic data - is essential for performance and cost.
 
-Although all of these resources can be optimised, tiles are usually the most critical due to their continuous streaming nature as a user moves the map thus higher data volume.
+Although all of these resources can be optimised, tiles are usually the most critical due to their continuously streaming-int nature as a user moves the map.
+They usualy have a cumulatively higher data volume due to this, even though their individual tiles may be much smaller.
 All other resources depend on locale slightly (for example loading different Unicode ranges or fonts), but are generally only handled one time.
 
 Real-world observations support this:
@@ -144,10 +147,12 @@ Common open-source renderers like maplibre or source available renderers like ma
 
 Tiles are the primary data delivery mechanism for interactive web maps.
 Rather than transferring the entire dataset to the client, the map is partitioned into a regular grid of square tiles at discrete zoom levels following the widely adopted XYZ tiling scheme.
+
 At zoom level~$z$, the world is subdivided into $2^z \times 2^z$ tiles, each identified by its column~$x$, row~$y$, and zoom level~$z$.
-Lower zoom levels cover large geographic areas with simplified geometry; higher zoom levels cover smaller areas with greater detail.
+Lower zoom levels cover large geographic areas with simplified geometry with higher zoom levels cover smaller areas with greater detail.
 The client requests only the tiles intersecting the current viewport, and as the user pans or zooms, new tiles are fetched while old ones are discarded or cached.
 When a client requests a tile at a zoom level beyond the source's maximum, the renderer \emph{overzooms}: it upscales the nearest available tile from the source's highest available zoom to fill the viewport.
+
 The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched, which means that a layer's effective visibility at a given camera zoom cannot be determined from filter or data bounds alone - it is a function of both the layer's filter and the source's \texttt{maxzoom}.
 This observation has direct consequences for any optimiser that rewrites zoom bounds, and is revisited in \cref{ch_methods}.
 In particular, tightening a layer's \texttt{maxzoom} is only sound when it accounts for overzoom: removing a layer at zoom~14 would suppress its rendering at zoom~15 and beyond if the source's maximum zoom is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.

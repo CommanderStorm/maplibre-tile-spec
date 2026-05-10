@@ -1,19 +1,20 @@
 \chapter{Introduction}\label{ch_introduction}
 
 Interactive web maps have become a ubiquitous interface for geographic information, powering applications from navigation and logistics to urban planning and journalism.
-Modern map renderers such as MapLibre GL~JS\footnote{This work targets MapLibre GL~JS, the open-source fork of Mapbox GL~JS, because its source code permits the static analysis and runtime instrumentation that a style optimiser requires; the proprietary Mapbox codebase does not allow independent research evaluation.} and Mapbox GL~JS deliver rich, client-side rendered vector maps by streaming tiled geometry data to the browser, where a client side style specification drives a WebGL- or WebGPU-based rendering pipeline.
+Modern map renderers such as MapLibre GL~JS\footnote{This work targets MapLibre GL~JS, the open-source fork of Mapbox GL~JS, because its source code permits the static analysis and runtime instrumentation that a style optimiser requires.
+The proprietary Mapbox codebase does not allow independent research evaluation.} and Mapbox GL~JS deliver client-side rendered vector maps by streaming tiled geometry data to the browser, where a client side style specification drives a WebGL- or WebGPU-based rendering pipeline.
 This architecture enables smooth panning, zooming, and rotation, but it also places competing demands on the network (tile fetching), the CPU (decoding, style expression evaluation), and the GPU (draw calls)- all within a single frame budget.
 
 As map deployments scale - from personal projects to platforms serving millions of daily users - the cost of suboptimal performance compounds.
-Larger tiles increase transfer time and bandwidth cost; redundant style layers waste rendering cycles; unnecessary properties inflate decoding overhead.
+Larger tiles increase transfer time and bandwidth cost, redundant style layers waste rendering cycles and unnecessary properties inflate decoding overhead.
 On mobile devices, these inefficiencies translate directly into battery drain and thermal throttling, though direct energy measurement is outside the scope of this work.
 On unstable network connections, such as on trains or aeroplanes, these translate to degraded user experiences.
 
 Despite this, the map rendering and geospatial community has largely treated style authoring and data preparation as independent concerns: styles are hand-tuned for visual appearance, while tiles are encoded with general-purpose content and compression.
 The interaction between the two is left unexploited.
 For example, a style filter that matches on a property value may, after constant folding with tile-level statistics, simplify to a form that no longer references that property at all.
-This in turn allows the data encoder to drop the corresponding column from every tile --- a saving that neither style simplification nor data pruning could achieve independently.
-Whether such cross-level interactions produce measurably super-additive gains --- or whether the levels compose merely additively --- is a central empirical question of this work.
+This in turn allows the data encoder to drop the corresponding column from every tile - a saving that neither style simplification nor data pruning could achieve independently.
+Whether such cross-level interactions produce measurably super-additive gains - or whether the levels compose merely additively - is a central empirical question of this work.
 
 \section{Research Goals}\label{sec_research_goals}
 
@@ -26,10 +27,10 @@ Three research questions guide the work:
     \item \textbf{How expensive are these optimisations} in terms of preprocessing time, and what are the \textbf{tradeoffs between decoding latency, rendering throughput, and transfer size}?
 \end{enumerate}
 
-To answer these questions, the thesis designs and implements a standalone optimiser that consumes a MapLibre style JSON document and, optionally, tile-level statistics (per-layer value-frequency counts and data-range summaries, computed in a single scan of the source tileset), and produces a semantically equivalent style whose rendering performance is measurably improved - together with optimised tile data.
+To answer these questions, the thesis designs and implements a standalone optimiser that consumes a MapLibre style JSON document and, optionally tile-level statistics, and produces a equivalent style whose rendering performance is measurably improved - together with optimised tile data.
 
 All transformations are visually lossless:
-The optimised output must produce pixel-identical rendering for every tile at every integer zoom level; fractional-zoom correctness is argued from the invariants of each pass and identified as a testing extension in \cref{sec_conclusion_future_work}.
+The optimised output must produce pixel-identical rendering for every tile at every integer zoom level.
 
 \newpage
 \section{Contributions}\label{sec_contributions}
@@ -38,8 +39,13 @@ The main contributions of this thesis are:
 
 \begin{enumerate}
     \item A \textbf{three-level optimisation pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering), structural passes (dead layer elimination, metadata refinement, layer merging), and data-level transformations (tile shaving, encoding strategy selection), modeled on peephole optimisers and query planners from the compiler and database literature.
-    The decomposition reflects three distinct input representations: expression passes operate on raw JSON arrays with no schema knowledge, enabling fast, composable peephole rules; structural passes require a typed model of the full style document to reason across layers and sources; and data passes operate on tile content rather than the style, requiring a different input representation entirely.
-    The three levels are complementary rather than co-equal: each targets a different performance bottleneck, and their relative importance varies by deployment scenario.
+    The decomposition reflects three distinct input representations:
+    Expression passes operate on raw JSON arrays with no schema knowledge, enabling fast, composable peephole rules.
+    Structural passes require a typed model of the full style document to reason across layers and sources.
+    And data passes operate on tile content rather than the style, requiring a different input representation entirely.
+    
+    The three levels are complementary rather than co-equal:
+    each targets a different performance bottleneck, and their relative importance varies by deployment scenario.
 
     \item \textbf{Style-driven tile shaving}, the single largest contributor to load-time improvements in this work, that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data.  Style-level passes assist by narrowing the advisory, though the interaction is additive rather than synergistic (\cref{sub_mlt_discussion}).
 
@@ -53,6 +59,6 @@ The main contributions of this thesis are:
 The remainder of this thesis is structured as follows.
 \cref{ch_related_work} surveys tile data pruning, encoding formats, style-level tooling, and rendering benchmarking, identifying the gap that motivates a joint style-data optimiser.
 \cref{ch_theoretical_background} establishes the compiler, database, and encoding foundations that the optimiser draws on.
-\cref{ch_methods} formalises the visual-equivalence-constrained optimisation problem and presents the three-level pipeline - expression-level rewrites, structural passes, and data-level optimisations - together with style-driven tile shaving, automatic encoding strategy selection, and the cumulative ablation methodology.
+\cref{ch_methods} formalises the visual-equivalence-constrained optimisation problem and presents the three-level pipeline and evaliation methodology.
 \cref{ch_experiments} evaluates each optimisation level in isolation and combined, tests generalisation across 15 styles, and quantifies the full pipeline's end-to-end effect on tile volume, load time, and rendering stability.
 \cref{ch_conclusion} revisits the research questions, summarises the key findings, and identifies directions for future work.
