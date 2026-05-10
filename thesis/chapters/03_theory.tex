@@ -167,7 +167,7 @@ Both operations consume the source's \texttt{maxzoom} tile as input; tightening 
 ]
 function sliceVectorTileLayer(sourceLayer, maxZoomTileID, targetTileID) {
     const {extent} = sourceLayer;
-    const dz    = targetTileID.z - maxZoomTileID.z;
+    const dz = targetTileID.z - maxZoomTileID.z;
     const scale = Math.pow(2, dz);
 
     // Target tile's offset within the source tile, in target coords
