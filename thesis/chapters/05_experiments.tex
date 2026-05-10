@@ -349,7 +349,7 @@ To separate the contribution of the multi-strategy competition (this work) from 
 
 Three observations emerge.
 \emph{First}, under no wire compression the Rust encoder reduces the \ac{MLT}-Java baseline by \qty{28.3}{\percent}, confirming that the sort-strategy competition, per-stream profiler, and shared-dictionary clustering add substantial savings over a columnar encoder that simply picks a fixed encoding plan.
-Note that the Java baseline used here incorporates encoding improvements backported from the Rust encoder development (correct delta-zigzag sequencing, \ac{RLE} viability checks, \ac{FSST} thresholds); the \qty{28}{\percent} reduction therefore isolates the contribution of the automatic strategy selection --- sort competition, per-stream profiling, and MinHash-based shared-dictionary clustering --- over a correctly-implemented fixed-plan encoder, rather than conflating bug-fixes with innovation.
+Note that the Java baseline used here incorporates encoding improvements backported from the Rust encoder development (correct delta-zigzag sequencing, \ac{RLE} viability checks, \ac{FSST} thresholds); the \qty{28}{\percent} reduction therefore isolates the contribution of the automatic strategy selection - sort competition, per-stream profiling, and MinHash-based shared-dictionary clustering - over a correctly-implemented fixed-plan encoder, rather than conflating bug-fixes with innovation.
 \emph{Second}, the \ac{MLT}-Java baseline is \emph{worse} than gzip-compressed \ac{MVT} (\qty{3.54}{\giga\byte} vs.\ \qty{3.08}{\giga\byte})  -  a finding that is easy to overlook when comparing \enquote{raw \ac{MLT}} to \enquote{raw \ac{MVT}} alone.
 General-purpose LZ77-family compressors already exploit most of the row-level redundancy in the protobuf wire format; a columnar encoder that uses fixed per-column schemes cannot keep up.
 The data-driven encoding strategy selection of the Rust encoder reclaims this gap: \ac{MLT}-Rust under gzip is \qty{12.3}{\percent} smaller than \ac{MVT} under gzip.
@@ -448,7 +448,7 @@ A simple analytical model frames the trade-off.
 Let $r$ denote the per-tile rendering-time saving from shaving (derived from the load-time reduction divided by the number of fetched tiles), let $S$ denote the number of distinct styles served, and let $f$ denote the origin fetch cost per cache miss (RTT plus transfer time).
 Under a uniform-traffic assumption, the cache miss rate increase from style-keyed tiles is $1 - 1/S$ compared to style-independent caching.
 Shaving is net-beneficial when $r > (1 - 1/S) \cdot f$.
-With the benchmark values ($r \approx \qty{3}{\milli\second}$ per tile from the load-time reduction, $f \approx \qty{25}{\milli\second}$ under the \qty{10}{\Mbps} throttle), shaving breaks even at roughly $S \leq 5$ canonical styles; beyond that, the hybrid strategy --- shaving canonical styles, serving raw \ac{MVT} for the tail --- is the recommended deployment pattern.
+With the benchmark values ($r \approx \qty{3}{\milli\second}$ per tile from the load-time reduction, $f \approx \qty{25}{\milli\second}$ under the \qty{10}{\Mbps} throttle), shaving breaks even at roughly $S \leq 5$ canonical styles; beyond that, the hybrid strategy - shaving canonical styles, serving raw \ac{MVT} for the tail - is the recommended deployment pattern.
 This model is intentionally conservative (uniform traffic, no locality effects); real deployments with skewed traffic towards one or two canonical styles will tolerate a higher $S$.
 
 \paragraph{Geometry simplification is out of scope}
@@ -541,7 +541,7 @@ For the 11 \ac{OMT}-compatible styles in the deep corpus, tile shaving was evalu
 A small number of styles in the corpus show negligible reductions ($< 1\%$).
 These are typically minimal styles that already use only literal values (no expressions), have few layers, and do not set properties to their default values.
 No style in the corpus shows a size \emph{increase} after optimisations, confirming that the passes are safe in the general case.
-In practice, styles maintained by large organisations --- which tend to accumulate verbose filters, redundant default values, and deeply nested expressions over successive authoring iterations --- offer the most room for automatic simplification.
+In practice, styles maintained by large organisations - which tend to accumulate verbose filters, redundant default values, and deeply nested expressions over successive authoring iterations - offer the most room for automatic simplification.
 Compact basemaps authored by experienced cartographers, which already use efficient expressions and few layers, show correspondingly smaller gains.
 
 
@@ -670,7 +670,7 @@ All four terms are paid \emph{once} per (style, tileset) build and are amortised
 \emph{Tile pruning and \ac{MVT} re-encoding} ($C_\text{enc}$, MVT) takes \qty{15.6}{\second} using Rayon parallelism.
 \emph{\ac{MLT} encoding with sort-strategy competition} ($C_\text{enc}$, \ac{MLT} auto) is the dominant term: \qty{5}{\minute}\,\qty{42}{\second} single-threaded, or \qty{47}{\second} with 16 threads.
 Without the competition ($C_\text{enc}$, \ac{MLT} none), single-threaded encoding takes \qty{2}{\minute}\,\qty{55}{\second}.
-The measured overhead ratio of the full competition is therefore $342 / 175 = 1.95\times$ in CPU time --- substantially lower than the analytical 3--5$\times$ estimate, because the cost-control mechanisms described below eliminate most redundant work.
+The measured overhead ratio of the full competition is therefore $342 / 175 = 1.95\times$ in CPU time - substantially lower than the analytical 3--5$\times$ estimate, because the cost-control mechanisms described below eliminate most redundant work.
 
 \begin{table}[htbp]
 \centering\small
@@ -703,9 +703,9 @@ Finally, the \emph{\ac{RAII} alternatives guard} realises the inner competition 
 This is what makes the multi-strategy approach affordable: the cost of trialling $k$ candidates is $k$ encode passes plus $O(1)$ bookkeeping, not $k$ encode passes plus $k$ full buffer clones.
 
 \paragraph{Amortisation and headline numbers}
-Taken together, the cost-control mechanisms reduce the measured overhead of the full sort-strategy competition to $1.95\times$ compared to a fixed-plan (single-strategy) encoder (\cref{tab:preprocessing_cost}) --- well below the na\"ive $4\times$ expectation from four candidate sort orders, confirming that bounding-box pruning, data profiling, and warm-start caching eliminate most redundant work.
+Taken together, the cost-control mechanisms reduce the measured overhead of the full sort-strategy competition to $1.95\times$ compared to a fixed-plan (single-strategy) encoder (\cref{tab:preprocessing_cost}) - well below the na\"ive $4\times$ expectation from four candidate sort orders, confirming that bounding-box pruning, data profiling, and warm-start caching eliminate most redundant work.
 This cost is paid once per tileset build and amortised over every subsequent tile request.
-The total single-threaded pipeline time (statistics collection through \ac{MLT} encoding with full competition) is under \qty{7}{\minute} on the Germany tileset; with 16-thread parallelism the end-to-end wall-clock time drops to approximately \qty{2}{\minute} --- perfectly acceptable for an offline build stage.
+The total single-threaded pipeline time (statistics collection through \ac{MLT} encoding with full competition) is under \qty{7}{\minute} on the Germany tileset; with 16-thread parallelism the end-to-end wall-clock time drops to approximately \qty{2}{\minute} - perfectly acceptable for an offline build stage.
 
 \subsection{Complexity Metrics}\label{sub_combined_complexity}
 
@@ -815,4 +815,4 @@ Tail metrics (p99 frame time, jank count) are particularly sensitive to sample s
 The full-pipeline ablation performs thousands of pairwise comparisons across metrics, styles, scenarios, and ablation steps; no multiple-comparisons correction (Bonferroni, Benjamini-Hochberg) is applied, so individual per-cell \enquote{significant} differences should not be read as hypothesis tests, only as descriptive summaries.
 
 \medskip\noindent
-With the empirical evaluation complete --- expression, structural, and data-level passes measured individually and in combination, generalisation tested across 15~styles, and validity threats assessed --- the following chapter synthesises these findings, revisits the research questions posed in \cref{sec_research_goals}, and identifies directions for future work.
+With the empirical evaluation complete - expression, structural, and data-level passes measured individually and in combination, generalisation tested across 15~styles, and validity threats assessed - the following chapter synthesises these findings, revisits the research questions posed in \cref{sec_research_goals}, and identifies directions for future work.

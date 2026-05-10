@@ -59,7 +59,7 @@ This framing does not appear in prior map-rendering work - neither \texttt{vtsha
 \section{Tile Encoding and Format Innovation}\label{sec_rw_tile_encoding}
 
 The dominant wire format for vector tiles is \ac{MVT}~\cite{Vectortilespec21Master}, which uses Protocol Buffers~\cite{ProtocolBuffers} to encode features in a row-oriented layout.
-\ac{MVT} has since been adopted as a conformance class in the OGC API~--- Tiles standard~\cite{ogcApiTiles2022}, making it the baseline format for any standards-compliant tile delivery.
+\ac{MVT} has since been adopted as a conformance class in the OGC API-Tiles standard~\cite{ogcApiTiles2022}, making it the baseline format for any standards-compliant tile delivery.
 Its row orientation means that accessing a single property column requires scanning the entire feature table, and its protobuf encoding does not exploit the statistical properties of individual columns.
 
 Tremmel et al.~\cite{tremmelMapLibreTileNext2025} introduced the MapLibre Tile (MLT) format, a columnar alternative that achieves \qtyrange{2}{6}{\times} tile size reduction over MVT.
