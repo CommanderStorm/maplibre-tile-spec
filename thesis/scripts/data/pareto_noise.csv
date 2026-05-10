@@ -1,0 +1,5 @@
+axis,withinCvMedian,withinCvHigh,crossRangeMedian,crossRangeHigh,verdict
+gzip_bytes,0.0,0.0,9.1,51.5,reliable (deterministic)
+loadMs,4.6,29.3,14.7,84.7,noise comparable to signal
+meanFrameMs,5.8,30.3,13.8,83.0,noise comparable to signal
+peakHeapMB,6.7,16.4,17.3,61.3,borderline (excluded for consistency)
