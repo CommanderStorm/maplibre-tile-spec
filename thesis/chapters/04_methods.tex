@@ -60,41 +60,19 @@ Each pass preserves the visual-equivalence constraint formalised in \cref{sec_pr
 
 \subsection{Three-Level Optimisation Pipeline}\label{sub_pipeline}
 
-The optimiser operates at three levels, each targeting a different level of abstraction:
+The optimiser is organised as a pipeline of passes at three levels of abstraction:
 
 \begin{enumerate}
-    \item \textbf{Expression passes} operate directly on the JSON representation of style expressions.
-    They apply peephole rewrites, constant folding, and algebraic simplifications to individual expressions without deserialising the style into typed Rust structures.
-    Expression passes run to a fixpoint.
-    The pass set is applied repeatedly (up to eight iterations) until no further changes are detected.
-
-    \item \textbf{Structural passes} deserialise the style into typed Rust structures generated from the upstream MapLibre specification, apply transformations that require cross-layer or cross-source reasoning, and serialise the result back to JSON.
-    These passes handle dead layer elimination, metadata refinement, layer merging, and cleanup.
-    A final fixpoint re-fold cleans up residual trivial expressions (e.g., \texttt{["all",~x]} $\to$ \texttt{x}) introduced by predicate removal.
-    Layer merging runs last, after dead layers have been eliminated, to maximise the number of mergeable adjacent layers.
-
-    \item \textbf{Data passes} apply changes to the served data, such as applying pruning advisorys or converting \ac{MLT} to \ac{MVT}. 
+    \item \textbf{Expression passes} (\cref{sub_expression_optimisations}) operate directly on the JSON representation of style expressions, applying peephole rewrites, constant folding, and algebraic simplifications without deserialising the style into typed structures.
+    They run to a fixpoint with a hard cap of eight iterations; in practice every style in the benchmarking and Maputnik corpora converges within two to three iterations, well below the cap, because human-authored styles tend to reuse a small repertoire of patterns.
+    The formal termination measure and confluence discussion are given alongside the pass descriptions.
+    \item \textbf{Structural passes} (\cref{sub_structural_optimisations}) deserialise the style into typed Rust structures generated from the upstream MapLibre specification (\cref{sub_codegen}) and apply transformations that require cross-layer or cross-source reasoning -- dead layer elimination, metadata refinement, layer merging, and cleanup.
+    A cross-phase \emph{filter-to-property constant propagation} -- substituting equality constraints extracted from a layer's filter into that layer's paint and layout expressions -- bridges the expression and structural phases and is detailed in \cref{sub_structural_optimisations}.
+    \item \textbf{Data passes} (\cref{sub_data_optimisations}) transform the served tile data via a style-driven pruning advisory and the conversion from \ac{MVT} to \ac{MLT}.
 \end{enumerate}
 
-The separation into three levels is deliberate and represents a specific resolution of the \emph{phase ordering problem}~\cite{clickCombiningAnalysesCombining1995}. 
-
-Expression passes run first so that structural passes operate on already-simplified expressions, and dead elimination precedes merging so that gaps left by removed layers expose new merging opportunities.
-Expression passes operate on raw JSON and require no knowledge of the style schema beyond expression syntax.
-This permits fine-grained, composable rules that each match a local pattern and apply a rewrite.
-The rules need not be aware of one another, and new rules can be added without modifying existing ones.
-Fixpoint iteration in the expression phase is necessary because rewrites compose non-trivially: constant folding a \texttt{has} expression may produce a boolean literal that enables dead-branch elimination in an enclosing \texttt{case}, which may in turn expose a boolean absorption opportunity in the filter's top-level \texttt{all} node.
-A cap of eight iterations provides a termination guarantee.
-In practice, most styles converge within two to three iterations, and no style in either the benchmarking corpus or the Maputnik corpus has ever reached the cap.
-Such fast convergance is likely because styles written by humans usually written to achive a point and there are only so many ways of doing this.
-
-Structural passes, by contrast, require typed access to the full style document.
-For example, dead layer elimination must resolve source-layer references across layers and sources, and layer merging must compare paint properties across layers.
-Deserialising the style into typed Rust structures incurs a non-trivial cost (parsing, validation, allocation), so it is performed exactly once, after expression passes have simplified the expressions that the typed structures will contain.
-A notable cross-phase optimisations is \emph{filter-to-property constant propagation}.
-During the typed structural phase, equality constraints are extracted from a layer's filter expression (e.g.\ if the filter asserts \texttt{["==",~["get",~"class"],~"primary"]}, then the property \texttt{class} is known to equal \texttt{"primary"} for all features passing the filter).
-These constraints are propagated into the layer's paint and layout expressions, replacing \texttt{["get",~"class"]} references with the known literal value.
-This enables further constant folding within paint ramp expressions that branch on the same property, collapsing \texttt{match} and \texttt{case} arms that are unreachable given the filter constraint.
-The propagation operates within a single layer (intra-procedural, in compiler terminology) and extracts constraints from \texttt{all}, equality, \texttt{has}, \texttt{in}, and range predicates.
+\noindent The ordering is a deliberate resolution of the \emph{phase ordering problem}~\cite{clickCombiningAnalysesCombining1995}.
+Expression passes run first so that structural passes operate on already-simplified expressions, dead elimination precedes layer merging so that gaps left by removed layers expose new merging opportunities, and the data phase consumes the fully optimised style so that the pruning advisory reflects the final set of live layers and properties.
 
 \subsection{Code Generation from v8.json}\label{sub_codegen}
 
@@ -102,16 +80,19 @@ Type-safe manipulation of style documents is central to the correctness guarante
 Rather than operating on raw JSON, the optimiser deserialises styles into Rust structures that are \emph{generated} from the upstream MapLibre GL~JS style specification.
 The generation pipeline proceeds in three stages.
 First, the machine-readable style specification published by the MapLibre project is \emph{decoded} into an internal representation.
-Second, the decoded data is \emph{normalised} into a stable intermediate representation that resolves cross-cutting concerns -- layers combine data from multiple specification sections, expressions require special handling, and so forth.
+Second, the decoded data is \emph{normalised} into a stable intermediate representation that resolves cross-cutting concerns - layers combine data from multiple specification sections, expressions require special handling, and so forth.
 Third, the intermediate representation is consumed by a code emitter that \emph{generates} Rust source files with serialisation and deserialisation support.
 
 This pipeline ensures that every structural pass operates on types that faithfully mirror the specification, and that changes to the upstream spec can be incorporated by re-running the generator.
 The alternative - hand-written Rust types - would require manual synchronisation with specification changes and risk silent divergence.
+Due to oddities how the maplibre style specification is specified, a simpler version was not possible.
 The generated types include serialisation and deserialisation support, so the structural passes can round-trip through JSON without losing unknown fields that the generator has not yet modelled.
 
 The normalisation stage produces what we call the \texttt{MIR} (mid-level intermediate representation), which resolves cross-cutting concerns in the specification.
 For example, the upstream \texttt{v8.json} defines layer properties across multiple sections (paint, layout) and references expression operators in a separate section; the MIR collapses these into per-layer field definitions that include the property's type, default value, and expression capabilities (whether the property supports zoom-dependent, feature-dependent, or both kinds of expressions).
-This metadata is critical for structural passes: layer merging queries the MIR to determine whether a differing paint property supports feature-driven expressions (and can therefore be wrapped in a \texttt{case}/\texttt{match} over the filter discriminator) or is camera-only (and must be uniform across merged layers).
+
+This metadata is critical for structural passes.
+Layer merging queries the MIR to determine whether a differing paint property supports feature-driven expressions (and can therefore be wrapped in a \texttt{case}/\texttt{match} over the filter discriminator) or is camera-only (and must be uniform across merged layers).
 The MIR also drives the default stripping pass, which compares property values against the specification defaults encoded in the generated types.
 
 \begin{figure}[htbp]
