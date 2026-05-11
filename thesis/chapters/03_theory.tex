@@ -229,7 +229,7 @@ The following formats are used for encoding and transferring data to the client:
 
 Beyond the choice of tile format, a number of transfer-layer optimisations can improve delivery performance:
 utilising the approximately \qty{14}{\kilo\byte} TCP slow-start window as discussed by Nathaniel~\cite{WhyYourWebsite}, edge caching~\cite{BestPracticesMap}, HTTP/2 multiplexing~\cite{belsheHypertextTransferProtocol2015} (and its QUIC-based successor HTTP/3~\cite{bishopHTTP32022} for lossy mobile networks), and modern content-encoding algorithms such as Zstandard~\cite{colletZstandardCompressionApplication2021} and Brotli~\cite{alakuijalaBrotliCompressedData2016} that achieve higher compression ratios than gzip's LZ77 foundation~\cite{zivUniversalAlgorithmSequential1977}.
-Tile archive formats such as PMTiles~\cite{liuPMTiles2022} and COMTiles~\cite{tremmelCOMTilesCloudOptimized2023} address the container layer by enabling serverless, cloud-native tile delivery from a single file in blob storage.
+Tile archive formats such as PMTiles~\cite{PMTilesConceptsProtomaps} and COMTiles~\cite{tremmelCOMTILESCASESTUDY2023} address the container layer by enabling serverless, cloud-native tile delivery from a single file in blob storage.
 Since \ac{MVT} is the established baseline and \ac{MLT} aims to improve upon it, this thesis evaluates both formats and uses the transition from \ac{MVT} to \ac{MLT} as one of its data-level optimisations strategies.
 
 \subsection{Styles}\label{sec:styles}
@@ -427,7 +427,7 @@ For a monotone transformation $f$ on a finite domain, the sequence $x,\, f(x),\,
 In practice, convergence is rapid:
 most programs stabilise within a small number of iterations, and a conservative upper bound on iterations serves as a safety limit.
 The standard \ac{TRS} notions of confluence (whether all rule-application sequences converge to the same normal form) and termination (whether all sequences reach a normal form) are revisited in the context of the concrete rewrite system in \cref{sub:expression_optimisations}.
-A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcombVerifyingImprovingHalide2020} showed that Halide's \ac{DSL} optimiser - which, like this thesis's expression passes, applies a set of hand-written rewrite rules in a fixed order to simplify \ac{DSL} expression trees - suffers from the same confluence and termination concerns, and developed synthesis-based techniques to verify correctness and discover missing rules.
+A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcombVerifyingImprovingHalides2020} showed that Halide's \ac{DSL} optimiser - which, like this thesis's expression passes, applies a set of hand-written rewrite rules in a fixed order to simplify \ac{DSL} expression trees - suffers from the same confluence and termination concerns, and developed synthesis-based techniques to verify correctness and discover missing rules.
 \end{sloppypar}
 
 
@@ -470,7 +470,7 @@ Compound predicates are estimated by combining individual selectivities:
 \end{align*}
 
 The independence assumption is known to be inaccurate when columns are correlated, but it provides a computationally cheap approximation that is effective in practice~\cite{selingerAccessPathSelection1979}.
-More sophisticated estimators - such as multi-dimensional histograms, sampling-based methods, or the lightweight graphical models proposed by Tzoumas et~al.~\cite{tzoumas2011lightweight} that capture inter-attribute correlations without the full cost of joint-distribution estimation - improve accuracy at higher computational cost.
+More sophisticated estimators - such as multi-dimensional histograms, sampling-based methods, or the lightweight graphical models proposed by Tzoumas et~al.~\cite{tzoumasLightweightGraphicalModels2011} that capture inter-attribute correlations without the full cost of joint-distribution estimation - improve accuracy at higher computational cost.
 
 Map-style filters are in fact known to violate independence:
 In OpenMapTiles, for example, \texttt{class} and \texttt{subclass} are strongly correlated by schema design (every value of \texttt{subclass} implies a constrained set of \texttt{class} values), as are \texttt{admin\_level} and \texttt{maritime}.
@@ -479,7 +479,7 @@ The independence-estimator error therefore propagates into the quality of the sh
 
 \subsection{Materialized Views}\label{sub:materialized_views}
 
-A \emph{materialized view} is a derived relation whose contents are precomputed from a query over base tables and stored for fast access~\cite{guptaMaintenanceMaterializedViews1995}.
+A \emph{materialized view} is a derived relation whose contents are precomputed from a query over base tables and stored for fast access~\cite{guptaMaintenanceMaterializedViews1999}.
 When the base data changes, the materialized view must be updated - either by full recomputation or by \emph{incremental view maintenance}, which propagates only the delta.
 The cascade developed in this thesis has a direct structural analogue: 
 the tile set is the base relation, the rendering style is the view definition, and the shaved tile is the materialized view.
@@ -494,7 +494,7 @@ The style optimiser performs partial evaluation of the rendering function: the s
 Filter-to-property constant propagation (\cref{sub:structural_optimisations}) is a textbook instance:
 an equality constraint in the filter (static) is substituted into paint expressions, collapsing data-dependent branches that can never be reached given the known filter.
 
-The encoding strategy competition (\cref{sub:encoding_strategies}) shares the spirit of \emph{superoptimization}~\cite{massalinSuperoptimizerLookingShortest1987} in that it exhaustively evaluates all candidate strategies over the actual data and retains the smallest result, rather than using profile data to guide a heuristic decision as in classical \ac{PGO} (\cref{sub:pgo}).
+The encoding strategy competition (\cref{sub:encoding_strategies}) shares the spirit of \emph{superoptimization}~\cite{massalinSuperoptimizerLookSmallest1987} in that it exhaustively evaluates all candidate strategies over the actual data and retains the smallest result, rather than using profile data to guide a heuristic decision as in classical \ac{PGO} (\cref{sub:pgo}).
 Unlike true superoptimization, however, the candidate set is designer-specified (sort orders $\times$ encoding schemes) and the profiler prunes the search space before exhaustive evaluation; it is therefore more precisely characterised as \emph{exhaustive strategy selection} over a bounded candidate space.
 The approach is optimal over its search space but does not discover strategies outside it.
 
@@ -509,7 +509,7 @@ Traditional database systems store data in \emph{row-oriented} layouts, where al
 This layout is efficient for transactional workloads that access entire records, but wasteful for analytical queries that access only a few columns, as the entire record must be read to access any single attribute.
 
 \emph{Column-oriented} (columnar) storage transposes this layout, storing all values of a single attribute contiguously~\cite{abadiDesignImplementationModern2013}.
-The foundational system in this space is Dremel~\cite{melnikDremelInteractiveAnalysis2010}, which introduced the record shredding and assembly algorithm for nested columnar data using definition and repetition levels - the same representation pattern that directly inspired Apache Parquet and, by extension, the columnar layout that \ac{MLT} adapts for tile data.
+The foundational system in this space is Dremel~\cite{melnikDremelInteractiveAnalysis}, which introduced the record shredding and assembly algorithm for nested columnar data using definition and repetition levels - the same representation pattern that directly inspired Apache Parquet and, by extension, the columnar layout that \ac{MLT} adapts for tile data.
 This has several advantages for read-heavy workloads.
 First, \emph{reduced I/O}: only the columns referenced by a query need to be read from disk or transferred over the network.
 Second, \emph{better compression}: values of the same type and semantic domain are stored together, exhibiting higher local homogeneity and thus compressing more effectively than interleaved multi-type records.
