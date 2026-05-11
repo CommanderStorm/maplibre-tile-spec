@@ -1,30 +1,3 @@
-@inproceedings{guptaMaintenanceMaterializedViews1999,
-  title = {Maintenance of {{Materialized Views}}: {{Problems}}, {{Techniques}}, and {{Applications}}},
-  author = {Gupta, Ashish and Mumick, Inderpal Singh},
-  date = {1995},
-  booktitle = {Data Engineering Bulletin},
-  volume = {18},
-  number = {2},
-  pages = {3--18},
-}
-
-@book{jonesPartialEvaluationAutomatic1993,
-  title = {Partial {{Evaluation}} and {{Automatic Program Generation}}},
-  author = {Jones, Neil D. and Gomard, Carsten K. and Sestoft, Peter},
-  date = {1993},
-  publisher = {Prentice Hall},
-  isbn = {978-0-13-020249-9},
-}
-
-@inproceedings{massalinSuperoptimizerLookSmallest1987,
-  title = {Superoptimizer: A {{Look}} at the {{Smallest Program}}},
-  author = {Massalin, Henry},
-  date = {1987},
-  booktitle = {Proceedings of the Second International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS)},
-  pages = {122--126},
-  doi = {10.1145/36206.36194},
-}
-
 @article{abadiDesignImplementationModern2013,
   title = {The {{Design}} and {{Implementation}} of {{Modern Column-Oriented Database Systems}}},
   author = {Abadi, Daniel and Boncz, Peter and Harizopoulos, Stavros and Idreos, Stratos and Madden, Samuel},
@@ -42,6 +15,40 @@
   file = {/home/frank/Zotero/storage/DAW359SS/Abadi et al. - 2013 - The Design and Implementation of Modern Column-Oriented Database Systems.pdf}
 }
 
+@inproceedings{abadiIntegratingCompressionExecution2006,
+  title = {Integrating Compression and Execution in Column-Oriented Database Systems},
+  booktitle = {Proceedings of the 2006 {{ACM SIGMOD}} International Conference on {{Management}} of Data},
+  author = {Abadi, Daniel and Madden, Samuel and Ferreira, Miguel},
+  date = {2006-06-27},
+  pages = {671--682},
+  publisher = {ACM},
+  location = {Chicago IL USA},
+  doi = {10.1145/1142473.1142548},
+  url = {https://dl.acm.org/doi/10.1145/1142473.1142548},
+  urldate = {2026-05-11},
+  eventtitle = {{{SIGMOD}}/{{PODS06}}: {{International Conference}} on {{Management}} of {{Data}} and {{Symposium}} on {{Principles Database}} and {{Systems}}},
+  isbn = {978-1-59593-434-5},
+  langid = {english}
+}
+
+@inproceedings{abadiMaterializationStrategiesColumnOriented2007,
+  title = {Materialization {{Strategies}} in a {{Column-Oriented DBMS}}},
+  booktitle = {2007 {{IEEE}} 23rd {{International Conference}} on {{Data Engineering}}},
+  author = {Abadi, Daniel J. and Myers, Daniel S. and DeWitt, David J. and Madden, Samuel R.},
+  date = {2007-04},
+  pages = {466--475},
+  publisher = {IEEE},
+  location = {Istanbul},
+  doi = {10.1109/ICDE.2007.367892},
+  url = {https://ieeexplore.ieee.org/document/4221695/},
+  urldate = {2026-05-11},
+  abstract = {There has been renewed interest in column-oriented database architectures in recent years. For read-mostly query workloads such as those found in data warehouse and decision support applications, “column-stores” have been shown to perform particularly well relative to “rowstores.” In order for column-stores to be readily adopted as a replacement for row-stores, however, they must present the same interface to client applications as do row stores, which implies that they must output row-store-style tuples.},
+  eventtitle = {2007 {{IEEE}} 23rd {{International Conference}} on {{Data Engineering}}},
+  isbn = {978-1-4244-0802-3},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/65K45BAE/Abadi et al. - 2007 - Materialization Strategies in a Column-Oriented DBMS.pdf}
+}
+
 @book{ahoCompilersPrinciplesTechniques2007,
   title = {Compilers: Principles, Techniques, \& Tools},
   shorttitle = {Compilers},
@@ -52,10 +59,21 @@
   location = {Boston Munich},
   isbn = {978-0-321-48681-3 978-0-321-49169-5},
   langid = {english},
-  pagetotal = {1009},
-  note = {Literaturangaben
-\par
-Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alfred V. Aho, Ravi Sethi, Jeffrey D. Ullman. 1986}
+  pagetotal = {1009}
+}
+
+@report{alakuijalaBrotliCompressedData2016,
+  title = {Brotli {{Compressed Data Format}}},
+  author = {Alakuijala, J. and Szabadka, Z.},
+  date = {2016-07},
+  number = {RFC7932},
+  pages = {RFC7932},
+  institution = {RFC Editor},
+  doi = {10.17487/RFC7932},
+  url = {https://www.rfc-editor.org/info/rfc7932},
+  urldate = {2026-05-11},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/IYLE584M/Alakuijala and Szabadka - 2016 - Brotli Compressed Data Format.pdf}
 }
 
 @article{amiraghdamLOCALISLocallyadaptiveLine2019,
@@ -87,11 +105,54 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   keywords = {FOS: Computer and information sciences,Graphics (cs.GR),I.3; I.3.3; I.3.5; I.3.6; I.3.7}
 }
 
+@inproceedings{armbrustSparkSQLRelational2015,
+  title = {Spark {{SQL}}: {{Relational Data Processing}} in {{Spark}}},
+  shorttitle = {Spark {{SQL}}},
+  booktitle = {Proceedings of the 2015 {{ACM SIGMOD International Conference}} on {{Management}} of {{Data}}},
+  author = {Armbrust, Michael and Xin, Reynold S. and Lian, Cheng and Huai, Yin and Liu, Davies and Bradley, Joseph K. and Meng, Xiangrui and Kaftan, Tomer and Franklin, Michael J. and Ghodsi, Ali and Zaharia, Matei},
+  date = {2015-05-27},
+  pages = {1383--1394},
+  publisher = {ACM},
+  location = {Melbourne Victoria Australia},
+  doi = {10.1145/2723372.2742797},
+  url = {https://dl.acm.org/doi/10.1145/2723372.2742797},
+  urldate = {2026-05-11},
+  eventtitle = {{{SIGMOD}}/{{PODS}}'15: {{International Conference}} on {{Management}} of {{Data}}},
+  isbn = {978-1-4503-2758-9},
+  langid = {english}
+}
+
+@article{arnoldSurveyAdaptiveOptimization2005,
+  title = {A {{Survey}} of {{Adaptive Optimization}} in {{Virtual Machines}}},
+  author = {Arnold, M. and Fink, S.J. and Grove, D. and Hind, M. and Sweeney, P.F.},
+  date = {2005-02},
+  journaltitle = {Proceedings of the IEEE},
+  shortjournal = {Proc. IEEE},
+  volume = {93},
+  number = {2},
+  pages = {449--466},
+  issn = {0018-9219},
+  doi = {10.1109/JPROC.2004.840305},
+  url = {http://ieeexplore.ieee.org/document/1386662/},
+  urldate = {2026-05-11}
+}
+
+@book{baaderTermRewritingAll1999,
+  title = {Term Rewriting and All That},
+  author = {Baader, Franz and Nipkow, Tobias},
+  date = {1999},
+  publisher = {Cambridge university press},
+  location = {Cambridge (GB)},
+  isbn = {978-0-521-77920-3},
+  langid = {english}
+}
+
 @article{ballaVectorDataRendering2025,
   title = {Vector {{Data Rendering Performance Analysis}} of {{Open-Source Web Mapping Libraries}}},
   author = {Balla, Dániel and Gede, Mátyás},
   date = {2025-08-30},
-  journaltitle = {IJGI},
+  journaltitle = {ISPRS International Journal of Geo-Information},
+  shortjournal = {IJGI},
   volume = {14},
   number = {9},
   pages = {336},
@@ -104,6 +165,20 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/96VW6KL8/Balla and Gede - 2025 - Vector Data Rendering Performance Analysis of Open-Source Web Mapping Libraries.pdf}
 }
 
+@report{belsheHypertextTransferProtocol2015,
+  title = {Hypertext {{Transfer Protocol Version}} 2 ({{HTTP}}/2)},
+  author = {Belshe, M. and Peon, R. and Thomson, M.},
+  date = {2015-05},
+  number = {RFC7540},
+  pages = {RFC7540},
+  institution = {RFC Editor},
+  doi = {10.17487/RFC7540},
+  url = {https://www.rfc-editor.org/info/rfc7540},
+  urldate = {2026-05-11},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/MDBE5P84/Belshe et al. - 2015 - Hypertext Transfer Protocol Version 2 (HTTP2).pdf}
+}
+
 @online{BestPracticesMap,
   title = {Best Practices for Map Tile Caching},
   url = {https://www.here.com/docs/bundle/raster-tile-api-developer-guide/page/topics/cache-maps.html},
@@ -111,12 +186,26 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/RRAQMHYD/cache-maps.html}
 }
 
+@report{bishopHTTP32022,
+  title = {{{HTTP}}/3},
+  author = {Bishop, M.},
+  date = {2022-06},
+  number = {RFC9114},
+  pages = {RFC9114},
+  institution = {RFC Editor},
+  doi = {10.17487/RFC9114},
+  url = {https://www.rfc-editor.org/info/rfc9114},
+  urldate = {2026-05-11},
+  langid = {english}
+}
+
 @article{bonczFSSTFastRandom2020,
   title = {{{FSST}}: Fast Random Access String Compression},
   shorttitle = {{{FSST}}},
   author = {Boncz, Peter and Neumann, Thomas and Leis, Viktor},
   date = {2020-08},
-  journaltitle = {Proc. VLDB Endow.},
+  journaltitle = {Proceedings of the VLDB Endowment},
+  shortjournal = {Proc. VLDB Endow.},
   volume = {13},
   number = {12},
   pages = {2649--2661},
@@ -168,6 +257,42 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/TIMIRU5K/Butler et al. - 2016 - The GeoJSON Format.pdf}
 }
 
+@inproceedings{cenLEALearnedEncoding2021,
+  title = {{{LEA}}: {{A Learned Encoding Advisor}} for {{Column Stores}}},
+  shorttitle = {{{LEA}}},
+  booktitle = {Fourth {{Workshop}} in {{Exploiting AI Techniques}} for {{Data Management}}},
+  author = {Cen, Lujing and Kipf, Andreas and Marcus, Ryan and Kraska, Tim},
+  date = {2021-06-20},
+  pages = {32--35},
+  publisher = {ACM},
+  location = {Virtual Event China},
+  doi = {10.1145/3464509.3464885},
+  url = {https://dl.acm.org/doi/10.1145/3464509.3464885},
+  urldate = {2026-05-11},
+  eventtitle = {{{SIGMOD}}/{{PODS}} '21: {{International Conference}} on {{Management}} of {{Data}}},
+  isbn = {978-1-4503-8535-0},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/SCR8688V/Cen et al. - 2021 - LEA A Learned Encoding Advisor for Column Stores.pdf}
+}
+
+@article{changUsingProfileInformation1991,
+  title = {Using Profile Information to Assist Classic Code Optimizations},
+  author = {Chang, Pohua P. and Mahlke, Scott A. and Hwu, Wen‐Mei W.},
+  date = {1991-12},
+  journaltitle = {Software: Practice and Experience},
+  shortjournal = {Softw Pract Exp},
+  volume = {21},
+  number = {12},
+  pages = {1301--1321},
+  issn = {0038-0644, 1097-024X},
+  doi = {10.1002/spe.4380211204},
+  url = {https://onlinelibrary.wiley.com/doi/10.1002/spe.4380211204},
+  urldate = {2026-05-11},
+  abstract = {Abstract             This paper describes the design and implementation of an optimizing compiler that automatically generates profile information to assist classic code optimizations. This compiler contains two new components, an execution profiler and a profile‐based code optimizer, which are not commonly found in traditional optimizing compilers. The execution profiler inserts probes into the input program, executes the input program for several inputs, accumulates profile information and supplies this information to the optimizer. The profile‐based code optimizer uses the profile information to expose new optimization opportunities that are not visible to traditional global optimization methods. Experimental results show that the profile‐based code optimizer significantly improves the performance of production C programs that have already been optimized by a high‐quality global code optimizer.},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/CVADWZBE/Chang et al. - 1991 - Using profile information to assist classic code optimizations.pdf}
+}
+
 @article{chawanjiVectorTileCache,
   title = {Vector Tile Cache Connecting Effective Spatial Communication and Geospatial {{AI}}},
   author = {Chawanji, Sharon},
@@ -180,7 +305,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   shorttitle = {{{SMAPGAN}}},
   author = {Chen, Xu and Chen, Songqiang and Xu, Tian and Yin, Bangguo and Peng, Jian and Mei, Xiaoming and Li, Haifeng},
   date = {2021-05},
-  journaltitle = {IEEE Trans. Geosci. Remote Sensing},
+  journaltitle = {IEEE Transactions on Geoscience and Remote Sensing},
+  shortjournal = {IEEE Trans. Geosci. Remote Sensing},
   volume = {59},
   number = {5},
   pages = {4388--4406},
@@ -196,7 +322,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   shorttitle = {Expressive Map Design},
   author = {Christophe, Sidonie and Duménieu, Bertrand and Masse, Antoine and Hoarau, Charlotte and Ory, Jérémie and Brédif, Mathieu and Lecordix, François and Mellado, Nicolas and Turbet, Jérémie and Loi, Hugo and Hurtut, Thomas and Vanderhaeghe, David and Vergne, Romain and Thollot, Joëlle},
   date = {2018-05-16},
-  journaltitle = {Proc. Int. Cartogr. Assoc.},
+  journaltitle = {Proceedings of the ICA},
+  shortjournal = {Proc. Int. Cartogr. Assoc.},
   volume = {1},
   pages = {1--3},
   issn = {2570-2092},
@@ -213,7 +340,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   shorttitle = {Expressive Map Design},
   author = {Christophe, Sidonie and Duménieu, Bertrand and Masse, Antoine and Hoarau, Charlotte and Ory, Jérémie and Brédif, Mathieu and Lecordix, François and Mellado, Nicolas and Turbet, Jérémie and Loi, Hugo and Hurtut, Thomas and Vanderhaeghe, David and Vergne, Romain and Thollot, Joëlle},
   date = {2018-05-16},
-  journaltitle = {Proc. Int. Cartogr. Assoc.},
+  journaltitle = {Proceedings of the ICA},
+  shortjournal = {Proc. Int. Cartogr. Assoc.},
   volume = {1},
   pages = {1--3},
   issn = {2570-2092},
@@ -225,11 +353,60 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/XF38BZQT/Christophe et al. - 2018 - Expressive map design OGC SLDSE++ extension for expressive map styles.pdf}
 }
 
+@article{clickCombiningAnalysesCombining1995,
+  title = {Combining Analyses, Combining Optimizations},
+  author = {Click, Cliff and Cooper, Keith D.},
+  date = {1995-03},
+  journaltitle = {ACM Transactions on Programming Languages and Systems},
+  shortjournal = {ACM Trans. Program. Lang. Syst.},
+  volume = {17},
+  number = {2},
+  pages = {181--196},
+  issn = {0164-0925, 1558-4593},
+  doi = {10.1145/201059.201061},
+  url = {https://dl.acm.org/doi/10.1145/201059.201061},
+  urldate = {2026-05-11},
+  abstract = {Modern optimizing compilers use several passes over a program's intermediate representation to generate good code. Many of these optimizations exhibit a phase-ordering problem. Getting the best code may require iterating optimizations until a fixed point is reached. Combining these phases can lead to the discovery of more facts about the program, exposing more opportunities for optimization. This article presents a framework for describing optimizations. It shows how to combine two such frameworks and how to reason about the properties of the resulting framework. The structure of the frame work provides insight into when a combination yields better results. To make the ideas more concrete, this article presents a framework for combining constant propagation, value numbering, and unreachable-code elimination. It is an open question as to what other frameworks can be combined in this way.},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/D46MKZBA/Click and Cooper - 1995 - Combining analyses, combining optimizations.pdf}
+}
+
+@report{colletZstandardCompressionApplication2021,
+  title = {Zstandard {{Compression}} and the 'application/Zstd' {{Media Type}}},
+  author = {Collet, Y. and Kucherawy, M.},
+  date = {2021-02},
+  number = {RFC8878},
+  pages = {RFC8878},
+  institution = {RFC Editor},
+  doi = {10.17487/RFC8878},
+  url = {https://www.rfc-editor.org/info/rfc8878},
+  urldate = {2026-05-11},
+  langid = {english}
+}
+
+@article{dammeComprehensiveExperimentalSurvey2019,
+  title = {From a {{Comprehensive Experimental Survey}} to a {{Cost-based Selection Strategy}} for {{Lightweight Integer Compression Algorithms}}},
+  author = {Damme, Patrick and Ungethüm, Annett and Hildebrandt, Juliana and Habich, Dirk and Lehner, Wolfgang},
+  date = {2019-09-30},
+  journaltitle = {ACM Transactions on Database Systems},
+  shortjournal = {ACM Trans. Database Syst.},
+  volume = {44},
+  number = {3},
+  pages = {1--46},
+  issn = {0362-5915, 1557-4644},
+  doi = {10.1145/3323991},
+  url = {https://dl.acm.org/doi/10.1145/3323991},
+  urldate = {2026-05-11},
+  abstract = {Lightweight integer compression algorithms are frequently applied in in-memory database systems to tackle the growing gap between processor speed and main memory bandwidth. In recent years, the vectorization of basic techniques such as delta coding and null suppression has considerably enlarged the corpus of available algorithms. As a result, today there is a large number of algorithms to choose from, while different algorithms are tailored to different data characteristics. However, a comparative evaluation of these algorithms with different data and hardware characteristics has never been sufficiently conducted in the literature. To close this gap, we conducted an exhaustive experimental survey by evaluating several state-of-the-art lightweight integer compression algorithms as well as cascades of basic techniques. We systematically investigated the influence of data as well as hardware properties on the performance and the compression rates. The evaluated algorithms are based on publicly available implementations as well as our own vectorized reimplementations. We summarize our experimental findings leading to several new insights and to the conclusion that there is no single-best algorithm. Moreover, in this article, we also introduce and evaluate a novel cost model for the selection of a suitable lightweight integer compression algorithm for a given dataset.},
+  langid = {english}
+}
+
 @article{davidsonCodeSelectionObject1984,
   title = {Code Selection through Object Code Optimization},
   author = {Davidson, Jack W. and Fraser, Christopher W.},
   date = {1984-10},
-  journaltitle = {ACM Trans. Program. Lang. Syst.},
+  journaltitle = {ACM Transactions on Programming Languages and Systems},
+  shortjournal = {ACM Trans. Program. Lang. Syst.},
   volume = {6},
   number = {4},
   pages = {505--526},
@@ -246,7 +423,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   shorttitle = {A Fast and Elitist Multiobjective Genetic Algorithm},
   author = {Deb, K. and Pratap, A. and Agarwal, S. and Meyarivan, T.},
   date = {2002-04},
-  journaltitle = {IEEE Trans. Evol. Computat.},
+  journaltitle = {IEEE Transactions on Evolutionary Computation},
+  shortjournal = {IEEE Trans. Evol. Computat.},
   volume = {6},
   number = {2},
   pages = {182--197},
@@ -254,6 +432,61 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   doi = {10.1109/4235.996017},
   url = {http://ieeexplore.ieee.org/document/996017/},
   urldate = {2026-04-21}
+}
+
+@inproceedings{deshpandeAdaptiveQueryProcessing2006,
+  title = {Adaptive Query Processing: Why, How, When, What Next},
+  shorttitle = {Adaptive Query Processing},
+  booktitle = {Proceedings of the 2006 {{ACM SIGMOD}} International Conference on {{Management}} of Data},
+  author = {Deshpande, A. and Hellerstein, J. M. and Raman, V.},
+  date = {2006-06-27},
+  pages = {806--807},
+  publisher = {ACM},
+  location = {Chicago IL USA},
+  doi = {10.1145/1142473.1142603},
+  url = {https://dl.acm.org/doi/10.1145/1142473.1142603},
+  urldate = {2026-05-11},
+  abstract = {Adaptive query processing has been the subject of a great deal of recent work, particularly in emerging data management environments such as data integration and data streams. We provide an overview of the work in this area, identifying its common themes, laying out the space of query plans, and discussing open research problems. We discuss why adaptive query processing is needed, how it is being implemented, where it is most appropriately used, and finally, what next, i.e., open research problems.},
+  eventtitle = {{{SIGMOD}}/{{PODS06}}: {{International Conference}} on {{Management}} of {{Data}} and {{Symposium}} on {{Principles Database}} and {{Systems}}},
+  isbn = {978-1-59593-434-5},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/NZGELGH7/Deshpande et al. - 2006 - Adaptive query processing why, how, when, what next.pdf}
+}
+
+@inproceedings{dingInstanceOptimizedDataLayouts2021,
+  title = {Instance-{{Optimized Data Layouts}} for {{Cloud Analytics Workloads}}},
+  booktitle = {Proceedings of the 2021 {{International Conference}} on {{Management}} of {{Data}}},
+  author = {Ding, Jialin and Minhas, Umar Farooq and Chandramouli, Badrish and Wang, Chi and Li, Yinan and Li, Ying and Kossmann, Donald and Gehrke, Johannes and Kraska, Tim},
+  date = {2021-06-09},
+  pages = {418--431},
+  publisher = {ACM},
+  location = {Virtual Event China},
+  doi = {10.1145/3448016.3457270},
+  url = {https://dl.acm.org/doi/10.1145/3448016.3457270},
+  urldate = {2026-05-11},
+  eventtitle = {{{SIGMOD}}/{{PODS}} '21: {{International Conference}} on {{Management}} of {{Data}}},
+  isbn = {978-1-4503-8343-1},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/6U999RM6/Ding et al. - 2021 - Instance-Optimized Data Layouts for Cloud Analytics Workloads.pdf}
+}
+
+@article{dingSageDBInstanceOptimizedData2022,
+  title = {{{SageDB}}: {{An Instance-Optimized Data Analytics System}}},
+  shorttitle = {{{SageDB}}},
+  author = {Ding, Jialin and Marcus, Ryan and Kipf, Andreas and Nathan, Vikram and Nrusimha, Aniruddha and Vaidya, Kapil and Van Renen, Alexander and Kraska, Tim},
+  date = {2022-09},
+  journaltitle = {Proceedings of the VLDB Endowment},
+  shortjournal = {Proc. VLDB Endow.},
+  volume = {15},
+  number = {13},
+  pages = {4062--4078},
+  issn = {2150-8097},
+  doi = {10.14778/3565838.3565857},
+  url = {https://dl.acm.org/doi/10.14778/3565838.3565857},
+  urldate = {2026-05-11},
+  abstract = {Modern data systems are typically both complex and general-purpose. They are complex because of the numerous internal knobs and parameters that users need to manually tune in order to achieve good performance; they are general-purpose because they are designed to handle diverse use cases, and therefore often do not achieve the best possible performance for any specific use case. A recent trend aims to tackle these pitfalls: instance-optimized systems are designed to automatically self-adjust in order to achieve the best performance for a specific use case, i.e., a dataset and query workload. Thus far, the research community has focused on creating instance-optimized database components, such as learned indexes and learned cardinality estimators, which are evaluated in isolation. However, to the best of our knowledge, there is no complete data system built with instance-optimization as a foundational design principle.},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/RDJQC6I7/Ding et al. - 2022 - SageDB An Instance-Optimized Data Analytics System.pdf}
 }
 
 @online{DirectXSpecs,
@@ -264,6 +497,51 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   langid = {american},
   organization = {DirectX-Specs},
   file = {/home/frank/Zotero/storage/EFCZZYQN/DirectX-Specs.html}
+}
+
+@article{douglasALGORITHMSREDUCTIONNUMBER1973,
+  title = {{{ALGORITHMS FOR THE REDUCTION OF THE NUMBER OF POINTS REQUIRED TO REPRESENT A DIGITIZED LINE OR ITS CARICATURE}}},
+  author = {Douglas, David H and Peucker, Thomas K},
+  date = {1973-12-01},
+  journaltitle = {Cartographica},
+  shortjournal = {Cartographica},
+  volume = {10},
+  number = {2},
+  pages = {112--122},
+  issn = {0317-7173, 1911-9925},
+  doi = {10.3138/FM57-6770-U75U-7727},
+  url = {https://utppublishing.com/doi/10.3138/FM57-6770-U75U-7727},
+  urldate = {2026-05-11},
+  abstract = {All digitizing methods, as a general rule, record lines with far more data than is necessary for accurate graphic reproduction or for computer analysis. Two algorithms to reduce the number of points required to represent the line and, if desired, produce caricatures, are presented and compared with the most promising methods so far suggested. Line reduction will form a major part of automated generalization.},
+  langid = {english}
+}
+
+@book{efronIntroductionBootstrap1998,
+  title = {An Introduction to the Bootstrap},
+  author = {Efron, Bradley and Tibshirani, Robert},
+  date = {1998},
+  series = {Monographs on Statistics and Applied Probability},
+  edition = {Nachdr.},
+  number = {57},
+  publisher = {Chapman \& Hall},
+  location = {Boca Raton, Fla.},
+  isbn = {978-0-412-04231-7},
+  langid = {english},
+  pagetotal = {436},
+  file = {/home/frank/Zotero/storage/5MG6F35A/Efron and Tibshirani - 1998 - An introduction to the bootstrap.pdf}
+}
+
+@online{feherAdaptiveColumnCompression2022,
+  title = {An {{Adaptive Column Compression Family}} for {{Self-Driving Databases}}},
+  author = {Fehér, Marcell and Lucani, Daniel E. and Chatzigeorgiou, Ioannis},
+  date = {2022},
+  doi = {10.48550/ARXIV.2209.02334},
+  url = {https://arxiv.org/abs/2209.02334},
+  urldate = {2026-05-11},
+  abstract = {Modern in-memory databases are typically used for high-performance workloads, therefore they have to be optimized for small memory footprint and high query speed at the same time. Data compression has the potential to reduce memory requirements but often reduces query speed too. In this paper we propose a novel, adaptive compressor that offers a new trade-off point of these dimensions, achieving better compression than LZ4 while reaching query speeds close to the fastest existing segment encoders. We evaluate our compressor both with synthetic data in isolation and on the TPC-H and Join Order Benchmarks, integrated into a modern relational column store, Hyrise.},
+  pubstate = {prepublished},
+  version = {1},
+  keywords = {Databases (cs.DB),FOS: Computer and information sciences}
 }
 
 @software{FeltTippecanoe2026,
@@ -294,11 +572,29 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/Y4EW9JXJ/Flajolet et al. - 2007 - HyperLogLog the analysis of a near-optimal cardinality estimation algorithm.pdf}
 }
 
+@online{FlatGeobuf,
+  title = {{{FlatGeobuf}}},
+  url = {http://flatgeobuf.org/},
+  urldate = {2026-05-11},
+  abstract = {A performant binary encoding for geographic data based on flatbuffers},
+  langid = {american},
+  organization = {flatgeobuf},
+  file = {/home/frank/Zotero/storage/L8P7PS32/flatgeobuf.org.html}
+}
+
+@online{FontThatIncludes,
+  title = {A Font That Includes All {{Unicode}} Characters, What Would Be the Approximate Size of Its File?-Zhihu},
+  url = {https://www.zhihu.com/en/answer/3540789754},
+  urldate = {2026-05-10},
+  file = {/home/frank/Zotero/storage/AUVWSITJ/3540789754.html}
+}
+
 @article{fujimuraDESIGNDEVELOPMENTVECTOR2019,
   title = {{{UN}} Vector Tile Toolkit},
   author = {Fujimura, H. and Martin Sanchez, O. and Gonzalez Ferreiro, D. and Kayama, Y. and Hayashi, H. and Iwasaki, N. and Mugambi, F. and Obukhov, T. and Motojima, Y. and Sato, T.},
   date = {2019-08-23},
-  journaltitle = {Int. Arch. Photogramm. Remote Sens. Spatial Inf. Sci.},
+  journaltitle = {The International Archives of the Photogrammetry, Remote Sensing and Spatial Information Sciences},
+  shortjournal = {Int. Arch. Photogramm. Remote Sens. Spatial Inf. Sci.},
   volume = {XLII-4/W14},
   pages = {57--62},
   issn = {2194-9034},
@@ -308,6 +604,24 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   abstract = {Abstract. The UN Vector Tile Toolkit (https://github.com/un-vector-tile-toolkit/) is a package of open source tools designed under the UN Open GIS Initiative to enable public basemap providers, such as the UN geospatial information services or mapping organizations of governments, among others, to deliver their basemap vector tiles leveraging the latest web map technologies. The toolkit provides a set of Node.js open source scripts designed for developers to use with existing and proven open-source software such as Tippecanoe, Maputnik and Vector Tile optimizer. The toolkit will help organizations to produce, host, style, and optimize fast and interoperable basemap vector tiles, making them available with various application frameworks. The talk will cover automatic and continuous updates of basemap vector tiles using a continuously updated PostGIS database which stores both the UN mission-specific basemap data and global OpenStreetMap data. The talk also focuses on how the project ensured interoperability with different existing enterprise geospatial software frameworks that use less-advanced web map libraries. The project aims to build a sustainable community of developers that support the provision of fast and interoperable basemap vector tiles.},
   langid = {english},
   file = {/home/frank/Zotero/storage/53XI39PJ/Fujimura et al. - 2019 - DESIGN AND DEVELOPMENT OF THE UN VECTOR TILE TOOLKIT.pdf}
+}
+
+@article{furcheOXPathLanguageScalable2011,
+  title = {{{OXPath}}: A Language for Scalable, Memory-Efficient Data Extraction from Web Applications},
+  shorttitle = {{{OXPath}}},
+  author = {Furche, Tim and Gottlob, Georg and Grasso, Giovanni and Schallhart, Christian and Sellers, Andrew},
+  date = {2011-08},
+  journaltitle = {Proceedings of the VLDB Endowment},
+  shortjournal = {Proc. VLDB Endow.},
+  volume = {4},
+  number = {11},
+  pages = {1016--1027},
+  issn = {2150-8097},
+  doi = {10.14778/3402707.3402738},
+  url = {https://dl.acm.org/doi/10.14778/3402707.3402738},
+  urldate = {2026-05-11},
+  abstract = {The evolution of the web has outpaced itself: The growing wealth of information and the increasing sophistication of interfaces necessitate automated processing. Web automation and extraction technologies have been overwhelmed by this very growth.             To address this trend, we identify four key requirements of web extraction: (1) Interact with sophisticated web application interfaces, (2) Precisely capture the relevant data for most web extraction tasks, (3) Scale with the number of visited pages, and (4) Readily embed into existing web technologies.             We introduce OXPath, an extension of XPath for interacting with web applications and for extracting information thus revealed. It addresses all the above requirements. OXPath's page-at-a-time evaluation guarantees memory use independent of the number of visited pages, yet remains polynomial in time. We validate experimentally the theoretical complexity and demonstrate that its evaluation is dominated by the page rendering of the underlying browser.             Our experiments show that OXPath outperforms existing commercial and academic data extraction tools by a wide margin. OX-Path is available under an open source license.},
+  langid = {english}
 }
 
 @incollection{gaffuriWebMappingVector2012,
@@ -328,6 +642,48 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   isbn = {978-3-642-33023-0 978-3-642-33024-7}
 }
 
+@article{ganBaguaScalingDistributed2021,
+  title = {Bagua: Scaling up Distributed Learning with System Relaxations},
+  shorttitle = {Bagua},
+  author = {Gan, Shaoduo and Jiang, Jiawei and Yuan, Binhang and Zhang, Ce and Lian, Xiangru and Wang, Rui and Chang, Jianbin and Liu, Chengjun and Shi, Hongmei and Zhang, Shengzhuo and Li, Xianghong and Sun, Tengxu and Yang, Sen and Liu, Ji},
+  date = {2021-12},
+  journaltitle = {Proceedings of the VLDB Endowment},
+  shortjournal = {Proc. VLDB Endow.},
+  volume = {15},
+  number = {4},
+  pages = {804--813},
+  issn = {2150-8097},
+  doi = {10.14778/3503585.3503590},
+  url = {https://dl.acm.org/doi/10.14778/3503585.3503590},
+  urldate = {2026-05-11},
+  abstract = {Recent years have witnessed a growing list of systems for distributed data-parallel training. Existing systems largely fit into two paradigms, i.e., parameter server and MPI-style collective operations. On the algorithmic side, researchers have proposed a wide range of techniques to lower the communication via "system relaxations":               quantization, decentralization,               and               communication delay.               However, most, if not all, existing systems only rely on standard synchronous and asynchronous stochastic gradient (SG) based optimization, therefore, cannot take advantage of all possible optimizations that the machine learning community has been developing recently. Given this emerging gap between the current landscapes of systems and theory, we build Bagua, a MPI-style communication library, providing a collection of primitives, that is both flexible and modular to support state-of-the-art system relaxation techniques of distributed training. Powered by this design, Bagua has a great ability to implement and extend various state-of-the-art distributed learning algorithms. In a production cluster with up to 16 machines (128 GPUs), Bagua can outperform PyTorch-DDP, Horovod and BytePS in the end-to-end training time by a significant margin (up to 2X) across a diverse range of tasks. Moreover, we conduct a rigorous tradeoff exploration showing that different algorithms and system relaxations achieve the best performance over different network conditions.},
+  langid = {english}
+}
+
+@online{Geoparquetorg,
+  title = {Geoparquet.Org},
+  url = {https://geoparquet.org/},
+  urldate = {2026-05-11},
+  file = {/home/frank/Zotero/storage/IP3TZ3X7/geoparquet.org.html}
+}
+
+@inproceedings{georgesStatisticallyRigorousJava2007,
+  title = {Statistically Rigorous Java Performance Evaluation},
+  booktitle = {Proceedings of the 22nd Annual {{ACM SIGPLAN}} Conference on {{Object-oriented}} Programming Systems, Languages and Applications},
+  author = {Georges, Andy and Buytaert, Dries and Eeckhout, Lieven},
+  date = {2007-10-21},
+  pages = {57--76},
+  publisher = {ACM},
+  location = {Montreal Quebec Canada},
+  doi = {10.1145/1297027.1297033},
+  url = {https://dl.acm.org/doi/10.1145/1297027.1297033},
+  urldate = {2026-05-11},
+  eventtitle = {{{OOPSLA07}}: {{ACM SIGPLAN Object Oriented Programming Systems}} and {{Applications Conference}}},
+  isbn = {978-1-59593-786-5},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/WGPYY5BT/Georges et al. - 2007 - Statistically rigorous java performance evaluation.pdf}
+}
+
 @online{Getwebglorg,
   title = {Get.Webgl.Org},
   url = {https://get.webgl.org/},
@@ -340,7 +696,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   shorttitle = {{{AnyBlox}}},
   author = {Gienieczko, Mateusz and Kuschewski, Maximilian and Neumann, Thomas and Leis, Viktor and Giceva, Jana},
   date = {2025-07},
-  journaltitle = {Proc. VLDB Endow.},
+  journaltitle = {Proceedings of the VLDB Endowment},
+  shortjournal = {Proc. VLDB Endow.},
   volume = {18},
   number = {11},
   pages = {4017--4031},
@@ -357,7 +714,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   title = {Query Evaluation Techniques for Large Databases},
   author = {Graefe, Goetz},
   date = {1993-06},
-  journaltitle = {ACM Comput. Surv.},
+  journaltitle = {ACM Computing Surveys},
+  shortjournal = {ACM Comput. Surv.},
   volume = {25},
   number = {2},
   pages = {73--169},
@@ -388,11 +746,24 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/BVDVGYKB/Green - 2007 - Improved alpha-tested magnification for vector textures and special effects.pdf}
 }
 
+@article{guptaMaintenanceMaterializedViews1999,
+  title = {Maintenance of {{Materialized Views}}: {{Problems}}, {{Techniques}}, and {{Applications}}},
+  shorttitle = {Maintenance of {{Materialized Views}}},
+  author = {Gupta, Ashish and Mumick, Inderpal},
+  date = {1999-11-11},
+  journaltitle = {Data Engineering Bulletin},
+  shortjournal = {Data Engineering Bulletin},
+  volume = {18},
+  abstract = {In this paper we motivate and describe materialized views, their applications, and the problems and techniques for their maintenance. We present a taxonomy of view maintenanceproblems basedupon the class of views considered, upon the resources used to maintain the view, upon the types of modi\#cations to the base data that areconsidered during maintenance, and whether the technique works for all instances of databases and modi\#cations. We describe some of the view maintenancetechniques proposed in the literature in terms of our taxonomy. Finally, we consider new and promising application domains that are likely to drive work in materialized views and view maintenance. 1 Introduction What is a view? A view is a derived relation de\#ned in terms of base \#stored\# relations. A view thus de\#nes a function from a set of base tables to a derived table; this function is typically recomputed every time the view is referenced. What is a materialized view? A view can be materialized by storin...},
+  file = {/home/frank/Zotero/storage/IHUC3ZQJ/Gupta and Mumick - 1999 - Maintenance of Materialized Views Problems, Techniques, and Applications.pdf}
+}
+
 @article{hagueCSSMinificationConstraint2019,
   title = {{{CSS Minification}} via {{Constraint Solving}}},
   author = {Hague, Matthew and Lin, Anthony W. and Hong, Chih-Duo},
   date = {2019-06-30},
-  journaltitle = {ACM Trans. Program. Lang. Syst.},
+  journaltitle = {ACM Transactions on Programming Languages and Systems},
+  shortjournal = {ACM Trans. Program. Lang. Syst.},
   volume = {41},
   number = {2},
   pages = {1--76},
@@ -426,6 +797,23 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/RLY2CD8R/www.here.com.html}
 }
 
+@inproceedings{hoeflerScientificBenchmarkingParallel2015,
+  title = {Scientific Benchmarking of Parallel Computing Systems: Twelve Ways to Tell the Masses When Reporting Performance Results},
+  shorttitle = {Scientific Benchmarking of Parallel Computing Systems},
+  booktitle = {Proceedings of the {{International Conference}} for {{High Performance Computing}}, {{Networking}}, {{Storage}} and {{Analysis}}},
+  author = {Hoefler, Torsten and Belli, Roberto},
+  date = {2015-11-15},
+  pages = {1--12},
+  publisher = {ACM},
+  location = {Austin Texas},
+  doi = {10.1145/2807591.2807644},
+  url = {https://dl.acm.org/doi/10.1145/2807591.2807644},
+  urldate = {2026-05-11},
+  eventtitle = {{{SC15}}: {{The International Conference}} for {{High Performance Computing}}, {{Networking}}, {{Storage}} and {{Analysis}}},
+  isbn = {978-1-4503-3723-6},
+  langid = {english}
+}
+
 @online{HomeDeckgl,
   title = {Home | Deck.Gl},
   url = {https://deck.gl/},
@@ -448,6 +836,7 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   author = {Ignizio, James P.},
   date = {1978-11},
   journaltitle = {Journal of the Operational Research Society},
+  shortjournal = {Journal of the Operational Research Society},
   volume = {29},
   number = {11},
   pages = {1109--1119},
@@ -496,8 +885,41 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   isbn = {978-0-471-50336-1},
   langid = {english},
   pagetotal = {685},
-  note = {Literaturverz. S. 651 - 660},
   file = {/home/frank/Zotero/storage/3LUXD5QU/Jain - 1991 - The art of computer systems performance analysis techniques for experimental design, measurement, s.pdf}
+}
+
+@inproceedings{jangdaNotFastAnalyzing2019,
+  title = {Not so Fast: Analyzing the Performance of Webassembly vs. Native Code},
+  shorttitle = {Not so Fast},
+  booktitle = {Proceedings of the 2019 {{USENIX Conference}} on {{Usenix Annual Technical Conference}}},
+  author = {Jangda, Abhinav and Powers, Bobby and Berger, Emery D. and Guha, Arjun},
+  date = {2019-07-10},
+  series = {{{USENIX ATC}} '19},
+  pages = {107--120},
+  publisher = {USENIX Association},
+  location = {USA},
+  abstract = {All major web browsers now support WebAssembly, a low-level bytecode intended to serve as a compilation target for code written in languages like C and C++. A key goal of WebAssembly is performance parity with native code; previous work reports near parity, with many applications compiled to WebAssembly running on average 10\% slower than native code. However, this evaluation was limited to a suite of scientific kernels, each consisting of roughly 100 lines of code. Running more substantial applications was not possible because compiling code to WebAssembly is only part of the puzzle: standard Unix APIs are not available in the web browser environment. To address this challenge, we build BROWSIX-WASM, a significant extension to BROWSIX [29] that, for the first time, makes it possible to run unmodified WebAssembly-compiled Unix applications directly inside the browser. We then use BROWSIX-WASM to conduct the first large-scale evaluation of the performance of WebAssembly vs. native. Across the SPEC CPU suite of benchmarks, we find a substantial performance gap: applications compiled to WebAssembly run slower by an average of 45\% (Firefox) to 55\% (Chrome), with peak slowdowns of 2:08× (Firefox) and 2:5× (Chrome). We identify the causes of this performance degradation, some of which are due to missing optimizations and code generation issues, while others are inherent to the WebAssembly platform.},
+  isbn = {978-1-939133-03-8}
+}
+
+@book{jonesPartialEvaluationAutomatic1993,
+  title = {Partial {{Evaluation}} and {{Automatic Program Generation}}},
+  author = {Jones, Neil and Gomard, Carsten and Sestoft, Peter},
+  date = {1993-01-01},
+  isbn = {978-0-13-020249-9},
+  file = {/home/frank/Zotero/storage/UYNULNZU/Jones et al. - 1993 - Partial Evaluation and Automatic Program Generation.pdf}
+}
+
+@article{kamelHilbertRtreeImproved1994,
+  title = {Hilbert {{R-tree}}: {{An Improved R-tree Using Fkactals}}},
+  author = {Kamel, Ibrahim and Faloutsos, Christos},
+  date = {1994},
+  series = {{{VLDB}} '94},
+  pages = {500--509},
+  issn = {1558601538},
+  doi = {10.5555/645920.673001},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/4LKNP4VE/Kamel and Faloutsos - Hilbert R-tree An Improved R-tree Using Fkactals.pdf}
 }
 
 @article{kangTransferringMultiscaleMap2019b,
@@ -510,10 +932,7 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   urldate = {2026-04-21},
   abstract = {The advancement of the Artificial Intelligence (AI) technologies makes it possible to learn stylistic design criteria from existing maps or other visual art and transfer these styles to make new digital maps. In this paper, we propose a novel framework using AI for map style transfer applicable across multiple map scales. Specifically, we identify and transfer the stylistic elements from a target group of visual examples, including Google Maps, OpenStreetMap, and artistic paintings, to unstylized GIS vector data through two generative adversarial network (GAN) models. We then train a binary classifier based on a deep convolutional neural network to evaluate whether the transfer styled map images preserve the original map design characteristics. Our experiment results show that GANs have a great potential for multiscale map style transferring, but many challenges remain requiring future research.},
   version = {2},
-  keywords = {Computer Vision and Pattern Recognition (cs.CV),FOS: Computer and information sciences,FOS: Electrical engineering electronic engineering information engineering,I.2.1; I.4.9,Image and Video Processing (eess.IV),Machine Learning (cs.LG)},
-  note = {\subsection{Other}
-
-12 pages, 17 figure}
+  keywords = {Computer Vision and Pattern Recognition (cs.CV),FOS: Computer and information sciences,FOS: Electrical engineering electronic engineering information engineering,I.2.1; I.4.9,Image and Video Processing (eess.IV),Machine Learning (cs.LG)}
 }
 
 @incollection{kobbenMappingWeb2020,
@@ -531,12 +950,26 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/RYAICDNE/Köbben and Kraak - 2020 - Mapping, Web.pdf}
 }
 
+@online{kraskaCaseLearnedIndex2017,
+  title = {The {{Case}} for {{Learned Index Structures}}},
+  author = {Kraska, Tim and Beutel, Alex and Chi, Ed H. and Dean, Jeffrey and Polyzotis, Neoklis},
+  date = {2017},
+  doi = {10.48550/ARXIV.1712.01208},
+  url = {https://arxiv.org/abs/1712.01208},
+  urldate = {2026-05-11},
+  abstract = {Indexes are models: a B-Tree-Index can be seen as a model to map a key to the position of a record within a sorted array, a Hash-Index as a model to map a key to a position of a record within an unsorted array, and a BitMap-Index as a model to indicate if a data record exists or not. In this exploratory research paper, we start from this premise and posit that all existing index structures can be replaced with other types of models, including deep-learning models, which we term learned indexes. The key idea is that a model can learn the sort order or structure of lookup keys and use this signal to effectively predict the position or existence of records. We theoretically analyze under which conditions learned indexes outperform traditional index structures and describe the main challenges in designing learned index structures. Our initial results show, that by using neural nets we are able to outperform cache-optimized B-Trees by up to 70\% in speed while saving an order-of-magnitude in memory over several real-world data sets. More importantly though, we believe that the idea of replacing core components of a data management system through learned models has far reaching implications for future systems designs and that this work just provides a glimpse of what might be possible.},
+  pubstate = {prepublished},
+  version = {3},
+  keywords = {Data Structures and Algorithms (cs.DS),Databases (cs.DB),FOS: Computer and information sciences,Neural and Evolutionary Computing (cs.NE)}
+}
+
 @article{kuschewskiBtrBlocksEfficientColumnar2023,
   title = {{{BtrBlocks}}: {{Efficient Columnar Compression}} for {{Data Lakes}}},
   shorttitle = {{{BtrBlocks}}},
   author = {Kuschewski, Maximilian and Sauerwein, David and Alhomssi, Adnan and Leis, Viktor},
   date = {2023-06-13},
-  journaltitle = {Proc. ACM Manag. Data},
+  journaltitle = {Proceedings of the ACM on Management of Data},
+  shortjournal = {Proc. ACM Manag. Data},
   volume = {1},
   number = {2},
   pages = {1--26},
@@ -562,7 +995,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   title = {Decoding Billions of Integers per Second through Vectorization},
   author = {Lemire, D. and Boytsov, L.},
   date = {2015-01},
-  journaltitle = {Softw. Pract. Exper.},
+  journaltitle = {Software: Practice and Experience},
+  shortjournal = {Softw. Pract. Exper.},
   volume = {45},
   number = {1},
   pages = {1--29},
@@ -585,6 +1019,7 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   author = {Li, Guowen and Li, Jingzhong},
   date = {2024-02},
   journaltitle = {Computers \& Geosciences},
+  shortjournal = {Computers \& Geosciences},
   volume = {184},
   pages = {105537},
   issn = {00983004},
@@ -599,7 +1034,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   title = {A {{High-performance Cross-platform Map Rendering Engine}} for {{Mobile Geographic Information System}} ({{GIS}})},
   author = {Li, Shaojie and Wang, Shaohua and Guan, Yong and Xie, Zhiyan and Huang, Kejia and Wen, Ming and Zhou, Lixin},
   date = {2019-09-20},
-  journaltitle = {IJGI},
+  journaltitle = {ISPRS International Journal of Geo-Information},
+  shortjournal = {IJGI},
   volume = {8},
   number = {10},
   pages = {427},
@@ -618,6 +1054,7 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   author = {Ma, Mengyu and Wu, Ye and Ouyang, Xue and Chen, Luo and Li, Jun and Jing, Ning},
   date = {2021-02},
   journaltitle = {Computers \& Geosciences},
+  shortjournal = {Computers \& Geosciences},
   volume = {147},
   pages = {104665},
   issn = {00983004},
@@ -667,6 +1104,43 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/DYEGTWUE/maplibre-style-spec.html}
 }
 
+@article{massalinSuperoptimizerLookSmallest1987,
+  title = {Superoptimizer: A Look at the Smallest Program},
+  shorttitle = {Superoptimizer},
+  author = {Massalin, Henry},
+  date = {1987-11},
+  journaltitle = {ACM SIGARCH Computer Architecture News},
+  shortjournal = {SIGARCH Comput. Archit. News},
+  volume = {15},
+  number = {5},
+  pages = {122--126},
+  issn = {0163-5964},
+  doi = {10.1145/36177.36194},
+  url = {https://dl.acm.org/doi/10.1145/36177.36194},
+  urldate = {2026-05-11},
+  abstract = {Given an instruction set, the superoptimizer finds the shortest program to compute a function. Startling programs have been generated, many of them engaging in convoluted bit-fiddling bearing little resemblance to the source programs which defined the functions. The key idea in the superoptimizer is a probabilistic test that makes exhaustive searches practical for programs of useful size. The search space is defined by the processor's instruction set, which may include the whole set, but it is typically restricted to a subset. By constraining the instructions and observing the effect on the output program, one can gain insight into the design of instruction sets. In addition, superoptimized programs may be used by peephole optimizers to improve the quality of generated code, or by assembly language programmers to improve manually written code.},
+  langid = {english}
+}
+
+@book{mcmasterGeneralizationDigitalCartography1992,
+  title = {Generalization in Digital Cartography},
+  author = {McMaster, Robert Brainerd and Shea, K. Stuart},
+  date = {1992},
+  series = {Resource Publications in Geography},
+  publisher = {Association of American geographers},
+  location = {Washington},
+  isbn = {978-0-89291-209-4},
+  langid = {english}
+}
+
+@article{melnikDremelInteractiveAnalysis,
+  title = {Dremel: {{Interactive Analysis}} of {{Web-Scale Datasets}}},
+  author = {Melnik, Sergey and Gubarev, Andrey and Long, Jing Jing and Romer, Geoffrey and Shivakumar, Shiva and Tolton, Matt and Vassilakis, Theo},
+  abstract = {Dremel is a scalable, interactive ad-hoc query system for analysis of read-only nested data. By combining multi-level execution trees and columnar data layout, it is capable of running aggregation queries over trillion-row tables in seconds. The system scales to thousands of CPUs and petabytes of data, and has thousands of users at Google. In this paper, we describe the architecture and implementation of Dremel, and explain how it complements MapReduce-based computing. We present a novel columnar storage representation for nested records and discuss experiments on few-thousand node instances of the system.},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/JX9YDNCA/Melnik et al. - Dremel Interactive Analysis of Web-Scale Datasets.pdf}
+}
+
 @book{miettinenNonlinearMultiobjectiveOptimization1998a,
   title = {Nonlinear {{Multiobjective Optimization}}},
   author = {Miettinen, Kaisa},
@@ -687,7 +1161,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   title = {Analysis of the Clustering Properties of the {{Hilbert}} Space-Filling Curve},
   author = {Moon, B. and Jagadish, H.V. and Faloutsos, C. and Saltz, J.H.},
   year = {Jan.-Feb./2001},
-  journaltitle = {IEEE Trans. Knowl. Data Eng.},
+  journaltitle = {IEEE Transactions on Knowledge and Data Engineering},
+  shortjournal = {IEEE Trans. Knowl. Data Eng.},
   volume = {13},
   number = {1},
   pages = {124--141},
@@ -709,6 +1184,24 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   langid = {english}
 }
 
+@article{nandiRewriteRuleInference2021,
+  title = {Rewrite Rule Inference Using Equality Saturation},
+  author = {Nandi, Chandrakana and Willsey, Max and Zhu, Amy and Wang, Yisu Remy and Saiki, Brett and Anderson, Adam and Schulz, Adriana and Grossman, Dan and Tatlock, Zachary},
+  date = {2021-10-20},
+  journaltitle = {Proceedings of the ACM on Programming Languages},
+  shortjournal = {Proc. ACM Program. Lang.},
+  volume = {5},
+  pages = {1--28},
+  issn = {2475-1421},
+  doi = {10.1145/3485496},
+  url = {https://dl.acm.org/doi/10.1145/3485496},
+  urldate = {2026-05-11},
+  abstract = {Many compilers, synthesizers, and theorem provers rely on rewrite rules to simplify expressions or prove equivalences. Developing rewrite rules can be difficult: rules may be subtly incorrect, profitable rules are easy to miss, and rulesets must be rechecked or extended whenever semantics are tweaked. Large rulesets can also be challenging to apply: redundant rules slow down rule-based search and frustrate debugging.                            This paper explores how equality saturation, a promising technique that uses e-graphs to               apply               rewrite rules, can also be used to               infer               rewrite rules. E-graphs can compactly represent the exponentially large sets of enumerated terms and potential rewrite rules. We show that equality saturation efficiently shrinks both sets, leading to faster synthesis of smaller, more general rulesets.                          We prototyped these strategies in a tool dubbed Ruler. Compared to a similar tool built on CVC4, Ruler synthesizes 5.8× smaller rulesets 25× faster without compromising on proving power. In an end-to-end case study, we show Ruler-synthesized rules which perform as well as those crafted by domain experts, and addressed a longstanding issue in a popular open source tool.},
+  issue = {OOPSLA},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/ZPRBUMUQ/Nandi et al. - 2021 - Rewrite rule inference using equality saturation.pdf}
+}
+
 @online{Navara,
   title = {Navara},
   url = {https://navara-docs.netlify.app/},
@@ -723,7 +1216,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   title = {Performance {{Testing}} on {{Vector}} vs. {{Raster Map Tiles}}—{{Comparative Study}} on {{Load Metrics}}},
   author = {Netek, Rostislav and Masopust, Jan and Pavlicek, Frantisek and Pechanec, Vilem},
   date = {2020-02-06},
-  journaltitle = {IJGI},
+  journaltitle = {ISPRS International Journal of Geo-Information},
+  shortjournal = {IJGI},
   volume = {9},
   number = {2},
   pages = {101},
@@ -740,7 +1234,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   title = {Performance {{Testing}} on {{Vector}} vs. {{Raster Map Tiles}}—{{Comparative Study}} on {{Load Metrics}}},
   author = {Netek, Rostislav and Masopust, Jan and Pavlicek, Frantisek and Pechanec, Vilem},
   date = {2020-02-06},
-  journaltitle = {IJGI},
+  journaltitle = {ISPRS International Journal of Geo-Information},
+  shortjournal = {IJGI},
   volume = {9},
   number = {2},
   pages = {101},
@@ -751,6 +1246,31 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   abstract = {Recent developments in web map applications have widely affected how background maps are rendered. Raster tiles are currently considered as a regular solution, while the use of vector tiles is becoming more widespread. This article describes an experiment to test both raster and vector tile methods. The concept behind raster tiles is based on pre-generating an original dataset including a customized symbology and style. All tiles are generated according to a standardized scheme. This method has a few disadvantages: if any change in the dataset is required, the entire tile-generating process must be redone. Vector tiles manipulate vector objects. Only vector geometry is stored on the server, while symbology, rendering, and defining zoom levels run on the client-side. This method simplifies changing symbology or topology. Based on eight pilot studies, performance testing on loading time, data size, and the number of requests were performed. The observed results provide a comprehensive comparison according to specific interactions. More data, but only one or two tiles, were downloaded for vector tiles in zoom and move interactions, while 40 tiles were downloaded for raster tiles for the same interactions. Generally, the WebP format downloaded about three times fewer data than Portable Network Graphics (PNG).},
   langid = {english},
   file = {/home/frank/Zotero/storage/W4WNKY96/Netek et al. - 2020 - Performance Testing on Vector vs. Raster Map Tiles—Comparative Study on Load Metrics.pdf}
+}
+
+@article{newcombVerifyingImprovingHalides2020,
+  title = {Verifying and Improving {{Halide}}’s Term Rewriting System with Program Synthesis},
+  author = {Newcomb, Julie L. and Adams, Andrew and Johnson, Steven and Bodik, Rastislav and Kamil, Shoaib},
+  date = {2020-11-13},
+  journaltitle = {Proceedings of the ACM on Programming Languages},
+  shortjournal = {Proc. ACM Program. Lang.},
+  volume = {4},
+  pages = {1--28},
+  issn = {2475-1421},
+  doi = {10.1145/3428234},
+  url = {https://dl.acm.org/doi/10.1145/3428234},
+  urldate = {2026-05-11},
+  abstract = {Halide is a domain-specific language for high-performance image processing and tensor computations, widely adopted in industry. Internally, the Halide compiler relies on a term rewriting system to prove properties of code required for efficient and correct compilation. This rewrite system is a collection of handwritten transformation rules that incrementally rewrite expressions into simpler forms; the system requires high performance in both time and memory usage to keep compile times low, while operating over the undecidable theory of integers. In this work, we apply formal techniques to prove the correctness of existing rewrite rules and provide a guarantee of termination. Then, we build an automatic program synthesis system in order to craft new, provably correct rules from failure cases where the compiler was unable to prove properties. We identify and fix 4 incorrect rules as well as 8 rules which could give rise to infinite rewriting loops. We demonstrate that the synthesizer can produce better rules than hand-authored ones in five bug fixes, and describe four cases in which it has served as an assistant to a human compiler engineer. We further show that it can proactively improve weaknesses in the compiler by synthesizing a large number of rules without human supervision and showing that the enhanced ruleset lowers peak memory usage of compiled code without appreciably increasing compilation times.},
+  issue = {OOPSLA},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/Q8PN4DN7/Newcomb et al. - 2020 - Verifying and improving Halide’s term rewriting system with program synthesis.pdf}
+}
+
+@online{OGCAPITiles,
+  title = {{{OGC API}} - {{Tiles}} - {{Part}} 1: {{Core}}},
+  url = {https://docs.ogc.org/is/20-057/20-057.html},
+  urldate = {2026-05-11},
+  file = {/home/frank/Zotero/storage/FZVR4KNL/20-057.html}
 }
 
 @software{OnthegomapPlanetiler2026,
@@ -807,6 +1327,31 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   isbn = {978-0-608-37391-1}
 }
 
+@inproceedings{piraheshExtensibleRuleBased1992,
+  title = {Extensible/Rule Based Query Rewrite Optimization in {{Starburst}}},
+  booktitle = {Proceedings of the 1992 {{ACM SIGMOD}} International Conference on {{Management}} of Data},
+  author = {Pirahesh, Hamid and Hellerstein, Joseph M. and Hasan, Waqar},
+  date = {1992-06},
+  pages = {39--48},
+  publisher = {ACM},
+  location = {San Diego California USA},
+  doi = {10.1145/130283.130294},
+  url = {https://dl.acm.org/doi/10.1145/130283.130294},
+  urldate = {2026-05-11},
+  eventtitle = {{{SIGMOD}}/{{PODS92}}: {{SIGMOD}}/{{PODS}} '92},
+  isbn = {978-0-89791-521-2},
+  langid = {english}
+}
+
+@online{PMTilesConceptsProtomaps,
+  title = {{{PMTiles Concepts}} | {{Protomaps Docs}}},
+  url = {https://docs.protomaps.com/pmtiles/},
+  urldate = {2026-05-11},
+  abstract = {Technical Documentation for Protomaps},
+  langid = {american},
+  file = {/home/frank/Zotero/storage/VKYXIL7E/pmtiles.html}
+}
+
 @online{ProtocolBuffers,
   title = {Protocol {{Buffers}}},
   url = {https://protobuf.dev/},
@@ -821,7 +1366,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   shorttitle = {{{MOEA}}/{{D}}},
   author = {{Qingfu Zhang} and {Hui Li}},
   date = {2007-12},
-  journaltitle = {IEEE Trans. Evol. Computat.},
+  journaltitle = {IEEE Transactions on Evolutionary Computation},
+  shortjournal = {IEEE Trans. Evol. Computat.},
   volume = {11},
   number = {6},
   pages = {712--731},
@@ -857,6 +1403,17 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   isbn = {978-953-290-056-9}
 }
 
+@software{RustdiplomatDiplomat2026,
+  title = {Rust-Diplomat/Diplomat},
+  date = {2026-05-09T01:41:23Z},
+  origdate = {2021-06-15T21:23:09Z},
+  url = {https://github.com/rust-diplomat/diplomat},
+  urldate = {2026-05-11},
+  abstract = {Rust tool for generating FFI definitions allowing many other languages to call Rust code},
+  organization = {Diplomat},
+  keywords = {hacktoberfest}
+}
+
 @inproceedings{selingerAccessPathSelection1979,
   title = {Access Path Selection in a Relational Database Management System},
   booktitle = {Proceedings of the 1979 {{ACM SIGMOD}} International Conference on {{Management}} of Data  - {{SIGMOD}} '79},
@@ -889,6 +1446,20 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/D3YE7SIS/optimize-streaming-map-data-with-vector-tile-cache-in-oracle-spatial.html}
 }
 
+@article{tateEqualitySaturationNew2010,
+  title = {Equality {{Saturation}}: {{A New Approach}} to {{Optimization}}},
+  shorttitle = {Equality {{Saturation}}},
+  author = {Tate, Ross and Stepp, Michael and Tatlock, Zachary and Lerner, Sorin},
+  date = {2010},
+  publisher = {arXiv},
+  doi = {10.48550/ARXIV.1012.1802},
+  url = {https://arxiv.org/abs/1012.1802},
+  urldate = {2026-05-11},
+  abstract = {Optimizations in a traditional compiler are applied sequentially, with each optimization destructively modifying the program to produce a transformed program that is then passed to the next optimization. We present a new approach for structuring the optimization phase of a compiler. In our approach, optimizations take the form of equality analyses that add equality information to a common intermediate representation. The optimizer works by repeatedly applying these analyses to infer equivalences between program fragments, thus saturating the intermediate representation with equalities. Once saturated, the intermediate representation encodes multiple optimized versions of the input program. At this point, a profitability heuristic picks the final optimized program from the various programs represented in the saturated representation. Our proposed way of structuring optimizers has a variety of benefits over previous approaches: our approach obviates the need to worry about optimization ordering, enables the use of a global optimization heuristic that selects among fully optimized programs, and can be used to perform translation validation, even on compilers other than our own. We present our approach, formalize it, and describe our choice of intermediate representation. We also present experimental results showing that our approach is practical in terms of time and space overhead, is effective at discovering intricate optimization opportunities, and is effective at performing translation validation for a realistic optimizer.},
+  version = {3},
+  keywords = {D.3.4,FOS: Computer and information sciences,Programming Languages (cs.PL)}
+}
+
 @online{TilemakerDIYVector,
   title = {Tilemaker | {{DIY}} Vector Tiles from {{OpenStreetMap}} Data},
   url = {https://tilemaker.org/},
@@ -903,6 +1474,24 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/J28SFWMI/sources-tiles.html}
 }
 
+@article{tremmelCOMTILESCASESTUDY2023,
+  title = {{{COMTILES}}: {{A CASE STUDY OF A CLOUD OPTIMIZED TILE ARCHIVE FORMAT FOR DEPLOYING PLANET-SCALE TILSETS IN THE CLOUD}}},
+  shorttitle = {{{COMTILES}}},
+  author = {Tremmel, M.},
+  date = {2023-06-22},
+  journaltitle = {The International Archives of the Photogrammetry, Remote Sensing and Spatial Information Sciences},
+  shortjournal = {Int. Arch. Photogramm. Remote Sens. Spatial Inf. Sci.},
+  volume = {XLVIII-4/W7-2023},
+  pages = {231--237},
+  issn = {2194-9034},
+  doi = {10.5194/isprs-archives-XLVIII-4-W7-2023-231-2023},
+  url = {https://isprs-archives.copernicus.org/articles/XLVIII-4-W7-2023/231/2023/},
+  urldate = {2026-05-11},
+  abstract = {Abstract. The container formats commonly used for managing map tiles, such as MBTiles and GeoPackage, were originally designed with only POSIX filesystem access in mind. This makes these file formats inefficient to use in a cloud native environment, especially in combination with large tilesets. The Cloud Optimized GeoTIFF format solves the problem of providing large satellite data in the cloud, creating a new category of so-called cloud optimized data formats. This type of format allows geospatial data to be deployed as a single file on a cheap and scalable cloud object storage such as AWS S3 and accessed directly from a browser without the need for a dedicated backend. Based on the concepts of the COG format, this contribution proposes a new cloud optimized file format called COMTiles, specially designed for planet-scale tilesets. This format has the potential to simplify the deployment workflow of large tilesets in a cloud-native environment, while simultaneously reducing the hosting costs. In comparison to PMTiles, another cloud-optimized tile archive solution, COMTiles can reduce the number of transferred data and the performance of decoding portions of the file. COMTiles also adds support for different coordinate systems.},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/S6SU6CZ3/Tremmel - 2023 - COMTILES A CASE STUDY OF A CLOUD OPTIMIZED TILE ARCHIVE FORMAT FOR DEPLOYING PLANET-SCALE TILSETS I.pdf}
+}
+
 @article{tremmelMapLibreTileNext2025,
   title = {{{MapLibre Tile}}: {{A Next Generation Vector Tile Format}}},
   shorttitle = {{{MapLibre Tile}}},
@@ -915,6 +1504,24 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   version = {1},
   keywords = {FOS: Computer and information sciences,Information Theory (cs.IT)},
   file = {/home/frank/Zotero/storage/B3UEASQU/Tremmel and Zink - 2025 - MapLibre Tile A Next Generation Vector Tile Format.pdf}
+}
+
+@article{tzoumasLightweightGraphicalModels2011,
+  title = {Lightweight Graphical Models for Selectivity Estimation without Independence Assumptions},
+  author = {Tzoumas, Kostas and Deshpande, Amol and Jensen, Christian S.},
+  date = {2011-08},
+  journaltitle = {Proceedings of the VLDB Endowment},
+  shortjournal = {Proc. VLDB Endow.},
+  volume = {4},
+  number = {11},
+  pages = {852--863},
+  issn = {2150-8097},
+  doi = {10.14778/3402707.3402724},
+  url = {https://dl.acm.org/doi/10.14778/3402707.3402724},
+  urldate = {2026-05-11},
+  abstract = {As a result of decades of research and industrial development, modern query optimizers are complex software artifacts. However, the quality of the query plan chosen by an optimizer is largely determined by the quality of the underlying statistical summaries. Small selectivity estimation errors, propagated exponentially, can lead to severely sub-optimal plans. Modern optimizers typically maintain one-dimensional statistical summaries and make the attribute value independence and join uniformity assumptions for efficiently estimating selectivities. Therefore, selectivity estimation errors in today’s optimizers are frequently caused by missed correlations between attributes. We present a selectivity estimation approach that does not make the independence assumptions. By carefully using concepts from the field of graphical models, we are able to factor the joint probability distribution of all the attributes in the database into small, usually two-dimensional distributions. We describe several optimizations that can make selectivity estimation highly efficient, and we present a complete implementation inside PostgreSQL’s query optimizer. Experimental results indicate an order of magnitude better selectivity estimates, while keeping optimization time in the range of tens of milliseconds.},
+  langid = {english},
+  file = {/home/frank/Zotero/storage/GLG37K2C/Tzoumas et al. - 2011 - Lightweight graphical models for selectivity estimation without independence assumptions.pdf}
 }
 
 @online{VectorTilesAre2025,
@@ -946,6 +1553,22 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   abstract = {A small NodeJS cli tool to inspect and optimize Mapbox Vector Tiles files}
 }
 
+@article{visvalingamLineGeneralisationRepeated1993,
+  title = {Line Generalisation by Repeated Elimination of Points},
+  author = {Visvalingam, M. and Whyatt, J. D.},
+  date = {1993-06},
+  journaltitle = {The Cartographic Journal},
+  shortjournal = {The Cartographic Journal},
+  volume = {30},
+  number = {1},
+  pages = {46--51},
+  issn = {0008-7041, 1743-2774},
+  doi = {10.1179/caj.1993.30.1.46},
+  url = {http://www.maneyonline.com/doi/abs/10.1179/caj.1993.30.1.46},
+  urldate = {2026-05-11},
+  langid = {english}
+}
+
 @book{vohraPracticalHadoopEcosystem2016,
   title = {Practical {{Hadoop Ecosystem}}},
   author = {Vohra, Deepak},
@@ -964,7 +1587,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   title = {Open Source Vector Tile Creation for Spatial Data Infrastructure Applications},
   author = {Wallner, Andreas Georg and Piechl, Thomas and Paulus, Gernot and Anders, Karl-Heinrich},
   date = {2022-06-11},
-  journaltitle = {AGILE GIScience Ser.},
+  journaltitle = {AGILE: GIScience Series},
+  shortjournal = {AGILE GIScience Ser.},
   volume = {3},
   pages = {1--7},
   issn = {2700-8150},
@@ -998,7 +1622,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   title = {Constant Propagation with Conditional Branches},
   author = {Wegman, Mark N. and Zadeck, F. Kenneth},
   date = {1991-04},
-  journaltitle = {ACM Trans. Program. Lang. Syst.},
+  journaltitle = {ACM Transactions on Programming Languages and Systems},
+  shortjournal = {ACM Trans. Program. Lang. Syst.},
   volume = {13},
   number = {2},
   pages = {181--210},
@@ -1018,6 +1643,20 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/FZBZ3CDG/why-your-website-should-be-under-14kb-in-size.html}
 }
 
+@article{willseyEggFastExtensible2020,
+  title = {Egg: {{Fast}} and {{Extensible Equality Saturation}}},
+  shorttitle = {Egg},
+  author = {Willsey, Max and Nandi, Chandrakana and Wang, Yisu Remy and Flatt, Oliver and Tatlock, Zachary and Panchekha, Pavel},
+  date = {2020},
+  publisher = {arXiv},
+  doi = {10.48550/ARXIV.2004.03082},
+  url = {https://arxiv.org/abs/2004.03082},
+  urldate = {2026-05-11},
+  abstract = {An e-graph efficiently represents a congruence relation over many expressions. Although they were originally developed in the late 1970s for use in automated theorem provers, a more recent technique known as equality saturation repurposes e-graphs to implement state-of-the-art, rewrite-driven compiler optimizations and program synthesizers. However, e-graphs remain unspecialized for this newer use case. Equality saturation workloads exhibit distinct characteristics and often require ad-hoc e-graph extensions to incorporate transformations beyond purely syntactic rewrites. This work contributes two techniques that make e-graphs fast and extensible, specializing them to equality saturation. A new amortized invariant restoration technique called rebuilding takes advantage of equality saturation's distinct workload, providing asymptotic speedups over current techniques in practice. A general mechanism called e-class analyses integrates domain-specific analyses into the e-graph, reducing the need for ad hoc manipulation. We implemented these techniques in a new open-source library called egg. Our case studies on three previously published applications of equality saturation highlight how egg's performance and flexibility enable state-of-the-art results across diverse domains.},
+  version = {3},
+  keywords = {FOS: Computer and information sciences,Programming Languages (cs.PL)}
+}
+
 @online{wipfliComplexTextPlugin2025,
   type = {Blog},
   title = {Complex {{Text Plugin}}},
@@ -1035,6 +1674,7 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   author = {Yao, Xiaochuang and Li, Guoqing},
   date = {2018-01-02},
   journaltitle = {Big Earth Data},
+  shortjournal = {Big Earth Data},
   volume = {2},
   number = {1},
   pages = {108--129},
@@ -1051,7 +1691,8 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   shorttitle = {An {{Assessment}} of the {{Map-Style Influence}} on {{Generalization}} with {{CycleGAN}}},
   author = {Yu, Heng and Chen, Haoxuan and Zhang, Ling},
   date = {2024-11-21},
-  journaltitle = {IJGI},
+  journaltitle = {ISPRS International Journal of Geo-Information},
+  shortjournal = {IJGI},
   volume = {13},
   number = {12},
   pages = {418},
@@ -1064,11 +1705,29 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   file = {/home/frank/Zotero/storage/29WR7LWD/Yu et al. - 2024 - An Assessment of the Map-Style Influence on Generalization with CycleGAN Taking Line Features as an.pdf}
 }
 
+@article{zengEmpiricalEvaluationColumnar2023,
+  title = {An {{Empirical Evaluation}} of {{Columnar Storage Formats}}},
+  author = {Zeng, Xinyu and Hui, Yulong and Shen, Jiahong and Pavlo, Andrew and McKinney, Wes and Zhang, Huanchen},
+  date = {2023-10},
+  journaltitle = {Proceedings of the VLDB Endowment},
+  shortjournal = {Proc. VLDB Endow.},
+  volume = {17},
+  number = {2},
+  pages = {148--161},
+  issn = {2150-8097},
+  doi = {10.14778/3626292.3626298},
+  url = {https://dl.acm.org/doi/10.14778/3626292.3626298},
+  urldate = {2026-05-11},
+  abstract = {Columnar storage is a core component of a modern data analytics system. Although many database management systems (DBMSs) have proprietary storage formats, most provide extensive support to open-source storage formats such as Parquet and ORC to facilitate cross-platform data sharing. But these formats were developed over a decade ago, in the early 2010s, for the Hadoop ecosystem. Since then, both the hardware and workload landscapes have changed.             In this paper, we revisit the most widely adopted open-source columnar storage formats (Parquet and ORC) with a deep dive into their internals. We designed a benchmark to stress-test the formats' performance and space efficiency under different workload configurations. From our comprehensive evaluation of Parquet and ORC, we identify design decisions advantageous with modern hardware and real-world data distributions. These include using dictionary encoding by default, favoring decoding speed over compression ratio for integer encoding algorithms, making block compression optional, and embedding finer-grained auxiliary data structures. We also point out the inefficiencies in the format designs when handling common machine learning workloads and using GPUs for decoding. Our analysis identified important considerations that may guide future formats to better fit modern technology trends.},
+  langid = {english}
+}
+
 @article{zhangRESEARCHVECTORTILE2022,
   title = {Vector Tile Construction Technology Based on {{Apache Sedona}}},
   author = {Zhang, H. and Du, M. and Huang, W. and Ding, L. and Tang, D. and Jiang, J.},
   date = {2022-06-02},
-  journaltitle = {Int. Arch. Photogramm. Remote Sens. Spatial Inf. Sci.},
+  journaltitle = {The International Archives of the Photogrammetry, Remote Sensing and Spatial Information Sciences},
+  shortjournal = {Int. Arch. Photogramm. Remote Sens. Spatial Inf. Sci.},
   volume = {XLIII-B4-2022},
   pages = {639--644},
   issn = {2194-9034},
@@ -1098,429 +1757,17 @@ Literaturangaben Rev. ed. of: Compilers, principles, techniques, and tools / Alf
   isbn = {978-3-540-23092-2 978-3-540-30217-9}
 }
 
-@online{RustdiplomatDiplomat2026,
-  title = {Diplomat: {{Idiomatic}} Cross-Language Binding Generation},
-  author = {{Manish Goregaokar} and {Robert Bastian}},
-  url = {https://github.com/rust-diplomat/diplomat},
-  urldate = {2026-04-30},
-}
-
-@inproceedings{kraskaCaseLearnedIndex2017,
-  author    = {Kraska, Tim and Beutel, Alex and Chi, Ed H. and Dean, Jeffrey and Polyzotis, Neoklis},
-  title     = {The Case for Learned Index Structures},
-  booktitle = {Proceedings of the 2018 International Conference on Management of Data (SIGMOD)},
-  year      = {2018},
-  pages     = {489--504},
-  publisher = {ACM},
-  doi       = {10.1145/3183713.3196909},
-}
-
-@article{deshpandeAdaptiveQueryProcessing2006,
-  author  = {Deshpande, Amol and Ives, Zachary and Raman, Vijayshankar},
-  title   = {Adaptive Query Processing},
-  journal = {Foundations and Trends in Databases},
-  year    = {2007},
-  volume  = {1},
-  number  = {1},
-  pages   = {1--140},
-  doi     = {10.1561/1900000001},
-}
-
-% ===== TIER 1 — Critical Gaps =====
-
-@inproceedings{melnikDremelInteractiveAnalysis,
-  title = {Dremel: {{Interactive Analysis}} of {{Web-Scale Datasets}}},
-  author = {Melnik, Sergey and Gubarev, Andrey and Long, Jing Jing and Romer, Geoffrey and Shivakumar, Shiva and Tolton, Matt and Vassilakis, Theo},
-  date = {2010},
-  booktitle = {Proc. VLDB Endow.},
-  volume = {3},
-  number = {1-2},
-  pages = {330--339},
-  doi = {10.14778/1920841.1920886},
-}
-
-@inproceedings{abadiMaterializationStrategiesColumnOriented2007,
-  title = {Materialization {{Strategies}} in a {{Column-Oriented DBMS}}},
-  author = {Abadi, Daniel J. and Myers, Daniel S. and DeWitt, David J. and Madden, Samuel R.},
-  date = {2007},
-  booktitle = {Proc. IEEE Int. Conf. on Data Engineering (ICDE)},
-  pages = {466--475},
-  location = {Istanbul, Turkey},
-  doi = {10.1109/ICDE.2007.367892},
-}
-
-@article{arnoldSurveyAdaptiveOptimization2005,
-  title = {A {{Survey}} of {{Adaptive Optimization}} in {{Virtual Machines}}},
-  author = {Arnold, Matthew and Fink, Stephen J. and Grove, David and Hind, Michael and Sweeney, Peter F.},
-  date = {2005-02},
-  journaltitle = {Proc. IEEE},
-  volume = {93},
-  number = {2},
-  pages = {449--466},
-  doi = {10.1109/JPROC.2004.840305},
-}
-
-@article{changUsingProfileInformation1991,
-  title = {Using {{Profile Information}} to {{Assist Classic Code Optimizations}}},
-  author = {Chang, Pohua P. and Mahlke, Scott A. and Hwu, Wen-Mei W.},
-  date = {1991},
-  journaltitle = {Software: Practice and Experience},
-  volume = {21},
-  number = {12},
-  pages = {1301--1321},
-  doi = {10.1002/spe.4380211204},
-}
-
-@report{OGCAPITiles,
-  title = {{{OGC API}} --- {{Tiles}} --- {{Part}} 1: {{Core}}},
-  author = {{Open Geospatial Consortium}},
-  date = {2022},
-  number = {OGC 20-057},
-  institution = {Open Geospatial Consortium},
-  url = {https://docs.ogc.org/is/20-057/20-057.html},
-  urldate = {2026-05-01},
-}
-
-@article{tremmelCOMTILESCASESTUDY2023,
-  title = {{{COMTiles}}: {{A Case Study}} of a {{Cloud Optimized Tile Archive Format}} for {{Deploying Planet-Scale Tilesets}} in the {{Cloud}}},
-  author = {Tremmel, Markus},
-  date = {2023},
-  journaltitle = {Int. Arch. Photogramm. Remote Sens. Spatial Inf. Sci.},
-  volume = {XLVIII-4/W7-2023},
-  pages = {231--236},
-  doi = {10.5194/isprs-archives-XLVIII-4-W7-2023-231-2023},
-}
-
-% ===== TIER 2 — Important Gaps =====
-
-@book{baaderTermRewritingAll1999,
-  title = {Term {{Rewriting}} and {{All That}}},
-  author = {Baader, Franz and Nipkow, Tobias},
-  date = {1998},
-  publisher = {Cambridge University Press},
-  isbn = {978-0-521-77920-3},
-}
-
-@inproceedings{tateEqualitySaturationNew2010,
-  title = {Equality {{Saturation}}: {{A New Approach}} to {{Optimization}}},
-  author = {Tate, Ross and Stepp, Michael and Tatlock, Zachary and Lerner, Sorin},
-  date = {2009},
-  booktitle = {Proc. ACM SIGPLAN-SIGACT Symp. on Principles of Programming Languages (POPL)},
-  pages = {264--276},
-  doi = {10.1145/1480881.1480915},
-}
-
-@article{willseyEggFastExtensible2020,
-  title = {egg: {{Fast}} and {{Extensible Equality Saturation}}},
-  author = {Willsey, Max and Nandi, Chandrakana and Wang, Yisu Remy and Flatt, Oliver and Tatlock, Zachary and Panchekha, Pavel},
-  date = {2021-01},
-  journaltitle = {Proc. ACM Program. Lang.},
-  volume = {5},
-  number = {POPL},
-  pages = {1--29},
-  doi = {10.1145/3434304},
-}
-
-@article{clickCombiningAnalysesCombining1995,
-  title = {Combining {{Analyses}}, {{Combining Optimizations}}},
-  author = {Click, Cliff and Cooper, Keith D.},
-  date = {1995-03},
-  journaltitle = {ACM Trans. Program. Lang. Syst.},
-  volume = {17},
-  number = {2},
-  pages = {181--196},
-  doi = {10.1145/201059.201061},
-}
-
-@inproceedings{dingSageDBInstanceOptimizedData2022,
-  title = {{{SageDB}}: {{A Learned Database System}}},
-  author = {Kraska, Tim and Alizadeh, Mohammad and Beutel, Alex and Chi, Ed H. and Ding, Jialin and Kristo, Ani and Leclerc, Guillaume and Madden, Samuel and Mao, Hongzi and Nathan, Vikram},
-  date = {2019},
-  booktitle = {Proc. CIDR},
-}
-
-@article{kraskaInstanceOptimizedData2021,
-  title = {Towards {{Instance-Optimized Data Systems}}},
-  author = {Kraska, Tim},
-  date = {2021},
-  journaltitle = {Proc. VLDB Endow.},
-  volume = {14},
-  number = {12},
-  pages = {3222--3232},
-  doi = {10.14778/3476311.3476384},
-}
-
-@article{douglasALGORITHMSREDUCTIONNUMBER1973,
-  title = {Algorithms for the {{Reduction}} of the {{Number}} of {{Points Required}} to {{Represent}} a {{Digitized Line}} or Its {{Caricature}}},
-  author = {Douglas, David H. and Peucker, Thomas K.},
-  date = {1973},
-  journaltitle = {Cartographica},
-  volume = {10},
-  number = {2},
-  pages = {112--122},
-  doi = {10.3138/FM57-6770-U75U-7727},
-}
-
-@article{visvalingamLineGeneralisationRepeated1993,
-  title = {Line {{Generalisation}} by {{Repeated Elimination}} of {{Points}}},
-  author = {Visvalingam, M. and Whyatt, J. D.},
-  date = {1993},
-  journaltitle = {The Cartographic Journal},
-  volume = {30},
-  number = {1},
-  pages = {46--51},
-  doi = {10.1179/caj.1993.30.1.46},
-}
-
-@inproceedings{georgesStatisticallyRigorousJava2007,
-  title = {Statistically {{Rigorous Java Performance Evaluation}}},
-  author = {Georges, Andy and Buytaert, Dries and Eeckhout, Lieven},
-  date = {2007},
-  booktitle = {Proc. ACM SIGPLAN Conf. on Object-Oriented Programming, Systems, Languages, and Applications (OOPSLA)},
-  pages = {57--76},
-  doi = {10.1145/1297027.1297033},
-}
-
-@inproceedings{hoeflerScientificBenchmarkingParallel2015,
-  title = {Scientific {{Benchmarking}} of {{Parallel Computing Systems}}: {{Twelve Ways}} to {{Tell}} the {{Masses When Reporting Performance Results}}},
-  author = {Hoefler, Torsten and Belli, Roberto},
-  date = {2015},
-  booktitle = {Proc. Int. Conf. for High Performance Computing, Networking, Storage and Analysis (SC~'15)},
-  pages = {1--12},
-  doi = {10.1145/2807591.2807644},
-}
-
-% ===== TIER 3 — Recommended Additions =====
-
-@online{FlatGeobuf,
-  title = {{{FlatGeobuf}}: {{A}} Performant Binary Encoding for Geographic Data Based on {{FlatBuffers}}},
-  author = {Harrtell, Björn},
-  url = {https://flatgeobuf.org/},
-  urldate = {2026-05-01},
-}
-
-@online{Geoparquetorg,
-  title = {{{GeoParquet}} Specification v1.1.0},
-  author = {{OGC GeoParquet Standards Working Group}},
-  date = {2024},
-  url = {https://geoparquet.org/},
-  urldate = {2026-05-01},
-}
-
-@online{PMTilesConceptsProtomaps,
-  title = {{{PMTiles}}: {{An}} Open, Cloud-Optimized Archive Format for Serverless Map Data},
-  author = {Liu, Brandon},
-  url = {https://docs.protomaps.com/pmtiles/},
-  urldate = {2026-05-01},
-}
-
-@report{belsheHypertextTransferProtocol2015,
-  title = {Hypertext {{Transfer Protocol Version}} 2 ({{HTTP}}/2)},
-  author = {Belshe, Mike and Peon, Roberto and Thomson, Martin},
-  date = {2015-05},
-  number = {RFC 7540},
-  institution = {Internet Engineering Task Force},
-  doi = {10.17487/RFC7540},
-}
-
-@report{bishopHTTP32022,
-  title = {{{HTTP}}/3},
-  author = {Bishop, Mike},
-  date = {2022-06},
-  number = {RFC 9114},
-  institution = {Internet Engineering Task Force},
-  doi = {10.17487/RFC9114},
-}
-
-@report{colletZstandardCompressionApplication2021,
-  title = {Zstandard {{Compression}} and the ``application/zstd'' {{Media Type}}},
-  author = {Collet, Yann and Kucherawy, Murray S.},
-  date = {2021-02},
-  number = {RFC 8878},
-  institution = {Internet Engineering Task Force},
-  doi = {10.17487/RFC8878},
-}
-
-@report{alakuijalaBrotliCompressedData2016,
-  title = {Brotli {{Compressed Data Format}}},
-  author = {Alakuijala, Jyrki and Szabadka, Zoltán},
-  date = {2016-07},
-  number = {RFC 7932},
-  institution = {Internet Engineering Task Force},
-  doi = {10.17487/RFC7932},
-}
-
-% ===== TIER 4 — Minor / Nice-to-Have =====
-
-@inproceedings{kamelHilbertRtreeImproved1994,
-  title = {Hilbert {{R-tree}}: {{An Improved R-tree Using Fractals}}},
-  author = {Kamel, Ibrahim and Faloutsos, Christos},
-  date = {1994},
-  booktitle = {Proc. 20th Int. Conf. on Very Large Data Bases (VLDB)},
-  pages = {500--509},
-}
-
 @article{zivUniversalAlgorithmSequential1977,
-  title = {A {{Universal Algorithm}} for {{Sequential Data Compression}}},
-  author = {Ziv, Jacob and Lempel, Abraham},
+  title = {A Universal Algorithm for Sequential Data Compression},
+  author = {Ziv, J. and Lempel, A.},
   date = {1977-05},
-  journaltitle = {IEEE Trans. Inf. Theory},
+  journaltitle = {IEEE Transactions on Information Theory},
+  shortjournal = {IEEE Trans. Inform. Theory},
   volume = {23},
   number = {3},
   pages = {337--343},
+  issn = {0018-9448, 1557-9654},
   doi = {10.1109/TIT.1977.1055714},
-}
-
-@inproceedings{abadiIntegratingCompressionExecution2006,
-  title = {Integrating Compression and Execution in Column-Oriented Database Systems},
-  author = {Abadi, Daniel J. and Madden, Samuel R. and Ferreira, Miguel C.},
-  date = {2006},
-  booktitle = {Proceedings of the 2006 ACM SIGMOD International Conference on Management of Data},
-  pages = {671--682},
-  publisher = {ACM},
-  doi = {10.1145/1142473.1142548},
-}
-
-@article{dammeComprehensiveExperimentalSurvey2019,
-  title = {From a Comprehensive Experimental Survey to a Cost-Based Selection Strategy for Lightweight Integer Compression Algorithms},
-  author = {Damme, Patrick and Ungethüm, Annett and Hildebrandt, Juliana and Habich, Dirk and Lehner, Wolfgang},
-  date = {2019},
-  journaltitle = {ACM Trans. Database Syst.},
-  volume = {44},
-  number = {3},
-  pages = {9:1--9:46},
-  doi = {10.1145/3323991},
-}
-
-@article{ganBaguaScalingDistributed2021,
-  title = {Robust and Budget-Constrained Encoding Configurations for In-Memory Database Systems},
-  author = {Boissier, Martin},
-  date = {2022},
-  journaltitle = {Proc. VLDB Endow.},
-  volume = {15},
-  number = {4},
-  pages = {780--793},
-  doi = {10.14778/3503585.3503590},
-}
-
-@article{zengEmpiricalEvaluationColumnar2023,
-  title = {An Empirical Evaluation of Columnar Storage Formats},
-  author = {Zeng, Xinyu and Hui, Yulong and Shen, Jiahong and Pavlo, Andrew and McKinney, Wes and Zhang, Huanchen},
-  date = {2024},
-  journaltitle = {Proc. VLDB Endow.},
-  volume = {17},
-  number = {2},
-  pages = {148--161},
-  doi = {10.14778/3626292.3626298},
-}
-
-@inproceedings{jangdaNotFastAnalyzing2019,
-  title = {Not So Fast: Analyzing the Performance of {{WebAssembly}} vs. Native Code},
-  author = {Jangda, Abhinav and Powers, Bobby and Berger, Emery D. and Guha, Arjun},
-  date = {2019},
-  booktitle = {2019 USENIX Annual Technical Conference (USENIX ATC 19)},
-  pages = {107--120},
-  publisher = {USENIX Association},
-  url = {https://www.usenix.org/conference/atc19/presentation/jangda},
-}
-
-@inproceedings{armbrustSparkSQLRelational2015,
-  title = {Spark {{SQL}}: Relational Data Processing in Spark},
-  author = {Armbrust, Michael and Xin, Reynold S. and Lian, Cheng and Huai, Yin and Liu, Davies and Bradley, Joseph K. and Meng, Xiangrui and Kaftan, Tomer and Franklin, Michael J. and Ghodsi, Ali and Zaharia, Matei},
-  date = {2015},
-  booktitle = {Proceedings of the 2015 ACM SIGMOD International Conference on Management of Data},
-  pages = {1383--1394},
-  publisher = {ACM},
-  doi = {10.1145/2723372.2742797},
-}
-
-@book{mcmasterGeneralizationDigitalCartography1992,
-  title = {Generalization in Digital Cartography},
-  author = {McMaster, Robert B. and Shea, K. Stuart},
-  date = {1992},
-  publisher = {Association of American Geographers},
-  location = {Washington, D.C.},
-  isbn = {978-0-89291-209-3},
-}
-
-% ===== TIER 5 — Literature Review Additions (Reviewer Feedback) =====
-
-@inproceedings{piraheshExtensibleRuleBased1992,
-  title = {Extensible/Rule Based Query Rewrite Optimization in Starburst},
-  author = {Pirahesh, Hamid and Hellerstein, Joseph M. and Hasan, Waqar},
-  date = {1992},
-  booktitle = {Proceedings of the 1992 ACM SIGMOD International Conference on Management of Data},
-  pages = {39--48},
-  publisher = {ACM},
-  doi = {10.1145/130283.130294},
-}
-
-@inproceedings{newcombVerifyingImprovingHalides2020,
-  title = {Verifying and Improving {Halide's} Term Rewriting System with Program Synthesis},
-  author = {Newcomb, Julie L. and Adams, Andrew and Johnson, Steven and Bodik, Rastislav and Kamil, Shoaib},
-  date = {2020},
-  booktitle = {Proc. ACM Program. Lang.},
-  volume = {4},
-  number = {OOPSLA},
-  pages = {1--28},
-  doi = {10.1145/3428234},
-}
-
-@inproceedings{dingInstanceOptimizedDataLayouts2021,
-  title = {Instance-Optimized Data Layouts for Cloud Analytics Workloads},
-  author = {Ding, Jialin and Minhas, Umar Farooq and Chandramouli, Badrish and Wang, Chi and Li, Yinan and Li, Ying and Kossmann, Donald and Gehrke, Johannes and Kraska, Tim},
-  date = {2021},
-  booktitle = {Proceedings of the 2021 International Conference on Management of Data (SIGMOD)},
-  pages = {418--431},
-  publisher = {ACM},
-  doi = {10.1145/3448016.3457270},
-}
-
-@inproceedings{cenLEALearnedEncoding2021,
-  title = {{LEA}: A Learned Encoding Advisor for Column Stores},
-  author = {Cen, Lujing and Kipf, Andreas and Marcus, Ryan and Kraska, Tim},
-  date = {2021},
-  booktitle = {Proceedings of the Fourth International Workshop on Exploiting Artificial Intelligence Techniques for Data Management (aiDM @ SIGMOD)},
-  pages = {1--8},
-  publisher = {ACM},
-  doi = {10.1145/3464509.3464885},
-}
-
-@article{feherAdaptiveColumnCompression2022,
-  title = {An Adaptive Column Compression Family for Self-Driving Databases},
-  author = {Fehér, Marcell and Lucani, Daniel E. and Chatzigeorgiou, Ioannis},
-  date = {2022},
-  journaltitle = {arXiv preprint arXiv:2209.02334},
-  doi = {10.48550/arXiv.2209.02334},
-}
-
-@book{efronIntroductionBootstrap1998,
-  title = {An Introduction to the Bootstrap},
-  author = {Efron, Bradley and Tibshirani, Robert J.},
-  date = {1993},
-  publisher = {Chapman \& Hall/CRC},
-  location = {New York},
-  isbn = {978-0-412-04231-7},
-}
-
-@inproceedings{nandiRewriteRuleInference2021,
-  title = {Rewrite Rule Inference Using Equality Saturation},
-  author = {Nandi, Chandrakana and Willsey, Max and Zhu, Amy and Wang, Yisu Remy and Saiki, Brett and Anderson, Adam and Schulz, Adriana and Grossman, Dan and Tatlock, Zachary},
-  date = {2021},
-  booktitle = {Proc. ACM Program. Lang.},
-  volume = {5},
-  number = {OOPSLA},
-  pages = {1--28},
-  doi = {10.1145/3485496},
-}
-
-@inproceedings{tzoumasLightweightGraphicalModels2011,
-  title = {Lightweight Graphical Models for Selectivity Estimation Without Independence Assumptions},
-  author = {Tzoumas, Kostas and Deshpande, Amol and Jensen, Christian S.},
-  date = {2011},
-  booktitle = {Proc. VLDB Endow.},
-  volume = {4},
-  number = {11},
-  pages = {852--863},
-  doi = {10.14778/3402707.3402738},
+  url = {https://ieeexplore.ieee.org/document/1055714/},
+  urldate = {2026-05-11}
 }
