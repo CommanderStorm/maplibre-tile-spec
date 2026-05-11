@@ -159,6 +159,7 @@ In particular, tightening a layer's \texttt{maxzoom} is only sound when it accou
 \Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \texttt{maxzoom} tile: \stepcirc{1}~rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/\texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}), and \stepcirc{2}~clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
 Both operations consume the source's \texttt{maxzoom} tile as input; tightening that \texttt{maxzoom} removes the upstream tile the slicer rescales and clips, which is why the soundness rule above forbids any rewrite that does not preserve every layer's effective overzoom range.
 
+\newpage
 \begin{lstlisting}[
   language=TypeScript,
   caption={Condensed MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts:87-125})},
@@ -202,7 +203,7 @@ The following formats are used for encoding and transferring data to the client:
     \item \textbf{Raster tiles} deliver pre-rendered images (PNG, JPEG, WebP, Avif, JPEGXL) rather than vector geometry.
     They require no client-side rendering logic but cannot be restyled, rotated at arbitrary angles (beyond the affine transform imposed by globe mode), or queried interactively, as the visual representation is fixed at generation time.
 
-    \item \textbf{Analysis-focused formats} such as FlatGeobuf~\cite{FlatGeobuf}, GeoParquet~\cite{Geoparquetorg}, and GeoArrow are optimised for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
+    \item \textbf{Analysis-focused formats} such as FlatGeobuf~\cite{flatgeobuf2018}, GeoParquet~\cite{geoparquetSpec2024}, and GeoArrow are optimised for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
     They support random access and columnar scans but do not follow the tiled spatial access pattern required by interactive map renderers and are therefore not considered further in this work.
     GeoParquet in particular supports row-group-level predicate pushdown and column pruning - operations analogous to the tile shaving and selective column access this thesis applies to \ac{MLT} - but operates on large per-file datasets rather than on the small, spatially-partitioned tiles that interactive renderers fetch individually; the per-tile overhead of Parquet's row-group and column-chunk metadata would dominate at typical tile sizes (\qtyrange{10}{100}{\kilo\byte}).
 
@@ -226,8 +227,8 @@ The following formats are used for encoding and transferring data to the client:
 \end{itemize}
 
 Beyond the choice of tile format, a number of transfer-layer optimisations can improve delivery performance:
-utilising the approximately \qty{14}{\kilo\byte} TCP slow-start window as discussed by Nathaniel~\cite{WhyYourWebsite}, edge caching~\cite{BestPracticesMap}, HTTP/2 multiplexing~\cite{belsheHypertextTransferProtocol2015} (and its QUIC-based successor HTTP/3~\cite{bishopHTTP32022} for lossy mobile networks), and modern content-encoding algorithms such as Zstandard~\cite{colletZstandardCompressionApplication2021} and Brotli~\cite{alakuijalaBrotliCompressedData2016} that achieve higher compression ratios than gzip's LZ77 foundation~\cite{zivUniversalAlgorithmSequential1977}.
-Tile archive formats such as PMTiles~\cite{PMTilesConceptsProtomaps} and COMTiles~\cite{tremmelCOMTILESCASESTUDY2023} address the container layer by enabling serverless, cloud-native tile delivery from a single file in blob storage.
+utilising the approximately \qty{14}{\kilo\byte} TCP slow-start window as discussed by Nathaniel~\cite{WhyYourWebsite}, edge caching~\cite{BestPracticesMap}, HTTP/2 multiplexing~\cite{belsheHTTP2RFC2015} (and its QUIC-based successor HTTP/3~\cite{bishopHTTP3RFC2022} for lossy mobile networks), and modern content-encoding algorithms such as Zstandard~\cite{colletZstandardRFC2021} and Brotli~\cite{alakuijalaBrotliRFC2016} that achieve higher compression ratios than gzip's LZ77 foundation~\cite{zivUniversalAlgorithmSequential1977}.
+Tile archive formats such as PMTiles~\cite{liuPMTiles2022} and COMTiles~\cite{tremmelCOMTilesCloudOptimized2023} address the container layer by enabling serverless, cloud-native tile delivery from a single file in blob storage.
 Since \ac{MVT} is the established baseline and \ac{MLT} aims to improve upon it, this thesis evaluates both formats and uses the transition from \ac{MVT} to \ac{MLT} as one of its data-level optimisations strategies.
 
 \subsection{Styles}\label{sec:styles}
@@ -420,12 +421,12 @@ A single traversal is therefore generally insufficient.
 
 \begin{sloppypar}
 \emph{Fixpoint iteration} addresses this by applying the entire rule set repeatedly until no rule fires - that is, until the expression reaches a \emph{fixpoint} at which no further rewrites apply.
-The expression-level optimiser is, formally, a \ac{TRS}: the style expressions are terms, and the peephole rules are rewrite rules applied modulo a traversal strategy~\cite{baaderTermRewritingAll1999}.
+The expression-level optimiser is, formally, a \ac{TRS}: the style expressions are terms, and the peephole rules are rewrite rules applied modulo a traversal strategy~\cite{baaderTermRewritingAll1998}.
 For a monotone transformation $f$ on a finite domain, the sequence $x,\, f(x),\, f(f(x)),\, \ldots$ is guaranteed to converge~\cite{ahoCompilersPrinciplesTechniques2007}.
 In practice, convergence is rapid:
 most programs stabilise within a small number of iterations, and a conservative upper bound on iterations serves as a safety limit.
 The standard \ac{TRS} notions of confluence (whether all rule-application sequences converge to the same normal form) and termination (whether all sequences reach a normal form) are revisited in the context of the concrete rewrite system in \cref{sub:expression_optimisations}.
-A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcombVerifyingImprovingHalides2020} showed that Halide's \ac{DSL} optimiser - which, like this thesis's expression passes, applies a set of hand-written rewrite rules in a fixed order to simplify \ac{DSL} expression trees - suffers from the same confluence and termination concerns, and developed synthesis-based techniques to verify correctness and discover missing rules.
+A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcombVerifyingImprovingHalide2020} showed that Halide's \ac{DSL} optimiser - which, like this thesis's expression passes, applies a set of hand-written rewrite rules in a fixed order to simplify \ac{DSL} expression trees - suffers from the same confluence and termination concerns, and developed synthesis-based techniques to verify correctness and discover missing rules.
 \end{sloppypar}
 
 
@@ -468,7 +469,7 @@ Compound predicates are estimated by combining individual selectivities:
 \end{align*}
 
 The independence assumption is known to be inaccurate when columns are correlated, but it provides a computationally cheap approximation that is effective in practice~\cite{selingerAccessPathSelection1979}.
-More sophisticated estimators - such as multi-dimensional histograms, sampling-based methods, or the lightweight graphical models proposed by Tzoumas et~al.~\cite{tzoumasLightweightGraphicalModels2011} that capture inter-attribute correlations without the full cost of joint-distribution estimation - improve accuracy at higher computational cost.
+More sophisticated estimators - such as multi-dimensional histograms, sampling-based methods, or the lightweight graphical models proposed by Tzoumas et~al.~\cite{tzoumas2011lightweight} that capture inter-attribute correlations without the full cost of joint-distribution estimation - improve accuracy at higher computational cost.
 
 Map-style filters are in fact known to violate independence:
 In OpenMapTiles, for example, \texttt{class} and \texttt{subclass} are strongly correlated by schema design (every value of \texttt{subclass} implies a constrained set of \texttt{class} values), as are \texttt{admin\_level} and \texttt{maritime}.
@@ -477,7 +478,7 @@ The independence-estimator error therefore propagates into the quality of the sh
 
 \subsection{Materialized Views}\label{sub:materialized_views}
 
-A \emph{materialized view} is a derived relation whose contents are precomputed from a query over base tables and stored for fast access~\cite{guptaMaintenanceMaterializedViews1999}.
+A \emph{materialized view} is a derived relation whose contents are precomputed from a query over base tables and stored for fast access~\cite{guptaMaintenanceMaterializedViews1995}.
 When the base data changes, the materialized view must be updated - either by full recomputation or by \emph{incremental view maintenance}, which propagates only the delta.
 The cascade developed in this thesis has a direct structural analogue: 
 the tile set is the base relation, the rendering style is the view definition, and the shaved tile is the materialized view.
@@ -492,7 +493,7 @@ The style optimiser performs partial evaluation of the rendering function: the s
 Filter-to-property constant propagation (\cref{sub:structural_optimisations}) is a textbook instance:
 an equality constraint in the filter (static) is substituted into paint expressions, collapsing data-dependent branches that can never be reached given the known filter.
 
-The encoding strategy competition (\cref{sub:encoding_strategies}) shares the spirit of \emph{superoptimization}~\cite{massalinSuperoptimizerLookSmallest1987} in that it exhaustively evaluates all candidate strategies over the actual data and retains the smallest result, rather than using profile data to guide a heuristic decision as in classical \ac{PGO} (\cref{sub:pgo}).
+The encoding strategy competition (\cref{sub:encoding_strategies}) shares the spirit of \emph{superoptimization}~\cite{massalinSuperoptimizerLookingShortest1987} in that it exhaustively evaluates all candidate strategies over the actual data and retains the smallest result, rather than using profile data to guide a heuristic decision as in classical \ac{PGO} (\cref{sub:pgo}).
 Unlike true superoptimization, however, the candidate set is designer-specified (sort orders $\times$ encoding schemes) and the profiler prunes the search space before exhaustive evaluation; it is therefore more precisely characterised as \emph{exhaustive strategy selection} over a bounded candidate space.
 The approach is optimal over its search space but does not discover strategies outside it.
 
@@ -507,7 +508,7 @@ Traditional database systems store data in \emph{row-oriented} layouts, where al
 This layout is efficient for transactional workloads that access entire records, but wasteful for analytical queries that access only a few columns, as the entire record must be read to access any single attribute.
 
 \emph{Column-oriented} (columnar) storage transposes this layout, storing all values of a single attribute contiguously~\cite{abadiDesignImplementationModern2013}.
-The foundational system in this space is Dremel~\cite{melnikDremelInteractiveAnalysis}, which introduced the record shredding and assembly algorithm for nested columnar data using definition and repetition levels - the same representation pattern that directly inspired Apache Parquet and, by extension, the columnar layout that \ac{MLT} adapts for tile data.
+The foundational system in this space is Dremel~\cite{melnikDremelInteractiveAnalysis2010}, which introduced the record shredding and assembly algorithm for nested columnar data using definition and repetition levels - the same representation pattern that directly inspired Apache Parquet and, by extension, the columnar layout that \ac{MLT} adapts for tile data.
 This has several advantages for read-heavy workloads.
 First, \emph{reduced I/O}: only the columns referenced by a query need to be read from disk or transferred over the network.
 Second, \emph{better compression}: values of the same type and semantic domain are stored together, exhibiting higher local homogeneity and thus compressing more effectively than interleaved multi-type records.
@@ -580,7 +581,7 @@ Two space-filling curves are commonly used:
     Morton codes are fast to compute via bit-interleaving instructions, but the Z-order curve exhibits \enquote{jumps} between quadrants that break spatial continuity.
 
     \item The \textbf{Hilbert curve} traces a continuous path through the grid without the inter-quadrant jumps of the Z-order curve, achieving better locality preservation at the cost of a more complex index computation~\cite{moonAnalysisClusteringProperties2001}.
-    The Hilbert curve has also been used as the basis for spatial index structures: the Hilbert R-tree~\cite{kamelHilbertRtreeImproved1994} orders rectangles along the Hilbert curve to achieve tighter node packing than conventional R-trees, and FlatGeobuf~\cite{FlatGeobuf} uses a packed Hilbert R-tree for spatial indexing of its features.
+    The Hilbert curve has also been used as the basis for spatial index structures: the Hilbert R-tree~\cite{kamelHilbertRtreeImproved1994} orders rectangles along the Hilbert curve to achieve tighter node packing than conventional R-trees, and FlatGeobuf~\cite{flatgeobuf2018} uses a packed Hilbert R-tree for spatial indexing of its features.
     The Hilbert index is computed recursively: the unit square is divided into four quadrants, each mapped to a sub-range of the curve; the quadrant containing the point determines the high-order bits of the index, and the process recurses on the sub-quadrant.
 \end{itemize}
 
@@ -612,7 +613,7 @@ The purpose of benchmarking is to evaluate system behaviour, compare alternative
 
 According to Jain~\cite{jainArtComputerSystems1991}, a good evaluation must start with selecting relevant metrics.
 Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that na\"ive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent JVM/engine invocations - a principle that informs the bootstrap CI methodology used in this thesis.
-The bootstrap itself - a resampling method for constructing confidence intervals without distributional assumptions - was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1998} and is the specific statistical technique applied throughout this thesis's evaluation (\cref{ch:experiments}).
+The bootstrap itself - a resampling method for constructing confidence intervals without distributional assumptions - was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1993} and is the specific statistical technique applied throughout this thesis's evaluation (\cref{ch:experiments}).
 Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} codified twelve common pitfalls in reporting performance results; the evaluation in \cref{ch:experiments} follows their guidelines by reporting per-metric confidence intervals and separating throughput from latency measurements.
 In the context of web maps, the candidate metrics span a range from deployment-critical on battery-constrained targets to directly user-visible on the desktop:
 
