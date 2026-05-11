@@ -296,18 +296,17 @@ Let $N$ denote the total number of features in the source layer, and $\mathrm{fr
 \begin{equation}\label{eq:selectivity}
     \begin{aligned}
         \mathrm{sel}(p = v)   &= \frac{\mathrm{freq}(v)}{N}  &
-        \mathrm{sel}(p \in V)  &= \min\!\Bigl(1,\;\sum_{v \in V}\! \mathrm{sel}(p = v)\Bigr) \\[4pt]
-        
-        \mathrm{sel}(\mathtt{geometry\text{-}type}\; t) &= \frac{\mathrm{count}(t)}{N} &
-        \mathrm{sel}(p \neq v) &= 1 - \mathrm{sel}(p = v) \\[4pt]
+        \mathrm{sel}(\mathtt{geometry\text{-}type}\; t) &= \frac{\mathrm{count}(t)}{N} \\[4pt]
         \mathrm{sel}(\mathtt{has}\; p) &= \frac{\mathrm{present}(p)}{N} &
-        \mathrm{sel}(p < n)   &= \frac{1}{N}\!\sum_{v < n}\! \mathrm{freq}(v) \\[4pt]
+        \mathrm{sel}(p \neq v) &= 1 - \mathrm{sel}(p = v) \\[4pt]
+        \mathrm{sel}(p < n)   &= \frac{1}{N}\!\sum_{v < n}\! \mathrm{freq}(v)  &
+        \mathrm{sel}(p \in V)  &= \min\!\Bigl(1,\;\sum_{v \in V}\! \mathrm{sel}(p = v)\Bigr) \\[4pt]
     \end{aligned}
 \end{equation}
 Compound predicates are estimated under the standard independence assumption:
 \begin{equation}\label{eq:selectivity_compound}
     \begin{aligned}
-        \mathrm{sel}(\texttt{all expr}) &= \prod_i \mathrm{sel}(p_i) \\[4pt]
+        \mathrm{sel}(\texttt{all expr} expr) &= \prod_i \mathrm{sel}(p_i) \\[4pt]
         \mathrm{sel}(\texttt{any expr}) &= 1 - \prod_i \bigl(1 - \mathrm{sel}(p_i)\bigr) \\[4pt]
     \end{aligned}
 \end{equation}
