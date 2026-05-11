@@ -1,17 +1,17 @@
-\chapter{Theoretical Background}\label{ch_theoretical_background}
+\chapter{Theoretical Background}\label{ch:theoretical_background}
 
-The gap identified in \cref{ch_related_work} is that no existing tool composes style rewrites with data-level pruning into a joint pipeline.
+The gap identified in \cref{ch:related_work} is that no existing tool composes style rewrites with data-level pruning into a joint pipeline.
 This calls for foundations from several fields.
 The map rendering architecture that defines what is being optimised, the compiler techniques whose analogues drive the expression-level passes, the query optimisation concepts that inform filter rewriting and predicate reordering, and the columnar encoding strategies that underpin the data-level passes.
 
 This chapter introduces these foundations in the order in which the optimiser consumes them.
-\cref{sec_map_rendering_approaches} describes the map rendering process and its resource pipeline.
-\cref{sec_compiler_optimisations} surveys compiler optimisation techniques - peephole rewriting, constant folding, and fixpoint iteration - whose analogues are applied to style expressions.
-\cref{sec_query_optimisations} presents query optimisation concepts - predicate pushdown and selectivity estimation - used for filter rewriting and reordering.
-\cref{sec_data_encoding} covers the columnar encoding and compression schemes employed at the tile level.
-\cref{sec_benchmarking} covers benchmarking methodology.
+\cref{sec:map_rendering_approaches} describes the map rendering process and its resource pipeline.
+\cref{sec:compiler_optimisations} surveys compiler optimisation techniques - peephole rewriting, constant folding, and fixpoint iteration - whose analogues are applied to style expressions.
+\cref{sec:query_optimisations} presents query optimisation concepts - predicate pushdown and selectivity estimation - used for filter rewriting and reordering.
+\cref{sec:data_encoding} covers the columnar encoding and compression schemes employed at the tile level.
+\cref{sec:benchmarking} covers benchmarking methodology.
 
-\section{Map Rendering Approaches}\label{sec_map_rendering_approaches}
+\section{Map Rendering Approaches}\label{sec:map_rendering_approaches}
 
 When building a slippy map (i.e.\ a map with the modern pan, zoom, rotation, and interaction capabilities), the technology stack is fairly simple.
 
@@ -143,7 +143,7 @@ This allows efficient GPU Sprite instancing.
 
 Common open-source renderers like maplibre or source available renderers like mapbox do this by shipping plain PNG or \acs{SDF}-PNG~\cite{greenImprovedAlphatestedMagnification2007} sprite sheets together with a lookup table recording where on the sprite sheet each sprite is located, whether it is a \ac{SDF}, and whether there are regions that can be stretched to account for placing text inside the sprite.
 
-\subsection{Tiles}\label{sec_tiles}
+\subsection{Tiles}\label{sec:tiles}
 
 Tiles are the primary data delivery mechanism for interactive web maps.
 Rather than transferring the entire dataset to the client, the map is partitioned into a regular grid of square tiles at discrete zoom levels following the XYZ tiling scheme.
@@ -154,7 +154,7 @@ The client requests only the tiles intersecting the current viewport, and as the
 When a client requests a tile at a zoom level beyond the source's maximum, the renderer \emph{overzooms}: it upscales the nearest available tile from the source's highest available zoom to fill the viewport.
 
 The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched, which means that a layer's effective visibility at a given camera zoom cannot be determined from filter or data bounds alone - it is a function of both the layer's filter and the source's \texttt{maxzoom}.
-This observation has direct consequences for any optimiser that rewrites zoom bounds, and is revisited in \cref{ch_methods}.
+This observation has direct consequences for any optimiser that rewrites zoom bounds, and is revisited in \cref{ch:methods}.
 In particular, tightening a layer's \texttt{maxzoom} is only sound when it accounts for overzoom: removing a layer at zoom~14 would suppress its rendering at zoom~15 and beyond if the source's maximum zoom is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.
 \Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \texttt{maxzoom} tile: \textcircled{1}~rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/\texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}), and \textcircled{2}~clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
 Both operations consume the source's \texttt{maxzoom} tile as input; tightening that \texttt{maxzoom} removes the upstream tile the slicer rescales and clips, which is why the soundness rule above forbids any rewrite that does not preserve every layer's effective overzoom range.
@@ -230,7 +230,7 @@ utilising the approximately \qty{14}{\kilo\byte} TCP slow-start window as discus
 Tile archive formats such as PMTiles~\cite{liuPMTiles2022} and COMTiles~\cite{tremmelCOMTilesCloudOptimized2023} address the container layer by enabling serverless, cloud-native tile delivery from a single file in blob storage.
 Since \ac{MVT} is the established baseline and \ac{MLT} aims to improve upon it, this thesis evaluates both formats and uses the transition from \ac{MVT} to \ac{MLT} as one of its data-level optimisations strategies.
 
-\subsection{Styles}\label{sec_styles}
+\subsection{Styles}\label{sec:styles}
 
 A map style defines the complete visual appearance of a map: which data is shown, how it is coloured, sized, and labelled, and at which zoom levels each element appears.
 Three architectural approaches to map styling have been established:
@@ -300,7 +300,7 @@ The resulting expression trees can be deeply nested and may contain redundant or
 \Cref{lst:worker_pipeline} shows the worker's tile-parse pipeline as five named steps, marked inline as
 \textcircled{a}--\textcircled{e}.
 
-Every optimisation in \cref{ch_methods} attaches to one of these steps:
+Every optimisation in \cref{ch:methods} attaches to one of these steps:
 Merging layers reduces work for \textcircled{a}.
 Pruning features server-side makes \textcircled{b} not handle them.
 Tightening \texttt{minzoom}/\texttt{maxzoom} makes the
@@ -357,12 +357,12 @@ for (const sourceLayerId in layerFamilies) {
 }
 \end{lstlisting}
 
-\section{Compiler Optimisation Techniques}\label{sec_compiler_optimisations}
+\section{Compiler Optimisation Techniques}\label{sec:compiler_optimisations}
 
 The style expressions used by map renderers such as MapLibre are, in essence, small programs:
 they contain conditionals (\texttt{case}, \texttt{match}), boolean operators (\texttt{all}, \texttt{any}), arithmetic, and data access (\texttt{get}, \texttt{has}), variables (global state, local state, feature state).
 Optimising these expressions draws directly on techniques developed over decades in compiler construction~\cite{ahoCompilersPrinciplesTechniques2007}.
-This section introduces the foundational concepts applied in \cref{ch_methods}.
+This section introduces the foundational concepts applied in \cref{ch:methods}.
 
 \subsection{Peephole Optimisation}
 
@@ -412,7 +412,7 @@ Common algebraic rules include:
 For style expressions, these rules simplify boolean filter expressions.
 A filter \texttt{["all", ["all", a, b], c]} is flattened to \texttt{["all", a, b, c]} by the associativity of conjunction, and \texttt{["all", true, x]} is simplified to~\texttt{x} by identity elimination.
 
-\subsection{Fixpoint Iteration}\label{sub_fixpoint}
+\subsection{Fixpoint Iteration}\label{sub:fixpoint}
 
 Individual peephole rules may expose further optimisations opportunities:
 constant folding a subexpression may create a new constant parent, which in turn enables dead branch elimination.
@@ -424,12 +424,12 @@ The expression-level optimiser is, formally, a \ac{TRS}: the style expressions a
 For a monotone transformation $f$ on a finite domain, the sequence $x,\, f(x),\, f(f(x)),\, \ldots$ is guaranteed to converge~\cite{ahoCompilersPrinciplesTechniques2007}.
 In practice, convergence is rapid:
 most programs stabilise within a small number of iterations, and a conservative upper bound on iterations serves as a safety limit.
-The standard \ac{TRS} notions of confluence (whether all rule-application sequences converge to the same normal form) and termination (whether all sequences reach a normal form) are revisited in the context of the concrete rewrite system in \cref{sub_expression_optimisations}.
+The standard \ac{TRS} notions of confluence (whether all rule-application sequences converge to the same normal form) and termination (whether all sequences reach a normal form) are revisited in the context of the concrete rewrite system in \cref{sub:expression_optimisations}.
 A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcombVerifyingImprovingHalide2020} showed that Halide's \ac{DSL} optimiser - which, like this thesis's expression passes, applies a set of hand-written rewrite rules in a fixed order to simplify \ac{DSL} expression trees - suffers from the same confluence and termination concerns, and developed synthesis-based techniques to verify correctness and discover missing rules.
 \end{sloppypar}
 
 
-\subsection{Profile-Guided Optimisation}\label{sub_pgo}
+\subsection{Profile-Guided Optimisation}\label{sub:pgo}
 
 \emph{\ac{PGO}} uses runtime execution profiles to specialise a program for its observed workload~\cite{changUsingProfileInformation1991}.
 Classical PGO instruments a program, collects execution frequencies and branch probabilities from representative inputs, and feeds this profile back into the compiler to guide inlining, code layout, and branch prediction hints.
@@ -439,7 +439,7 @@ The style optimiser performs an analogous form of \ac{PGO}:
 tile-level statistics (value cardinalities, per-property frequency distributions, geometry-type counts) are the ``profile data,'' and the stats-driven folding pass uses this profile to specialise the style for the observed data distribution - collapsing \texttt{match} arms whose values never occur in the tile census, tightening zoom bounds based on observed data ranges, and converting high-selectivity predicates into constants.
 The key difference from classical \ac{PGO} is that the profile is exact (the tile census covers every feature in the tileset at a sample rate of~1.0) rather than sampled, and the optimisation target is a declarative style document rather than machine code.
 
-\section{Query Optimisation}\label{sec_query_optimisations}
+\section{Query Optimisation}\label{sec:query_optimisations}
 
 Style filters in map rendering are structurally equivalent to database query predicates:
 both select a subset of records (features) from a dataset (tile) based on attribute conditions.
@@ -472,10 +472,10 @@ More sophisticated estimators - such as multi-dimensional histograms, sampling-b
 
 Map-style filters are in fact known to violate independence:
 In OpenMapTiles, for example, \texttt{class} and \texttt{subclass} are strongly correlated by schema design (every value of \texttt{subclass} implies a constrained set of \texttt{class} values), as are \texttt{admin\_level} and \texttt{maritime}.
-A joint-distribution estimator, such as the one proposed in \cref{sec_seletivity_reordering} would therefore give tighter bounds, but the selectivity signal used in this thesis is consumed only by a \emph{reordering} heuristic - not by a cost-based plan chooser - and reordering is monotone in the ordering of the individual selectivities rather than in their absolute values.
+A joint-distribution estimator, such as the one proposed in \cref{sec:seletivity_reordering} would therefore give tighter bounds, but the selectivity signal used in this thesis is consumed only by a \emph{reordering} heuristic - not by a cost-based plan chooser - and reordering is monotone in the ordering of the individual selectivities rather than in their absolute values.
 The independence-estimator error therefore propagates into the quality of the short-circuit ordering but never into the correctness of the rewritten style, which makes the cheap estimator an acceptable engineering choice for this use case.
 
-\subsection{Materialized Views}\label{sub_materialized_views}
+\subsection{Materialized Views}\label{sub:materialized_views}
 
 A \emph{materialized view} is a derived relation whose contents are precomputed from a query over base tables and stored for fast access~\cite{guptaMaintenanceMaterializedViews1995}.
 When the base data changes, the materialized view must be updated - either by full recomputation or by \emph{incremental view maintenance}, which propagates only the delta.
@@ -483,25 +483,25 @@ The cascade developed in this thesis has a direct structural analogue:
 the tile set is the base relation, the rendering style is the view definition, and the shaved tile is the materialized view.
 When the style changes (e.g., a layer is removed by dead elimination), the pruning advisory changes, which in turn changes the shaved output - precisely the IVM problem of maintaining a derived dataset under view-definition changes.
 
-The future direction of serving-time applicability (\cref{sec_conclusion_future_work}) - applying the advisory as a per-request filter rather than a batch operation - is a form of virtual (non-materialized) view evaluation.
+The future direction of serving-time applicability (\cref{sec:conclusion_future_work}) - applying the advisory as a per-request filter rather than a batch operation - is a form of virtual (non-materialized) view evaluation.
 
-\subsection{Partial Evaluation and Superoptimization}\label{sub_partial_eval}
+\subsection{Partial Evaluation and Superoptimization}\label{sub:partial_eval}
 
 \emph{Partial evaluation} (also called program specialization) transforms a program with respect to known static inputs, producing a residual program that depends only on the remaining dynamic inputs~\cite{jonesPartialEvaluationAutomatic1993}.
 The style optimiser performs partial evaluation of the rendering function: the style (static input) is known at optimisation time, while tile data (dynamic input) varies at runtime.
-Filter-to-property constant propagation (\cref{sub_structural_optimisations}) is a textbook instance:
+Filter-to-property constant propagation (\cref{sub:structural_optimisations}) is a textbook instance:
 an equality constraint in the filter (static) is substituted into paint expressions, collapsing data-dependent branches that can never be reached given the known filter.
 
-The encoding strategy competition (\cref{sub_encoding_strategies}) shares the spirit of \emph{superoptimization}~\cite{massalinSuperoptimizerLookingShortest1987} in that it exhaustively evaluates all candidate strategies over the actual data and retains the smallest result, rather than using profile data to guide a heuristic decision as in classical \ac{PGO} (\cref{sub_pgo}).
+The encoding strategy competition (\cref{sub:encoding_strategies}) shares the spirit of \emph{superoptimization}~\cite{massalinSuperoptimizerLookingShortest1987} in that it exhaustively evaluates all candidate strategies over the actual data and retains the smallest result, rather than using profile data to guide a heuristic decision as in classical \ac{PGO} (\cref{sub:pgo}).
 Unlike true superoptimization, however, the candidate set is designer-specified (sort orders $\times$ encoding schemes) and the profiler prunes the search space before exhaustive evaluation; it is therefore more precisely characterised as \emph{exhaustive strategy selection} over a bounded candidate space.
 The approach is optimal over its search space but does not discover strategies outside it.
 
-\section{Data Encoding and Compression}\label{sec_data_encoding}
+\section{Data Encoding and Compression}\label{sec:data_encoding}
 
 Efficient encoding of tile data is essential for interactive map performance, as tiles are fetched continuously during map interaction.
-This section surveys the encoding and compression techniques used in the data-level optimisations of \cref{ch_methods}.
+This section surveys the encoding and compression techniques used in the data-level optimisations of \cref{ch:methods}.
 
-\subsection{Column-Oriented Storage}\label{sub_column_storage}
+\subsection{Column-Oriented Storage}\label{sub:column_storage}
 
 Traditional database systems store data in \emph{row-oriented} layouts, where all attributes of a single record are stored contiguously in memory.
 This layout is efficient for transactional workloads that access entire records, but wasteful for analytical queries that access only a few columns, as the entire record must be read to access any single attribute.
@@ -517,7 +517,7 @@ In the context of vector tiles, the row-oriented \ac{MVT} format stores all prop
 The columnar layout allows per-column encoding strategies:
 a column of \texttt{road} classes can use dictionary encoding, while a column of building heights can use delta-rle encoding, each chosen independently.
 
-\subsection{Integer Encoding}\label{sub_integer_encoding}
+\subsection{Integer Encoding}\label{sub:integer_encoding}
 
 Integer columns appear throughout tile data: geometry coordinates, feature IDs, property values, and dictionary indices.
 Several encoding schemes exploit structural properties of integer sequences:
@@ -543,9 +543,9 @@ delta encoding followed by \ac{RLE} (\emph{delta-\acs{RLE}}) is effective for se
 
 The question of which encoding to apply to a given column has been studied systematically:
 Abadi et~al.~\cite{abadiIntegratingCompressionExecution2006} proposed property-based selection rules, and Damme et~al.~\cite{dammeComprehensiveExperimentalSurvey2019} developed a cost-model-driven selection strategy that picks the encoding with the lowest expected cost for a given data distribution.
-The encoding competition in \cref{sub_encoding_strategies} takes an exhaustive rather than cost-model approach, trialling a pruned set of candidate encodings and retaining the smallest output.
+The encoding competition in \cref{sub:encoding_strategies} takes an exhaustive rather than cost-model approach, trialling a pruned set of candidate encodings and retaining the smallest output.
 
-\subsection{String Compression}\label{sub_string_compression}
+\subsection{String Compression}\label{sub:string_compression}
 
 String data in vector tiles includes feature names, road classes, land-use categories, and administrative identifiers.
 Two complementary compression strategies address different aspects of string redundancy:
@@ -562,7 +562,7 @@ Two complementary compression strategies address different aspects of string red
     This means that applying \ac{FSST} to the deduplicated dictionary strings compresses both the unique values and the byte-level redundancy within them.
 \end{itemize}
 
-\subsection{Space-Filling Curves}\label{sub_space_filling_curves}
+\subsection{Space-Filling Curves}\label{sub:space_filling_curves}
 
 \emph{Space-filling curves} map multi-dimensional points to a one-dimensional ordering while preserving spatial locality.
 Points that are close in two-dimensional space tend to receive nearby positions on the curve~\cite{moonAnalysisClusteringProperties2001}.
@@ -584,9 +584,9 @@ Two space-filling curves are commonly used:
     The Hilbert index is computed recursively: the unit square is divided into four quadrants, each mapped to a sub-range of the curve; the quadrant containing the point determines the high-order bits of the index, and the process recurses on the sub-quadrant.
 \end{itemize}
 
-For tile data, features are assigned a curve index based on their first vertex coordinate, and the feature ordering that produces the smallest encoded output (across Morton, Hilbert, and non-spatial orderings) is selected by the encoding competition described in \cref{ch_methods}.
+For tile data, features are assigned a curve index based on their first vertex coordinate, and the feature ordering that produces the smallest encoded output (across Morton, Hilbert, and non-spatial orderings) is selected by the encoding competition described in \cref{ch:methods}.
 
-\subsection{Locality-Sensitive Hashing}\label{sub_lsh}
+\subsection{Locality-Sensitive Hashing}\label{sub:lsh}
 
 When multiple string columns share overlapping vocabularies, storing a single shared dictionary can reduce overhead compared to per-column dictionaries.
 Identifying which columns share sufficient overlap is a set similarity problem.
@@ -606,15 +606,15 @@ where $\mathbf{1}[\cdot]$ is the indicator function.
 The estimate is unbiased with variance $O(1/k)$~\cite{broderResemblanceContainmentDocuments1998}, so the accuracy is fine-tunable.
 
 
-\section{Benchmarking}\label{sec_benchmarking}
+\section{Benchmarking}\label{sec:benchmarking}
 
 Benchmarking refers to the systematic measurement of system performance using controlled workloads and standardized metrics.
 The purpose of benchmarking is to evaluate system behaviour, compare alternative implementations, and quantify the effects of optimisations.
 
 According to Jain~\cite{jainArtComputerSystems1991}, a good evaluation must start with selecting relevant metrics.
 Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that na\"ive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent JVM/engine invocations - a principle that informs the bootstrap CI methodology used in this thesis.
-The bootstrap itself - a resampling method for constructing confidence intervals without distributional assumptions - was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1993} and is the specific statistical technique applied throughout this thesis's evaluation (\cref{ch_experiments}).
-Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} codified twelve common pitfalls in reporting performance results; the evaluation in \cref{ch_experiments} follows their guidelines by reporting per-metric confidence intervals and separating throughput from latency measurements.
+The bootstrap itself - a resampling method for constructing confidence intervals without distributional assumptions - was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1993} and is the specific statistical technique applied throughout this thesis's evaluation (\cref{ch:experiments}).
+Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} codified twelve common pitfalls in reporting performance results; the evaluation in \cref{ch:experiments} follows their guidelines by reporting per-metric confidence intervals and separating throughput from latency measurements.
 In the context of web maps, the candidate metrics span a range from deployment-critical on battery-constrained targets to directly user-visible on the desktop:
 
 \begin{itemize}

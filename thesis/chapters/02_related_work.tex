@@ -1,16 +1,16 @@
-\chapter{Related Work}\label{ch_related_work}
+\chapter{Related Work}\label{ch:related_work}
 
-\Cref{ch_introduction} identified a gap between style authoring and tile data preparation - two concerns that remain independent in all existing open-source tooling.
+\Cref{ch:introduction} identified a gap between style authoring and tile data preparation - two concerns that remain independent in all existing open-source tooling.
 Before developing an optimiser that bridges this gap, this chapter surveys the state of the art along four dimensions that correspond to the levels at which the optimiser will operate.
-\cref{sec_rw_tile_data} reviews existing approaches to tile data pruning and schema design.
-\cref{sec_rw_tile_encoding} covers tile encoding formats and columnar compression techniques.
-\cref{sec_rw_style_optimisations} examines the limited prior work on style-level optimisation.
-\cref{sec_rw_benchmarking} surveys rendering performance benchmarking methodologies.
+\cref{sec:rw_tile_data} reviews existing approaches to tile data pruning and schema design.
+\cref{sec:rw_tile_encoding} covers tile encoding formats and columnar compression techniques.
+\cref{sec:rw_style_optimisations} examines the limited prior work on style-level optimisation.
+\cref{sec:rw_benchmarking} surveys rendering performance benchmarking methodologies.
 
 For each area, the discussion identifies what existing tools achieve and where they fall short, building toward the composite gap that motivates the co-optimisation approach developed in this thesis.
 Specifically, tile data pruning motivates the shaving pass, encoding formats motivate the strategy competition, style optimisation motivates the expression and structural passes, and benchmarking motivates the evaluation methodology.
 
-\section{Tile Data Optimisation}\label{sec_rw_tile_data}
+\section{Tile Data Optimisation}\label{sec:rw_tile_data}
 
 The most direct approach to reducing tile transfer cost is to remove data that the rendering style does not reference.
 
@@ -46,17 +46,17 @@ These systems define the data that enters the pipeline.
 The optimisations in this thesis operate downstream, on the data and style that emerge from such pipelines, and do not require re-running the generator.
 
 A complementary framing connects tile shaving directly to relational query processing.
-The transformations developed in \cref{ch_methods} that compute a tile pruning advisory from the style and apply it to the tile data are a form of \emph{projection pushdown}~\cite{graefeQueryEvaluationTechniques1993}.
+The transformations developed in \cref{ch:methods} that compute a tile pruning advisory from the style and apply it to the tile data are a form of \emph{projection pushdown}~\cite{graefeQueryEvaluationTechniques1993}.
 The rendering style is the \enquote{query} (specifying which columns, geometry types, and property values it reads), the tile set is the \enquote{base relation}, and the advisory is the pushdown plan that moves the projection and predicate evaluation upstream of the wire format.
 Columnar analytical systems built on Parquet - whose columnar nested-data representation originates in Dremel's record shredding and assembly algorithm~\cite{melnikDremelInteractiveAnalysis2010} - or ORC rely on precisely this pushdown to avoid reading unreferenced columns.
 Abadi et~al.~\cite{abadiMaterializationStrategiesColumn2007} formalised the trade-off between \emph{early} and \emph{late materialisation} in column stores: early materialisation reconstructs full tuples before applying operators, while late materialisation defers reconstruction until the final projection, accessing only the columns that survive filtering.
-The thesis's tile shaving is a form of early materialisation (columns are removed at encoding time), while the selective column decoding discussed in future work (\cref{sec_conclusion_future_work}) is a form of late materialisation (columns are skipped at decode time).
+The thesis's tile shaving is a form of early materialisation (columns are removed at encoding time), while the selective column decoding discussed in future work (\cref{sec:conclusion_future_work}) is a form of late materialisation (columns are skipped at decode time).
 Modern query engines extend the pushdown with predicate filters~\cite{abadiDesignImplementationModern2013}.
 Modern distributed query engines such as Spark SQL~\cite{armbrustSparkSQLRelational2015} implement predicate and projection pushdown as composable tree-transformation rules applied in batches by a rule-based optimiser - a direct descendant of the extensible rule-based query rewriting architecture introduced by Pirahesh et~al.~\cite{piraheshExtensibleRuleBasedQuery1992} in the Starburst system - an architecture structurally parallel to the three-phase pipeline in this thesis.
 The thesis's contribution is to lift this DB-internal optimisations across the network boundary between the tile server and the MapLibre renderer, treating the declarative style as a readable query plan.
 This framing does not appear in prior map-rendering work - neither \texttt{vtshaver} nor \texttt{vt-optimizer} positions its pruning as query-engine pushdown, and neither tool composes with style-level rewrites to enlarge the pushdown.
 
-\section{Tile Encoding and Format Innovation}\label{sec_rw_tile_encoding}
+\section{Tile Encoding and Format Innovation}\label{sec:rw_tile_encoding}
 
 The dominant wire format for vector tiles is \ac{MVT}~\cite{Vectortilespec21Master}, which uses Protocol Buffers~\cite{ProtocolBuffers} to encode features in a row-oriented layout.
 \ac{MVT} has since been adopted as a conformance class in the OGC API-Tiles standard~\cite{ogcApiTiles2022}, making it the baseline format for any standards-compliant tile delivery.
@@ -91,7 +91,7 @@ GeoParquet's columnar layout with Parquet's built-in encoding competition (dicti
 The key difference is granularity: Parquet optimises for analytical scans over large row groups, whereas \ac{MLT} optimises for tile-granularity access in an interactive rendering pipeline where each tile is a single, small columnar unit (\qtyrange{10}{100}{\kilo\byte}).
 Parquet's per-column-chunk metadata overhead would dominate at these tile sizes, which is why a purpose-built tile format remains justified despite the ecosystem support GeoParquet provides.
 
-\section{Style Optimisation}\label{sec_rw_style_optimisations}
+\section{Style Optimisation}\label{sec:rw_style_optimisations}
 
 Compared to data-level optimisations, style-level optimisations has received relatively little attention.
 
@@ -106,7 +106,7 @@ More broadly, style documents in practice accumulate redundancy through several 
 The result is that production styles routinely contain default-valued properties, unreachable filter branches, and duplicated paint blocks - creating a practical demand for automatic simplification that no existing tool meets.
 
 Stamen Design published \texttt{mapbox-gl-style-remove-defaults}\footnote{\url{https://github.com/stamen/mapbox-gl-style-remove-defaults}}, a tool that removes properties set to their specification default values from Mapbox GL style JSON.
-This is the default stripping pass described in \cref{ch_methods}, implemented as a standalone tool.
+This is the default stripping pass described in \cref{ch:methods}, implemented as a standalone tool.
 It demonstrates that individual style optimisations are recognised as valuable by practitioners, but no existing tool composes multiple optimisations passes into a pipeline.
 
 Outside the map domain, the most closely related academic work is CSS minification.
@@ -120,9 +120,9 @@ A set of declarative transformation rules is applied in priority order to rewrit
 The expression-level passes in this thesis follow the same architecture. Declarative rewrite rules are applied in priority order to style expressions. This makes Starburst the direct database ancestor of the approach.
 The modern state of the art for avoiding rule-ordering sensitivity is \emph{equality saturation}~\cite{tateEqualitySaturationNew2009,willseyEggFastExtensible2021}: rather than applying rewrites sequentially and committing to the first match, an e-graph simultaneously represents all equivalent forms and selects the optimal one after saturation.
 The rewrite system in this thesis is not confluent and applies rules in a fixed priority order; equality saturation would eliminate this ordering dependence at the cost of significantly higher implementation and runtime complexity.
-Since the peephole rules are individually simple and the styles converge within a few fixpoint iterations (\cref{sub_fixpoint} provides the convergence analysis), the simpler sequential approach suffices for the current use case, but equality saturation remains a natural future direction if the rule set grows or ordering sensitivity becomes a practical concern.
+Since the peephole rules are individually simple and the styles converge within a few fixpoint iterations (\cref{sub:fixpoint} provides the convergence analysis), the simpler sequential approach suffices for the current use case, but equality saturation remains a natural future direction if the rule set grows or ordering sensitivity becomes a practical concern.
 
-\section{Rendering Performance Benchmarking}\label{sec_rw_benchmarking}
+\section{Rendering Performance Benchmarking}\label{sec:rw_benchmarking}
 
 Several studies have benchmarked vector map rendering performance.
 
@@ -137,12 +137,12 @@ Rechsteiner~\cite{rechsteinerPerformancevergleichOpenSourceVectorTilesServerloes
 Since the systems under test offer different feature sets, the evaluation partly compares incomparable aspects and does not address client-side rendering optimisations or style-level improvements.
 \end{sloppypar}
 
-Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} and Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} established the methodological foundations for statistically rigorous performance evaluation; the specific techniques drawn from their work - bootstrap confidence intervals, warm-up handling, and metric separation - are introduced in \cref{sec_benchmarking}.
+Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} and Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} established the methodological foundations for statistically rigorous performance evaluation; the specific techniques drawn from their work - bootstrap confidence intervals, warm-up handling, and metric separation - are introduced in \cref{sec:benchmarking}.
 
 These benchmarking studies establish the measurement landscape but focus on comparing \emph{systems} rather than evaluating the impact of \emph{optimisations passes} applied to a fixed system.
 This thesis complements them by introducing a cumulative ablation methodology that isolates the contribution of each optimisations pass within a single renderer (MapLibre GL~JS).
 
-\section{Positioning}\label{sec_rw_positioning}
+\section{Positioning}\label{sec:rw_positioning}
 
 In summary, existing work addresses individual optimisation dimensions in isolation.
 Data-level tools such as \texttt{vtshaver}, \texttt{vt-optimizer}, and Tippecanoe prune tile content but leave the style untouched.
@@ -155,7 +155,7 @@ The recent formalisation of vector tile delivery in the OGC API-Tiles standard~\
 Critically, no existing open-source tool performs \emph{systematic composition} of style and data optimisations.
 Using tile statistics to inform style simplification, and using the simplified style to derive a pruning advisory for the data, so that each level's output feeds forward into the next.
 This thesis fills the gap by applying compiler and database optimisation techniques to the map style and tile data as a unified optimisation target, measuring the interaction between levels through a cumulative ablation methodology that isolates each pass's contribution and quantifies whether the composition is additive or synergistic.
-The magnitude of this gap is quantified in \cref{ch_experiments}, which demonstrates that composing these techniques reduces load times by up to \qty{75}{\percent} and tile volume by \qty{28}{\percent}.
+The magnitude of this gap is quantified in \cref{ch:experiments}, which demonstrates that composing these techniques reduces load times by up to \qty{75}{\percent} and tile volume by \qty{28}{\percent}.
 
 The following chapter introduces the theoretical foundations that these techniques draw on.
 The map rendering architecture that defines the optimisation target, the compiler and query optimisation concepts that inform the rewrite rules, and the encoding strategies that underpin the data-level passes.

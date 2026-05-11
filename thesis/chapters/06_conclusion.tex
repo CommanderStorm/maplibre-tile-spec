@@ -1,28 +1,28 @@
-\chapter{Conclusion}\label{ch_conclusion}
+\chapter{Conclusion}\label{ch:conclusion}
 
 The experiments in the preceding chapter evaluated each optimisation level in isolation and then measured their combined effect, revealing that tile shaving and columnar re-encoding dominate the load-time improvements while style-level passes provide modest, additive contributions.
-This chapter draws together the findings: it summarises the contributions, distils the key insights, revisits the three research questions posed in \cref{sec_research_goals}, and identifies directions for future work.
+This chapter draws together the findings: it summarises the contributions, distils the key insights, revisits the three research questions posed in \cref{sec:research_goals}, and identifies directions for future work.
 
 \section{Summary of Contributions}
 
 The main contributions are:
 
 \begin{enumerate}
-    \item The \textbf{three-level optimisation pipeline} (\cref{sub_pipeline}) proved most effective as an enabler: expression-level simplifications cascaded into forms that structural passes could exploit, with constant folding and dead elimination together accounting for the largest per-pass rendering gains (\cref{sub_combined_marginal}).
+    \item The \textbf{three-level optimisation pipeline} (\cref{sub:pipeline}) proved most effective as an enabler: expression-level simplifications cascaded into forms that structural passes could exploit, with constant folding and dead elimination together accounting for the largest per-pass rendering gains (\cref{sub:combined_marginal}).
     Some passes, such as the default removal passes had both positive and negative effects on the metrics measured, but not to a significant enough extent to alter the overall trend.
 
-    \item \textbf{Style-driven tile shaving} (\cref{sub_tile_shaving}) is the dominant contributor to load-time and transfer-size improvements.  Dead elimination narrows the pruning advisory, enabling elimination of property columns and tiles from the encoded output, though the interaction with style-level passes is additive rather than synergistic (\cref{sub_mlt_discussion}).
+    \item \textbf{Style-driven tile shaving} (\cref{sub:tile_shaving}) is the dominant contributor to load-time and transfer-size improvements.  Dead elimination narrows the pruning advisory, enabling elimination of property columns and tiles from the encoded output, though the interaction with style-level passes is additive rather than synergistic (\cref{sub:mlt_discussion}).
 
     \item The \textbf{automatic encoding strategy selection} for the \ac{MLT} format closed the gap that the fixed-plan Java encoder left open: the Rust encoder's per-stream profiling and sort-strategy competition reduced tile volume by \qty{28}{\percent} over the Java baseline, and this advantage persisted under every wire compressor tested (\cref{tab:mvt_mlt_comparison}).
 
-    \item The \textbf{empirical evaluation} (\cref{ch_experiments}) confirmed that the three optimisation categories are complementary: expression and structural passes dominate rendering-throughput improvements, while data-level passes dominate load-time improvements, with the full pipeline reducing total tile volume by \qty{28}{\percent} (\qty{12}{\percent} over gzip-compressed \ac{MVT}) and improving end-to-end load times by \qtyrange{71}{75}{\percent} on the two styles benchmarked with tile data.
+    \item The \textbf{empirical evaluation} (\cref{ch:experiments}) confirmed that the three optimisation categories are complementary: expression and structural passes dominate rendering-throughput improvements, while data-level passes dominate load-time improvements, with the full pipeline reducing total tile volume by \qty{28}{\percent} (\qty{12}{\percent} over gzip-compressed \ac{MVT}) and improving end-to-end load times by \qtyrange{71}{75}{\percent} on the two styles benchmarked with tile data.
 \end{enumerate}
 
 \section{Key Findings}
 
-Three architectural insights emerged from the evaluation that go beyond the quantitative results reported in \cref{ch_experiments}.
+Three architectural insights emerged from the evaluation that go beyond the quantitative results reported in \cref{ch:experiments}.
 
-\emph{First}, tile shaving dominates the load-time and transfer-size improvements (\cref{sub_mlt_discussion}).
+\emph{First}, tile shaving dominates the load-time and transfer-size improvements (\cref{sub:mlt_discussion}).
 Style-level passes simplify the advisory computation and provide modest rendering improvements, but the aggregate data shows no super-additive interaction: the combined style+shaving reduction is approximately the sum of the individual reductions.
 For the geospatial community this means that tile shaving and encoding strategy selection are the primary levers; style-level passes are useful enablers that improve code quality and provide small rendering gains, rather than co-equal partners in a synergistic pipeline.
 For FPS (\qtyrange{162}{213}{\percent}) and transfer size (\qty{36}{\percent}) the full pipeline's effect is significant, while the incremental contribution of style-level passes over shaving alone is modest.
@@ -34,33 +34,33 @@ A mobile deployment on a constrained network should prioritise tile shaving and 
 The rewrite rules (\cref{tab:all_rewrite_rules}) are individually simple, yet their composition through fixpoint iteration achieves globally significant simplification across styles of widely varying complexity (raw reductions of \qtyrange{10}{71}{\percent} across the Maputnik generalisation corpus).
 This transfer succeeds because both domains share a key structural property: expressions are compositional (sub-expressions can be rewritten independently without invalidating the enclosing context), and the rewrite rules are semantics-preserving, so fixpoint iteration over a monotone rule set converges to a sound result regardless of rule application order.
 
-\section{Research Questions Revisited}\label{sec_rq_revisited}
+\section{Research Questions Revisited}\label{sec:rq_revisited}
 
-The three research questions posed in \cref{sec_research_goals} can now be answered directly from the experiments in \cref{ch_experiments}.
+The three research questions posed in \cref{sec:research_goals} can now be answered directly from the experiments in \cref{ch:experiments}.
 
 \paragraph{R1 - To what extent can automatic data and style co-optimisations reduce map tile size and improve rendering performance?}
 Style-level evaluation across all 15 styles and 18 scenarios shows style-gzip reductions of \qtyrange{3}{47}{\percent} (median ${\sim}$\qty{8}{\percent}).
-At the tile-data level, full-pipeline benchmarks on the two styles evaluated end-to-end (Fiord and Liberty) show a total tile volume reduction of \qty{28}{\percent} (from \qty{4.24}{\giga\byte} to \qty{3.06}{\giga\byte} on the Germany OpenMapTiles tileset), \qty{12}{\percent} over gzip-compressed \ac{MVT}, and load-time improvements of \qtyrange{71}{75}{\percent} (\cref{sub_combined_ablation}).
-The gains are not uniform: verbose institutional styles with hundreds of layers benefit far more than already-compact basemaps, and scenarios dominated by overview zoom levels benefit more than those dominated by street-level panning (\cref{sub_combined_marginal}).
+At the tile-data level, full-pipeline benchmarks on the two styles evaluated end-to-end (Fiord and Liberty) show a total tile volume reduction of \qty{28}{\percent} (from \qty{4.24}{\giga\byte} to \qty{3.06}{\giga\byte} on the Germany OpenMapTiles tileset), \qty{12}{\percent} over gzip-compressed \ac{MVT}, and load-time improvements of \qtyrange{71}{75}{\percent} (\cref{sub:combined_ablation}).
+The gains are not uniform: verbose institutional styles with hundreds of layers benefit far more than already-compact basemaps, and scenarios dominated by overview zoom levels benefit more than those dominated by street-level panning (\cref{sub:combined_marginal}).
 The quantitative answer to R1 is therefore \enquote{yes, meaningfully, but in a style- and scenario-dependent way}, with tile shaving and the Rust encoder's strategy competition accounting for most of the tile-size and load-time reduction, and dead elimination plus layer merging accounting for most of the frame-rate improvements.  The load-time claim of \qtyrange{71}{75}{\percent} is established for only two styles (Fiord and Liberty); the remaining styles are evaluated at the style level only, and tile-shaving effectiveness varies from \qty{19.8}{\percent} to \qty{46.3}{\percent} across styles.
 
 \paragraph{R2 - Which techniques are most effective, and how do they interact?}
-The cumulative ablation in \cref{sub_combined_ablation} and the per-style results in \cref{app_per_style} rank the passes by marginal contribution and show three clusters.
+The cumulative ablation in \cref{sub:combined_ablation} and the per-style results in \cref{sec:app_per_style} rank the passes by marginal contribution and show three clusters.
 \emph{First}, constant folding (including stats-driven folding) and expression simplification dominate the expression-level reductions because they simplify filters into forms that the structural passes can exploit, and because a single successful fold cascades through enclosing expressions.
 \emph{Second}, dead elimination and layer merging dominate the structural-level reductions because they reduce the per-frame draw-call count directly; they are also strongly synergistic, because dead elimination removes gaps between mergeable layers that would otherwise prevent the merge pass from recognising adjacency.
 \emph{Third}, data-level optimisations operate on a different axis: tile shaving reduces transfer size by using the optimised style's property and value references to build a pruning advisory, and the \ac{MLT} encoder's sort-strategy and per-stream competition reduces encoded size on top of that.
 Style-level dead elimination narrows the pruning advisory, which can shrink tiles further, but the aggregate data shows this interaction is additive rather than synergistic.
 
 \paragraph{R3 - How expensive are these optimisations in terms of preprocessing time, and what are the tradeoffs between decoding latency, rendering throughput, and transfer size?}
-The preprocessing-cost model in \cref{sub_preprocessing_cost} decomposes the total cost into four additive stages (style optimisations, statistics collection, advisory computation, \ac{MLT} re-encoding) and shows that the dominant term is re-encoding.
+The preprocessing-cost model in \cref{sub:preprocessing_cost} decomposes the total cost into four additive stages (style optimisations, statistics collection, advisory computation, \ac{MLT} re-encoding) and shows that the dominant term is re-encoding.
 Empirical measurement on the Germany OpenMapTiles tileset (\cref{tab:preprocessing_cost}) shows that the multi-strategy competition increases single-threaded re-encoding cost by a factor of $1.95\times$ over a fixed-plan encoder - well below the na\"ive $4\times$ expectation, thanks to bounding-box pruning, data profiling, and warm-start caching.
 The full single-threaded pipeline completes in under \qty{7}{\minute}; with 16-thread parallelism the wall-clock time drops to approximately \qty{2}{\minute}, paid once per tileset build and amortised over every subsequent tile request.
 On the tradeoff axis, decoding latency improvement is the most dramatic gain: the \ac{MLT}-Rust decoder achieves \numrange{4.6}{8.3}$\times$ higher full-decode throughput than \ac{MVT}+gzip across zoom levels 4, 7, and 13 (\cref{tab:decode_throughput}).
 Transfer-size reduction is the most reliably measurable axis (deterministic under compression), but for style-level passes it primarily affects initial load; tile-level volume reduction (\qty{12.4}{\percent} for \ac{MLT}-Rust vs.\ \ac{MVT} under gzip) has the larger sustained impact as tiles are fetched continuously.
 Rendering throughput (FPS) for style-only optimisations varies by style (median change ${\sim}$\qty{3}{\percent}, range \qtyrange{-4}{13}{\percent}), affected almost entirely by the structural passes rather than by the data-level passes - confirming that the multi-level pipeline is a set of complementary mechanisms that each address a different bottleneck, with tile shaving carrying the dominant share of load-time improvement.
-Energy consumption is not measured directly (the benchmark host is a desktop workstation rather than a battery-constrained device), but the transfer-size and frame-rate results are well-established proxies on mobile targets and the qualitative discussion in \cref{sub_combined_discussion} translates them into the expected battery-life direction.
+Energy consumption is not measured directly (the benchmark host is a desktop workstation rather than a battery-constrained device), but the transfer-size and frame-rate results are well-established proxies on mobile targets and the qualitative discussion in \cref{sub:combined_discussion} translates them into the expected battery-life direction.
 
-\section{Future Work}\label{sec_conclusion_future_work}
+\section{Future Work}\label{sec:conclusion_future_work}
 
 Several directions remain open:
 
@@ -78,6 +78,6 @@ Several directions remain open:
     The tile pruning advisory could potentially be applied as a lightweight per-request filter at serving time, since it reduces to column selection and predicate evaluation - operations that tile servers already perform for other purposes - connecting directly to the \emph{adaptive query processing} literature~\cite{deshpandeAdaptiveQueryProcessing2007}, which studies techniques for adjusting query plans at runtime in response to changing data characteristics.
     The encoding strategy competition, by contrast, requires access to the full column to profile and is inherently a batch operation; its results could be cached per schema and reused across tile requests.
     Characterising which passes are applicable at serving time and measuring their overhead on a request-critical path would extend the pipeline's applicability to dynamic tile sources.
-    \item \textbf{Learned sort-strategy prediction}: the encoder's sort-strategy competition (\cref{sub_data_optimisations}) exhaustively trials Hilbert, Morton, ID, and unsorted orderings and retains the smallest encoding. Kraska et~al.~\cite{kraskaLearnedIndex2018} showed that learned models can replace traditional index structures by predicting key positions; by analogy, a learned model trained on layer-level statistics (cardinality, spatial spread, value distribution) could predict the optimal sort strategy without running all trials, reducing preprocessing cost while preserving most of the size reduction.
-    \item \textbf{Equality saturation for the rewrite engine}: the current rewrite system applies rules in a fixed priority order and is not confluent (\cref{sub_fixpoint}). Replacing the sequential rewriter with an equality saturation engine~\cite{tateEqualitySaturationNew2009,willseyEggFastExtensible2021} would explore all equivalent forms simultaneously and select the globally optimal one, eliminating the ordering dependence. Beyond execution, Nandi et~al.~\cite{nandiRewriteRuleInference2021} showed that equality saturation can also be used to \emph{infer} rewrite rules automatically from input--output examples, which could complement or replace the manually authored rules in this thesis. This direction is primarily valuable if the rule set grows significantly or if ordering sensitivity becomes a practical concern.
+    \item \textbf{Learned sort-strategy prediction}: the encoder's sort-strategy competition (\cref{sub:data_optimisations}) exhaustively trials Hilbert, Morton, ID, and unsorted orderings and retains the smallest encoding. Kraska et~al.~\cite{kraskaLearnedIndex2018} showed that learned models can replace traditional index structures by predicting key positions; by analogy, a learned model trained on layer-level statistics (cardinality, spatial spread, value distribution) could predict the optimal sort strategy without running all trials, reducing preprocessing cost while preserving most of the size reduction.
+    \item \textbf{Equality saturation for the rewrite engine}: the current rewrite system applies rules in a fixed priority order and is not confluent (\cref{sub:fixpoint}). Replacing the sequential rewriter with an equality saturation engine~\cite{tateEqualitySaturationNew2009,willseyEggFastExtensible2021} would explore all equivalent forms simultaneously and select the globally optimal one, eliminating the ordering dependence. Beyond execution, Nandi et~al.~\cite{nandiRewriteRuleInference2021} showed that equality saturation can also be used to \emph{infer} rewrite rules automatically from input--output examples, which could complement or replace the manually authored rules in this thesis. This direction is primarily valuable if the rule set grows significantly or if ordering sensitivity becomes a practical concern.
 \end{itemize}
