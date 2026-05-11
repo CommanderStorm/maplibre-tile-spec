@@ -439,7 +439,7 @@ For a comparison operator with threshold~$n$, the extracted zoom interval is:
         \texttt{>=}\; n &\;\Rightarrow\; [n,\;\infty) \\
         \texttt{>}\; n  &\;\Rightarrow\; [\lfloor n \rfloor + 1,\;\infty) \\
         \texttt{<=}\; n &\;\Rightarrow\; [0,\; n]\\
-        \texttt{<}\; n  &\;\Rightarrow\; [0,\; \lceil n \rceil - 1]
+        \texttt{<}\; n  &\;\Rightarrow\; [0,\; \lceil n \rceil - 1] \\
     \end{aligned}
 \end{equation}
 Within an \texttt{all} node, extracted intervals are intersected: $[l_1, u_1] \cap [l_2, u_2] = [\max(l_1, l_2),\; \min(u_1, u_2)]$.
@@ -615,17 +615,17 @@ Sort-key synthesis is only applied to layer types that support the \texttt{*-sor
 
         % Phase annotations (middle)
         \node[right=1.4cm of l0, check, text width=4.2cm] (p1) {%
-            \textbf{Phase 1} — Candidate check\\[2pt]
+            \textbf{1. Candidate check}\\[2pt]
             same type and source,
             source-layer differing props are feature-driven,
             no zoom ramps in diffs,
             no existing sort-key};
         \node[right=1.4cm of l1, check, text width=4.2cm] (p2) {%
-            \textbf{Phase 2} — Match detection\\[2pt]
+            \textbf{2. Match detection}\\[2pt]
             all filters access the same property \texttt{"class"} with unique literals\\
             $\Rightarrow$ use \texttt{match} pattern};
         \node[right=1.4cm of l2, check, text width=4.2cm] (p3) {%
-            \textbf{Phase 3} — Zoom check\\[2pt]
+            \textbf{3. Zoom check}\\[2pt]
             all zoom ranges identical\\
             $\Rightarrow$ no guards needed};
 
