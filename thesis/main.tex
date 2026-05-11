@@ -20,7 +20,6 @@
 
 \documentclass[
   a4paper,            % paper size (a4paper, a5paper)
-  thesis=student,     % define the type of the thesis (student, phd, none)
   english,            % define the document language (english, german)
   % BCOR=5mm,           % define a binding offset for the document
   % coverBCOR=1cm,      % define a different binding offset for the cover page
@@ -30,6 +29,8 @@
   % headmarks=true,     % enable headmarks (true, false)
   % font=times          % define main text font (helvet, times, palatino, libertine)
 ]{tumbook}
+% Set type after \documentclass to avoid the spurious "Unused global option(s): [thesis]" warning caused by tumbook already-consumed pgfopts keys on to scrbook.. grr
+\pgfqkeys{/TUM/book}{thesis=student}     % student, phd, or none
 
 % For theses that are printed with a transparent cover it is recommended to
 % use the coverpage and provide the proper coverBCOR, so the distance between
