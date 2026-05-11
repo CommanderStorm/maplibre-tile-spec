@@ -75,7 +75,8 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
         % "over the network" brace
         \draw[decorate, decoration={brace, amplitude=6pt}, thick]
             ([xshift=4pt]renderer.south east) -- ([xshift=4pt]server.north east)
-            node[midway, right=10pt, font=\scriptsize\itshape] {over the network};
+            node[midway, right=10pt, font=\scriptsize\itshape, align=left]
+            {over\\the\\network};
 
         % Data Source (bottom)
         \node[datasource, below=1.2cm of server] (datasource) {Data Source};
