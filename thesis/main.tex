@@ -92,14 +92,14 @@
 \UseTblrLibrary{booktabs}
 \usepackage[noabbrev,capitalize,nameinlink]{cleveref}
 \newcommand{\crefrangeconjunction}{--}
-\newcommand{\stepcirc}[1]{%
+\newcommand{\stepcirc}[1]{
 	\tikz[baseline=(char.base)]{
 		\node[
 		draw,
 		circle,
 		inner sep=0.5pt,
-		minimum size=1.4em
-		] (char) {\scriptsize #1};
+		minimum size=1.1em
+		] (char) {\scriptsize \textbf{#1}};
 }}
 \input{csvtables.tex}
 
