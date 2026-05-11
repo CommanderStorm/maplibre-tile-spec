@@ -599,7 +599,7 @@ Rather than computing the exact intersection and union (which requires $O(|A| + 
 For each of $k$ independent hash functions $h_1, \ldots, h_k$, the minimum hash value over all elements is recorded: $\mathit{sig}_i(A) = \min_{a \in A} h_i(a)$.
 The Jaccard similarity is then estimated as:
 \begin{equation}\label{eq:minhash}
-    \hat{J}(A, B) = \frac{1}{k} \sum_{i=1}^{k} \mathbf{1}\bigl[\mathit{sig}_i(A) = \mathit{sig}_i(B)\bigr],
+    \hat{J}(A, B) = \frac{1}{k} \sum_{i=1}^{k} \mathbf{1}\bigl[\mathit{sig}_i(A) = \mathit{sig}_i(B)\bigr]
 \end{equation}
 where $\mathbf{1}[\cdot]$ is the indicator function.
 
