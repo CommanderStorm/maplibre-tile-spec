@@ -1138,7 +1138,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\linewidth]{figures/minhash_sweep.pdf}
+    \includegraphics[width=0.8\linewidth]{figures/minhash_sweep.pdf}
     \caption{Total encoded mbtiles size of the Germany OpenMapTiles tileset under different MinHash similarity modes and Jaccard thresholds.  Lower is better.  The hybrid mode (teal) produces the smallest output at every threshold; all modes increase monotonically with threshold as fewer column pairs qualify for shared-dictionary grouping.  The y-axis is zoomed to the data range to make the differences visible; the full range spans approximately \qty{6}{\mega\byte} out of \qty{3.14}{\giga\byte} total}
     \label{fig:minhash_sweep}
 \end{figure}

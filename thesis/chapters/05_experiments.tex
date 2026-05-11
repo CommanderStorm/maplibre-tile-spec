@@ -201,7 +201,7 @@ Sparse overview tiles at low zoom exercise the advisory's zoom-level pruning; de
 This section quantifies the interaction between style-level and data-level optimisations previewed in \cref{sub:structural_discussion}: style-level optimisations narrow the pruning advisory, and the following paragraphs measure the extent of this effect before turning to the encoding evaluation.
 
 \paragraph{Interaction between style and data optimisations}
-\cref{fig:interaction_plot} compares the gzip-size reductions of style-only (config~2), shaving-only (config~3), and their combination (config~4).
+Comparing the gzip-size reductions of style-only, shaving-only, and their combination, we can see the following:
 For Fiord, the style-only reduction is \qty{14.1}{\percent} and shaving-only contributes a negligible reduction, yet the combined style+shaving reduction is \qty{14.7}{\percent} - a modest additional \qty{0.6}{pp} from dead-layer elimination narrowing the pruning advisory.
 For Liberty, shaving-only also contributes negligibly (Liberty's broad layer structure already references most tile properties), and the combined reduction (\qty{4.8}{\percent}) is close to the style-only reduction (\qty{4.9}{\percent}), indicating approximately additive behaviour.
 The aggregate across both styles shows no super-additive interaction at the median level, though per-scenario synergy is present in 16 of the 26 scenarios with complete data.
@@ -220,13 +220,6 @@ Jangda et~al.~\cite{jangdaNotFastAnalyzing2019} measured a 45--55\% slowdown for
 As a result, the columnar decoder's advantage materialises primarily on larger, feature-dense tiles where the per-column setup and transfer cost is amortised; on smaller tiles the per-column dispatch overhead narrows the gap to approximate parity with \ac{MVT}'s single-path protobuf parser.
 Work is underway to shift more decoding and data consumption into WASM to reduce boundary-crossing overhead.
 Bootstrap \qty{95}{\percent} confidence intervals confirm that the full-pipeline load-time improvements are tight: Fiord's final load time is \qty{108.7}{\milli\second} (CI: [\num{107.6}, \num{109.7}]), Liberty's is \qty{123.5}{\milli\second} (CI: [\num{122.7}, \num{124.4}]), both with $p < 10^{-45}$ (Wilcoxon, $n = 270$ pooled across 18 scenarios $\times$ 15 runs) against their respective baselines.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\linewidth]{figures/interaction_plot.pdf}
-    \caption{Interaction between style optimisations and tile shaving.  The combined reduction is approximately the sum of individual reductions, indicating additive rather than synergistic composition}
-    \label{fig:interaction_plot}
-\end{figure}
 
 \begin{figure}[htbp]
     \centering
