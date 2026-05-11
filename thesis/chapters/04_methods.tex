@@ -305,8 +305,8 @@ Let $N$ denote the total number of features in the source layer, and $\mathrm{fr
 \end{equation}
 Compound predicates are estimated under the standard independence assumption:
 \begin{equation}\label{eq:selectivity_compound}
-    \mathrm{sel}(\texttt{all}) = \prod_i \mathrm{sel}(p_i), \qquad
-    \mathrm{sel}(\texttt{any}) = 1 - \prod_i \bigl(1 - \mathrm{sel}(p_i)\bigr).
+    \mathrm{sel}(\texttt{all}) &= \prod_i \mathrm{sel}(p_i) \\[4pt]
+    \mathrm{sel}(\texttt{any}) &= 1 - \prod_i \bigl(1 - \mathrm{sel}(p_i)\bigr) \\[4pt]
 \end{equation}
 
 \noindent The independence assumption is known to be imprecise for correlated predicates~\cite{selingerAccessPathSelection1979}, but as discussed in \cref{sec:query_optimisations} the selectivity signal here is consumed only by a reordering heuristic, not by a cost-based plan chooser: what matters is the \emph{ordering} of predicates by selectivity, not their absolute values.
