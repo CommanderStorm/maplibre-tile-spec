@@ -306,8 +306,8 @@ Let $N$ denote the total number of features in the source layer, and $\mathrm{fr
 Compound predicates are estimated under the standard independence assumption:
 \begin{equation}\label{eq:selectivity_compound}
     \begin{aligned}
-        \mathrm{sel}(\texttt{all expr} expr) &= \prod_i \mathrm{sel}(p_i) \\[4pt]
-        \mathrm{sel}(\texttt{any expr}) &= 1 - \prod_i \bigl(1 - \mathrm{sel}(p_i)\bigr) \\[4pt]
+        \mathrm{sel}(\texttt{all} p_0 \ldots p_i) &= \prod_i \mathrm{sel}(p_i) \\[4pt]
+        \mathrm{sel}(\texttt{any} p_0 \ldots p_i) &= 1 - \prod_i \bigl(1 - \mathrm{sel}(p_i)\bigr) \\[4pt]
     \end{aligned}
 \end{equation}
 
@@ -597,7 +597,7 @@ Sort-key synthesis is only applied to layer types that support the \texttt{*-sor
     \resizebox{\linewidth}{!}{\hfuzz=50pt\begin{tikzpicture}[
         node distance=0.35cm,
         layer/.style={rectangle, draw, rounded corners=2pt, minimum width=3.2cm,
-                      minimum height=0.55cm, font=\scriptsize, align=center},
+                      minimum height=0.55cm, font=\scriptsize},
         merged/.style={rectangle, draw, rounded corners=2pt, minimum width=4.8cm,
                        font=\scriptsize, align=left, inner sep=4pt},
         phase/.style={rectangle, draw, dashed, rounded corners=3pt, fill=gray!8,
