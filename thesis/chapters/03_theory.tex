@@ -176,12 +176,12 @@ function sliceVectorTileLayer(sourceLayer, maxZoomTileID, targetTileID) {
 
     for (const feature of sourceLayer) {
         let geometry = feature.loadGeometry();
-        // (*@\textcircled{1}@*) Rescale each coordinate into the target tile's space
+        // (*@\stepcirc{1}@*) Rescale each coordinate into the target tile's space
         for (const ring of geometry) for (const p of ring) {
             p.x = p.x * scale - offsetX;
             p.y = p.y * scale - offsetY;
         }
-        // (*@\textcircled{2}@*) Clip to the target extent with a 128-unit overdraw buffer
+        // (*@\stepcirc{2}@*) Clip to the target extent with a 128-unit overdraw buffer
         geometry = clipGeometry(geometry, feature.type,
                                 -128, -128, extent + 128, extent + 128);
         // ...emit feature with rescaled+clipped geometry
