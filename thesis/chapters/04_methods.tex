@@ -436,10 +436,10 @@ Extracted fractional bounds are rounded to integer zoom levels because tile zoom
 For a comparison operator with threshold~$n$, the extracted zoom interval is:
 \begin{equation}\label{eq:zoom_bounds}
     \begin{aligned}
-        \texttt{>=}\; n &\;\Rightarrow\; [n,\;\infty), &
-        \texttt{>}\; n  &\;\Rightarrow\; [\lfloor n \rfloor + 1,\;\infty), \\
-        \texttt{<=}\; n &\;\Rightarrow\; [0,\; n], &
-        \texttt{<}\; n  &\;\Rightarrow\; [0,\; \lceil n \rceil - 1].
+        \texttt{>=}\; n &\;\Rightarrow\; [n,\;\infty) \\
+        \texttt{>}\; n  &\;\Rightarrow\; [\lfloor n \rfloor + 1,\;\infty) \\
+        \texttt{<=}\; n &\;\Rightarrow\; [0,\; n]\\
+        \texttt{<}\; n  &\;\Rightarrow\; [0,\; \lceil n \rceil - 1]
     \end{aligned}
 \end{equation}
 Within an \texttt{all} node, extracted intervals are intersected: $[l_1, u_1] \cap [l_2, u_2] = [\max(l_1, l_2),\; \min(u_1, u_2)]$.
