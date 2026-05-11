@@ -45,8 +45,9 @@
 % - Per-style ablation table macro -
 % #1 = style_id (for filename), #2 = display name
 \NewDocumentCommand{\perstyleablation}{mm}{%
+  \needspace{15\baselineskip}%
   \subsection{Style: #2}%
-  \begin{table}[htbp]
+  \begin{table}[H]
   \centering\small
   \csvreader[
     tabular=r l r r r r r r,
