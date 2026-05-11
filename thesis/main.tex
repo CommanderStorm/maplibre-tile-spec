@@ -92,7 +92,9 @@
 \UseTblrLibrary{booktabs}
 \usepackage[noabbrev,capitalize,nameinlink]{cleveref}
 \newcommand{\crefrangeconjunction}{--}
-\newcommand{\stepmark}[1]{\textsuperscript{\textbf{#1}}}
+\newcommand{\stepcirc}[1]{%
+	\smash{\raisebox{0.2ex}{\textcircled{\scriptsize #1}}}%
+}
 \input{csvtables.tex}
 
 
