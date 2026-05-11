@@ -49,9 +49,9 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
         node distance=0.8cm and 1.4cm,
         box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
                     minimum width=2.0cm, font=\small, align=center},
-        renderer/.style={box, fill=green!10, minimum width=5.5cm, minimum height=0.7cm},
-        server/.style={box, fill=blue!12, minimum width=5.5cm, minimum height=0.7cm},
-        datasource/.style={box, fill=orange!10, minimum width=5.5cm, minimum height=0.7cm},
+        renderer/.style={box, fill=green!10, minimum width=4.5cm, minimum height=0.7cm},
+        server/.style={box, fill=blue!12, minimum width=4.5cm, minimum height=0.7cm},
+        datasource/.style={box, fill=orange!10, minimum width=4.5cm, minimum height=0.7cm},
         arrow/.style={-Stealth, thick},
         label/.style={font=\scriptsize\itshape, fill=white},
     ]
@@ -75,7 +75,7 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
         % "over the network" brace
         \draw[decorate, decoration={brace, amplitude=6pt}, thick]
             ([xshift=4pt]renderer.south east) -- ([xshift=4pt]server.north east)
-            node[midway, right=10pt, font=\scriptsize\itshape] {over\\the\\network};
+            node[midway, right=10pt, font=\scriptsize\itshape] {over the network};
 
         % Data Source (bottom)
         \node[datasource, below=1.2cm of server] (datasource) {Data Source};
