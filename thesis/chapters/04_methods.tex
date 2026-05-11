@@ -306,8 +306,8 @@ Let $N$ denote the total number of features in the source layer, and $\mathrm{fr
 Compound predicates are estimated under the standard independence assumption:
 \begin{equation}\label{eq:selectivity_compound}
     \begin{aligned}
-        \mathrm{sel}(\texttt{all}) &= \prod_i \mathrm{sel}(p_i) \\[4pt]
-        \mathrm{sel}(\texttt{any}) &= 1 - \prod_i \bigl(1 - \mathrm{sel}(p_i)\bigr) \\[4pt]
+        \mathrm{sel}(\texttt{all expr}) &= \prod_i \mathrm{sel}(p_i) \\[4pt]
+        \mathrm{sel}(\texttt{any expr}) &= 1 - \prod_i \bigl(1 - \mathrm{sel}(p_i)\bigr) \\[4pt]
     \end{aligned}
 \end{equation}
 
