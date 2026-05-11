@@ -298,16 +298,16 @@ Filters and properties can be specified as literal constants, as \emph{zoom-depe
 The resulting expression trees can be deeply nested and may contain redundant or unreachable branches - characteristics that make them amenable to the same kinds of simplification and optimisations techniques used in compilers and database query planners.
 
 \Cref{lst:worker_pipeline} shows the worker's tile-parse pipeline as five named steps, marked inline as
-\textcircled{\scriptsize a}--\textcircled{\scriptsize e}.
+\textcircled{a}--\textcircled{e}.
 
 Every optimisation in \cref{ch_methods} attaches to one of these steps:
-Merging layers reduces work for \textcircled{\scriptsize a}.
-Pruning features server-side makes \textcircled{\scriptsize b} not handle them.
+Merging layers reduces work for \textcircled{a}.
+Pruning features server-side makes \textcircled{b} not handle them.
 Tightening \texttt{minzoom}/\texttt{maxzoom} makes the
-\textcircled{\scriptsize c} guard true earlier.
-Pre-folding zoom-dependent constants reduces the work in \textcircled{\scriptsize d} while
+\textcircled{c} guard true earlier.
+Pre-folding zoom-dependent constants reduces the work in \textcircled{d} while
 filter-to-property propagation simplifies the per-feature work inside
-\textcircled{\scriptsize e}.
+\textcircled{e}.
 
 \begin{lstlisting}[
     language=TypeScript,
@@ -315,7 +315,7 @@ filter-to-property propagation simplifies the per-feature work inside
     caption={MapLibre GL-JS WorkerTile.parse processing pipeline (\texttt{src/source/worker\_tile.ts:85-127})},
     label=lst:worker_pipeline
 ]
-// (*@\textcircled{\scriptsize a}@*) Iterate source layers
+// (*@\textcircled{a}@*) Iterate source layers
 const layerFamilies = layerIndex.familiesBySource[this.source];
 for (const sourceLayerId in layerFamilies) {
     const sourceLayer = data.layers[sourceLayerId];
@@ -328,7 +328,7 @@ for (const sourceLayerId in layerFamilies) {
 
     const sourceLayerIndex = sourceLayerCoder.encode(sourceLayerId);
 
-    // (*@\textcircled{\scriptsize b}@*) Collect raw features
+    // (*@\textcircled{b}@*) Collect raw features
     const features = [];
     for (let index = 0; index < sourceLayer.length; index++) {
         const feature = sourceLayer.feature(index);
@@ -342,15 +342,15 @@ for (const sourceLayerId in layerFamilies) {
 
         ...
 
-        // (*@\textcircled{\scriptsize c}@*) Skip hidden layers
+        // (*@\textcircled{c}@*) Skip hidden layers
         if (layer.isHidden(this.zoom, true)) continue;
 
-        // (*@\textcircled{\scriptsize d}@*) Recalculate zoom-dependent expressions
+        // (*@\textcircled{d}@*) Recalculate zoom-dependent expressions
         recalculateLayers(family, this.zoom, availableImages);
 
         const bucket = buckets[layer.id] = layer.createBucket({...});
 
-        // (*@\textcircled{\scriptsize e}@*) Filter features and build vertex data
+        // (*@\textcircled{e}@*) Filter features and build vertex data
         bucket.populate(features, options, this.tileID.canonical);
         featureIndex.bucketLayerIDs.push(family.map((l) => l.id));
     }
