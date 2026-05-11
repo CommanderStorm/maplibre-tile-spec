@@ -156,7 +156,7 @@ When a client requests a tile at a zoom level beyond the source's maximum, the r
 The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched, which means that a layer's effective visibility at a given camera zoom cannot be determined from filter or data bounds alone - it is a function of both the layer's filter and the source's \texttt{maxzoom}.
 This observation has direct consequences for any optimiser that rewrites zoom bounds, and is revisited in \cref{ch:methods}.
 In particular, tightening a layer's \texttt{maxzoom} is only sound when it accounts for overzoom: removing a layer at zoom~14 would suppress its rendering at zoom~15 and beyond if the source's maximum zoom is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.
-\Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \texttt{maxzoom} tile: \textcircled{1}~rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/\texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}), and \textcircled{2}~clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
+\Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \texttt{maxzoom} tile: \stepcirc{1}~rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/\texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}), and \stepcirc{2}~clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
 Both operations consume the source's \texttt{maxzoom} tile as input; tightening that \texttt{maxzoom} removes the upstream tile the slicer rescales and clips, which is why the soundness rule above forbids any rewrite that does not preserve every layer's effective overzoom range.
 
 \begin{lstlisting}[
@@ -298,16 +298,16 @@ Filters and properties can be specified as literal constants, as \emph{zoom-depe
 The resulting expression trees can be deeply nested and may contain redundant or unreachable branches - characteristics that make them amenable to the same kinds of simplification and optimisations techniques used in compilers and database query planners.
 
 \Cref{lst:worker_pipeline} shows the worker's tile-parse pipeline as five named steps, marked inline as
-\textcircled{a}--\textcircled{e}.
+\stepcirc{a}--\stepcirc{e}.
 
 Every optimisation in \cref{ch:methods} attaches to one of these steps:
-Merging layers reduces work for \textcircled{a}.
-Pruning features server-side makes \textcircled{b} not handle them.
+Merging layers reduces work for \stepcirc{a}.
+Pruning features server-side makes \stepcirc{b} not handle them.
 Tightening \texttt{minzoom}/\texttt{maxzoom} makes the
-\textcircled{c} guard true earlier.
-Pre-folding zoom-dependent constants reduces the work in \textcircled{d} while
+\stepcirc{c} guard true earlier.
+Pre-folding zoom-dependent constants reduces the work in \stepcirc{d} while
 filter-to-property propagation simplifies the per-feature work inside
-\textcircled{e}.
+\stepcirc{e}.
 
 \begin{lstlisting}[
     language=TypeScript,
@@ -315,7 +315,7 @@ filter-to-property propagation simplifies the per-feature work inside
     caption={MapLibre GL-JS WorkerTile.parse processing pipeline (\texttt{src/source/worker\_tile.ts:85-127})},
     label=lst:worker_pipeline
 ]
-// (*@\textcircled{a}@*) Iterate source layers
+// (*@\stepcirc{a}@*) Iterate source layers
 const layerFamilies = layerIndex.familiesBySource[this.source];
 for (const sourceLayerId in layerFamilies) {
     const sourceLayer = data.layers[sourceLayerId];
@@ -328,7 +328,7 @@ for (const sourceLayerId in layerFamilies) {
 
     const sourceLayerIndex = sourceLayerCoder.encode(sourceLayerId);
 
-    // (*@\textcircled{b}@*) Collect raw features
+    // (*@\stepcirc{b}@*) Collect raw features
     const features = [];
     for (let index = 0; index < sourceLayer.length; index++) {
         const feature = sourceLayer.feature(index);
@@ -342,15 +342,15 @@ for (const sourceLayerId in layerFamilies) {
 
         ...
 
-        // (*@\textcircled{c}@*) Skip hidden layers
+        // (*@\stepcirc{c}@*) Skip hidden layers
         if (layer.isHidden(this.zoom, true)) continue;
 
-        // (*@\textcircled{d}@*) Recalculate zoom-dependent expressions
+        // (*@\stepcirc{d}@*) Recalculate zoom-dependent expressions
         recalculateLayers(family, this.zoom, availableImages);
 
         const bucket = buckets[layer.id] = layer.createBucket({...});
 
-        // (*@\textcircled{e}@*) Filter features and build vertex data
+        // (*@\stepcirc{e}@*) Filter features and build vertex data
         bucket.populate(features, options, this.tileID.canonical);
         featureIndex.bucketLayerIDs.push(family.map((l) => l.id));
     }
@@ -593,7 +593,7 @@ Identifying which columns share sufficient overlap is a set similarity problem.
 
 \emph{MinHash}~\cite{broderResemblanceContainmentDocuments1998} is a locality-sensitive hashing technique that efficiently estimates the \emph{Jaccard similarity} between two sets $A$ and $B$:
 \begin{equation}\label{eq:jaccard}
-    J(A, B) = \frac{|A \cap B|}{|A \cup B|}.
+    J(A, B) = \frac{|A \cap B|}{|A \cup B|}
 \end{equation}
 Rather than computing the exact intersection and union (which requires $O(|A| + |B|)$ time and space), MinHash constructs a compact \emph{signature} of $k$ hash values for each set.
 For each of $k$ independent hash functions $h_1, \ldots, h_k$, the minimum hash value over all elements is recorded: $\mathit{sig}_i(A) = \min_{a \in A} h_i(a)$.
