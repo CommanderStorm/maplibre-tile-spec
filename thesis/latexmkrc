@@ -3,3 +3,5 @@
 # located in the tum/ subdirectory.
 
 $ENV{'TEXINPUTS'}='./tum//:' . $ENV{'TEXINPUTS'};
+$pdf_mode = 1;
+@default_files = ('main.tex');

@@ -597,7 +597,7 @@ Sort-key synthesis is only applied to layer types that support the \texttt{*-sor
     \resizebox{\linewidth}{!}{\hfuzz=50pt\begin{tikzpicture}[
         node distance=0.35cm,
         layer/.style={rectangle, draw, rounded corners=2pt, minimum width=3.2cm,
-                      minimum height=0.55cm, font=\scriptsize},
+                      minimum height=0.55cm, font=\scriptsize, align=center},
         merged/.style={rectangle, draw, rounded corners=2pt, minimum width=4.8cm,
                        font=\scriptsize, align=left, inner sep=4pt},
         phase/.style={rectangle, draw, dashed, rounded corners=3pt, fill=gray!8,
@@ -698,7 +698,7 @@ The pipeline operates in three stages that mirror the structure of a database qu
 \begin{enumerate}
     \item \textbf{Style-driven tile shaving} (\cref{sub:tile_shaving}): the optimised style is analysed to produce a \emph{tile pruning advisory} that specifies, per source-layer and zoom level, which properties, geometry types, and property values to retain.
     Tiles are pruned according to this advisory before encoding.
-    \item \textbf{Data transformations} (\cref{sub:string_property_interning} and \cref{sub:feature_reordering}): remaining data is transformed to improve compressibility - categorical string properties are replaced by frequency-ordered integers (\emph{string interning}), and features are reordered to exploit spatial or categorical locality.
+    \item \textbf{Data transformations} (\cref{sub:string_property_interning,sub:feature_reordering}): remaining data is transformed to improve compressibility - categorical string properties are replaced by frequency-ordered integers (\emph{string interning}), and features are reordered to exploit spatial or categorical locality.
     \item \textbf{Encoding strategy selection} (\cref{sub:encoding_strategies}): the pruned, transformed data is re-encoded into \ac{MLT} using a multi-strategy competition that automatically profiles each data stream and selects the most compact encoding.
 \end{enumerate}
 
@@ -744,7 +744,7 @@ The advisory captures the following per source-layer:
                       align=left, inner sep=6pt, text=black!80},
     ]
         % Row 1: style-side and data-side inputs
-        \node[style] (sopt) {Style optimisations\\{\scriptsize (\cref{sub:expression_optimisations,sub_structural_optimisations})}};
+        \node[style] (sopt) {Style optimisations\\{\scriptsize (\cref{sub:expression_optimisations,sub:structural_optimisations})}};
 
         % Row 2: advisory
         \node[both, right=3cm of sopt] (adv) {Tile pruning advisory};
@@ -808,7 +808,7 @@ This is done via
 The re-encoding proceeds in three stages: (1)~the row-oriented \ac{MVT} features are converted into an owned columnar representation (\texttt{StagedLayer01}), with separate arrays for each property column, the geometry vertex buffer, and the feature ID column; (2)~the columnar data is optionally reordered according to the sort strategy competition; (3)~each column is independently encoded using the per-stream encoding competition.
 The final wire format consists of three concatenated sections per layer: a header (layer name, tile extent, column count), a metadata section (column types, encoding descriptors), and a data section (the encoded streams).
 
-The Rust-based encoder reformulates the encoding problem as a \emph{multi-strategy competition} inspired by \ac{PGO} in compilers~\cite{changUsingProfileInformation1991} and the instance-optimised systems vision of Kraska~\cite{kraskaInstanceOptimizedData2021}:
+The Rust-based encoder reformulates the encoding problem as a \emph{multi-strategy competition} inspired by \ac{PGO} in compilers~\cite{changUsingProfileInformation1991} and the instance-optimised systems vision of Kraska~\cite{dingSageDBInstanceOptimizedData2022}:
 rather than committing to a single encoding plan, the encoder uses the data distribution of each tile to try multiple strategies, measures the output size of each, and selects the smallest result.
 This competition operates at two nested levels: an \emph{outer loop} that trials multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
 The inner competition criterion is deliberately \emph{single-objective}: the winning candidate is the one with the smallest encoded \texttt{total\_len()}.
