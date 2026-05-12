@@ -317,6 +317,30 @@ Compound predicates are estimated under the standard independence assumption:
 Correlation between map-style predicates (e.g.\ \texttt{class} and \texttt{subclass} in OpenMapTiles) distorts the absolute selectivities but rarely inverts their relative ordering, so the cheap estimator suffices.
 Because the rendering benefit of predicate reordering depends on the proportion of evaluation cost attributable to predicate ordering - expected to be small for styles with short filters - this pass is included as an exploratory extension and its isolated impact is not separately benchmarked.
 
+\paragraph{Termination and confluence of the fixpoint}
+The expression-level phase applies the entire rewrite rule set until the style JSON stops changing.
+The implementation imposes a hard cap of \texttt{8} iterations; this is the \emph{formal} termination guarantee - the fixpoint loop executes at most 8 passes regardless of rule behaviour.
+
+The majority of the rules described above strictly decrease a lexicographic measure
+\begin{equation}\label{eq:termination_measure}
+    \mu(S) = (n_{\mathrm{AST}}(S),\, d_{\max}(S),\, n_{\mathrm{lit}}(S))
+\end{equation}
+where $n_{\mathrm{AST}}$ is the total number of \ac{AST} nodes in all expressions of $S$, $d_{\max}$ is the maximum expression nesting depth, and $n_{\mathrm{lit}}$ is the number of non-literal nodes.
+Rules either reduce $n_{\mathrm{AST}}$ (e.g.\ constant folding, boolean absorption, dead-branch elimination), keep $n_{\mathrm{AST}}$ unchanged but strictly reduce $d_{\max}$ (e.g.\ boolean flattening), or keep both unchanged but strictly reduce $n_{\mathrm{lit}}$ (e.g.\ redundant coercion removal).
+Two further rules - \texttt{any}$\to$\texttt{in} merging and predicate reordering - are either strictly monotone in the measure (\texttt{any}$\to$\texttt{in} reduces $n_{\mathrm{AST}}$ because the merged \texttt{in} has fewer nodes than the original chain of equalities) or semantically idempotent after one application (selectivity reordering sorts predicates into a canonical order).
+
+Two rules can \emph{temporarily increase} $n_{\mathrm{AST}}$ within a single iteration, which is why the measure alone does not constitute a termination proof.
+De~Morgan's law transforms \texttt{["!",\allowbreak["any",\allowbreak A,\allowbreak B]]} (4~nodes) into \texttt{["all",\allowbreak["!",\allowbreak A],\allowbreak["!",\allowbreak B]]} (5~nodes), and distributive factoring may introduce boolean identity elements in vacuous-remainder cases.
+In both cases, subsequent rules within the same or next iteration typically compensate: boolean flattening reduces nesting depth, and constant folding absorbs the identity elements, so the net effect across iterations is a decrease in $\mu$.
+In the general case, however, compensating rules are not guaranteed to fire (e.g., when De~Morgan produces negated predicates that admit no further simplification at the top level of a filter).
+In practice, all styles in the benchmark corpus converge within three iterations - well below the hard cap - because the monotone majority of rules drives $\mu$ toward zero and the non-monotone rules fire at most once per expression.
+
+The rewrite system is not confluent: the first matching rule fires (table iteration order defines implicit priority), and selectivity reordering depends on data-dependent statistics.
+Different rule orderings could therefore yield different but visually equivalent output.
+Visual equivalence - the soundness criterion of~(\ref{eq:visual_equivalence}) - is preserved regardless, because every individual rule preserves expression semantics.
+
+
+
 \paragraph{Concrete examples}
 To illustrate how expression passes compose, \cref{fig:expr_before_after} shows two representative transformations.
 In the first, two equality tests within an \texttt{any} node are factored and rewritten to a compact \texttt{in} expression.
@@ -340,16 +364,16 @@ Both examples are drawn from the optimiser's test suite.
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-["any",
-	["all", 
-		["has","name"],
-		["==",["get","class"],"road"]
-	],
-	["all",
-		["has","name"],
-		["==",["get","class"],"rail"]
-	]
-]
+			["any",
+			["all", 
+			["has","name"],
+			["==",["get","class"],"road"]
+			],
+			["all",
+			["has","name"],
+			["==",["get","class"],"rail"]
+			]
+			]
 		\end{lstlisting}
 		
 		\vspace{2mm}
@@ -363,13 +387,13 @@ Both examples are drawn from the optimiser's test suite.
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-["all",
-	["has","name"],
-	["in",
-		["get","class"],
-		["literal",["road","rail"]]
-	]
-]
+			["all",
+			["has","name"],
+			["in",
+			["get","class"],
+			["literal",["road","rail"]]
+			]
+			]
 		\end{lstlisting}
 		
 		\caption{Expression rewriting via distributive factoring and \texttt{any}$\to$\texttt{in} promotion.}
@@ -391,13 +415,13 @@ Both examples are drawn from the optimiser's test suite.
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-filter: ["==",["get","class"],"road"]
-paint:
-	fill-color: ["match",["get","class"],
-		"road", "#333",
-		"rail", "#666",
-		"#999"
-	]
+			filter: ["==",["get","class"],"road"]
+			paint:
+			fill-color: ["match",["get","class"],
+			"road", "#333",
+			"rail", "#666",
+			"#999"
+			]
 		\end{lstlisting}
 		
 		\vspace{2mm}
@@ -411,9 +435,9 @@ paint:
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-filter: ["==",["get","class"],"road"]
-paint:
-	fill-color: "#333"
+			filter: ["==",["get","class"],"road"]
+			paint:
+			fill-color: "#333"
 		\end{lstlisting}
 		
 		\caption{Constant propagation simplifies rendering expressions.}
@@ -434,10 +458,10 @@ paint:
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-["all",
-	["==",["get","class"],"road"],
-	["==",["get","class"],"road"]
-]
+			["all",
+			["==",["get","class"],"road"],
+			["==",["get","class"],"road"]
+			]
 		\end{lstlisting}
 		
 		\vspace{2mm}
@@ -451,7 +475,7 @@ paint:
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-["==",["get","class"],"road"]
+			["==",["get","class"],"road"]
 		\end{lstlisting}
 		
 		\caption{Duplicate predicate elimination via subsumption.}
@@ -473,10 +497,10 @@ paint:
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-["all",
-	["!",["==",["get","class"],"road"]],
-	["!",["==",["get","class"],"rail"]]
-]
+			["all",
+			["!",["==",["get","class"],"road"]],
+			["!",["==",["get","class"],"rail"]]
+			]
 		\end{lstlisting}
 		
 		\vspace{2mm}
@@ -490,10 +514,10 @@ paint:
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-["all",
-	["!=","class","road"],
-	["!=","class","rail"]
-]
+			["all",
+			["!=","class","road"],
+			["!=","class","rail"]
+			]
 		\end{lstlisting}
 		
 		\caption{Negation pushdown and operator normalization.}
@@ -505,29 +529,7 @@ paint:
 	\label{fig:expr_before_after}
 \end{figure}
 
-\paragraph{Termination and confluence of the fixpoint}
-The expression-level phase applies the entire rewrite rule set until the style JSON stops changing.
-The implementation imposes a hard cap of \texttt{8} iterations; this is the \emph{formal} termination guarantee - the fixpoint loop executes at most 8 passes regardless of rule behaviour.
-
-The majority of the rules described above strictly decrease a lexicographic measure
-\begin{equation}\label{eq:termination_measure}
-    \mu(S) = (n_{\mathrm{AST}}(S),\, d_{\max}(S),\, n_{\mathrm{lit}}(S))
-\end{equation}
-where $n_{\mathrm{AST}}$ is the total number of \ac{AST} nodes in all expressions of $S$, $d_{\max}$ is the maximum expression nesting depth, and $n_{\mathrm{lit}}$ is the number of non-literal nodes.
-Rules either reduce $n_{\mathrm{AST}}$ (e.g.\ constant folding, boolean absorption, dead-branch elimination), keep $n_{\mathrm{AST}}$ unchanged but strictly reduce $d_{\max}$ (e.g.\ boolean flattening), or keep both unchanged but strictly reduce $n_{\mathrm{lit}}$ (e.g.\ redundant coercion removal).
-Two further rules - \texttt{any}$\to$\texttt{in} merging and predicate reordering - are either strictly monotone in the measure (\texttt{any}$\to$\texttt{in} reduces $n_{\mathrm{AST}}$ because the merged \texttt{in} has fewer nodes than the original chain of equalities) or semantically idempotent after one application (selectivity reordering sorts predicates into a canonical order).
-
-Two rules can \emph{temporarily increase} $n_{\mathrm{AST}}$ within a single iteration, which is why the measure alone does not constitute a termination proof.
-De~Morgan's law transforms \texttt{["!",\allowbreak["any",\allowbreak A,\allowbreak B]]} (4~nodes) into \texttt{["all",\allowbreak["!",\allowbreak A],\allowbreak["!",\allowbreak B]]} (5~nodes), and distributive factoring may introduce boolean identity elements in vacuous-remainder cases.
-In both cases, subsequent rules within the same or next iteration typically compensate: boolean flattening reduces nesting depth, and constant folding absorbs the identity elements, so the net effect across iterations is a decrease in $\mu$.
-In the general case, however, compensating rules are not guaranteed to fire (e.g., when De~Morgan produces negated predicates that admit no further simplification at the top level of a filter).
-In practice, all styles in the benchmark corpus converge within three iterations - well below the hard cap - because the monotone majority of rules drives $\mu$ toward zero and the non-monotone rules fire at most once per expression.
-
-The rewrite system is not confluent: the first matching rule fires (table iteration order defines implicit priority), and selectivity reordering depends on data-dependent statistics.
-Different rule orderings could therefore yield different but visually equivalent output.
-Visual equivalence - the soundness criterion of~(\ref{eq:visual_equivalence}) - is preserved regardless, because every individual rule preserves expression semantics.
-
-\newpage
+\clearpage
 \subsection{Structural Optimisations}\label{sub:structural_optimisations}
 
 Structural passes operate on typed Rust representations of the full style document, enabling cross-layer and cross-source reasoning.
