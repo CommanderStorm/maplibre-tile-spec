@@ -860,7 +860,7 @@ The pipeline operates in three stages that mirror the structure of a database qu
 \noindent The three stages compose:
 shaving narrows the column set fed to Stage~2, which in turn determines the value distributions Stage~3 sees.
 Stage~3's profiler-driven candidate pruning responds to those distributions $\bar{S}$ automatically.
-Its viability tests ($\bar{S}_\text{rle} \geq 2.0$, delta bit-widths beat raw $\bar{S}_\Delta \geq 2.0$) operate on actual stream statistics, so a column whose distinct-value count drops after shaving naturally presents longer runs and triggers more compact candidates.
+Its viability tests (rle is considered if $\bar{S}_\text{rle} \geq 2.0$, delta bit-widths beat raw $\bar{S}_\Delta \geq 2.0$) operate on actual stream statistics, so a column whose distinct-value count drops after shaving naturally presents longer runs and triggers more compact candidates.
 
 \paragraph{Style-Driven Tile Shaving}\label{sub:tile_shaving}
 
