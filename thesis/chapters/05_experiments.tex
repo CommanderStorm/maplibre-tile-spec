@@ -21,7 +21,6 @@ The full rendering and static-size metric set is described in \cref{sub:metrics}
 \subsection{Results}\label{sub:expr_results}
 
 \cref{fig:waterfall_loadMs} shows the cumulative effect of adding each expression pass in ablation order on median load time, aggregated across the full scenario corpus; lower bars mean a shorter end-to-end load.
-\cref{fig:marginal_loadMs} then isolates the \emph{marginal} contribution of each pass, stripping out the cumulative accumulation so that individual passes can be compared on a level footing.
 Read together, the two views separate \enquote{which passes are pulling their weight} from \enquote{how much does the stack as a whole improve over the baseline}.
 
 Across the benchmark corpus, the seven expression passes reduce the median load time from \qty{424}{\milli\second} (baseline) to \qty{416}{\milli\second} (\qty{-1.8}{\percent}).
@@ -417,7 +416,7 @@ No rendering benchmarks are executed, as the diverse styles reference incompatib
 \cref{fig:cross_style_reduction} shows per-style percentage reductions (raw, gzip, Brotli) across the 13 Maputnik styles, sorted by raw reduction; the key question here is whether the distribution clusters tightly around the deep corpus median or fans out with substantial per-style variance.
 \cref{fig:cross_style_complexity_scatter} then plots each style's initial complexity against its achievable reduction, testing the hypothesis that verbose institutional styles (the right-hand side of the scatter) have disproportionately more optimisations headroom than already-compact minimal basemaps on the left.
 
-The distribution, summarised in \cref{tab:cross_style_summary}, fans out considerably: raw reductions range from \qty{10.6}{\percent} (AWS Hybrid, AWS Standard) to \qty{71.2}{\percent} (LocationIQ Streets), with a median of \qty{44.5}{\percent} and a standard deviation of \qty{19.4}{\percent}.
+The distribution fans out considerably: raw reductions range from \qty{10.6}{\percent} (AWS Hybrid, AWS Standard) to \qty{71.2}{\percent} (LocationIQ Streets), with a median of \qty{44.5}{\percent} and a standard deviation of \qty{19.4}{\percent}.
 Under gzip compression the range narrows to \qtyrange{4.6}{32.3}{\percent} (median \qty{25.4}{\percent}), confirming that some of the raw-byte savings overlap with what gzip already captures.
 The top reducers - LocationIQ Streets (\qty{71.2}{\percent} raw), MapTiler Toner (\qty{63.9}{\percent}), and Americana (\qty{56.3}{\percent}) - are styles with either verbose filter logic (LocationIQ, Americana) or highly repetitive property structures (Toner).
 At the low end, the two AWS styles share a codebase of hand-tuned expressions with few redundancies, leaving little for the optimiser to remove.
@@ -496,7 +495,6 @@ The first-tile and remaining-load components are stable across style-only steps,
 \cref{fig:memory_ablation} tracks browser heap memory across steps.
 Peak heap drops sharply at step~3 (constant folding), from roughly \qty{43.5}{\mega\byte} to \qty{39.5}{\mega\byte}, reflecting the reduced expression-tree size in the parsed style.
 Subsequent passes produce smaller incremental reductions; the total peak-heap reduction from baseline to step~15 is approximately \qty{4}{\mega\byte} (\qty{-9}{\percent}).
-\Cref{tab:per_style_summary} summarises the per-style baseline and optimised gzip sizes, percentage reduction, and median changes in load time and FPS across the deep corpus.
 
 \begin{figure}[htbp]
     \centering
@@ -566,7 +564,7 @@ Subsequent passes produce smaller incremental reductions; the total peak-heap re
 
 \subsection{Marginal Contribution Analysis}\label{sub:combined_marginal}
 
-\Cref{tab:marginal_contribution} reports the per-step deltas in raw size, gzip, Brotli, load time, and layer count: not all passes contribute equally, and the marginal contribution of each pass depends on the metric under consideration.
+Not all passes contribute equally, and the marginal contribution of each pass depends on the metric under consideration.
 
 \paragraph{Rendering time metrics}
 Expression-level constant folding and structural dead elimination tend to produce the largest marginal improvements in frame time and FPS, as they reduce the number of expressions the renderer must evaluate per feature per frame and the number of layers it must process, respectively.
@@ -727,7 +725,7 @@ The synthetic camera animations (zigzag, spiral, zoomdrill, pansweep, bearingspi
 The tile statistics count feature \emph{occurrences} across tiles, not unique geographic entities: a highway spanning 50 tiles is counted 50 times.  This inflates total feature counts and distorts absolute selectivity estimates, though relative selectivity ordering (which is all the reordering heuristic consumes) is less affected.
 The selectivity estimation model assumes independence between filter predicates (\cref{eq:selectivity_compound}), which may not hold for correlated properties; map-style filters in practice do exhibit correlations (e.g.\ \texttt{class} and \texttt{subclass} in OpenMapTiles), so the estimator is a first-order approximation rather than a calibrated model, and selectivity-based reordering should be understood as a heuristic that produces a locally-good ordering rather than a provably-optimal one.
 The 15-run median provides robustness against outliers but does not quantify sampling uncertainty on its own.
-Bootstrap \qty{95}{\percent} confidence intervals~\cite{efronIntroductionBootstrap1998} (10\,000 resamples, percentile method) were computed over the per-(style, variant) measurement pools for \texttt{loadMs} and \texttt{fps}.
+Bootstrap \qty{95}{\percent} confidence intervals~\cite{efronIntroductionBootstrap1998} (10\,000 resamples, percentile method) were computed over the per-(style, variant) measurement pools for \texttt{loadMs} and \texttt{fps}; the full table is provided in the supplementary data (\texttt{scripts/data/confidence\_intervals.csv}).
 Error bars in the waterfall (\cref{fig:waterfall_loadMs}), marginal (\cref{fig:marginal_loadMs}), and rendering-metrics (\cref{fig:rendering_metrics_mlt}) figures represent these bootstrap \qty{95}{\percent} CIs.
 Wilcoxon signed-rank tests (or Mann-Whitney~U where sample sizes differ) confirm that the full-pipeline load-time reductions are highly significant for both end-to-end styles (Fiord: \qty{374.9}{\milli\second}$\to$\qty{108.7}{\milli\second}, $p < 10^{-45}$, $n = 270$; Liberty: \qty{493.0}{\milli\second}$\to$\qty{123.5}{\milli\second}, $p < 10^{-74}$, $n = 270$; each pool comprises 18 scenarios $\times$ 15 runs).
 Because the 18 scenarios share hardware, tile data, and styles, they are not fully independent observations; the effective sample size is smaller than $n = 270$, and the reported $p$-values should be interpreted as descriptive evidence of large effect sizes rather than as strict inferential tests.
