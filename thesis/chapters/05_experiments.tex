@@ -21,6 +21,7 @@ The full rendering and static-size metric set is described in \cref{sub:metrics}
 \subsection{Results}\label{sub:expr_results}
 
 \cref{fig:waterfall_loadMs} shows the cumulative effect of adding each expression pass in ablation order on median load time, aggregated across the full scenario corpus; lower bars mean a shorter end-to-end load.
+%\cref{fig:marginal_loadMs} then isolates the \emph{marginal} contribution of each pass, stripping out the cumulative accumulation so that individual passes can be compared on a level footing.
 Read together, the two views separate \enquote{which passes are pulling their weight} from \enquote{how much does the stack as a whole improve over the baseline}.
 
 Across the benchmark corpus, the seven expression passes reduce the median load time from \qty{424}{\milli\second} (baseline) to \qty{416}{\milli\second} (\qty{-1.8}{\percent}).
@@ -37,6 +38,13 @@ Under gzip, the reductions are \qty{8.3}{\percent} and \qty{5.9}{\percent} respe
     \caption{Cumulative ablation waterfall for load time. Each bar shows the median change introduced by adding one expression pass on top of all previous passes, aggregated across all 18 scenarios and 15 benchmark styles}
     \label{fig:waterfall_loadMs}
 \end{figure}
+
+%\begin{figure}[htbp]
+%    \centering
+%    \includegraphics[width=\linewidth]{figures/marginal_loadMs.pdf}
+%    \caption{Marginal contribution of each expression pass to load time reduction}
+%    \label{fig:marginal_loadMs}
+%\end{figure}
 
 \subsection{Discussion}\label{sub:expr_discussion}
 
