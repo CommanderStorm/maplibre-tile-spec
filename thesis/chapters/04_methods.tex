@@ -747,6 +747,11 @@ When a \texttt{match} pattern is used, the sort key maps each discriminator valu
 When a \texttt{case} pattern is used, the sort key tests filters in reverse order (last painter wins) and assigns ascending indices.
 Sort-key synthesis is only applied to layer types that support the \texttt{*-sort-key} property and that do not already define one.
 
+\paragraph{Source zoom tightening}
+After all layer-level passes, source \texttt{minzoom}/\texttt{maxzoom} bounds are tightened to the effective zoom range of the layers that reference each source.
+This is a liveness analysis: a source is \enquote{live} at a zoom level only if at least one layer referencing it is active at that zoom.
+Tighter source bounds allow the tile server (or client-side tile manager) to skip tile requests for zoom levels where no layer needs data from that source.
+
 \begin{figure}[H]
     \centering
     \resizebox{\linewidth}{!}{\hfuzz=50pt\begin{tikzpicture}[
@@ -818,11 +823,6 @@ Sort-key synthesis is only applied to layer types that support the \texttt{*-sor
     Phase~1 validates that all differing properties support feature-driven expressions; Phase~3 confirms identical zoom ranges, so no zoom guards are needed}
     \label{fig:layer_merge_example}
 \end{figure}
-
-\paragraph{Source zoom tightening}
-After all layer-level passes, source \texttt{minzoom}/\texttt{maxzoom} bounds are tightened to the effective zoom range of the layers that reference each source.
-This is a liveness analysis: a source is \enquote{live} at a zoom level only if at least one layer referencing it is active at that zoom.
-Tighter source bounds allow the tile server (or client-side tile manager) to skip tile requests for zoom levels where no layer needs data from that source.
 
 \subsection{Data-Level Optimisations}\label{sub:data_optimisations}
 
