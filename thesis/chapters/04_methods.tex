@@ -1063,7 +1063,7 @@ Different orderings favour different encoding schemes: spatial orderings cluster
 Which ordering wins depends on the value distributions and cardinalities of the specific layer: a layer dominated by a single repeated property value may benefit most from spatial clustering, while a layer with sequential IDs and high-cardinality properties may favour ID ordering.
 Because this balance shifts across layers, zoom levels, and tilesets, no single ordering dominates universally, and the choice cannot be resolved statically.
 
-The encoder therefore trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count (\cref{fig:sort_competition}).
+The encoder therefore trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count; \cref{fig:sort_competition} diagrams the resulting trial-and-retain loop, including the bounding-box pruning that skips spatial trials for large, widely-spread layers.
 The implemented strategies and their rationale are:
 
 \begin{enumerate}
@@ -1161,16 +1161,16 @@ The contiguous mid-stream window is chosen over a random sample because \ac{RLE}
 The profiler computes four metrics in a single pass:
 
 \begin{itemize}
-    \item \emph{Average run length} ($\bar{r} = |s| / n_{\text{runs}}$): the mean number of consecutive identical values.
-    \item \emph{Delta average run length} ($\bar{r}_\Delta = (|s|-1) / n_{\Delta\text{-runs}}$): the mean run length in the zigzag-encoded delta stream.
+    \item \emph{Average run length} ($\bar{S} = |s| / n_{\text{runs}}$): the mean number of consecutive identical values.
+    \item \emph{Delta average run length} ($\bar{S}_\Delta = (|s|-1) / n_{\Delta\text{-runs}}$): the mean run length in the zigzag-encoded delta stream.
     \item \emph{Sortedness}: whether the sample is monotonically ascending or descending.
     \item \emph{Bit-width sums}: the total bit widths of both raw values and zigzag-encoded deltas, used to estimate whether delta encoding reduces the representation cost.
 \end{itemize}
 
-Based on these metrics, candidates are pruned before any full encoding is attempted:
-\ac{RLE} is excluded when $\bar{r} < 2.0$;
+Based on these statistics $\bar{S}$, candidates are pruned before any full encoding is attempted:
+\ac{RLE} is excluded when $\bar{S}_\text{rle} < 2.0$;
 Delta is excluded when the stream is unsorted \emph{and} delta bit widths exceed raw bit widths;
-DeltaRle is excluded when $\bar{r}_\Delta < 2.0$ and neither \ac{RLE} nor Delta is independently viable.
+DeltaRle is excluded when $\bar{S}_\Delta < 2.0$ and neither \ac{RLE} nor Delta is independently viable.
 \ac{FastPFOR} is only offered for 32-bit integer types, as the algorithm's block structure is designed for fixed-width words.
 The remaining candidates (typically two to four) are encoded in full, and the smallest output is committed.
 
@@ -1196,7 +1196,8 @@ The \ac{MLT} format supports shared dictionaries where multiple string columns r
 The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \texttt{name:en}, \texttt{name:de}), which misses semantic overlaps (e.g., \texttt{class} and \texttt{subclass} in OpenMapTiles share many values).
 
 \begin{sloppypar}
-    The Rust encoder replaces prefix matching with -based similarity clustering~\cite{broderResemblanceContainmentDocuments1998} (\cref{fig:minhash_clustering}).
+    The Rust encoder replaces prefix matching with -based similarity clustering~\cite{broderResemblanceContainmentDocuments1998}.
+    \Cref{fig:minhash_clustering} walks through the four-step pipeline from per-column vocabularies through MinHash signatures and pairwise Jaccard estimation to the final Union-Find clustering.
     For each string column, two MinHash sketches of $128$ permutations are computed: one over exact string values and one over byte trigrams (3-byte sliding windows).
     The choice of 128 permutations corresponds to an expected standard error of approximately $1/\sqrt{128} \approx 8.8\%$ on the Jaccard estimate, which is adequate for the binary accept/reject decision of the clustering step.
     The trigram sketch captures partial overlap between columns whose values are substrings or morphological variants of each other.
@@ -1254,21 +1255,21 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             	\texttt{name:de} vs.\ \texttt{name:fr}:\\
             	\quad $\hat{J}_{\text{exact}}\!=\!0.14$\enspace
             	$\hat{J}_{\text{tri}}\!=\!\mathbf{0.35}$
-            	\;$\Rightarrow$ $0.35 > \tau$ \;\checkmark\\[1pt]
+            	\;$\Rightarrow 0.35$\\[1pt]
             	\quad{\scriptsize because shared trigrams (Str, \ldots)}\\[2pt]
             	\texttt{class} vs.\ \texttt{subclass}:\\
             	\quad $\hat{J}_{\text{exact}}\!=\!0.45$\enspace
             	$\hat{J}_{\text{tri}}\!=\!\mathbf{0.57}$
-            	\;$\Rightarrow$ $0.57 > \tau$ \;\checkmark\\[1pt]
+            	\;$\Rightarrow 0.57$\\[1pt]
             	\quad{\scriptsize 5 shared values (motorway, trunk, primary, \ldots)}\\[2pt]
             	\texttt{name:de} vs.\ \texttt{class}:\\
             	\quad $\hat{J}_{\text{exact}}\!=\!0.00$\enspace
             	$\hat{J}_{\text{tri}}\!=\!0.01$
-            	\;$\Rightarrow$ $0.01 < \tau$ \;$\times$\\[2pt]
+            	\;$\Rightarrow 0.01$\\[2pt]
             	\texttt{maxspeed} vs.\ \emph{all others}:\\
             	\quad $\hat{J}_{\text{exact}}\!=\!0.00$\enspace
             	$\hat{J}_{\text{tri}}\!=\!0.00$
-            	\;$\Rightarrow$ $0.00 < \tau$ \;$\times$%
+            	\;$\Rightarrow 0.00$
             };
             \node[steplabel, below=1pt of sim] {\circled{3} Pairwise comparison ($\tau = 0.075$)};
 
