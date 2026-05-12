@@ -567,9 +567,10 @@ A layer is considered dead - and removed - if any of the following conditions ho
 After dead layers are removed, sources that are no longer referenced by any surviving layer are pruned.
 This mirrors dead code elimination followed by unreachable function removal in a compiler.
 
-Geometry-type mismatch detection is particularly effective for tile schemas such as OpenMapTiles, where a single source layer (e.g.\ \texttt{transportation}) may contain mixed geometry types.
+Geometry-type mismatch detection is particularly effective for tile schemas such as OpenMapTiles, where a single source layer (e.g.\ \texttt{transportation}) may contain mixed geometry types:
 A \texttt{fill} layer referencing such a source is dead if the source contains no polygons; a \texttt{circle} layer is dead if it contains no points.
 A \texttt{line} layer can draw both on polygons and lines, but not points.
+A \texttt{symbol}/\texttt{circle} layer can draw on polygons, lines and points and is never dead.
 This information is only available with tile statistics, which is why the pass has both a static and a stats-driven variant.
 
 \paragraph{Metadata refinement}
