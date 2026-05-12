@@ -152,7 +152,7 @@ This metadata is the substrate for two structural passes.
 Layer merging queries the MIR to decide whether a differing paint property supports feature-driven expressions - and can therefore be wrapped in a \texttt{case}/\texttt{match} over the filter discriminator - or is camera-only and must remain uniform across merged layers.
 Default stripping compares property values against the specification defaults encoded in the generated types.
 
-\subsection{Building Optimisations}\label{sec:building_optimisations}
+\section{Building Optimisations}\label{sec:building_optimisations}
 
 The implemented passes target three areas of the rendering pipeline: style expressions, structural properties, and tile data.
 Each pass is classified by \emph{where} it operates and its \emph{data requirements} (none, sampling, or full scan); many are analogues of well-known compiler and query-processing techniques.
