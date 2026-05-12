@@ -857,8 +857,10 @@ The pipeline operates in three stages that mirror the structure of a database qu
     \item \textbf{Encoding strategy selection} (\cref{sub:encoding_strategies}): the pruned, transformed data is re-encoded into \ac{MLT} using a multi-strategy competition that automatically profiles each data stream and selects the most compact encoding.
 \end{enumerate}
 
-\noindent The three stages compose: shaving narrows the column set fed to Stage~2, which in turn determines the value distributions Stage~3 sees.
-Stage~3's profiler-driven candidate pruning responds to those distributions automatically - its viability tests (\texttt{rle\_is\_viable} at $\bar{r} \geq 2.0$, \texttt{delta\_is\_beneficial} when delta bit-widths beat raw, \texttt{delta\_rle\_is\_viable} at $\bar{r}_\Delta \geq 2.0$) operate on actual stream statistics, so a column whose distinct-value count drops after shaving naturally presents longer runs and triggers more compact candidates.
+\noindent The three stages compose:
+shaving narrows the column set fed to Stage~2, which in turn determines the value distributions Stage~3 sees.
+Stage~3's profiler-driven candidate pruning responds to those distributions $\bar{S}$ automatically.
+Its viability tests ($\bar{S}_\text{rle} \geq 2.0$, delta bit-widths beat raw $\bar{S}_\Delta \geq 2.0$) operate on actual stream statistics, so a column whose distinct-value count drops after shaving naturally presents longer runs and triggers more compact candidates.
 
 \paragraph{Style-Driven Tile Shaving}\label{sub:tile_shaving}
 
