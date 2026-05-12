@@ -404,38 +404,38 @@ In the map-style domain, dead code elimination corresponds to removing style lay
 Common algebraic rules include:
 
 \begin{itemize}
-	\item \makebox[3.5cm][l]{\emph{Identity elements}:}
-	$\begin{alignedat}{4}
-		x \land \mathit{true}   & = x \qquad &
-		x \lor \mathit{false}   & = x \qquad &
-		x + 0                   & = x \qquad &
-		x \cdot 1               & = x
-	\end{alignedat}$.
+	\item \emph{Identity elements}:
+	\begin{tabular}[t]{@{}rcl@{\qquad}rcl@{\qquad}rcl@{\qquad}rcl@{}}
+		$x \land \mathit{true}$ & $=$ & $x$ &
+		$x \lor \mathit{false}$ & $=$ & $x$ &
+		$x + 0$                 & $=$ & $x$ &
+		$x \cdot 1$             & $=$ & $x$
+	\end{tabular}
 	
-	\item \makebox[3.5cm][l]{\emph{Annihilation}:}
-	$\begin{alignedat}{3}
-		x \land \mathit{false}  & = \mathit{false} \qquad &
-		x \lor \mathit{true}    & = \mathit{true} \qquad &
-		x \cdot 0               & = 0
-	\end{alignedat}$.
+	\item \emph{Annihilation}:
+	\begin{tabular}[t]{@{}rcl@{\qquad}rcl@{\qquad}rcl@{}}
+		$x \land \mathit{false}$ & $=$ & $\mathit{false}$ &
+		$x \lor \mathit{true}$   & $=$ & $\mathit{true}$ &
+		$x \cdot 0$              & $=$ & $0$
+	\end{tabular}
 	
-	\item \makebox[3.5cm][l]{\emph{De~Morgan's laws}:}
-	$\begin{alignedat}{2}
-		\lnot (a \land b) & = \lnot a \lor \lnot b \qquad &
-		\lnot (a \lor b)  & = \lnot a \land \lnot b
-	\end{alignedat}$.
+	\item \emph{De~Morgan's laws}:
+	\begin{tabular}[t]{@{}rcl@{\qquad}rcl@{}}
+		$\lnot (a \land b)$ & $=$ & $\lnot a \lor \lnot b$ &
+		$\lnot (a \lor b)$  & $=$ & $\lnot a \land \lnot b$
+	\end{tabular}
 	
-	\item \makebox[3.5cm][l]{\emph{Idempotence}:}
-	$\begin{alignedat}{2}
-		x \land x & = x \qquad &
-		x \lor x  & = x
-	\end{alignedat}$.
+	\item \emph{Idempotence}:
+	\begin{tabular}[t]{@{}rcl@{\qquad}rcl@{}}
+		$x \land x$ & $=$ & $x$ &
+		$x \lor x$  & $=$ & $x$
+	\end{tabular}
 	
-	\item \makebox[3.5cm][l]{\emph{Absorption}:}
-	$\begin{alignedat}{2}
-		x \land (x \lor y) & = x \qquad &
-		x \lor (x \land y) & = x
-	\end{alignedat}$.
+	\item \emph{Absorption}:
+	\begin{tabular}[t]{@{}rcl@{\qquad}rcl@{}}
+		$x \land (x \lor y)$ & $=$ & $x$ &
+		$x \lor (x \land y)$ & $=$ & $x$
+	\end{tabular}
 \end{itemize}
 
 For style expressions, these rules simplify boolean filter expressions.
