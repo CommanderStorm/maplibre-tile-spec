@@ -1411,9 +1411,6 @@ Only for \ac{OSM} is the underlying data fully available, so only for this sourc
 To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs with the latency and download speed of a 4G internet connection according to Rusan et al.~\cite{rusanAssessmentPacketLatency2015} ($\frac{\text{size}}{30\frac{Mb}{s}} + 25ms$).
 This eliminates network variability and guarantees that every ablation step operates on identical tile data (after an initial, discarded run).
 
-All compressed-size measurements throughout this thesis use maximum compression: gzip level~9, Brotli quality~11, and zstd level~22.
-This reflects the deployment scenario where tiles and styles are compressed once and served many times, so encoding cost is negligible relative to the number of requests served.
-
 \subsection{Geographic and Use-Case Scenarios}\label{sub:scenarios}
 
 The benchmark harness defines 18 scenarios drawn from a matrix of 15 geographic locations and 5 camera animation types:
