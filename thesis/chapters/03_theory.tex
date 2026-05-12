@@ -302,7 +302,7 @@ The resulting expression trees can be deeply nested and may contain redundant or
 \Cref{lst:worker_pipeline} shows the worker's tile-parse pipeline as five named steps, marked inline as
 \stepcirc{a}--\stepcirc{e}.
 
-Every optimisation in \cref{ch:methods} attaches to one of these steps:
+\noindent Every optimisation in \cref{ch:methods} attaches to one of these steps:
 Merging layers reduces work for \stepcirc{a}.
 Pruning features server-side makes \stepcirc{b} not handle them.
 Tightening \texttt{minzoom}/\texttt{maxzoom} makes the
@@ -404,11 +404,48 @@ In the map-style domain, dead code elimination corresponds to removing style lay
 Common algebraic rules include:
 
 \begin{itemize}
-    \item \emph{Identity elements}: $x \land \mathit{true} = x$,\quad $x \lor \mathit{false} = x$,\quad $x + 0 = x$,\quad $x \cdot 1 = x$.
-    \item \emph{Annihilation}: $x \land \mathit{false} = \mathit{false}$,\quad $x \lor \mathit{true} = \mathit{true}$,\quad $x \cdot 0 = 0$.
-    \item \emph{De~Morgan's laws}: $\lnot (a \land b) = \lnot a \lor \lnot b$ and $\lnot (a \lor b) = \lnot a \land \lnot b$.
-    \item \emph{Idempotence}: $x \land x = x$,\quad $x \lor x = x$.
-    \item \emph{Absorption}: $x \land (x \lor y) = x$,\quad $x \lor (x \land y) = x$.
+	\item \emph{Identity elements}:
+	\[
+	\begin{alignedat}{4}
+		x \land \mathit{true}   & = x \qquad &
+		x \lor \mathit{false}   & = x \qquad &
+		x + 0                   & = x \qquad &
+		x \cdot 1               & = x
+	\end{alignedat}
+	\]
+	
+	\item \emph{Annihilation}:
+	\[
+	\begin{alignedat}{3}
+		x \land \mathit{false}  & = \mathit{false} \qquad &
+		x \lor \mathit{true}    & = \mathit{true} \qquad &
+		x \cdot 0               & = 0
+	\end{alignedat}
+	\]
+	
+	\item \emph{De~Morgan's laws}:
+	\[
+	\begin{alignedat}{2}
+		\lnot (a \land b) & = \lnot a \lor \lnot b \qquad &
+		\lnot (a \lor b)  & = \lnot a \land \lnot b
+	\end{alignedat}
+	\]
+	
+	\item \emph{Idempotence}:
+	\[
+	\begin{alignedat}{2}
+		x \land x & = x \qquad &
+		x \lor x  & = x
+	\end{alignedat}
+	\]
+	
+	\item \emph{Absorption}:
+	\[
+	\begin{alignedat}{2}
+		x \land (x \lor y) & = x \qquad &
+		x \lor (x \land y) & = x
+	\end{alignedat}
+	\]
 \end{itemize}
 
 For style expressions, these rules simplify boolean filter expressions.
