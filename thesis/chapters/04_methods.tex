@@ -324,45 +324,89 @@ In the second, filter-to-property constant propagation resolves a data-driven \t
 Both examples are drawn from the optimiser's test suite.
 
 \begin{figure}[htbp]
-\centering
-\begin{minipage}[t]{0.48\linewidth}
-\textbf{Before} (distributive factoring + \texttt{any}$\to$\texttt{in}):\par\smallskip
-\begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize,frame=single]
-["any",
-  ["all", ["has","name"],
-          ["==",["get","class"],"road"]],
-  ["all", ["has","name"],
-          ["==",["get","class"],"rail"]]]
-\end{lstlisting}
-\textbf{After:}\par\smallskip
-\begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize,frame=single]
-["all",
-  ["has","name"],
-  ["in",["get","class"],
-        ["literal",["road","rail"]]]]
-\end{lstlisting}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\linewidth}
-\textbf{Before} (filter-to-property propagation):\par\smallskip
-\begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize,frame=single]
-filter: ["==",["get","class"],"road"]
-paint:
-  fill-color:
-    ["match",["get","class"],
-      "road","#333",
-      "rail","#666","#999"]
-\end{lstlisting}
-\textbf{After:}\par\smallskip
-\begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize,frame=single]
-filter: ["==",["get","class"],"road"]
-paint:
-  fill-color: "#333"
-\end{lstlisting}
-\end{minipage}
-\caption{Two expression-level transformations.
-\emph{Left}: distributive factoring extracts the common \texttt{has} predicate, then the two remaining equality tests are merged into a single \texttt{in} expression.
-\emph{Right}: the filter constrains \texttt{class} to \texttt{"road"}, so the \texttt{match} in the paint expression resolves to its \texttt{"road"} arm, collapsing to a literal}
-\label{fig:expr_before_after}
+	\centering
+	
+	\begin{minipage}[t]{0.48\linewidth}
+		\vspace{0pt}
+		
+		\textbf{Before} (distributive factoring + \texttt{any}$\to$\texttt{in}):\\[2mm]
+		
+		\begin{lstlisting}[
+			language={},
+			basicstyle=\ttfamily\scriptsize,
+			frame=single,
+			aboveskip=0pt,
+			belowskip=0pt
+			]
+			["any",
+			["all", ["has","name"],
+			["==",["get","class"],"road"]],
+			["all", ["has","name"],
+			["==",["get","class"],"rail"]]]
+		\end{lstlisting}
+		
+		\vspace{2mm}
+		
+		\textbf{After:}\\[2mm]
+		
+		\begin{lstlisting}[
+			language={},
+			basicstyle=\ttfamily\scriptsize,
+			frame=single,
+			aboveskip=0pt,
+			belowskip=0pt
+			]
+			["all",
+			["has","name"],
+			["in",["get","class"],
+			["literal",["road","rail"]]]]
+		\end{lstlisting}
+		
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.48\linewidth}
+		\vspace{0pt}
+		
+		\textbf{Before} (filter-to-property propagation):\\[2mm]
+		
+		\begin{lstlisting}[
+			language={},
+			basicstyle=\ttfamily\scriptsize,
+			frame=single,
+			aboveskip=0pt,
+			belowskip=0pt
+			]
+			filter: ["==",["get","class"],"road"]
+			paint:
+			fill-color:
+			["match",["get","class"],
+			"road","#333",
+			"rail","#666","#999"]
+		\end{lstlisting}
+		
+		\vspace{2mm}
+		
+		\textbf{After:}\\[2mm]
+		
+		\begin{lstlisting}[
+			language={},
+			basicstyle=\ttfamily\scriptsize,
+			frame=single,
+			aboveskip=0pt,
+			belowskip=0pt
+			]
+			filter: ["==",["get","class"],"road"]
+			paint:
+			fill-color: "#333"
+		\end{lstlisting}
+		
+	\end{minipage}
+	
+	\caption{Two expression-level transformations.
+		\emph{Left}: distributive factoring extracts the common \texttt{has} predicate, then the two remaining equality tests are merged into a single \texttt{in} expression.
+		\emph{Right}: the filter constrains \texttt{class} to \texttt{"road"}, so the \texttt{match} in the paint expression resolves to its \texttt{"road"} arm, collapsing to a literal.}
+	\label{fig:expr_before_after}
+	
 \end{figure}
 
 \paragraph{Termination and confluence of the fixpoint}
