@@ -1127,7 +1127,7 @@ Property-based sort strategies were considered but are not included in the curre
         \draw[arrow] (enc) -- node[right, label] {\texttt{total\_len()}} (cmp);
 
         % Yes: update best, then loop back
-        \node[stage, below=0.8cm of cmp] (upd) {Update best};
+        \node[stage, below=0.5cm of cmp] (upd) {Update best};
         \draw[arrow] (cmp) -- node[right, label] {yes} (upd);
 
         % No: discard, loop back
