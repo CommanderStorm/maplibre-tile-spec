@@ -959,8 +959,9 @@ The order of features within a tile layer affects the compressibility of every p
 The encoder explores multiple feature orderings - spatial (Hilbert/Morton curve of first vertex), ID-based, and property-based (grouping by a low-cardinality attribute) - and retains the ordering that produces the smallest encoded output.
 This is described in detail in \cref{sub:encoding_strategies}.
 
-\newline
-\noindent The pruned and transformed data is re-encoded into the \ac{MLT} columnar format.
+\subsection{Reencoding data}
+
+The pruned and transformed data is re-encoded into the \ac{MLT} columnar format.
 This is done via
 
 \paragraph{Automatic Encoding Strategy Selection}\label{sub:encoding_strategies}
