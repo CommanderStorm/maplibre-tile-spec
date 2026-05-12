@@ -872,7 +872,7 @@ This ordering is important: style-level dead layer elimination, metadata refinem
 The preceding style optimisations thus feed into data-level savings, though the aggregate interaction is additive rather than synergistic (\cref{sub:mlt_results}).
 This cascade mirrors the materialized-view maintenance problem described in \cref{sub:materialized_views}: the rendering style acts as the view definition, the tile set as the base relation, and the shaved tile as the materialized view.
 
-The advisory captures the following per source-layer:
+\noindent The advisory captures the following per source-layer:
 
 \begin{itemize}
     \item \textbf{Used properties with zoom ranges}: for each property name appearing in a \texttt{["get",~\ldots]} or \texttt{["has",~\ldots]} expression in any live style layer, the zoom range over which it is referenced.
