@@ -326,85 +326,94 @@ Both examples are drawn from the optimiser's test suite.
 \begin{figure}[htbp]
 	\centering
 	
-	\begin{minipage}[t]{0.48\linewidth}
-		\vspace{0pt}
+	\setlength{\tabcolsep}{10pt}
+	\renewcommand{\arraystretch}{1.2}
+	
+	\begin{tabular}{p{0.48\linewidth} p{0.48\linewidth}}
 		
-		\textbf{Before} (distributive factoring + \texttt{any}$\to$\texttt{in}):\\[2mm]
+		\textbf{Left transformation} & \textbf{Right transformation} \\
 		
-		\begin{lstlisting}[
-			language={},
-			basicstyle=\ttfamily\scriptsize,
-			frame=single,
-			aboveskip=0pt,
-			belowskip=0pt
-			]
-			["any",
-			["all", ["has","name"],
-			["==",["get","class"],"road"]],
-			["all", ["has","name"],
-			["==",["get","class"],"rail"]]]
-		\end{lstlisting}
+		\begin{minipage}[t]{\linewidth}
+			\textbf{Before (distributive factoring + \texttt{any}$\to$\texttt{in})}
+			
+			\vspace{1mm}
+			
+			\begin{lstlisting}[
+				language={},
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+				["any",
+				["all", ["has","name"],
+				["==",["get","class"],"road"]],
+				["all", ["has","name"],
+				["==",["get","class"],"rail"]]]
+			\end{lstlisting}
+			
+			\vspace{2mm}
+			
+			\textbf{After}
+			
+			\begin{lstlisting}[
+				language={},
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+				["all",
+				["has","name"],
+				["in",["get","class"],
+				["literal",["road","rail"]]]]
+			\end{lstlisting}
+			
+		\end{minipage}
+		&
+		\begin{minipage}[t]{\linewidth}
+			\textbf{Before (filter-to-property propagation)}
+			
+			\vspace{1mm}
+			
+			\begin{lstlisting}[
+				language={},
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+				filter: ["==",["get","class"],"road"]
+				paint:
+				fill-color:
+				["match",["get","class"],
+				"road","#333",
+				"rail","#666","#999"]
+			\end{lstlisting}
+			
+			\vspace{2mm}
+			
+			\textbf{After}
+			
+			\begin{lstlisting}[
+				language={},
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+				filter: ["==",["get","class"],"road"]
+				paint:
+				fill-color: "#333"
+			\end{lstlisting}
+			
+		\end{minipage}
 		
-		\vspace{2mm}
-		
-		\textbf{After:}\\[2mm]
-		
-		\begin{lstlisting}[
-			language={},
-			basicstyle=\ttfamily\scriptsize,
-			frame=single,
-			aboveskip=0pt,
-			belowskip=0pt
-			]
-			["all",
-			["has","name"],
-			["in",["get","class"],
-			["literal",["road","rail"]]]]
-		\end{lstlisting}
-		
-	\end{minipage}
-	\hfill
-	\begin{minipage}[t]{0.48\linewidth}
-		\vspace{0pt}
-		
-		\textbf{Before} (filter-to-property propagation):\\[2mm]
-		
-		\begin{lstlisting}[
-			language={},
-			basicstyle=\ttfamily\scriptsize,
-			frame=single,
-			aboveskip=0pt,
-			belowskip=0pt
-			]
-			filter: ["==",["get","class"],"road"]
-			paint:
-			fill-color:
-			["match",["get","class"],
-			"road","#333",
-			"rail","#666","#999"]
-		\end{lstlisting}
-		
-		\vspace{2mm}
-		
-		\textbf{After:}\\[2mm]
-		
-		\begin{lstlisting}[
-			language={},
-			basicstyle=\ttfamily\scriptsize,
-			frame=single,
-			aboveskip=0pt,
-			belowskip=0pt
-			]
-			filter: ["==",["get","class"],"road"]
-			paint:
-			fill-color: "#333"
-		\end{lstlisting}
-		
-	\end{minipage}
+	\end{tabular}
 	
 	\caption{Two expression-level transformations.
-		\emph{Left}: distributive factoring extracts the common \texttt{has} predicate, then the two remaining equality tests are merged into a single \texttt{in} expression.
-		\emph{Right}: the filter constrains \texttt{class} to \texttt{"road"}, so the \texttt{match} in the paint expression resolves to its \texttt{"road"} arm, collapsing to a literal.}
+		Left: distributive factoring merges predicates and introduces an \texttt{in} expression.
+		Right: constant propagation simplifies a \texttt{match} after filtering.}
 	\label{fig:expr_before_after}
 	
 \end{figure}
