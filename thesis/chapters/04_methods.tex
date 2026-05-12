@@ -1426,9 +1426,10 @@ The benchmark harness defines 18 scenarios drawn from a matrix of 15 geographic 
 \end{itemize}
 
 Each scenario is a specific (location, animation) pair.
-The full cross-product of 15 locations and 5 animations is 75 pairs, which is too expensive\footnote{each cell requires 15 repeat runs for statistical validity across 17 ablation steps and 15 styles, as this would result in $75 \times 15 \times 17 \times 15 = \num{286875}$ full animations} to run for every ablation step.
+The full cross-product of 15 locations and 5 animations is 75 pairs, which is too expensive\footnote{Each cell requires 15 repeat runs for statistical validity across 17 ablation steps and 15 styles, as this would result in $75 \times 15 \times 17 \times 15 = \num{286875}$ full animations} to run for every ablation step.
 The 18 selected scenarios are chosen by stratified sampling so that every location appears at least once and every animation appears at least three times, and so that all combinations of density class (high/low) and script class (Latin/non-Latin) are represented.
 Within each stratum the specific (location, animation) pair is the one that exercises the most layers in the densest style in the corpus, ensuring that the sample is biased \emph{against} the null hypothesis of \enquote{no effect} - i.e.\ towards scenarios where any rendering-cost differences are most likely to be visible.
+
 This is a convenience sample by design:
 it is not claimed to be unbiased across all real-world usage patterns, but it is claimed to be a reasonable stress test of the optimiser across the dimensions (density, script, zoom trajectory, camera motion) that most plausibly interact with style and data-level optimisations.
 
