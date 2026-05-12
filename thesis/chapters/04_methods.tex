@@ -163,7 +163,7 @@ For expression-level passes, this is witnessed by the termination measure $\mu(S
 For structural passes, soundness is argued per-pass in the paragraphs below - dead elimination preserves equivalence because it only removes layers that produce no visible output; metadata refinement preserves equivalence because it only tightens bounds that the renderer would enforce anyway (with the overzoom asymmetry detailed below); layer merging preserves equivalence via the three invariants of \cref{sub:structural_optimisations}.
 For data-level passes, the pruning advisory removes only data that no live style layer references, so the rendering function $R$ receives the same effective input.
 
-\subsubsection{Expression-Level Optimisations}\label{sub:expression_optimisations}
+\subsection{Expression-Level Optimisations}\label{sub:expression_optimisations}
 
 Expression passes operate directly on the JSON representation, applying rewrites that reduce expression complexity and eliminate redundant computation.
 \cref{tab:expression_passes} summarises the implemented passes.
