@@ -1482,10 +1482,7 @@ The median and standard deviation of each metric are reported; the median is pre
 To reduce measurement noise, the benchmark harness pins rendering to real GPU hardware via ANGLE/Vulkan rather than the software rasteriser used for pixel-exact render tests.
 This ensures that GPU-bound workloads (fragment shading, texture sampling, blend operations) are measured realistically.
 
-All tile requests are served from a local caching proxy that stores tiles on first access and replays them on subsequent runs.
-To avoid artificially high performance from local network transfer, the proxy introduces a network delay that simulates realistic latency.
-Concretely, each tile response is delayed by a fixed per-request round-trip time on top of a per-byte throughput throttle, so the wire time for a tile of $b$ bytes is approximately $\mathrm{RTT} + b / \mathrm{bandwidth}$.
-Both values are configurable; the default benchmark run uses an \ac{RTT} of \qty{25}{\milli\second} and a bandwidth cap of \qty{30}{\Mbps}, matching the 4G profile of Rusan et al.~\cite{rusanAssessmentPacketLatency2015}.
+All tile requests are served from a local caching proxy as described in
 This ensures that tile-fetch improvements (e.g.\ smaller tiles due to shaving) are measured under conditions representative of a \ac{CDN}-served deployment while remaining deterministic across runs.
 
 The benchmark harness itself is a Puppeteer-driven headless browser that programmatically loads the MapLibre GL~JS renderer, applies a camera animation scenario, and collects performance counters via the \texttt{Performance} API and custom instrumentation hooks in the renderer.
