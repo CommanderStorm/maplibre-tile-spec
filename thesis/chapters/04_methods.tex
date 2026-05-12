@@ -614,10 +614,8 @@ Because the thesis requires  \cref{eq:visual_equivalence}, the metadata refineme
 \begin{enumerate}
     \item \textbf{\texttt{minzoom} is symmetric.}
     Vector tiles are not \emph{underzoomed} - the renderer will not synthesise a coarser tile from a finer one - so raising \texttt{minzoom} to the first data-carrying zoom never removes a rendered pixel.
-    This rule fires unconditionally.
     \item \textbf{\texttt{maxzoom} is asymmetric.}
     The refinement pass tightens the layer's \texttt{maxzoom} to the last data-carrying zoom $z^{*}$ only when $z^{*}$ is strictly less than the \emph{source's} \texttt{maxzoom}; otherwise, the layer's tiles at $z^{*}$ will be overzoomed to produce higher zoom levels, and the layer remains rendered beyond $z^{*}$.
-    This condition is checked explicitly in the implementation.
 \end{enumerate}
 The zoom-folding rule that collapses zoom comparisons in filters is similarly one-sided: only \texttt{minzoom} is used as a lower bound for the fold, because a layer's effective \texttt{maxzoom} is not an upper bound on the camera zoom once overzooming is considered.
 The source-zoom-tightening pass follows the same principle: it tightens a source's \texttt{maxzoom} only as far as the maximum \texttt{maxzoom} of any layer referencing it, which already respects the overzoom rule above, and it never tightens below the source's declared bounds.
