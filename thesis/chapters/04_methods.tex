@@ -1484,7 +1484,6 @@ To reduce measurement noise, the benchmark harness pins rendering to real GPU ha
 This ensures that GPU-bound workloads (fragment shading, texture sampling, blend operations) are measured realistically.
 
 All tile requests are served from a local caching proxy as described in \cref{sub:tile_data}.
-
 The benchmark harness itself is a Puppeteer-driven headless browser that programmatically loads the MapLibre GL~JS renderer, applies a camera animation scenario, and collects performance counters via the \texttt{Performance} API and custom instrumentation hooks in the renderer.
 
 Visual correctness is verified separately through pixel-exact render tests that compare optimised output against the unoptimised baseline across a grid of zoom levels and geographic locations.
