@@ -1411,6 +1411,7 @@ Only for \ac{OSM} is the underlying data fully available, so only for this sourc
 To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs with the latency and download speed of a 4G internet connection according to Rusan et al.~\cite{rusanAssessmentPacketLatency2015} ($\frac{\text{size}}{30\frac{Mb}{s}} + 25ms$).
 This eliminates network variability and guarantees that every ablation step operates on identical tile data (after an initial, discarded run).
 The model does not simulate packet loss, HTTP/2 multiplexing, TCP slow-start, or HTTP/3 (QUIC) with its 0-RTT connection resumption and absence of head-of-line blocking - all of which would amplify the benefit of smaller tiles - so the measured load-time improvements from tile shaving are a conservative lower bound on what a real deployment would observe.
+This ensures that tile-fetch improvements (e.g.\ smaller tiles due to shaving) are measured under conditions representative of a \ac{CDN}-served deployment while remaining deterministic across runs.
 
 \subsection{Geographic and Use-Case Scenarios}\label{sub:scenarios}
 
@@ -1482,8 +1483,7 @@ The median and standard deviation of each metric are reported; the median is pre
 To reduce measurement noise, the benchmark harness pins rendering to real GPU hardware via ANGLE/Vulkan rather than the software rasteriser used for pixel-exact render tests.
 This ensures that GPU-bound workloads (fragment shading, texture sampling, blend operations) are measured realistically.
 
-All tile requests are served from a local caching proxy as described in
-This ensures that tile-fetch improvements (e.g.\ smaller tiles due to shaving) are measured under conditions representative of a \ac{CDN}-served deployment while remaining deterministic across runs.
+All tile requests are served from a local caching proxy as described in \cref{label}
 
 The benchmark harness itself is a Puppeteer-driven headless browser that programmatically loads the MapLibre GL~JS renderer, applies a camera animation scenario, and collects performance counters via the \texttt{Performance} API and custom instrumentation hooks in the renderer.
 
