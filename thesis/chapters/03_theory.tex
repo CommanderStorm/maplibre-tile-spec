@@ -405,47 +405,37 @@ Common algebraic rules include:
 
 \begin{itemize}
 	\item \emph{Identity elements}:
-	\[
-	\begin{alignedat}{4}
+	$\begin{alignedat}{2}
 		x \land \mathit{true}   & = x \qquad &
 		x \lor \mathit{false}   & = x \qquad &
 		x + 0                   & = x \qquad &
 		x \cdot 1               & = x
-	\end{alignedat}
-	\]
+	\end{alignedat}$
 	
 	\item \emph{Annihilation}:
-	\[
-	\begin{alignedat}{3}
+	$\begin{alignedat}{2}
 		x \land \mathit{false}  & = \mathit{false} \qquad &
 		x \lor \mathit{true}    & = \mathit{true} \qquad &
 		x \cdot 0               & = 0
-	\end{alignedat}
-	\]
+	\end{alignedat}$
 	
 	\item \emph{De~Morgan's laws}:
-	\[
-	\begin{alignedat}{2}
+	$\begin{alignedat}{2}
 		\lnot (a \land b) & = \lnot a \lor \lnot b \qquad &
 		\lnot (a \lor b)  & = \lnot a \land \lnot b
-	\end{alignedat}
-	\]
+	\end{alignedat}$
 	
 	\item \emph{Idempotence}:
-	\[
-	\begin{alignedat}{2}
+	$\begin{alignedat}{2}
 		x \land x & = x \qquad &
 		x \lor x  & = x
-	\end{alignedat}
-	\]
+	\end{alignedat}$
 	
 	\item \emph{Absorption}:
-	\[
-	\begin{alignedat}{2}
+	$\begin{alignedat}{2}
 		x \land (x \lor y) & = x \qquad &
 		x \lor (x \land y) & = x
-	\end{alignedat}
-	\]
+	\end{alignedat}$
 \end{itemize}
 
 For style expressions, these rules simplify boolean filter expressions.
