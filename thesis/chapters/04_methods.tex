@@ -1313,7 +1313,7 @@ The encoder tries both strategies (when the coordinate range permits Morton enco
 \paragraph{Feature IDs encoding}
 Feature IDs are encoded through the same per-stream integer competition as other integer columns, using an explicit \texttt{IdWidth} tag (\texttt{Id32} or \texttt{Id64}) to select the physical word width.
 The \ac{FastPFOR} codec operates on 32-bit blocks by construction, so only 32-bit ID streams and property columns reach it; 64-bit streams fall back to \ac{VarInt} (the \ac{VarInt} candidate list covers both widths).
-The encoder chooses \texttt{Id32} when the maximum observed ID fits in \texttt{u32}, narrowing 64-bit-declared ID columns whose actual values fit in 32 bits; the round-trip correctness of this narrowing is covered by per-case tests including \texttt{test\_config\_produces\_correct\_variant} and proptest round-trips over $[0,\,\texttt{u32::MAX}]$ and $[0,\,\texttt{u64::MAX}]$ domains.
+The encoder chooses \texttt{Id32} when the maximum observed ID fits in \texttt{u32}, narrowing 64-bit-declared ID columns whose actual values fit in 32 bits; the round-trip correctness of this narrowing is covered by per-case tests and proptest round-trips over $[0,\,\texttt{u32::MAX}]$ and $[0,\,\texttt{u64::MAX}]$ domains.
 
 Structural patterns (sequential, constant) are discovered by the same data profiler that drives the inner competition: sequential IDs reach DeltaRle, constant IDs reach \ac{RLE}, and short or irregular sequences fall back to plain \ac{VarInt}.
 
