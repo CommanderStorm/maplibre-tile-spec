@@ -1303,14 +1303,18 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
     \label{fig:minhash_sweep}
 \end{figure}
 
-\paragraph{Geometry and ID encoding}
+\paragraph{Geometry encoding}
 Geometry vertices are encoded as either \emph{componentwise deltas} (CWD), \emph{Hilbert-code dictionaries}, \emph{Morton-code dictionaries} or plain verticies.
 CWD encodes each vertex as the delta from the previous vertex, producing a single interleaved stream $[x_0, y_0, \Delta x_1, \Delta y_1, \ldots]$ that is then compressed via the per-stream integer competition.
 The Morton/Hilbert-code dictionary approach computes a Z-order code for each unique vertex pair, stores the deduplicated codes as a sorted dictionary, and references them via per-vertex offset indices - producing two streams (offsets and dictionary deltas) instead of one.
 The encoder tries both strategies (when the coordinate range permits Morton encoding, i.e., both axes fit within 16~bits after shifting) and retains the smaller result.
+
+
+\paragraph{Feature IDs encoding}
 Feature IDs are encoded through the same per-stream integer competition as other integer columns, using an explicit \texttt{IdWidth} tag (\texttt{Id32} or \texttt{Id64}) to select the physical word width.
 The \ac{FastPFOR} codec operates on 32-bit blocks by construction, so only 32-bit ID streams and property columns reach it; 64-bit streams fall back to \ac{VarInt} (the \ac{VarInt} candidate list covers both widths).
 The encoder chooses \texttt{Id32} when the maximum observed ID fits in \texttt{u32}, narrowing 64-bit-declared ID columns whose actual values fit in 32 bits; the round-trip correctness of this narrowing is covered by per-case tests including \texttt{test\_config\_produces\_correct\_variant} and proptest round-trips over $[0,\,\texttt{u32::MAX}]$ and $[0,\,\texttt{u64::MAX}]$ domains.
+
 Structural patterns (sequential, constant) are discovered by the same data profiler that drives the inner competition: sequential IDs reach DeltaRle, constant IDs reach \ac{RLE}, and short or irregular sequences fall back to plain \ac{VarInt}.
 
 \paragraph{Encoder cost amortisation}
