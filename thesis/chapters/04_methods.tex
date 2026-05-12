@@ -1364,7 +1364,7 @@ This knowledge is provided by a statistics collection phase that scans the tile 
 For each source layer, the following statistics are collected:
 
 \begin{itemize}
-    \item \textbf{Feature count}: total number of features across all tiles\footnote{Contrairy to na"ive reasoning, eatures appearing in multiple tiles at different zoom levels are counted multipe times, as the optimiser reasons per-tile, not per-geographic-entity}.
+    \item \textbf{Feature count}: total number of features across all tiles\footnote{Contrairy to na"ive reasoning, eatures appearing in multiple tiles at different zoom levels are counted multipe times, as the optimiser reasons per-tile, not per-geographic-entity. This creates bias, but bias that is representative to the usecase of rendering maps}.
     \item \textbf{Features by zoom}: a per-zoom-level feature count, used by metadata refinement to determine the first and last zoom level at which data exists.
     \item \textbf{Geometry types}: counts of Point, LineString, and Polygon features, used by dead elimination to detect geometry-type mismatches.
     \item \textbf{Feature ID presence}: whether any feature carries a non-zero feature ID, used by the advisory to decide whether to strip the ID column.
