@@ -326,11 +326,10 @@ Both examples are drawn from the optimiser's test suite.
 \begin{figure}[htbp]
 	\centering
 	
-	% ---------- (a) ----------
 	\begin{subfigure}[t]{0.48\linewidth}
 		\centering
 		
-		\textbf{Before (distributive factoring + \texttt{any}$\to$\texttt{in})}
+		Before
 		
 		\vspace{2mm}
 		
@@ -350,7 +349,7 @@ Both examples are drawn from the optimiser's test suite.
 		
 		\vspace{2mm}
 		
-		\textbf{After}
+		After
 		
 		\begin{lstlisting}[
 			language={},
@@ -365,16 +364,16 @@ Both examples are drawn from the optimiser's test suite.
 			["literal",["road","rail"]]]]
 		\end{lstlisting}
 		
-		\caption{Expression rewriting via distributive factoring.}
+		\caption{Expression rewriting via distributive factoring and \texttt{any}$\to$\texttt{in} promotion.}
 		\label{fig:expr_a}
 		
 	\end{subfigure}
 	\hfill
-	% ---------- (b) ----------
+	
 	\begin{subfigure}[t]{0.48\linewidth}
 		\centering
 		
-		\textbf{Before (filter-to-property propagation)}
+		Before
 		
 		\vspace{2mm}
 		
@@ -395,7 +394,7 @@ Both examples are drawn from the optimiser's test suite.
 		
 		\vspace{2mm}
 		
-		\textbf{After}
+		After
 		
 		\begin{lstlisting}[
 			language={},
