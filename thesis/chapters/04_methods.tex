@@ -1322,7 +1322,7 @@ Multi-trial encoding is made affordable through warm-start caching - \ac{FSST} c
 Furtermore, scratch buffers grow on first use and are recycled.
 
 The alternatives mechanism is an RAII stack of \texttt{AltSession} guards: each candidate writes into a sub-range of the encoder's buffers, and the guard's \texttt{Drop} impl retains only the bytes of the smallest candidate and rolls the cursor back for the others, so nesting lets the inner per-stream competition resolve before the enclosing sort-strategy trial commits.
-In the pathological case, this could mean that this results in $|\text{AltSession}|$ \texttt{memcpy} calls, but in practice they are ordered by decending choice-likelyhood.
+In the pathological case, this could mean that this results in $|\text{AltSession::with}|$ \texttt{memcpy} calls, but in practice they are ordered by decending choice-likelyhood.
 
 \paragraph{Encoder correctness validation}
 \begin{sloppypar}
