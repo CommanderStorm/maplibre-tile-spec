@@ -671,7 +671,7 @@ After all layer-level passes, source \texttt{minzoom}/\texttt{maxzoom} bounds ar
 This is a liveness analysis: a source is \enquote{live} at a zoom level only if at least one layer referencing it is active at that zoom.
 Tighter source bounds allow the tile server (or client-side tile manager) to skip tile requests for zoom levels where no layer needs data from that source.
 
-\subsubsection{Data-Level Optimisations}\label{sub:data_optimisations}
+\subsection{Data-Level Optimisations}\label{sub:data_optimisations}
 
 Data-level optimisations transform the tile data itself, reducing transfer size and decoding cost without altering the rendered output.
 \cref{tab:data_passes} summarises the implemented techniques.
