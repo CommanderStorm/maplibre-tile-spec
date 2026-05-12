@@ -607,7 +607,6 @@ For symbol layers, \emph{either} text or icon opacity must be non-zero (the laye
 \emph{Stats-driven refinement} tightens bounds using actual tile coverage: if a source layer's first tile appears at zoom~4, the layer's \texttt{minzoom} is raised to~4 regardless of what the filter permits, since there is no data to render below that zoom.
 This refinement only tightens bounds; it never loosens them due to \cref{eq:visual_equivalence}.
 
-\paragraph{Soundness under overzoom}
 A subtle but load-bearing correctness concern is MapLibre's \emph{overzoom} behaviour: when a client requests a tile at a zoom level beyond a source's \texttt{maxzoom}, the renderer reuses the nearest available tile from a lower zoom and upscales it.
 A naive stats-driven tightening - \enquote{the last tile containing polygons appears at zoom~12, therefore set \texttt{maxzoom}=12} - would change the rendered output if the layer is visible at zoom~13 or~14 via overzoom from zoom~12.
 Because the thesis requires  \cref{eq:visual_equivalence}, the metadata refinement pass enforces two asymmetric rules:
