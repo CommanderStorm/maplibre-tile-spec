@@ -1442,7 +1442,7 @@ The evaluation considers several dimensions:
     \item \textbf{Data savings}: reduction in style size (raw, gzip, and Brotli) and tile transfer volume.
     \item \textbf{Rendering performance}: client-side metrics including load time, frames per second, frame time percentiles (p50, p95, p99), jank count, style parse time, time to first tile, and time to first frame.
     \item \textbf{Optimisation cost}: preprocessing time introduced by each pass, measured as wall-clock time on the optimiser's host machine; this is an offline cost amortised over all subsequent tile deliveries.
-    \item \textbf{Efficiency}: \emph{qualitative} discussion of the energy implications of reduced data transfer and fewer rendering operations.  No direct power or energy measurement (RAPL, battery delta) is performed, because the benchmark harness runs on a desktop workstation rather than a thermal and battery-constrained mobile device; any quantitative energy claim would require a different hardware platform and is deferred to future work.
+    \item \textbf{Efficiency}: \emph{qualitative} discussion of the energy implications of reduced data transfer and fewer rendering operations.  No direct power or energy measurement (RAPL, battery delta) is performed, because the benchmark harness runs on a desktop workstation rather than a thermaly and battery-constrained mobile device; any quantitative energy claim would require a different hardware platform and is deferred to future work.
 \end{itemize}
 
 \subsection{Metrics}\label{sub:metrics}
