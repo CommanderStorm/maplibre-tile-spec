@@ -709,6 +709,8 @@ Its soundness depends on a MapLibre evaluation-order invariant: the filter is ev
 \Cref{lst:bucket_populate} shows this invariant in the \texttt{FillBucket.populate} method: the early \texttt{if (!this.layers[0].\_featureFilter.filter(\dots)) continue;} guard rejects a feature before any paint or layout expression is evaluated, so any equality constraint extracted from the filter is guaranteed to hold for every feature that reaches the subsequent \texttt{bucketFeatures.push} and can be safely substituted into the layer's paint/layout expressions.
 This holds for the data-driven expression variants used across all MapLibre versions this thesis targets (\texttt{match}, \texttt{case}, \texttt{get}, etc.).
 
+\clearpage
+
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS bucket populate method showing filter-first evaluation (\texttt{src/data/bucket/fill\_bucket.ts:84-106})},label=lst:bucket_populate]
 // src/data/bucket/fill_bucket.ts:84-106 - populate()
 for (const {feature, id, index, sourceLayerIndex} of features) {
