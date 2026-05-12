@@ -64,7 +64,6 @@ The distinction between raw, gzip, and Brotli reductions is notable: some rewrit
 Selectivity reordering (step~16) is a theoretically motivated heuristic whose isolated rendering impact was not measured in this evaluation.
 Because it appears late in the cumulative ablation, its marginal contribution is confounded with the preceding passes.
 The independence assumption underlying the selectivity estimates is acknowledged as inaccurate for correlated map predicates (\cref{sec:query_optimisations}), and the empirical benefit may be negligible for styles whose filters are already short.
-No isolated A/B measurement was performed; the pass is retained because it is cheap to apply and cannot worsen correctness.
 
 \paragraph{Downstream interaction with the data pipeline}
 Beyond their direct rendering benefit, expression-level simplifications feed into the data-level pipeline evaluated in \cref{sec:exp_mlt}.
