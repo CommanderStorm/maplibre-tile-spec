@@ -24,7 +24,7 @@ The optimiser solves the following problem: given an input pair $(S, T)$ and a c
 \end{equation}
 where $\equiv$ denotes pixel-identity under a deterministic rasteriser.
 
-In practice, $v$ is quantified only over the discrete grid of integer zoom levels and axis-aligned viewports, and pixel-identity is verified by direct image comparison rather than by proof.
+In practice, $v$ is quantified only over the discrete grid of zooms and viewports, and pixel-identity is verified by direct image comparison rather than by proof.
 The cost function $c$ encodes the deployment-relevant metrics discussed in \cref{sec:benchmarking}; this thesis does not attempt to collapse them into a scalar, instead reporting the effect of each pass on each metric separately.
 
 The constraint~(\cref{eq:visual_equivalence}) is the \emph{soundness criterion} for every pass in this chapter:
