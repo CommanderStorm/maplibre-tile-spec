@@ -912,8 +912,8 @@ This cascade mirrors the materialized-view maintenance problem described in \cre
         \node[data, right=3cm of adv] (stats) {Tile statistics};
         \draw[arrow] (stats) -- node[above, lbl] {property/\\geom distribution} (adv);
 
-        % Row 3: MVT → prune → MLT
-        \node[data, below=1.5cm of adv] (prune) {Prune \& transform};
+        % Row 3: MVT -> prune -> MLT
+        \node[data, below=0.5cm of adv] (prune) {Prune \& transform};
         \node[data] at ($(sopt |- prune)$) (mvt) {\ac{MVT} tile};
         \node[data] at ($(stats |- prune)$) (mlt) {\ac{MLT} tile};
 
@@ -937,7 +937,7 @@ This cascade mirrors the materialized-view maintenance problem described in \cre
     \label{fig:tile_shaving_pipeline}
 \end{figure}
 
-After pruning, two data transformations improve compressibility before encoding.
+\noindent After pruning, two data transformations improve compressibility before encoding.
 
 \paragraph{String property interning}\label{sub:string_property_interning}
 Categorical string properties - such as road class, land-use type, or administrative level - are replaced by frequency-ordered integer indices.
