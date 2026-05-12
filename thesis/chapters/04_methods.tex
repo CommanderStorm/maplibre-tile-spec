@@ -605,7 +605,7 @@ For example, a fill layer whose \texttt{fill-opacity} is a step function that ou
 For symbol layers, \emph{either} text or icon opacity must be non-zero (the layer is visible if any symbol component is visible); for all other layer types, \emph{both} size and opacity must be non-zero.
 
 \emph{Stats-driven refinement} tightens bounds using actual tile coverage: if a source layer's first tile appears at zoom~4, the layer's \texttt{minzoom} is raised to~4 regardless of what the filter permits, since there is no data to render below that zoom.
-This refinement only tightens bounds; it never loosens them for soundness.
+This refinement only tightens bounds; it never loosens them due to the soundness constraint in \cref{eq:visual_equivalence}.
 
 \paragraph{Soundness under overzoom}
 A subtle but load-bearing correctness concern is MapLibre's \emph{overzoom} behaviour: when a client requests a tile at a zoom level beyond a source's \texttt{maxzoom}, the renderer reuses the nearest available tile from a lower zoom and upscales it.
