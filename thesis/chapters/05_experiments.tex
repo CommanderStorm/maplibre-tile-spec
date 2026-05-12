@@ -60,10 +60,6 @@ Passes that primarily reduce serialised style size - default stripping, colour m
 This primarily benefits time to first render (discussed in \cref{sub:combined_marginal}).
 The distinction between raw, gzip, and Brotli reductions is notable: some rewrites (e.g., \texttt{any}$\to$\texttt{in}) increase raw token count while decreasing compressed size, because the repetitive structure of \texttt{in} operand lists compresses well.
 
-\paragraph{Fixpoint convergence}
-All styles converged within two to three fixpoint iterations; no style in either corpus reached the eight-iteration cap.
-Styles with deeply nested expressions (e.g., Americana, which uses complex label logic) sit at the upper end of this range.
-
 \paragraph{Selectivity reordering is empirically unmeasured}
 Selectivity reordering (step~16) is a theoretically motivated heuristic whose isolated rendering impact was not measured in this evaluation.
 Because it appears late in the cumulative ablation, its marginal contribution is confounded with the preceding passes.
