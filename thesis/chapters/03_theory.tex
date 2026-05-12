@@ -450,7 +450,7 @@ Implemented algebraic rules include:
 
 \noindent For style expressions, these rules simplify boolean filter expressions.
 A filter \texttt{["all", ["all", a, b], c]} is flattened to \texttt{["all", a, b, c]} by the associativity of conjunctio.
-\texttt{["all", true, x]} is simplified to~\texttt{x} by identity elimination.
+A filter \texttt{["all", true, x]} is simplified to~\texttt{x} by identity elimination.
 
 \subsection{Fixpoint Iteration}\label{sub:fixpoint}
 
