@@ -589,7 +589,7 @@ For a comparison operator with threshold~$n$, the extracted zoom interval is:
         \texttt{<}\; n  &\;\Rightarrow\; [0,\; \lceil n \rceil - 1] \\
     \end{aligned}
 \end{equation}
-Within an \texttt{all} node, extracted intervals are intersected: $[l_1, u_1] \cap [l_2, u_2] = [\max(l_1, l_2),\; \min(u_1, u_2)]$.
+Within an \texttt{all} node, extracted intervals are intersected: \[[l_1, u_1] \cap [l_2, u_2] = [\max(l_1, l_2),\; \min(u_1, u_2)]\].
 Within an \texttt{any} node, they are unioned: $[l_1, u_1] \cup [l_2, u_2] = [\min(l_1, l_2),\; \max(u_1, u_2)]$.
 After extraction, the consumed zoom predicates are removed from the filter, often simplifying it to \texttt{true}.
 
