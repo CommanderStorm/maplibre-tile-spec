@@ -401,7 +401,7 @@ In the map-style domain, dead code elimination corresponds to removing style lay
 \subsection{Algebraic Simplification}
 
 \emph{Algebraic simplification} applies mathematical identities to reduce expression complexity without changing semantics~\cite{ahoCompilersPrinciplesTechniques2007}.
-Common algebraic rules include:
+Implemented algebraic rules include:
 
 \begin{itemize}
 	\item \emph{Identity elements}:
@@ -448,8 +448,9 @@ Common algebraic rules include:
 	\]
 \end{itemize}
 
-For style expressions, these rules simplify boolean filter expressions.
-A filter \texttt{["all", ["all", a, b], c]} is flattened to \texttt{["all", a, b, c]} by the associativity of conjunction, and \texttt{["all", true, x]} is simplified to~\texttt{x} by identity elimination.
+\noindent For style expressions, these rules simplify boolean filter expressions.
+A filter \texttt{["all", ["all", a, b], c]} is flattened to \texttt{["all", a, b, c]} by the associativity of conjunctio.
+\texttt{["all", true, x]} is simplified to~\texttt{x} by identity elimination.
 
 \subsection{Fixpoint Iteration}\label{sub:fixpoint}
 
