@@ -419,7 +419,7 @@ paint:
 		\caption{Constant propagation simplifies rendering expressions.}
 		\label{fig:expr_b}	
 	\end{subfigure}
-	\\
+	par
 	\begin{subfigure}[t]{0.48\linewidth}
 		\centering
 		
@@ -434,10 +434,10 @@ paint:
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-			["all",
-			["==",["get","class"],"road"],
-			["==",["get","class"],"road"]
-			]
+["all",
+	["==",["get","class"],"road"],
+	["==",["get","class"],"road"]
+]
 		\end{lstlisting}
 		
 		\vspace{2mm}
@@ -451,7 +451,7 @@ paint:
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-			["==",["get","class"],"road"]
+["==",["get","class"],"road"]
 		\end{lstlisting}
 		
 		\caption{Duplicate predicate elimination via subsumption.}
