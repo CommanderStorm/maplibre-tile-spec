@@ -867,10 +867,10 @@ Its viability tests (rle is considered if $\bar{S}_\text{rle} \geq 2.0$, delta b
 
 The bridge between style-level and data-level optimisations is the \emph{tile pruning advisory} - a structured report that captures, for each source-layer and zoom level, exactly what the rendering style needs.
 The advisory is computed from the \emph{optimised} style (after all expression and structural passes) together with tile statistics.
-This ordering is critical: style-level dead layer elimination, metadata refinement, and layer merging reduce the set of live style layers, which in turn reduces the set of referenced properties and geometry types in the advisory.
+\noindent
+This ordering is important: style-level dead layer elimination, metadata refinement, and layer merging reduce the set of live style layers, which in turn reduces the set of referenced properties and geometry types in the advisory.
 The preceding style optimisations thus feed into data-level savings, though the aggregate interaction is additive rather than synergistic (\cref{sub:mlt_results}).
 This cascade mirrors the materialized-view maintenance problem described in \cref{sub:materialized_views}: the rendering style acts as the view definition, the tile set as the base relation, and the shaved tile as the materialized view.
-When the style changes (e.g., dead elimination removes a layer), the advisory changes, which in turn changes the shaved output - precisely the incremental view maintenance problem of updating a derived dataset under view-definition changes.
 
 The advisory captures the following per source-layer:
 
@@ -973,6 +973,7 @@ The inner competition criterion is deliberately \emph{single-objective}: the win
 Multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - are not resolved inside the encoder; they are reported separately per metric in the ablation evaluation (\cref{ch:experiments}), where the contribution of each pass can be assessed against the deployment-relevant axis.
 
 A no-copy alternatives mechanism lets each candidate write into the encoder's buffers and rolls losing candidates back by resetting cursor positions, so the inner and outer competitions nest without redundant allocation.
+\Cref{fig:arch_enc} summarises the encoder and decoder data-flow in \texttt{mlt-core}.
 
 \begin{figure}[htbp]
     \centering
@@ -1058,7 +1059,7 @@ Different orderings favour different encoding schemes: spatial orderings cluster
 Which ordering wins depends on the value distributions and cardinalities of the specific layer: a layer dominated by a single repeated property value may benefit most from spatial clustering, while a layer with sequential IDs and high-cardinality properties may favour ID ordering.
 Because this balance shifts across layers, zoom levels, and tilesets, no single ordering dominates universally, and the choice cannot be resolved statically.
 
-The encoder therefore trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count.
+The encoder therefore trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count (\cref{fig:sort_competition}).
 The implemented strategies and their rationale are:
 
 \begin{enumerate}
@@ -1191,7 +1192,7 @@ The \ac{MLT} format supports shared dictionaries where multiple string columns r
 The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \texttt{name:en}, \texttt{name:de}), which misses semantic overlaps (e.g., \texttt{class} and \texttt{subclass} in OpenMapTiles share many values).
 
 \begin{sloppypar}
-    The Rust encoder replaces prefix matching with -based similarity clustering~\cite{broderResemblanceContainmentDocuments1998}.
+    The Rust encoder replaces prefix matching with -based similarity clustering~\cite{broderResemblanceContainmentDocuments1998} (\cref{fig:minhash_clustering}).
     For each string column, two MinHash sketches of $128$ permutations are computed: one over exact string values and one over byte trigrams (3-byte sliding windows).
     The choice of 128 permutations corresponds to an expected standard error of approximately $1/\sqrt{128} \approx 8.8\%$ on the Jaccard estimate, which is adequate for the binary accept/reject decision of the clustering step.
     The trigram sketch captures partial overlap between columns whose values are substrings or morphological variants of each other.
