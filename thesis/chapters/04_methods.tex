@@ -913,7 +913,7 @@ This cascade mirrors the materialized-view maintenance problem described in \cre
         \draw[arrow] (stats) -- node[above, lbl] {property/\\geom distribution} (adv);
 
         % Row 3: MVT -> prune -> MLT
-        \node[data, below=0.5cm of adv] (prune) {Prune \& transform};
+        \node[data, below=1.0cm of adv] (prune) {Prune \& transform};
         \node[data] at ($(sopt |- prune)$) (mvt) {\ac{MVT} tile};
         \node[data] at ($(stats |- prune)$) (mlt) {\ac{MLT} tile};
 
