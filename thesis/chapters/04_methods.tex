@@ -747,6 +747,10 @@ When a \texttt{match} pattern is used, the sort key maps each discriminator valu
 When a \texttt{case} pattern is used, the sort key tests filters in reverse order (last painter wins) and assigns ascending indices.
 Sort-key synthesis is only applied to layer types that support the \texttt{*-sort-key} property and that do not already define one.
 
+\Cref{fig:layer_merge_example} traces the three phases end-to-end on a representative input: three adjacent \texttt{line} layers that classify roads by \texttt{class} (motorway, primary, secondary) and differ only in filter literal, colour, and width.
+Phase~1 admits the group because the differing properties (\texttt{line-color}, \texttt{line-width}) both support feature-driven expressions; Phase~2 detects the shared \texttt{["==",~["get",~"class"],~\textit{literal}]} shape and selects the compact \texttt{match} encoding; Phase~3 short-circuits because the three layers share an identical zoom range, so no zoom guards are needed.
+The synthesised \texttt{line-sort-key} assigns indices $0,\,1,\,2$ to motorway, primary, and secondary respectively, recovering the original declaration order under the painter's algorithm.
+
 \begin{figure}[H]
     \centering
     \resizebox{\linewidth}{!}{\hfuzz=50pt\begin{tikzpicture}[
