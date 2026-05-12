@@ -53,13 +53,13 @@ Panama was chosen over conventional \ac{JNI} glue because it removes the need fo
 This is the boundary shape that a columnar encoder needs, because each tile is handed over as a batch of parallel \texttt{MemorySegment}s rather than one call per feature, amortising the per-boundary cost over thousands of features in one encoder invocation.
 The legacy self-contained Java encoder in \texttt{java/mlt-core}~\cite{tremmelMapLibreTileNext2025} is kept only as a reference baseline for the \ac{MLT} experiments in \cref{ch:experiments} and is not a target of the optimisations proposed in this thesis.
 
-\section{Approach}\label{sec:approach}
+\section{Approach and basic building blocks}\label{sec:approach}
 
 To evaluate the effectiveness of the optimisations strategies developed in this work, a benchmarking-driven approach was adopted.
 A reliable performance baseline was established first, followed by cumulative ablation experiments that isolate the contribution of each optimisations pass.
 Each pass preserves the visual-equivalence constraint formalised in \cref{sec:problem_statement}; together, the passes from~\cref{sub:pipeline} seek to minimise $c(S', T')$ across the metrics defined in \cref{sec:benchmarking}.
 
-\paragraph{Three-Level Optimisation Pipeline}\label{sub:pipeline}
+\subsection{Three-Level Optimisation Pipeline}\label{sub:pipeline}
 
 \Cref{fig:system_architecture} sketches the optimiser system as a whole.
 At the centre sits the \emph{Optimiser}, a pipeline of passes at three levels of abstraction.
