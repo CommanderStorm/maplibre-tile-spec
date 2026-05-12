@@ -1410,6 +1410,7 @@ Both sources are consumed through the standard Web Mercator XYZ tiling scheme us
 Only for \ac{OSM} is the underlying data fully available, so only for this source can tile statistics be collected at a sample rate of~1.0.
 To ensure reproducibility across benchmark runs, all tile requests are routed through a local caching proxy that stores tiles on first access and replays them on subsequent runs with the latency and download speed of a 4G internet connection according to Rusan et al.~\cite{rusanAssessmentPacketLatency2015} ($\frac{\text{size}}{30\frac{Mb}{s}} + 25ms$).
 This eliminates network variability and guarantees that every ablation step operates on identical tile data (after an initial, discarded run).
+The model does not simulate packet loss, HTTP/2 multiplexing, TCP slow-start, or HTTP/3 (QUIC) with its 0-RTT connection resumption and absence of head-of-line blocking - all of which would amplify the benefit of smaller tiles - so the measured load-time improvements from tile shaving are a conservative lower bound on what a real deployment would observe.
 
 \subsection{Geographic and Use-Case Scenarios}\label{sub:scenarios}
 
@@ -1485,7 +1486,6 @@ All tile requests are served from a local caching proxy that stores tiles on fir
 To avoid artificially high performance from local network transfer, the proxy introduces a network delay that simulates realistic latency.
 Concretely, each tile response is delayed by a fixed per-request round-trip time on top of a per-byte throughput throttle, so the wire time for a tile of $b$ bytes is approximately $\mathrm{RTT} + b / \mathrm{bandwidth}$.
 Both values are configurable; the default benchmark run uses an \ac{RTT} of \qty{25}{\milli\second} and a bandwidth cap of \qty{30}{\Mbps}, matching the 4G profile of Rusan et al.~\cite{rusanAssessmentPacketLatency2015}.
-The model does not simulate packet loss, HTTP/2 multiplexing, TCP slow-start, or HTTP/3 (QUIC) with its 0-RTT connection resumption and absence of head-of-line blocking - all of which would amplify the benefit of smaller tiles - so the measured load-time improvements from tile shaving are a conservative lower bound on what a real deployment would observe.
 This ensures that tile-fetch improvements (e.g.\ smaller tiles due to shaving) are measured under conditions representative of a \ac{CDN}-served deployment while remaining deterministic across runs.
 
 The benchmark harness itself is a Puppeteer-driven headless browser that programmatically loads the MapLibre GL~JS renderer, applies a camera animation scenario, and collects performance counters via the \texttt{Performance} API and custom instrumentation hooks in the renderer.
