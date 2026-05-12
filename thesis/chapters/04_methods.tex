@@ -419,6 +419,89 @@ paint:
 		\caption{Constant propagation simplifies rendering expressions.}
 		\label{fig:expr_b}	
 	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\linewidth}
+		\centering
+		
+		Before
+		
+		\vspace{2mm}
+		
+		\begin{lstlisting}[
+			language={},
+			basicstyle=\ttfamily\scriptsize,
+			frame=single,
+			aboveskip=0pt,
+			belowskip=0pt
+			]
+			["all",
+			["==",["get","class"],"road"],
+			["==",["get","class"],"road"]
+			]
+		\end{lstlisting}
+		
+		\vspace{2mm}
+		
+		After
+		
+		\begin{lstlisting}[
+			language={},
+			basicstyle=\ttfamily\scriptsize,
+			frame=single,
+			aboveskip=0pt,
+			belowskip=0pt
+			]
+			["==",["get","class"],"road"]
+		\end{lstlisting}
+		
+		\caption{Duplicate predicate elimination via subsumption.}
+		\label{fig:expr_c}
+		
+	\end{subfigure}
+	
+	\vspace{4mm}
+	
+	\begin{subfigure}[t]{0.48\linewidth}
+		\centering
+		
+		Before
+		
+		\vspace{2mm}
+		
+		\begin{lstlisting}[
+			language={},
+			basicstyle=\ttfamily\scriptsize,
+			frame=single,
+			aboveskip=0pt,
+			belowskip=0pt
+			]
+			["all",
+			["!",["==",["get","class"],"road"]],
+			["!",["==",["get","class"],"rail"]]
+			]
+		\end{lstlisting}
+		
+		\vspace{2mm}
+		
+		After
+		
+		\begin{lstlisting}[
+			language={},
+			basicstyle=\ttfamily\scriptsize,
+			frame=single,
+			aboveskip=0pt,
+			belowskip=0pt
+			]
+			["all",
+			["!=","class","road"],
+			["!=","class","rail"]
+			]
+		\end{lstlisting}
+		
+		\caption{Negation pushdown and operator normalization.}
+		\label{fig:expr_d}
+		
+	\end{subfigure}
 	
 	\caption{Examples how expression-level transformations transform inputs.}
 	\label{fig:expr_before_after}
