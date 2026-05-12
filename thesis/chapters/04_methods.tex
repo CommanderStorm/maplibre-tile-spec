@@ -693,7 +693,6 @@ while (this._currentPlacementIndex >= 0) {
 }
 \end{lstlisting}
 
-\paragraph{Soundness of layer merging}
 The merge pass has to preserve three invariants that collectively witness the visual-equivalence constraint of \cref{sec:problem_statement}:
 (1)~every feature drawn by the original $k$ layers must still be drawn by the merged layer, with the same paint and layout properties it would have had;
 (2)~the per-layer draw order (the painter's algorithm) must be preserved so that the top-most pixel at each screen position is unchanged; and
@@ -748,7 +747,7 @@ When a \texttt{match} pattern is used, the sort key maps each discriminator valu
 When a \texttt{case} pattern is used, the sort key tests filters in reverse order (last painter wins) and assigns ascending indices.
 Sort-key synthesis is only applied to layer types that support the \texttt{*-sort-key} property and that do not already define one.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \resizebox{\linewidth}{!}{\hfuzz=50pt\begin{tikzpicture}[
         node distance=0.35cm,
