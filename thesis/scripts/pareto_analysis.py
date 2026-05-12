@@ -7,39 +7,6 @@
 #     "kaleido>=0.4",
 # ]
 # ///
-"""
-Post-hoc Pareto analysis over benchmark-harness JSONL output.
-
-This script is the analysis layer referenced from thesis Section~4.X
-(``Pareto Analysis of the Size--Cost Trade-off''). It reads the per-run
-records emitted by ``tests/bench/run.ts``, filters to the latest complete
-ablation session per style (to avoid mixing benchmark sessions that used
-different ``ABLATION_STEPS`` orderings), computes a noise decomposition per
-candidate objective axis, and produces a two-axis Pareto frontier over
-``gzip_bytes`` and ``pass_count``.
-
-The narrower scope is deliberate. An earlier version of this script computed
-a six-axis frontier over gzip, loadMs, meanFrameMs, peakHeapMB,
-preprocessing_ms, and a CPU-time energy proxy. The noise decomposition
-printed by this script (see ``pareto_noise.tex``/``pareto_summary.json``)
-demonstrated that only ``gzip_bytes`` carries a per-step signal on the
-existing benchmark corpus; the three remaining candidate axes (``loadMs``,
-``meanFrameMs``, ``peakHeapMB``) have within-cell coefficients of variation
-comparable to or larger than their cross-variant ranges, so a frontier
-built on them would select points by measurement noise rather than by
-optimiser behaviour. Section~4.X of the thesis reflects the reduced scope.
-
-When the benchmark harness has been run with the ``preprocessing_ms`` timing
-hook (added to ``tests/bench/run.ts``) the script automatically substitutes
-the measured wall-clock cost for the ``pass_count`` proxy and the frontier
-tightens accordingly.
-
-Usage:
-    uv run thesis/scripts/pareto_analysis.py \\
-        --input ../maplibre-optimizer/tests/bench/results \\
-        --out thesis/figures \\
-        --tables thesis/scripts/data
-"""
 
 from __future__ import annotations
 
@@ -55,12 +22,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 # Shared thesis-figure palette and layout defaults. Imported so a future
 # palette swap in ``generate_plots.py`` propagates automatically to the
 # Pareto figures as well.
 from generate_plots import LAYOUT_DEFAULTS, SOURCE_COLORS
+from plotly.subplots import make_subplots
 
 # Axes
 
@@ -126,10 +93,14 @@ def parse_variant(variant: str) -> VariantId:
         return VariantId(mode="baseline", step_num=0, pass_name="")
     m = _ISOLATED_RE.match(variant)
     if m is not None:
-        return VariantId(mode="isolated", step_num=int(m.group(1)), pass_name=m.group(2))
+        return VariantId(
+            mode="isolated", step_num=int(m.group(1)), pass_name=m.group(2)
+        )
     m = _STEP_RE.match(variant)
     if m is not None:
-        return VariantId(mode="cumulative", step_num=int(m.group(1)), pass_name=m.group(2))
+        return VariantId(
+            mode="cumulative", step_num=int(m.group(1)), pass_name=m.group(2)
+        )
     # Malformed — treat as a cumulative step at position -1 so downstream
     # sorting still produces a deterministic order, but the caller can spot
     # the anomaly in the JSON summary.
@@ -163,7 +134,9 @@ def load_jsonl(input_dir: Path) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def filter_latest_session_per_style(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
+def filter_latest_session_per_style(
+    df: pd.DataFrame,
+) -> tuple[pd.DataFrame, dict[str, str]]:
     """Keep only the most recent complete ablation session per style.
 
     The benchmark harness writes one JSONL file per run, but the results
@@ -201,9 +174,7 @@ def filter_latest_session_per_style(df: pd.DataFrame) -> tuple[pd.DataFrame, dic
         keep_rows.append(style_df[style_df["timestamp"] == chosen])
 
     filtered = (
-        pd.concat(keep_rows, ignore_index=True)
-        if keep_rows
-        else df.iloc[0:0].copy()
+        pd.concat(keep_rows, ignore_index=True) if keep_rows else df.iloc[0:0].copy()
     )
     return filtered, session_log
 
@@ -269,7 +240,9 @@ def compute_noise_report(df: pd.DataFrame) -> pd.DataFrame:
                 "within_cv_median": _pct_or_nan(within_cv, np.median),
                 "within_cv_p95": _pct_or_nan(within_cv, lambda s: np.percentile(s, 95)),
                 "cross_range_median": _pct_or_nan(cross_range, np.median),
-                "cross_range_p95": _pct_or_nan(cross_range, lambda s: np.percentile(s, 95)),
+                "cross_range_p95": _pct_or_nan(
+                    cross_range, lambda s: np.percentile(s, 95)
+                ),
             }
         )
     return pd.DataFrame(report_rows).set_index("axis")
@@ -292,20 +265,30 @@ def _fmt_noise_val(value: float) -> str:
 def write_noise_csv(path: Path, report: pd.DataFrame) -> None:
     """Write the noise-floor report as a CSV file."""
     import csv as _csv
-    header = ["axis", "withinCvMedian", "withinCvHigh", "crossRangeMedian", "crossRangeHigh", "verdict"]
+
+    header = [
+        "axis",
+        "withinCvMedian",
+        "withinCvHigh",
+        "crossRangeMedian",
+        "crossRangeHigh",
+        "verdict",
+    ]
     rows: list[list[str]] = []
     for axis in CANDIDATE_AXES:
         if axis not in report.index:
             continue
         row = report.loc[axis]
-        rows.append([
-            axis,
-            _fmt_noise_val(row["within_cv_median"]),
-            _fmt_noise_val(row["within_cv_p95"]),
-            _fmt_noise_val(row["cross_range_median"]),
-            _fmt_noise_val(row["cross_range_p95"]),
-            AXIS_VERDICTS.get(axis, ""),
-        ])
+        rows.append(
+            [
+                axis,
+                _fmt_noise_val(row["within_cv_median"]),
+                _fmt_noise_val(row["within_cv_p95"]),
+                _fmt_noise_val(row["cross_range_median"]),
+                _fmt_noise_val(row["cross_range_p95"]),
+                AXIS_VERDICTS.get(axis, ""),
+            ]
+        )
     with path.open("w", newline="", encoding="utf-8") as f:
         w = _csv.writer(f)
         w.writerow(header)
@@ -415,7 +398,9 @@ def write_frontier_plot(
         vertical_spacing=0.14,
     )
 
-    by_style = {str(style): group for style, group in frontier_df.groupby("style", sort=False)}
+    by_style = {
+        str(style): group for style, group in frontier_df.groupby("style", sort=False)
+    }
     legend_drawn = False
     for idx, style in enumerate(styles):
         sdf = by_style.get(style)
@@ -449,7 +434,9 @@ def write_frontier_plot(
                 y=pareto[cost_axis],
                 mode="lines+markers",
                 line=dict(color=FRONTIER_COLOUR, width=1.2),
-                marker=dict(size=9, color=FRONTIER_COLOUR, line=dict(width=1, color="black")),
+                marker=dict(
+                    size=9, color=FRONTIER_COLOUR, line=dict(width=1, color="black")
+                ),
                 name="Pareto frontier",
                 showlegend=not legend_drawn,
                 hovertext=pareto["variant"],
@@ -487,9 +474,15 @@ def write_frontier_plot(
 
 def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", type=Path, required=True, help="directory of bench-*.jsonl files")
-    parser.add_argument("--out", type=Path, required=True, help="figure output directory")
-    parser.add_argument("--tables", type=Path, required=True, help="LaTeX-table output directory")
+    parser.add_argument(
+        "--input", type=Path, required=True, help="directory of bench-*.jsonl files"
+    )
+    parser.add_argument(
+        "--out", type=Path, required=True, help="figure output directory"
+    )
+    parser.add_argument(
+        "--tables", type=Path, required=True, help="LaTeX-table output directory"
+    )
     parser.add_argument(
         "--json-summary",
         type=Path,
@@ -543,11 +536,16 @@ def main(argv: Iterable[str] | None = None) -> int:
         "styles": styles,
         "session_used": session_log,
         "noise_report": noise_summary,
-        "frontier_sizes": frontier_df[frontier_df["is_pareto"]].groupby("style").size().to_dict(),
+        "frontier_sizes": frontier_df[frontier_df["is_pareto"]]
+        .groupby("style")
+        .size()
+        .to_dict(),
         "baseline_to_final_gzip_reduction": _compute_gzip_reductions(frontier_df),
     }
     summary_path = args.json_summary or (args.tables / "pareto_summary.json")
-    summary_path.write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
+    summary_path.write_text(
+        json.dumps(summary, indent=2, default=str), encoding="utf-8"
+    )
 
     print(
         f"wrote frontier figure, noise table, and JSON summary to "

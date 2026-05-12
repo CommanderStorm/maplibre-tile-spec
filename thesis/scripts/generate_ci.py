@@ -5,20 +5,6 @@
 #     "numpy>=1.24",
 # ]
 # ///
-"""Compute bootstrap 95% confidence intervals from benchmark JSONL data.
-
-Reads all JSONL benchmark results, filters to the latest session per style,
-and for each (style, variant) pair computes:
-  - Bootstrap 95% CIs for loadMs and fps
-  - IQR (Q1, Q3)
-  - Wilcoxon signed-rank test p-value vs. baseline
-
-Outputs:
-  scripts/data/confidence_intervals.csv
-
-Usage:
-    python3 thesis/scripts/generate_ci.py
-"""
 
 from __future__ import annotations
 

@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""Generate CSV tables from benchmark JSONL data.
-
-Reads all JSONL benchmark results and emits:
-  1. Per-style ablation CSVs (one .csv file per style, excluding americana)
-  2. Per-style summary CSV (per_style_summary.csv)
-  3. Marginal contribution CSV (marginal_contribution.csv)
-
-Usage:
-    python3 thesis/scripts/generate_tables.py
-"""
 
 from __future__ import annotations
 

@@ -6,15 +6,6 @@
 #     "kaleido>=0.4",
 # ]
 # ///
-"""Generate a per-style tile shaving effectiveness figure for the thesis.
-
-Reads the JSONL produced by verify_tile_shave.ts and produces a horizontal
-bar chart showing tile-data reduction (%) per style, sorted by effectiveness.
-
-Usage:
-    uv run generate_tile_shave_per_style.py
-    uv run generate_tile_shave_per_style.py --input data/tile_shave_per_style.jsonl
-"""
 
 import argparse
 import json
