@@ -973,7 +973,7 @@ rather than committing to a single encoding plan, the encoder uses the data dist
 
 This competition operates at two nested levels.
 An \emph{outer loop} that trials multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
-The inner competition criterion is deliberately \emph{single-objective}: the winning candidate is the one with the smallest encoded \texttt{total\_len()}.
+The inner competition criterion is deliberately \emph{single-objective} (smallest encoded size).
 Multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - are not resolved inside the encoder; they are reported separately per metric in the ablation evaluation (\cref{ch:experiments}), where the contribution of each pass can be assessed against the deployment-relevant axis.
 
 A no-copy alternatives mechanism lets each candidate write into the encoder's buffers and rolls losing candidates back by resetting cursor positions, so the inner and outer competitions nest without redundant allocation.
