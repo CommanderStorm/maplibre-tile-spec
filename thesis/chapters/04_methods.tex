@@ -1304,7 +1304,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
 \end{figure}
 
 \paragraph{Geometry and ID encoding}
-Geometry vertices are encoded as either \emph{componentwise deltas} (CWD) or \emph{Morton-code dictionaries}.
+Geometry vertices are encoded as either \emph{componentwise deltas} (CWD), \emph{Hilbert-code dictionaries}, \emph{Morton-code dictionaries} or plain verticies.
 CWD encodes each vertex as the delta from the previous vertex, producing a single interleaved stream $[x_0, y_0, \Delta x_1, \Delta y_1, \ldots]$ that is then compressed via the per-stream integer competition.
 The Morton-code dictionary approach computes a Z-order code for each unique vertex pair, stores the deduplicated codes as a sorted dictionary, and references them via per-vertex offset indices - producing two streams (offsets and dictionary deltas) instead of one.
 The encoder tries both strategies (when the coordinate range permits Morton encoding, i.e., both axes fit within 16~bits after shifting) and retains the smaller result.
