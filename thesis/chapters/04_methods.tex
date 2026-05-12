@@ -340,11 +340,12 @@ Both examples are drawn from the optimiser's test suite.
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-			["any",
-			["all", ["has","name"],
-			["==",["get","class"],"road"]],
-			["all", ["has","name"],
-			["==",["get","class"],"rail"]]]
+["any",
+	["all", ["has","name"],
+	["==",["get","class"],"road"]],
+	["all", ["has","name"],
+	["==",["get","class"],"rail"]]
+]
 		\end{lstlisting}
 		
 		\vspace{2mm}
@@ -358,10 +359,11 @@ Both examples are drawn from the optimiser's test suite.
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-			["all",
-			["has","name"],
-			["in",["get","class"],
-			["literal",["road","rail"]]]]
+["all",
+	["has","name"],
+	["in",["get","class"],
+	["literal",["road","rail"]]]
+]
 		\end{lstlisting}
 		
 		\caption{Expression rewriting via distributive factoring and \texttt{any}$\to$\texttt{in} promotion.}
