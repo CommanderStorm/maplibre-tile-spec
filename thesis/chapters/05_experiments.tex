@@ -580,7 +580,7 @@ Subsequent passes produce smaller incremental reductions; the total peak-heap re
 Not all passes contribute equally, and the marginal contribution of each pass depends on the metric under consideration.
 
 \paragraph{Rendering time metrics}
-Next to tile shaving, Expression-level constant folding and structural dead elimination tend to produce the largest marginal improvements in frame time and FPS, as they reduce the number of expressions the renderer must evaluate per feature per frame and the number of layers it must process, respectively.
+After to tile shaving, Expression-level constant folding and structural dead elimination tend to produce the largest marginal improvements in frame time and FPS, as they reduce the number of expressions the renderer must evaluate per feature per frame and the number of layers it must process, respectively.
 Layer merging produces a large marginal improvement in draw-call-heavy styles (many road layers, many boundary layers) but a smaller improvement in simple styles.
 
 \paragraph{Transfer size metrics}
