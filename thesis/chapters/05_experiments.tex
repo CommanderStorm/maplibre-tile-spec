@@ -699,15 +699,6 @@ This variance is partially self-inflicted as the use of real GPU hardware (ANGLE
 Visual losslessness (\cref{sec:problem_statement}) was verified with pixelmatch across all 15 benchmark styles at zoom levels~0-14, across all 18 scenarios, in both axis-aligned and pitched views, at \texttt{pixelRatio}~1 and using MapLibre GL~JS's Node-side software rasteriser for determinism rather than a GPU backend.
 Across every comparison, pixelmatch reported zero differing pixels at a strict (zero-tolerance) threshold, confirming that every optimisations pass preserves visual identity on the software rasteriser.
 
-Three caveats apply to this result.
-First, the grid samples integer zoom levels, a single \texttt{pixelRatio}, and a small set of pitch and bearing settings; behaviour at fractional zoom levels, higher display densities (2$\times$, 3$\times$), and tilted camera trajectories is not directly asserted by pixelmatch.
-This is a meaningful gap: metadata refinement infers minzoom/maxzoom from expressions that may involve fractional zoom thresholds (e.g., \texttt{[">=",~["zoom"],~12.5]}), and zoom-bounded ramp folding prunes interpolation stops whose behaviour between integer zooms is exactly where bugs would appear.
-Adding fractional-zoom samples (e.g., $z + 0.25$, $z + 0.5$, $z + 0.75$) to the pixelmatch harness would strengthen the soundness argument; this is left for future work.
-The underlying optimisations invariants (overzoom-aware metadata refinement, painter's-order-pre\-serving layer merging) are, however, zoom-invariant by construction.
-Second, the equivalence holds for the software rasteriser.
-The benchmark harness runs the GPU backend (ANGLE/Vulkan) in parallel for performance measurement, and no GPU-only divergence appears in the benchmark traces, but the claim \enquote{pixel-exact on the GPU} is neither asserted nor required - style and tile transformations cannot introduce GPU-only divergences not already present in the software rasteriser, because both backends consume the same post-optimisations inputs.
-
-
 \section{Threats to Validity}\label{sec:threats}
 
 This section discusses potential threats to the validity of the experimental findings.
