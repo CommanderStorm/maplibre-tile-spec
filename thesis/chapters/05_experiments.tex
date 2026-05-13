@@ -349,7 +349,7 @@ Speedup (vs.\ gzip) & $8.3\times$ & $5.3\times$ & $4.6\times$ \\
 \end{table}
 
 The \ac{MLT} decoder's columnar layout enables selective column access and avoids the per-feature tag-parsing overhead of protobuf, which accounts for the speedup even before transport decompression is considered: \ac{MLT}-Rust is $4.0$--$7.7\times$ faster than uncompressed \ac{MVT}.
-These micro-benchmark results complement the browser-based \texttt{loadMs} metric by providing an isolated measurement of the decoding-latency axis of Research Goal~R3.
+These micro-benchmark results complement the browser-based \texttt{loadMs} metric by providing an isolated measurement of the decoding-latency axis of Research Goal~R3, even though they are not 1:1 applicable because the rust decoder is not used in \texttt{maplibre-gl-js}.
 
 
 \subsection{Discussion}\label{sub:mlt_discussion}
