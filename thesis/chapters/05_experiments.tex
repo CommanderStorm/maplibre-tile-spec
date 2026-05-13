@@ -690,7 +690,7 @@ No single pass dominates across all styles, which justifies the multi-pass desig
 \paragraph{Measurement noise}
 The 15-run median smooths out most measurement noise, but tail metrics (p99 frame time, jank count) exhibit higher variance than central-tendency metrics (median frame time, FPS).
 GPU thermals, browser garbage collection, and OS scheduling contribute to this variance.
-The use of real GPU hardware (ANGLE/Vulkan) rather than a software rasteriser is a deliberate choice: it captures realistic rendering costs, including GPU buffer management and shader compilation, at the expense of slightly higher measurement noise compared to deterministic software rendering.
+This variance is partially self-build as the use of real GPU hardware (ANGLE/Vulkan) rather than a software rasteriser captures realistic rendering costs, including GPU buffer management and shader compilation, at the expense of slightly higher measurement noise compared to deterministic software rendering.
 
 
 \section{Visual Correctness Validation}\label{sec:visual_correctness}
