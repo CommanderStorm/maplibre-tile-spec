@@ -194,9 +194,6 @@ Configuration~5 adds the encoding layer: after shaving has determined what data 
 
 For each configuration, two classes of metrics are collected: \emph{tile transfer metrics} - encoded tile size (raw, gzip, Brotli) per zoom level, total tileset volume, and encoding time per tile - and \emph{rendering metrics} shared with Experiments~1-2 (load time, frames per second, frame time percentiles p50/p95/p99, and time to first tile), enabling direct comparison of data-level contributions against expression-level and structural contributions in the combined analysis (\cref{sec:exp_combined}).
 
-The tileset covers OpenMapTiles zoom levels~0-14.
-Sparse overview tiles at low zoom exercise the advisory's zoom-level pruning; dense urban tiles at high zoom exercise the encoding competition's spatial sorting and per-stream profiling.
-
 \subsection{Results: Style-Driven Cascade}\label{sub:mlt_results}
 
 This section quantifies the interaction between style-level and data-level optimisations previewed in \cref{sub:structural_discussion}: style-level optimisations narrow the pruning advisory, and the following paragraphs measure the extent of this effect before turning to the encoding evaluation.
