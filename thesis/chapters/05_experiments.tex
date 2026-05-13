@@ -396,10 +396,6 @@ These techniques typically deliver larger absolute savings than attribute-column
 Style-driven geometry simplification - choosing a simplification tolerance that is demonstrably below the smallest visible feature at each zoom level - is an interesting direction for future work but is not pursued here.
 The thesis therefore quantifies the size reductions achievable \emph{without} touching geometry at all, which understates the total optimisations headroom a production pipeline could reach by composing this work with an upstream simplifier.
 
-\paragraph{Sort order interacts with encoding}
-No single sort order dominates: across the Germany tileset, the per-layer winners are split between Hilbert, Morton, and ID, confirming that the nested competition (\cref{sub:encoding_strategies}) materially affects which encoding survives the inner per-stream contest rather than being a redundant outer loop.
-
-
 \section{Cross-Style Generalisation}\label{sec:exp_cross_style}
 
 The preceding experiments evaluate optimisations effectiveness on a curated corpus of 15 styles.
