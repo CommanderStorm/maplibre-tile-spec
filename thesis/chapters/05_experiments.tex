@@ -616,8 +616,8 @@ The measured overhead ratio of the full competition is therefore $342 / 175 = 1.
 
 \begin{table}[htbp]
 \centering\small
-\begin{tblr}{colspec={l l r}, row{1}={font=\bfseries}, hlines={0.4pt}}
-Stage & Description & Wall-clock \\
+\begin{tabular}{l l r}
+\textbf{Stage} & \textbf{Description} & \textbf{Wall-clock} \\
 \midrule
 $C_\text{style}$ & Style optimisation (all passes, Liberty) & \qty{7.5}{\milli\second} \\
 $C_\text{stats}$ & Tile statistics (\num{256588} tiles, 1 thread) & \qty{57.4}{\second} \\
@@ -627,8 +627,8 @@ $C_\text{enc}$ (\ac{MLT} none, 1T) & \ac{MLT} encoding, single strategy, 1 threa
 $C_\text{enc}$ (\ac{MLT} auto, 1T) & \ac{MLT} encoding, full competition, 1 thread & \qty{342}{\second} \\
 $C_\text{enc}$ (\ac{MLT} auto, 16T) & \ac{MLT} encoding, full competition, 16 threads & \qty{46.7}{\second} \\
 \midrule
-Overhead factor & auto\,/\,none (single-threaded CPU time) & $1.95\times$
-\end{tblr}
+Overhead factor & auto\,/\,none (single-threaded CPU time) & $1.95\times$ \\
+\end{tabular}
 \caption{Preprocessing wall-clock time per pipeline stage on the Germany OpenMapTiles tileset (zoom 0-14, \num{255694} tiles after pruning). AMD Ryzen~7 3700X, \qty{46}{\gibi\byte} RAM, NVMe SSD. Median of 3~runs.}
 \label{tab:preprocessing_cost}
 \end{table}
