@@ -666,7 +666,7 @@ Where the same step appears across two complexity axes, the connection to the co
 The full pipeline ablation suggests three plausible channels by which optimisations improve rendering performance, inferred from proxy metrics (AST node count, layer count, tile size) rather than direct per-mechanism instrumentation.
 \emph{Style simplification} (expression passes) plausibly reduces per-feature evaluation cost: fewer \ac{AST} nodes mean fewer interpreter steps per feature per frame.
 \emph{Structural reduction} (dead elimination, layer merging) plausibly reduces per-frame overhead: fewer layers mean fewer draw calls, fewer GPU state changes, and fewer filter evaluations at the layer level.
-\emph{Data reduction} (tile shaving, re-encoding) reduces transfer cost: smaller tiles mean shorter download times and lower decode overhead, primarily improving load time and time to first tile, but because of lower \ac{GC}-spend also frame times.
+\emph{Data reduction} (tile shaving, re-encoding) reduces transfer cost: smaller tiles mean shorter download times and lower decode overhead, primarily improving load time and time to first tile, but because of lower \ac{GC}-spend also average frame times.
 No renderer instrumentation separates these channels directly; the decomposition is inferred from the proxy metrics and the time breakdown (\cref{fig:time_breakdown}).
 The three channels target non-overlapping costs - simplification cannot shrink tiles and shaving cannot prune expressions - so they compose additively in the aggregate, as already established quantitatively in \cref{sub:mlt_results}.
 
