@@ -386,7 +386,7 @@ A hybrid strategy - serving raw \ac{MVT} for uncommon styles and shaved \ac{MLT}
 A simple analytical model frames the trade-off.
 Let $r$ denote the per-tile rendering-time saving from shaving (derived from the load-time reduction divided by the number of fetched tiles), let $S$ denote the number of distinct styles served, and let $C_f$ denote the origin fetch cost per cache miss (RTT plus transfer time).
 Under a uniform-traffic assumption, the cache miss rate increase from style-keyed tiles is $1 - 1/S$ compared to style-independent caching.
-Shaving is net-beneficial when $r > (1 - 1/S) \cdot f$.
+Shaving is net-beneficial when $r > (1 - 1/S) \cdot C_f$.
 With the benchmark values ($r \approx \qty{3}{\milli\second}$ per tile from the load-time reduction, $C_f \approx \qty{26}{\milli\second}$ under the Rusan et al.~\cite{rusanAssessmentPacketLatency2015} $\frac{\text{size}}{30\frac{Mb}{s}} + 25ms$ throttle asssuming a \qty{50}{\kilo\byte} average tile), shaving breaks even at roughly $S \leq 5$ canonical styles; beyond that, the hybrid strategy - shaving canonical styles, serving raw \ac{MVT} for the tail - might be a better deployment pattern.
 This model is intentionally conservative (uniform traffic, no locality effects); real deployments with skewed traffic towards one or two canonical styles will tolerate a higher $S$.
 
