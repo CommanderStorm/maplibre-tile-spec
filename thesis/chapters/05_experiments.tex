@@ -178,15 +178,15 @@ Two open problems frame the experiment:
 \subsection{Evaluation Design}\label{sub:mlt_evaluation}
 
 The experiment isolates the interaction between style-level and data-level optimisations and identifies which level contributes the dominant share of the end-to-end savings.
-
 The evaluation uses a cumulative design with five configurations, each adding one optimisation layer:
 
 \begin{enumerate}
     \item \textbf{\ac{MVT} baseline}: unoptimised protobuf-encoded tiles served with the original style.
     \item \textbf{Style-only}: the optimised style from Experiments~1-2, served with unmodified \ac{MVT} tiles.
     \item \textbf{Shaving-only}: the original style with tile shaving applied (advisory-driven pruning of unused columns, geometry types, and property values), but without style optimisations.
-    \item \textbf{Style + shaving}: the optimised style driving tile shaving - the combined configuration where dead layer elimination and metadata refinement may narrow the advisory relative to the unoptimised style.
-    \item \textbf{Style + shaving + \ac{MLT} encoding}: the full pipeline - the encoding stage that delivers the shaved data to the wire via automatic encoding strategy selection (sort competition, per-stream profiling, string compression).
+    \item \textbf{Style + shaving}: The optimised style driving tile shaving.
+    Dead layer elimination and metadata refinement may narrow the advisory relative to the unoptimised style.
+    \item \textbf{Style + shaving + \ac{MLT} encoding}: encoding stage that delivers the shaved data to the wire via automatic encoding strategy selection (sort competition, per-stream profiling, string compression).
 \end{enumerate}
 
 \noindent Configurations~2-4 isolate the interaction effect: if the combined reduction of style+shaving exceeds the sum of style-only and shaving-only, the two optimisation categories are synergistic; if approximately equal, they compose additively; if less, they are partially redundant.
