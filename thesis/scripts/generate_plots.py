@@ -98,11 +98,14 @@ def _bootstrap_ci(
     )
 
 
-def export_figure(fig: go.Figure, name: str) -> None:
+def export_figure(
+    fig: go.Figure, name: str,
+    width: int = FIG_WIDTH, height: int = FIG_HEIGHT,
+) -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     for fmt in FORMATS:
         path = OUTPUT_DIR / f"{name}.{fmt}"
-        fig.write_image(str(path), scale=2, width=FIG_WIDTH, height=FIG_HEIGHT)
+        fig.write_image(str(path), scale=2, width=width, height=height)
         print(f"  → {path}")
 
 
@@ -625,8 +628,8 @@ def plot_rendering_metrics_mlt() -> None:
             f"{style_titles[s]} — {metric_titles[met]}"
             for s in styles for met in metrics
         ],
-        vertical_spacing=0.22,
-        horizontal_spacing=0.15,
+        vertical_spacing=0.32,
+        horizontal_spacing=0.20,
     )
 
     for row_idx, style in enumerate(styles, start=1):
@@ -648,10 +651,12 @@ def plot_rendering_metrics_mlt() -> None:
     for row_idx in range(1, 3):
         fig.update_yaxes(title_text=y_titles["loadMs"], row=row_idx, col=1)
         fig.update_yaxes(title_text=y_titles["fps"], row=row_idx, col=2)
-    fig.update_xaxes(tickangle=30)
-    fig.update_layout(**LAYOUT_DEFAULTS, height=700)
+    fig.update_xaxes(tickangle=30, automargin=True)
+    fig.update_yaxes(automargin=True)
+    layout = {**LAYOUT_DEFAULTS, "margin": dict(l=80, r=40, t=60, b=80)}
+    fig.update_layout(**layout)
 
-    export_figure(fig, "rendering_metrics_mlt")
+    export_figure(fig, "rendering_metrics_mlt", width=900, height=850)
 
 
 if __name__ == "__main__":
