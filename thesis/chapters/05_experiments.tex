@@ -404,7 +404,7 @@ With the benchmark values ($r \approx \qty{3}{\milli\second}$ per tile, $C_f \ap
 
 Under typical \ac{LRU} dynamics this in turn requires the style to hold a majority share of pool traffic before it can be shaved profitably.
 The corollary is the hybrid pattern:
-shave the one or two canonical styles that dominate the pool, and leave the long tail on raw \ac{MVT}.
+Shave the one or two canonical styles that dominate the pool, and leave the long tail on raw \ac{MVT}.
 This recommendation is driven by traffic concentration, not style count - a server hosting fifty styles with one \qty{70}{\percent}-share dominant style behaves the same as one hosting five with the same concentration.
 The model omits spatial locality and the second-order effect that peeling the dominant style off the pool cools the cache further for the remaining \ac{MVT}-served styles, both of which would only sharpen the recommendation.
 
