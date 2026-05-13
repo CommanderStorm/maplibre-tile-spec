@@ -455,8 +455,7 @@ def write_frontier_plot(
     layout.update(
         height=340 * rows,
         width=420 * cols,
-        margin=dict(l=70, r=40, t=70, b=60),
-        title_text=f"Per-style Pareto frontier (gzip_bytes, {cost_label})",
+        margin=dict(l=70, r=40, t=40, b=60),
         legend=dict(orientation="h", y=-0.06),
     )
     fig.update_layout(**layout)

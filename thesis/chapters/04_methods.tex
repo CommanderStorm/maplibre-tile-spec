@@ -1381,6 +1381,26 @@ Statistics can be collected at a configurable \emph{sample rate}.
 A sample rate of~1.0 (full census) is required for irreversible decisions such as dead layer elimination or property interning; lower sample rates are sufficient for selectivity estimation and reordering.
 This distinction is enforced by a sample-rate guard in the optimiser: passes that permanently remove data check that the sample rate is~1.0 before applying.
 
+\subsection{Preprocessing Cost Model}\label{sub:preprocessing_cost_model}
+
+All optimisations described above run \emph{offline}: a style is optimised once and served many times, and tiles are re-encoded once per tileset build.
+The full preprocessing cost of a tileset $T$ served by a style $S$ decomposes into four additive terms:
+\begin{equation}\label{eq:cost_model}
+    C_\text{total}(S, T) \;=\; C_\text{style}(S) \;+\; C_\text{stats}(T) \;+\; C_\text{adv}(S) \;+\; C_\text{enc}(S, T),
+\end{equation}
+where $C_\text{style}$ is the cost of running all expression and structural passes to fixpoint on a single style JSON (\cref{sub:expression_optimisations,sub:structural_optimisations}), $C_\text{stats}$ is the one-off cost of scanning $T$ to produce the per-layer statistical profile consumed by stats-driven folding and selectivity reordering (\cref{sub:tile_statistics}), $C_\text{adv}$ is the cost of computing the tile pruning advisory from the optimised style (\cref{sub:tile_shaving}), and $C_\text{enc}$ is the cost of the sort-strategy and per-stream encoding competition that actually writes the optimised \ac{MLT} tiles (\cref{sub:encoding_strategies}).
+$C_\text{style}$ scales with the style size alone and is independent of $|T|$; $C_\text{stats}$ and $C_\text{enc}$ scale with the number of tiles; $C_\text{adv}$ scales with the product of layer count and the number of distinct categorical values tracked below the cardinality threshold.
+All four terms are paid \emph{once} per (style, tileset) build and are amortised across every tile request, every rendering session, and every re-run of the rendering benchmark.
+
+Several mechanisms keep $C_\text{enc}$ bounded even with a multi-strategy competition.
+\emph{Bounding-box pruning} (\cref{sub:encoding_strategies}) skips Hilbert and Morton trials for large, spatially dispersed layers, removing the two most expensive candidates from the outer loop whenever they are unlikely to help.
+\emph{Data profiling} samples a contiguous mid-stream window to rule out logical encodings that cannot possibly win before any full encode pass is run, reducing the per-stream candidate set from the na\"ive worst case of eight to an average of two to three fully executed trials.
+\emph{\ac{FSST} warm-start caching} trains a symbol table exactly once per distinct unique-value set and reuses it across every sort-strategy trial, so the trained compressor is not rebuilt when the same column is re-encoded under a different feature ordering; the same applies to Morton dictionary metadata and HyperLogLog vertex-uniqueness sketches.
+\emph{Scratch-buffer recycling} in the writer reuses temporary arrays for delta computation, run counting, and bit packing across streams and across sort trials, so per-stream work does not allocate at all in the steady state.
+Finally, the \emph{\ac{RAII} alternatives guard} realises the inner competition as a stack of savepoints into the encoder's output buffers: each candidate writes directly into the final buffer positions, the smallest winner is committed in place, and the losers are rolled back simply by resetting the buffer cursor - no candidate bytes are ever copied, and nesting (per-stream competition inside a sort-strategy trial) is supported by pushing additional savepoints.
+This is what makes the multi-strategy approach affordable: the cost of trialling $k$ candidates is $k$ encode passes plus $O(1)$ bookkeeping, not $k$ encode passes plus $k$ full buffer clones.
+The empirical overhead ratio induced by these mechanisms is measured in \cref{sub:preprocessing_cost}.
+
 \section{Gathering a Representative Sample}\label{sec:gathering_sample}
 
 Evaluating an optimiser requires both a diverse set of styles and realistic tile data.
