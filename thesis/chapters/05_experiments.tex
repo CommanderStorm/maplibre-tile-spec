@@ -696,7 +696,7 @@ This variance is partially self-inflicted as the use of real GPU hardware (ANGLE
 
 \section{Visual Correctness Validation}\label{sec:visual_correctness}
 
-Visual losslessness (\cref{sec:problem_statement}) was verified with pixelmatch across all 15 benchmark styles at integer zoom levels~0-14, across all 18 scenarios, in both axis-aligned and pitched views, at \texttt{pixelRatio}~1 - using MapLibre GL~JS's Node-side software rasteriser for determinism rather than a GPU backend.
+Visual losslessness (\cref{sec:problem_statement}) was verified with pixelmatch across all 15 benchmark styles at zoom levels~0-14, across all 18 scenarios, in both axis-aligned and pitched views, at \texttt{pixelRatio}~1 and using MapLibre GL~JS's Node-side software rasteriser for determinism rather than a GPU backend.
 Across every comparison, pixelmatch reported zero differing pixels at a strict (zero-tolerance) threshold, confirming that every optimisations pass preserves visual identity on the software rasteriser.
 
 Three caveats apply to this result.
