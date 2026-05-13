@@ -116,7 +116,6 @@ Liberty's layer count drops from 111 to 107 (\qty{-3.6}{\percent}), concentrated
 In terms of gzip transfer size, Fiord benefits substantially (\qty{-14.1}{\percent} from baseline to step~15), while Liberty sees a modest \qty{-4.9}{\percent}, with layer merging slightly \emph{increasing} gzip by \qty{36}{\byte} due to the larger merged filter expressions.
 AST complexity tells a similar per-style story: Fiord's expression nodes drop by \qty{36.8}{\percent} (\num{1610}$\to$\num{1018}), whereas Liberty's drop by \qty{10.5}{\percent} (\num{3537}$\to$\num{3167}).
 
-\clearpage
 \subsection{Discussion}\label{sub:structural_discussion}
 
 \paragraph{Dead elimination and layer merging dominate}
