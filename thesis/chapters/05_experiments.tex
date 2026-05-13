@@ -500,6 +500,7 @@ The combined view is essential because the three optimisation categories (expres
 \cref{fig:heatmap_loadMs} presents the full scenario$\times$step load-time heatmap.
 The heatmap reveals that load-time improvements are unevenly distributed across scenarios: urban, tile-dense scenarios (New York, Tokyo, Paris) show larger absolute improvements than sparse scenarios (Sahara, Amazon), because the tile-fetch component of load time dominates in dense areas.
 Expression passes (steps~1-7) produce a diffuse, moderate improvement across most scenarios, whereas the improvement from structural passes (steps~8-15) is concentrated in the few styles and scenarios where dead elimination or layer merging applies.
+Consequently of this large improvement in frame time, frame time consistency issues become more obvious as shown in \cref{fig:heatmapjankcount}.
 
 \cref{fig:time_breakdown} decomposes load time into its constituent phases - style parse, first tile, first frame, and remaining load - across ablation steps.
 The style-parse component shrinks monotonically as the style document gets smaller, dropping from the baseline to a visibly shorter bar by step~7 (after expression passes).
