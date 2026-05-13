@@ -649,7 +649,7 @@ Taken together, the cost-control mechanisms formalised in \cref{sub:preprocessin
 This empirically confirms that the trial-and-retain loop costs $k$ encode passes plus $\mathcal{O}(1)$ bookkeeping rather than $k$ encode passes plus $k$ full buffer clones.
 This cost is paid once per tileset build and amortised over every subsequent tile request.
 The total single-threaded pipeline time (statistics collection through \ac{MLT} encoding with full competition) is under \qty{7}{\minute} on the Germany tileset; with 16-thread parallelism the end-to-end wall-clock time drops to approximately \qty{2}{\minute} - perfectly acceptable for an offline build stage.
-The effect of this on client side performance is not as big as it could currently, internally, data is transformed to \acsp{MVT}.
+The effect of this on client side performance is not as big as it could currently, internally, data is transformed to \acsp{MVT} instead of an more efficient in-memory-structure.
 
 \subsection{Complexity Metrics}\label{sub:combined_complexity}
 
