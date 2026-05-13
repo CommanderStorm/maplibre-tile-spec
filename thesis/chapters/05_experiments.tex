@@ -142,7 +142,8 @@ For styles that already have precise filters (e.g., hand-tuned Americana), the m
 
 \paragraph{Symbol layer exclusion}
 Symbol layers are excluded from merging because MapLibre's collision detection operates per-layer (the soundness argument is given in \cref{sub:structural_optimisations}).
-The headline merging numbers above are therefore reductions in the non-symbol pool only, and styles dominated by labels see proportionally smaller layer-count gains.
+The headline merging numbers above are therefore reductions in the non-symbol pool only.
+Because styles are usually dominated by labels, most see proportionally smaller layer-count gains.
 
 \paragraph{Downstream interaction with tile shaving}
 Dead layer elimination has a second-order effect beyond reducing per-frame draw calls: each eliminated layer removes its property references from the tile pruning advisory computed in the data-level pipeline (\cref{sub:tile_shaving}).
