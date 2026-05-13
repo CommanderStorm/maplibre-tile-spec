@@ -219,7 +219,7 @@ As a result, the columnar decoder's advantage materialises primarily on larger, 
 Work is underway to shift more decoding and data consumption into WASM to reduce boundary-crossing overhead.
 Bootstrap \qty{95}{\percent} confidence intervals confirm that the full-pipeline load-time improvements are tight: Fiord's final load time is \qty{108.7}{\milli\second} (CI: [\num{107.6}, \num{109.7}]), Liberty's is \qty{123.5}{\milli\second} (CI: [\num{122.7}, \num{124.4}]), both with $p < 10^{-45}$ (Wilcoxon, $n = 270$ pooled across 18 scenarios $\times$ 15 runs) against their respective baselines.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\linewidth]{figures/rendering_metrics_mlt.pdf}
     \caption{Rendering metrics (load time, FPS) across configurations~1-5, enabling direct comparison with Experiments~1-2 in the combined analysis}
