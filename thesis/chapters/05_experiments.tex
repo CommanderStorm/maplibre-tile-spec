@@ -385,7 +385,7 @@ A hybrid strategy - serving raw \ac{MVT} for uncommon styles and shaved \ac{MLT}
 
 A per-style break-even model frames the decision.
 Because \ac{MVT} and \ac{MLT} cannot coexist within a single style's vector-tile source, every style is either served as shaved \ac{MLT} (with its own \emph{(tile, style)} cache-key namespace) or as raw \ac{MVT} (sharing cache slots with all other \ac{MVT}-served styles).
-The choice is usually binary per style, and the operational question is which styles belong in which group.
+The choice is usually binary per style (given most styles only have one vector source), and the operational question is which styles belong in which group.
 Let $r$ denote the per-tile rendering-time saving from shaving (the load-time reduction divided by the number of fetched tiles), $C_f$ the origin fetch cost per cache miss, $\lambda_i$ the aggregate request rate to style $i$, $N$ the number of distinct tiles, and $\mathcal{M}$ the subset of styles served as \ac{MVT} with pooled rate $\Lambda_\mathcal{M} = \sum_{i \in \mathcal{M}} \lambda_i$.
 Let $h(\mu)$ denote the steady-state hit rate of a cache slot accessed at rate $\mu$ on the shared edge cache; under \ac{LRU}, $h$ is monotonically increasing in $\mu$ and saturates near $1$ for popular content.
 A style-$j \in \mathcal{M}$ request hits the per-tile pooled slot at rate $\Lambda_\mathcal{M}/N$, while a style served as shaved \ac{MLT} hits its own \emph{(tile, style)} slot at rate only $\lambda_i/N$.
