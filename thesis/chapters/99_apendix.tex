@@ -61,7 +61,7 @@ Each rule is characterised by its pass assignment, scope (filter-only or both fi
 36 & Simplify & both & pure & Rewrite \texttt{["any",["==",x,a],\ldots]} $\to$ \texttt{["in",x,[\ldots]]} \\
 37 & Simplify & both & pure & Flatten nested \texttt{case}: inline the fallback's arms \\
 38 & Simplify & both & pure & Remove trailing \texttt{case} arms whose output equals the fallback \\
-39 & Simplify & both & pure & Rewrite \texttt{case} to \texttt{match} for $O(1)$ dispatch when all arms test equality on the same expression \\
+39 & Simplify & both & pure & Rewrite \texttt{case} to \texttt{match} for $\mathcal{O}(1)$ dispatch when all arms test equality on the same expression \\
 40 & Simplify & both & pure & Simplify \texttt{coalesce}: remove null literals, truncate after first non-null literal \\
 41 & Simplify & both & pure & Flatten nested \texttt{coalesce} expressions \\
 42 & Simplify & both & pure & Flatten nested \texttt{all}/\texttt{any} operators \\

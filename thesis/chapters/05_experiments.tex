@@ -635,7 +635,7 @@ Overhead factor & auto\,/\,none (single-threaded CPU time) & $1.95\times$ \\
 
 \paragraph{Amortisation and headline numbers}
 Taken together, the cost-control mechanisms formalised in \cref{sub:preprocessing_cost_model} - bounding-box pruning, data profiling, warm-start caching, scratch-buffer recycling, and the \ac{RAII} alternatives guard - reduce the measured overhead of the full sort-strategy competition to $1.95\times$ compared to a fixed-plan (single-strategy) encoder (\cref{tab:preprocessing_cost}), well below the na\"ive $4\times$ expectation from four candidate sort orders.
-This empirically confirms that the trial-and-retain loop costs $k$ encode passes plus $O(1)$ bookkeeping rather than $k$ encode passes plus $k$ full buffer clones.
+This empirically confirms that the trial-and-retain loop costs $k$ encode passes plus $\mathcal{O}(1)$ bookkeeping rather than $k$ encode passes plus $k$ full buffer clones.
 This cost is paid once per tileset build and amortised over every subsequent tile request.
 The total single-threaded pipeline time (statistics collection through \ac{MLT} encoding with full competition) is under \qty{7}{\minute} on the Germany tileset; with 16-thread parallelism the end-to-end wall-clock time drops to approximately \qty{2}{\minute} - perfectly acceptable for an offline build stage.
 

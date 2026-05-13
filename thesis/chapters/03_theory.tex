@@ -635,14 +635,14 @@ Identifying which columns share sufficient overlap is a set similarity problem.
 \begin{equation}\label{eq:jaccard}
     J(A, B) = \frac{|A \cap B|}{|A \cup B|}
 \end{equation}
-Rather than computing the exact intersection and union (which requires $O(|A| + |B|)$ time and space), MinHash constructs a compact \emph{signature} of $k$ hash values for each set.
+Rather than computing the exact intersection and union (which requires $\mathcal{O}(|A| + |B|)$ time and space), MinHash constructs a compact \emph{signature} of $k$ hash values for each set.
 For each of $k$ independent hash functions $h_1, \ldots, h_k$, the minimum hash value over all elements is recorded: $\mathit{sig}_i(A) = \min_{a \in A} h_i(a)$.
 The Jaccard similarity is then estimated as:
 \begin{equation}\label{eq:minhash}
     \hat{J}(A, B) = \frac{1}{k} \sum_{i=1}^{k} \mathbf{1}\bigl[\mathit{sig}_i(A) = \mathit{sig}_i(B)\bigr]
 \end{equation}
 where $\mathbf{1}[\cdot]$ is the indicator function.
-The estimate is unbiased with variance $O(1/k)$~\cite{broderResemblanceContainmentDocuments1998}, so the accuracy is fine-tunable.
+The estimate is unbiased with variance $\mathcal{O}(1/k)$~\cite{broderResemblanceContainmentDocuments1998}, so the accuracy is fine-tunable.
 
 
 \section{Benchmarking}\label{sec:benchmarking}

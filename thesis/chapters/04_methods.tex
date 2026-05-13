@@ -1398,7 +1398,7 @@ Several mechanisms keep $C_\text{enc}$ bounded even with a multi-strategy compet
 \emph{\ac{FSST} warm-start caching} trains a symbol table exactly once per distinct unique-value set and reuses it across every sort-strategy trial, so the trained compressor is not rebuilt when the same column is re-encoded under a different feature ordering; the same applies to Morton dictionary metadata and HyperLogLog vertex-uniqueness sketches.
 \emph{Scratch-buffer recycling} in the writer reuses temporary arrays for delta computation, run counting, and bit packing across streams and across sort trials, so per-stream work does not allocate at all in the steady state.
 Finally, the \emph{\ac{RAII} alternatives guard} realises the inner competition as a stack of savepoints into the encoder's output buffers: each candidate writes directly into the final buffer positions, the smallest winner is committed in place, and the losers are rolled back simply by resetting the buffer cursor - no candidate bytes are ever copied, and nesting (per-stream competition inside a sort-strategy trial) is supported by pushing additional savepoints.
-This is what makes the multi-strategy approach affordable: the cost of trialling $k$ candidates is $k$ encode passes plus $O(1)$ bookkeeping, not $k$ encode passes plus $k$ full buffer clones.
+This is what makes the multi-strategy approach affordable: the cost of trialling $k$ candidates is $k$ encode passes plus $\mathcal{O}(1)$ bookkeeping, not $k$ encode passes plus $k$ full buffer clones.
 The empirical overhead ratio induced by these mechanisms is measured in \cref{sub:preprocessing_cost}.
 
 \section{Gathering a Representative Sample}\label{sec:gathering_sample}
