@@ -502,6 +502,15 @@ The heatmap reveals that load-time improvements are unevenly distributed across 
 Expression passes (steps~1-7) produce a diffuse, moderate improvement across most scenarios, whereas the improvement from structural passes (steps~8-15) is concentrated in the few styles and scenarios where dead elimination or layer merging applies.
 Consequently of this large improvement in frame time, previously hidden frame time consistency issues become more obvious as shown in \cref{fig:heatmapjankcount}.
 
+
+
+\begin{figure}[tbph]
+	\centering
+	\includegraphics[width=\linewidth]{figures/heatmap_jankCount}
+	\caption{Heatmap of how jank frames, i.e. frames that are much slower than the sorrounding frame times, happen. Due to the increased FPS, smaller variations make this metric go up as FPS is higher. this does not nessarily have an effect to the user, since real devices render below the 2000FPS marker that we run at, but nevertheless something to keep in mind.}
+	\label{fig:heatmapjankcount}
+\end{figure}
+
 \cref{fig:time_breakdown} decomposes load time into its constituent phases - style parse, first tile, first frame, and remaining load - across ablation steps.
 The style-parse component shrinks monotonically as the style document gets smaller, dropping from the baseline to a visibly shorter bar by step~7 (after expression passes).
 The first-tile and remaining-load components are stable across style-only steps, confirming that style optimisations primarily affects parse time rather than tile-fetch time; this changes only at the tile-shaving steps (17-19), where smaller tiles reduce the first-tile phase.
@@ -578,13 +587,6 @@ Subsequent passes produce smaller incremental reductions; the total peak-heap re
 \caption{Marginal contribution of each ablation step to style size (raw, gzip, Brotli), load time, and layer count. Values are percentage of baseline, medians across 14 styles and 18 scenarios}
 \label{tab:marginal_contribution}
 \end{table}
-
-\begin{figure}[tbph]
-	\centering
-	\includegraphics[width=\linewidth]{figures/heatmap_jankCount}
-	\caption{Heatmap of how jank frames, i.e. frames that are much slower than the sorrounding frame times, happen. Due to the increased FPS, smaller variations make this metric go up as FPS is higher. this does not nessarily have an effect to the user, since real devices render below the 2000FPS marker that we run at, but nevertheless something to keep in mind.}
-	\label{fig:heatmapjankcount}
-\end{figure}
 
 \subsection{Marginal Contribution Analysis}\label{sub:combined_marginal}
 
