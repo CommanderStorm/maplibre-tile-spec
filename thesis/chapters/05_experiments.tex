@@ -200,7 +200,7 @@ This section quantifies the interaction between style-level and data-level optim
 
 \paragraph{Interaction between style and data optimisations}
 Comparing the gzip-size reductions of style-only, shaving-only, and their combination, we can see the following:
-For Fiord, the style-only reduction is \qty{14.1}{\percent} and shaving-only contributes a negligible reduction, yet the combined style+shaving reduction is \qty{14.7}{\percent} - a modest additional \qty{0.6}{pp} from dead-layer elimination narrowing the pruning advisory.
+For Fiord, the style-only reduction is \qty{14.1}{\percent} and shaving-only contributes a negligible reduction, yet the combined style+shaving reduction is \qty{14.7}{\percent} - a modest additional \qty{0.6}{\percent} from dead-layer elimination narrowing the pruning advisory.
 For Liberty, shaving-only also contributes negligibly (Liberty's broad layer structure already references most tile properties), and the combined reduction (\qty{4.8}{\percent}) is close to the style-only reduction (\qty{4.9}{\percent}), indicating approximately additive behaviour.
 The aggregate across both styles shows no super-additive interaction at the median level, though per-scenario synergy is present in 16 of the 26 scenarios with complete data.
 
