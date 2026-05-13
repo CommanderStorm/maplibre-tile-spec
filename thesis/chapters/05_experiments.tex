@@ -221,7 +221,7 @@ Bootstrap \qty{95}{\percent} confidence intervals confirm that the full-pipeline
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{figures/rendering_metrics_mlt.pdf}
+    \includegraphics[width=0.9\linewidth]{figures/rendering_metrics_mlt.pdf}
     \caption{Rendering metrics (load time, FPS) across configurations~1-5, enabling direct comparison with Experiments~1-2 in the combined analysis}
     \label{fig:rendering_metrics_mlt}
 \end{figure}
@@ -391,7 +391,7 @@ Let $h(\mu)$ denote the steady-state hit rate of a cache slot accessed at rate $
 A style-$j \in \mathcal{M}$ request hits the per-tile pooled slot at rate $\Lambda_\mathcal{M}/N$, while a style served as shaved \ac{MLT} hits its own \emph{(tile, style)} slot at rate only $\lambda_i/N$.
 Moving style $i$ from $\mathcal{M}$ to the \ac{MLT}-served set is net-beneficial when
 \[
-    r \;>\; \big[\, h(\Lambda_\mathcal{M}/N) - h(\lambda_i/N) \,\big] \cdot C_f \,,
+    r \;>\; \big[\, h(\Lambda_\mathcal{M}/N) - h(\lambda_i/N) \,\big] \cdot C_f
 \]
 where the bracketed \emph{hit-rate gap} measures the cache warmth that style $i$ surrenders by leaving the pool.
 The decision depends on style $i$'s share of pool traffic, not on the total number of styles served.
