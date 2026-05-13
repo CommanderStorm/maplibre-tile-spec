@@ -95,25 +95,27 @@ The effects on Performance are reported in \cref{sub:cross_results,sub:generalis
 \cref{fig:complexity_layer_count} tracks layer count across the structural ablation steps, showing which passes concretely remove layers rather than merely rewriting them.
 \cref{fig:style_size_ablation} complements this with the raw, gzip, and Brotli style sizes, confirming that a reduction in layer count also translates into a reduction in transfer size and not just a reshuffling of the serialised form.
 
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{figures/complexity_layer_count.pdf}
+	\caption{Layer count across cumulative ablation steps on the liberty style showing a representative behavior that only layer merging reduces the amount of layers. Dead elimination usually is unable to entirely remove layers because styles are usually designed to show parts of the map and thus cannot be safely removed.}
+	\label{fig:complexity_layer_count}
+\end{figure}
+
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{figures/style_size_ablation.pdf}
+	\caption{Style size (raw, gzip, Brotli) across ablation steps}
+	\label{fig:style_size_ablation}
+\end{figure}
+
 The magnitude of structural improvement is style-dependent.
 Fiord's layer count drops from 48 to 46 (\qty{-4.2}{\percent}), with dead elimination removing one layer (step~9) and cleanup removing another (step~14) after metadata refinement lifts zoom predicates that leave a filter as \texttt{true} on an invisible layer.
 Liberty's layer count drops from 111 to 107 (\qty{-3.6}{\percent}), concentrated entirely in the layer-merge step (step~15), which merges four pairs of adjacent layers with compatible filters.
 In terms of gzip transfer size, Fiord benefits substantially (\qty{-14.1}{\percent} from baseline to step~15), while Liberty sees a modest \qty{-4.9}{\percent}, with layer merging slightly \emph{increasing} gzip by \qty{36}{\byte} due to the larger merged filter expressions.
 AST complexity tells a similar per-style story: Fiord's expression nodes drop by \qty{36.8}{\percent} (\num{1610}$\to$\num{1018}), whereas Liberty's drop by \qty{10.5}{\percent} (\num{3537}$\to$\num{3167}).
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\linewidth]{figures/complexity_layer_count.pdf}
-    \caption{Layer count across cumulative ablation steps on the liberty style showing a representative behavior that only layer merging reduces the amount of layers. Dead elimination usually is unable to entirely remove layers because styles are usually designed to show parts of the map and thus cannot be safely removed.}
-    \label{fig:complexity_layer_count}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\linewidth]{figures/style_size_ablation.pdf}
-    \caption{Style size (raw, gzip, Brotli) across ablation steps}
-    \label{fig:style_size_ablation}
-\end{figure}
 
 \subsection{Discussion}\label{sub:structural_discussion}
 
