@@ -383,12 +383,26 @@ The break-even point depends on the ratio of per-style rendering cost savings to
 For deployments where a single style dominates traffic, style-driven shaving is strictly beneficial; for multi-tenant tile servers hosting dozens of styles, shaving should be applied per style and the resulting tile variants cached independently (the approach of Mapbox's closed-source \enquote{style-optimized vector tiles} service~\cite{StyleoptimizedVectorTiles}).
 A hybrid strategy - serving raw \ac{MVT} for uncommon styles and shaved \ac{MLT} for a small set of \enquote{canonical} styles - captures most of the per-tile savings while bounding cache-key explosion.
 
-A simple analytical model frames the trade-off.
-Let $r$ denote the per-tile rendering-time saving from shaving (derived from the load-time reduction divided by the number of fetched tiles), let $S$ denote the number of distinct styles served, and let $C_f$ denote the origin fetch cost per cache miss (RTT plus transfer time).
-Under a uniform-traffic assumption, the cache miss rate increase from style-keyed tiles is $1 - 1/S$ compared to style-independent caching.
-Shaving is net-beneficial when $r > (1 - 1/S) \cdot C_f$.
-With the benchmark values ($r \approx \qty{3}{\milli\second}$ per tile from the load-time reduction, $C_f \approx \qty{26}{\milli\second}$ under the Rusan et al.~\cite{rusanAssessmentPacketLatency2015} $\frac{\text{size}}{30\frac{Mb}{s}} + 25ms$ throttle asssuming a \qty{50}{\kilo\byte} average tile), shaving breaks even at roughly $S \leq 5$ canonical styles; beyond that, the hybrid strategy - shaving canonical styles, serving raw \ac{MVT} for the tail - might be a better deployment pattern.
-This model is intentionally conservative (uniform traffic, no locality effects); real deployments with skewed traffic towards one or two canonical styles will tolerate a higher $S$.
+A per-style break-even model frames the decision.
+Because \ac{MVT} and \ac{MLT} cannot coexist within a single style's vector-tile source, every style is either served as shaved \ac{MLT} (with its own \emph{(tile, style)} cache-key namespace) or as raw \ac{MVT} (sharing cache slots with all other \ac{MVT}-served styles); the choice is binary per style, and the operational question is which styles belong in which group.
+Let $r$ denote the per-tile rendering-time saving from shaving (the load-time reduction divided by the number of fetched tiles), $C_f$ the origin fetch cost per cache miss, $\lambda_i$ the aggregate request rate to style $i$, $N$ the number of distinct tiles, and $\mathcal{M}$ the subset of styles served as \ac{MVT} with pooled rate $\Lambda_\mathcal{M} = \sum_{i \in \mathcal{M}} \lambda_i$.
+Let $h(\mu)$ denote the steady-state hit rate of a cache slot accessed at rate $\mu$ on the shared edge cache; under \ac{LRU}, $h$ is monotonically increasing in $\mu$ and saturates near $1$ for popular content.
+A style-$j \in \mathcal{M}$ request hits the per-tile pooled slot at rate $\Lambda_\mathcal{M}/N$, while a style served as shaved \ac{MLT} hits its own \emph{(tile, style)} slot at rate only $\lambda_i/N$.
+Moving style $i$ from $\mathcal{M}$ to the \ac{MLT}-served set is net-beneficial when
+\[
+    r \;>\; \big[\, h(\Lambda_\mathcal{M}/N) - h(\lambda_i/N) \,\big] \cdot C_f \,,
+\]
+where the bracketed \emph{hit-rate gap} measures the cache warmth that style $i$ surrenders by leaving the pool.
+The decision depends on style $i$'s share of pool traffic, not on the total number of styles served.
+
+Two regimes are practically meaningful.
+A \emph{dominant style} ($\lambda_i$ comparable to $\Lambda_\mathcal{M}$) sees a near-zero gap, since the pool was already warmed almost entirely by its own traffic, and any positive $r$ justifies shaving.
+A \emph{long-tail style} ($\lambda_i \ll \Lambda_\mathcal{M}$) sees a gap that approaches the full pooled hit rate $h(\Lambda_\mathcal{M}/N)$, because its private cache cannot self-warm on its own thin traffic and reverts to near-cold-start behaviour.
+With the benchmark values ($r \approx \qty{3}{\milli\second}$ per tile, $C_f \approx \qty{26}{\milli\second}$ under the Rusan et al.~\cite{rusanAssessmentPacketLatency2015} $\frac{\text{tile size}}{\qty{30}{\mega\bit\per\second}} + \qty{25}{\milli\second}$ throttle for a \qty{50}{\kilo\byte} average tile) and a representative pooled hit rate $h(\Lambda_\mathcal{M}/N) \approx 0.9$ for popular tile content, the maximum tolerable hit-rate gap is $r/C_f \approx 0.12$.
+Under typical \ac{LRU} dynamics this in turn requires the style to hold a majority share of pool traffic before it can be shaved profitably.
+The corollary is the hybrid pattern: shave the one or two canonical styles that dominate the pool, and leave the long tail on raw \ac{MVT}.
+This recommendation is driven by traffic concentration, not style count - a server hosting fifty styles with one \qty{70}{\percent}-share dominant style behaves the same as one hosting five with the same concentration.
+The model omits spatial locality and the second-order effect that peeling the dominant style off the pool cools the cache further for the remaining \ac{MVT}-served styles, both of which would only sharpen the recommendation.
 
 \paragraph{Geometry simplification is out of scope}
 A complementary direction not explored by this thesis is geometry-level pruning - coordinate precision reduction, Visvalingam or Douglas-Peucker simplification, and polygon topology coalescing - which is the principal lever used by upstream generators such as Tippecanoe~\cite{FeltTippecanoe2026} and Planetiler~\cite{OnthegomapPlanetiler2026}.
@@ -530,7 +544,7 @@ Subsequent passes produce smaller incremental reductions; the total peak-heap re
 {\ifnum\isBold=1\textbf{\style}\else\style\fi &
  \num{\baseGzip} & \num{\optGzip} & \reduction &
  \fmtdelta{\deltaLoad} & \fmtdelta{\deltaFps}}%
-\caption{Per-style summary: baseline and optimised style size (gzip), percentage reduction, and change in load time and FPS (median across scenarios). Americana excluded (incomplete data). Styles below the rule include tile-level optimisations (steps~16-19)}
+\caption{Per-style summary: baseline and optimised style size (gzip), percentage reduction, and change in load time and FPS (median across scenarios).  Styles below the rule include tile-level optimisations (steps~16-19)}
 \label{tab:per_style_summary}
 \end{table}
 
