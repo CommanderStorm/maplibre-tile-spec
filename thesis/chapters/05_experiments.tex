@@ -503,6 +503,12 @@ Expression passes (steps~1-7) produce a diffuse, moderate improvement across mos
 Consequently of this large improvement in frame time, previously hidden frame time consistency issues become more obvious as shown in \cref{fig:heatmapjankcount}.
 
 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{figures/heatmap_loadMs.pdf}
+	\caption{Heatmap of load time across scenarios (rows) and ablation steps (columns). Darker cells indicate greater improvement relative to baseline}
+	\label{fig:heatmap_loadMs}
+\end{figure}
 
 \begin{figure}[tbph]
 	\centering
@@ -518,13 +524,6 @@ The first-tile and remaining-load components are stable across style-only steps,
 \cref{fig:memory_ablation} tracks browser heap memory across steps.
 Peak heap drops sharply at step~3 (constant folding), from roughly \qty{43.5}{\mega\byte} to \qty{39.5}{\mega\byte}, reflecting the reduced expression-tree size in the parsed style.
 Subsequent passes produce smaller incremental reductions; the total peak-heap reduction from baseline to step~15 is approximately \qty{4}{\mega\byte} (\qty{-9}{\percent}).
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\linewidth]{figures/heatmap_loadMs.pdf}
-    \caption{Heatmap of load time across scenarios (rows) and ablation steps (columns). Darker cells indicate greater improvement relative to baseline}
-    \label{fig:heatmap_loadMs}
-\end{figure}
 
 \begin{figure}[htbp]
     \centering
