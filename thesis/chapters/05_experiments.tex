@@ -731,6 +731,7 @@ This inflates total feature counts and distorts absolute selectivity estimates, 
 This choice was made deliberatiley because the underlying features are not a concearn for the renderer on most layers (exception being symbol placement which is map-global instead of tile-local).
 
 The selectivity estimation model assumes independence between filter predicates (\cref{eq:selectivity_compound}), which may not hold for correlated properties; map-style filters in practice do exhibit correlations (e.g.\ \texttt{class} and \texttt{subclass} in OpenMapTiles), so the estimator is a first-order approximation rather than a calibrated model, and selectivity-based reordering should be understood as a heuristic that produces a locally-good ordering rather than a provably-optimal one.
+
 The 15-run median provides robustness against outliers but does not quantify sampling uncertainty on its own.
 Bootstrap \qty{95}{\percent} confidence intervals~\cite{efronIntroductionBootstrap1998} (10\,000 resamples, percentile method) were computed over the per-(style, variant) measurement pools for \texttt{loadMs} and \texttt{fps}; the full table is provided in the supplementary data (\texttt{scripts/data/confidence\_intervals.csv}).
 Error bars in the waterfall (\cref{fig:waterfall_loadMs}), and rendering-metrics (\cref{fig:rendering_metrics_mlt}) figures represent these bootstrap \qty{95}{\percent} CIs.
