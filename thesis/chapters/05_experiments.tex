@@ -716,7 +716,7 @@ The tile data uses only OpenMapTiles and BasemapDE schemas. Other schemas with d
 The 15 benchmark styles, while diverse, may not represent all style authoring patterns encountered in production deployments.
 
 \paragraph{End-to-end data-level coverage}
-The full rendering pipeline - style optimisations through tile shaving to \ac{MLT} re-encoding - is benchmarked end-to-end on only 2 of the 15 styles (fiord and liberty), because rendering benchmarks require a running tile proxy and browser automation.
+The full rendering pipeline - style optimisations through tile shaving to \ac{MLT} re-encoding - is benchmarked end-to-end on only 2 of the 15 styles (fiord and liberty) to reduce cost.
 However, the tile-shaving step alone (advisory generation and \ac{MVT} pruning, without rendering) was verified across all 11 \ac{OMT}-compatible styles on the same Germany tileset (\cref{fig:tile_shave_per_style}), confirming that the shaving effectiveness generalises across styles with reductions from \qty{19.8}{\percent} to \qty{46.3}{\percent}.
 The remaining limitation is that tile statistics at a sample rate of~1.0 require access to the underlying tile data, which is available only for \ac{OSM}-based tilesets accessed via a local \texttt{.mbtiles} file.
 BasemapDE styles that reference \texttt{funktion} and \texttt{objart} columns absent from OpenMapTiles would produce different shaving advisories and potentially different interaction magnitudes.
