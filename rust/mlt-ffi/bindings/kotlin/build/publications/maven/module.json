@@ -1,0 +1,116 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.maplibre",
+    "module": "mlt-ffi-kotlin",
+    "version": "0.0.1-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "net.java.dev.jna",
+          "module": "jna",
+          "version": {
+            "requires": "5.17.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "mlt-ffi-kotlin-0.0.1-SNAPSHOT.jar",
+          "url": "mlt-ffi-kotlin-0.0.1-SNAPSHOT.jar",
+          "size": 100554,
+          "sha512": "8c639c0711c5645374038e4ab7671c2192026eb92c83ec4ac4c4cfe46d5be951b887b76c540b78d122cf39e67ff6633694d0bb9701f671e26d54975a0287c913",
+          "sha256": "aa851aa10832c24d816d129c6e6684a69f4aafe452d71bddc6e13d138c981c34",
+          "sha1": "e6c8f97475560cc9b1365db97e07410813755725",
+          "md5": "281f57c9b0bc27bc36cb38dbeac82ea7"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "net.java.dev.jna",
+          "module": "jna",
+          "version": {
+            "requires": "5.17.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "mlt-ffi-kotlin-0.0.1-SNAPSHOT.jar",
+          "url": "mlt-ffi-kotlin-0.0.1-SNAPSHOT.jar",
+          "size": 100554,
+          "sha512": "8c639c0711c5645374038e4ab7671c2192026eb92c83ec4ac4c4cfe46d5be951b887b76c540b78d122cf39e67ff6633694d0bb9701f671e26d54975a0287c913",
+          "sha256": "aa851aa10832c24d816d129c6e6684a69f4aafe452d71bddc6e13d138c981c34",
+          "sha1": "e6c8f97475560cc9b1365db97e07410813755725",
+          "md5": "281f57c9b0bc27bc36cb38dbeac82ea7"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "mlt-ffi-kotlin-0.0.1-SNAPSHOT-sources.jar",
+          "url": "mlt-ffi-kotlin-0.0.1-SNAPSHOT-sources.jar",
+          "size": 8722,
+          "sha512": "2601c344f07a84fcd9e7d8329ed99d865ee6e70b479c6faefc94ffec3e42f9b962cfe451dfcfd9dea76b2c01034c4ed43b0775e58ddb2f56a506f75078f8d209",
+          "sha256": "226eac69bf8cc0ce343595f4effd2aa8d7de0b535d0f9d89ed50a6ed13ace4d6",
+          "sha1": "ac1ceca6d88c7bb3a876513b8487cf6dcb380889",
+          "md5": "617fe567f2e83360a3de5ce6429208da"
+        }
+      ]
+    }
+  ]
+}

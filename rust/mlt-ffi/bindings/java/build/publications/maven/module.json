@@ -1,0 +1,80 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.maplibre",
+    "module": "mlt-ffi-java",
+    "version": "0.0.1-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 22,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "mlt-ffi-java-0.0.1-SNAPSHOT.jar",
+          "url": "mlt-ffi-java-0.0.1-SNAPSHOT.jar",
+          "size": 8535,
+          "sha512": "a550a18dc57f82fed66272651275f3d50df0f256916f32e17bca8c32f660f5a83c9e4d01b2483d82b484a2687b5fa2219b5c570295a874136cadeb5a472547cd",
+          "sha256": "7d3872b535ca6984a0488b1874c779b98341c2c831d032fa178579e08d1437dc",
+          "sha1": "6bb2eec482b32cb8e6c8381fd87d7ca1e2070efa",
+          "md5": "e1bbc859522a03311f15824b74057c9d"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 22,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "mlt-ffi-java-0.0.1-SNAPSHOT.jar",
+          "url": "mlt-ffi-java-0.0.1-SNAPSHOT.jar",
+          "size": 8535,
+          "sha512": "a550a18dc57f82fed66272651275f3d50df0f256916f32e17bca8c32f660f5a83c9e4d01b2483d82b484a2687b5fa2219b5c570295a874136cadeb5a472547cd",
+          "sha256": "7d3872b535ca6984a0488b1874c779b98341c2c831d032fa178579e08d1437dc",
+          "sha1": "6bb2eec482b32cb8e6c8381fd87d7ca1e2070efa",
+          "md5": "e1bbc859522a03311f15824b74057c9d"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "mlt-ffi-java-0.0.1-SNAPSHOT-sources.jar",
+          "url": "mlt-ffi-java-0.0.1-SNAPSHOT-sources.jar",
+          "size": 4766,
+          "sha512": "e50a58dfc9ca63399c71d2ce505e681658331da963b97b436451ade63c6e3d47daf33ba1df9f152591f23adf84ff25f1912e80d23ce76afd4704389d4697e9c4",
+          "sha256": "a12a6e6135091824750f4bd3eb6a9296e45adf4d29bc0a7271412713dc00484a",
+          "sha1": "de96d041f425a7254dde3fa5c0081fd2acd12468",
+          "md5": "c12328b1c9837243c5be77880a0dde82"
+        }
+      ]
+    }
+  ]
+}
