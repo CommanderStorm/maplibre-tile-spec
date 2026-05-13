@@ -126,7 +126,7 @@ The interaction between the two is synergistic: styles with many narrowly-filter
 
 \paragraph{Layer merging can trade raw size for runtime savings}
 Layer merging does not always reduce the raw serialised byte count: a merged layer replaces $k$ small filter expressions with a single \texttt{match}-keyed filter and $k$-armed \texttt{match} expressions for every differing paint property, which for small $k$ can produce a slightly larger textual representation than the sum of the originals.
-The per-style ablation tables in \cref{sec:app_per_style} show one such case (OSM Liberty: \num{27628}$\to$\qty{28328}{\byte} after layer merging), where the raw count increases while the layer count drops from 105 to 103.
+The per-style ablation tables in \cref{sec:app_per_style} show one such case (OSM Liberty: \num{27.6}$\to$\qty{28.3}{\kilo\byte} after layer merging), where the raw count increases while the layer count drops from 105 to 103.
 The important observation is that raw byte count is a proxy metric for parse time and transfer cost, whereas the driver of rendering performance is layer count and per-frame draw calls; the merged layer is still cheaper to render even when its serialised form is larger.
 The gzip and Brotli columns of the same table show that the compressed size is essentially unchanged, confirming that the raw increase disappears under realistic wire compression.
 
