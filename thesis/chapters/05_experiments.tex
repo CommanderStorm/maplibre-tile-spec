@@ -215,7 +215,7 @@ The \ac{MLT} variant is slightly below at \num{2232} \ac{FPS}, consistent with t
 The native Rust micro-benchmarks show \numrange{4.6}{8.3}$\times$ higher decode throughput for \ac{MLT} over \ac{MVT}+gzip (\cref{tab:decode_throughput}), but this advantage does not fully transfer to the browser, where the \ac{MLT} decoder we build would need to run as a WASM module.
 The dominant bottleneck would be the WASM-to-JavaScript boundary as each decoded column must be transferred from WASM linear memory into JavaScript-visible typed arrays, incurring per-column copying and GC pressure that does not exist in a pure-native pipeline.
 Secondary overheads include the restriction to 128-bit WASM SIMD (whereas native \ac{FastPFOR} exploits AVX2/512) and baseline JIT compilation latency.
-Jangda et~al.~\cite{jangdaNotFastAnalyzing2019} measured a 45--55\% slowdown for WASM relative to native on SPEC CPU benchmarks; although the computational gap has narrowed since 2019, the data-transfer boundary cost remains largely unchanged because the WASM--JS interface still lacks zero-copy sharing of structured columnar buffers.
+Jangda et~al.~\cite{jangdaNotFastAnalyzing2019} measured a 45-55\% slowdown for WASM relative to native on SPEC CPU benchmarks; although the computational gap has narrowed since 2019, the data-transfer boundary cost remains largely unchanged because the WASM-JS interface still lacks zero-copy sharing of structured columnar buffers.
 As a result, the columnar decoder's advantage materialises primarily on larger, feature-dense tiles where the per-column setup and transfer cost is amortised; on smaller tiles the per-column dispatch overhead narrows the gap to approximate parity with \ac{MVT}'s single-path protobuf parser.
 Work is underway to shift more decoding and data consumption into WASM to reduce boundary-crossing overhead.
 Bootstrap \qty{95}{\percent} confidence intervals confirm that the full-pipeline load-time improvements are tight: Fiord's final load time is \qty{108.7}{\milli\second} (CI: [\num{107.6}, \num{109.7}]), Liberty's is \qty{123.5}{\milli\second} (CI: [\num{122.7}, \num{124.4}]), both with $p < 10^{-45}$ (Wilcoxon, $n = 270$ pooled across 18 scenarios $\times$ 15 runs) against their respective baselines.
@@ -348,7 +348,7 @@ Speedup (vs.\ gzip) & $8.3\times$ & $5.3\times$ & $4.6\times$ \\
 \label{tab:decode_throughput}
 \end{table}
 
-The \ac{MLT} decoder's columnar layout enables selective column access and avoids the per-feature tag-parsing overhead of protobuf, which accounts for the speedup even before transport decompression is considered: \ac{MLT}-Rust is $4.0$--$7.7\times$ faster than uncompressed \ac{MVT}.
+The \ac{MLT} decoder's columnar layout enables selective column access and avoids the per-feature tag-parsing overhead of protobuf, which accounts for the speedup even before transport decompression is considered: \ac{MLT}-Rust is $4.0$-$7.7\times$ faster than uncompressed \ac{MVT}.
 These micro-benchmark results complement the browser-based \texttt{loadMs} metric by providing an isolated measurement of the decoding-latency axis of Research Goal~R3, even though they are not 1:1 applicable because the rust decoder is not used in \texttt{maplibre-gl-js}.
 
 \subsection{Discussion}\label{sub:mlt_discussion}
@@ -364,7 +364,7 @@ The encoding stage that follows benefits from this enabling effect: shaved data 
 
 \paragraph{Style-dependent tile sizes}
 A consequence of style-driven shaving is that different styles produce different tile sizes from the same source data.
-To quantify this variation, we ran the full shaving pipeline (optimise with all passes, generate pruning advisory, apply advisory as \ac{MVT}) on the same Germany tileset (\qty{3.07}{\giga\byte}, OpenMapTiles schema, zoom levels 0--14) for each of the 11 \ac{OMT}-compatible styles in the benchmark corpus.
+To quantify this variation, we ran the full shaving pipeline (optimise with all passes, generate pruning advisory, apply advisory as \ac{MVT}) on the same Germany tileset (\qty{3.07}{\giga\byte}, OpenMapTiles schema, zoom levels 0-14) for each of the 11 \ac{OMT}-compatible styles in the benchmark corpus.
 \cref{fig:tile_shave_per_style} shows the results: tile-data reductions range from \qty{19.8}{\percent} (Bright) to \qty{46.3}{\percent} (Toner), with a median of \qty{29.0}{\percent}.
 Styles that reference fewer source-layers and property columns - such as Toner (monochrome, road/water/boundary only) and Americana (focused on shield and label rendering) - leave more tile data unused, enabling the advisory to strip more columns and features.
 Conversely, broad-coverage styles like Bright and OSM~Bright reference most of the tileset's property columns, limiting the shaving headroom.
@@ -595,13 +595,13 @@ $C_\text{style}$ scales with the style size alone and is independent of $|T|$; $
 All four terms are paid \emph{once} per (style, tileset) build and are amortised across every tile request, every rendering session, and every re-run of the rendering benchmark.
 
 \paragraph{Measured stage costs}
-\Cref{tab:preprocessing_cost} reports wall-clock time for each stage of the preprocessing pipeline on the Germany OpenMapTiles tileset (\num{255694} tiles after pruning, zoom 0--14), measured on an AMD Ryzen~7 3700X (8 cores / 16 threads), \qty{46}{\gibi\byte} RAM, NVMe SSD; median of three runs.
+\Cref{tab:preprocessing_cost} reports wall-clock time for each stage of the preprocessing pipeline on the Germany OpenMapTiles tileset (\num{255694} tiles after pruning, zoom 0-14), measured on an AMD Ryzen~7 3700X (8 cores / 16 threads), \qty{46}{\gibi\byte} RAM, NVMe SSD; median of three runs.
 \emph{Style optimisation} ($C_\text{style}$) and \emph{advisory computation} ($C_\text{adv}$) are negligible: Liberty's 90-layer style completes all passes in \qty{7.5}{\milli\second} and the advisory in \qty{1.1}{\milli\second}.
 \emph{Tile-statistics collection} ($C_\text{stats}$) takes \qty{57.4}{\second} for a single-threaded scan of all \num{256588} source tiles.
 \emph{Tile pruning and \ac{MVT} re-encoding} ($C_\text{enc}$, MVT) takes \qty{15.6}{\second} using Rayon parallelism.
 \emph{\ac{MLT} encoding with sort-strategy competition} ($C_\text{enc}$, \ac{MLT} auto) is the dominant term: \qty{5}{\minute}\,\qty{42}{\second} single-threaded, or \qty{47}{\second} with 16 threads.
 Without the competition ($C_\text{enc}$, \ac{MLT} none), single-threaded encoding takes \qty{2}{\minute}\,\qty{55}{\second}.
-The measured overhead ratio of the full competition is therefore $342 / 175 = 1.95\times$ in CPU time - substantially lower than the analytical 3--5$\times$ estimate, because the cost-control mechanisms described below eliminate most redundant work.
+The measured overhead ratio of the full competition is therefore $342 / 175 = 1.95\times$ in CPU time - substantially lower than the analytical 3-5$\times$ estimate, because the cost-control mechanisms described below eliminate most redundant work.
 
 \begin{table}[htbp]
 \centering\small
@@ -620,7 +620,7 @@ $C_\text{enc}$ (\ac{MLT} auto, 16T) & \ac{MLT} encoding, full competition, 16 th
 Overhead factor & auto\,/\,none (single-threaded CPU time) & $1.95\times$ \\
 \bottomrule
 \end{tblr}
-\caption{Preprocessing wall-clock time per pipeline stage on the Germany OpenMapTiles tileset (zoom 0--14, \num{255694} tiles after pruning). AMD Ryzen~7 3700X, \qty{46}{\gibi\byte} RAM, NVMe SSD. Median of 3~runs.}
+\caption{Preprocessing wall-clock time per pipeline stage on the Germany OpenMapTiles tileset (zoom 0-14, \num{255694} tiles after pruning). AMD Ryzen~7 3700X, \qty{46}{\gibi\byte} RAM, NVMe SSD. Median of 3~runs.}
 \label{tab:preprocessing_cost}
 \end{table}
 
