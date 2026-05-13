@@ -146,7 +146,8 @@ The headline merging numbers above are therefore reductions in the non-symbol po
 Because styles are usually dominated by labels, most see proportionally smaller layer-count gains.
 
 \paragraph{Downstream interaction with tile shaving}
-Dead layer elimination has a second-order effect beyond reducing per-frame draw calls: each eliminated layer removes its property references from the tile pruning advisory computed in the data-level pipeline (\cref{sub:tile_shaving}).
+Dead layer elimination has a second-order effect beyond reducing per-frame draw calls:
+each eliminated layer removes its property references from the tile pruning advisory computed in the data-level pipeline (\cref{sub:tile_shaving}).
 If a removed layer was the sole consumer of a property column, that column is stripped from every tile at encoding time.
 Similarly, metadata refinement's tightened zoom bounds cause the advisory to mark additional zoom levels as unused for a given source-layer, potentially eliminating entire tiles.
 This interaction is characterised fully in \cref{sub:mlt_discussion} and quantified in \cref{sub:mlt_results}; the aggregate data shows that the composition is additive rather than synergistic, but the advisory-narrowing effect is a necessary precondition for style-dependent tile shaving.
