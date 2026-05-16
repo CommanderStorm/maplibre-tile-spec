@@ -47,7 +47,8 @@ The main contributions of this thesis are:
     \item \textbf{Style-driven tile shaving}, the dominant source of load-time improvements in this work, which derives a pruning advisory from the optimised style to eliminate unused properties, geometry types, property values, and feature IDs from tile data.
     Style-level passes further refine the advisory, though the interaction remains additive rather than synergistic (\cref{sub:mlt_discussion}).
 
- \item An \textbf{automatic encoding strategy selection} for the MapLibre Tiles (MLT) columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies. The approach adapts to the altered data characteristics introduced by style-driven shaving, including changes in value distributions and column cardinalities.
+ \item An \textbf{automatic encoding strategy selection} for the MapLibre Tiles (MLT) columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies
+  The approach adapts to the altered data characteristics introduced by style-driven shaving, including changes in value distributions and column cardinalities.
 
     \item An \textbf{empirical evaluation} across 15 styles, 18 scenarios, and 17~cumulative ablation steps (fixed pass ordering; interaction effects are discussed in \cref{sec:threats}), validated end-to-end on two styles with tile data, demonstrating measurable improvements in tile volume, load time, and rendering stability.
 \end{enumerate}
