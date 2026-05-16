@@ -99,7 +99,7 @@ In contrast to data-level optimisations, style-level optimisation techniques hav
 
 \begin{sloppypar}
 The MapLibre style specification includes the utilities \texttt{gl\allowbreak-style\allowbreak-validate} and \texttt{gl\allowbreak-style\allowbreak-migrate}~\cite{MapLibreStyleSpec}, which validate style documents against the specification and mechanically migrate legacy function syntax to the expression language.
-These tools are not simplifiers - they are deliberately conservative transformers - but the mechanical migration they produce often contains redundancy that a simplifier could fold.
+These tools are not simplifiers - they are deliberately conservative transformers - but the mechanical migration they produce often contains redundancy that a simplifier could improve.
 Deeply nested \texttt{case} chains where a \texttt{match} would suffice, explicit \texttt{typeof} guards that are trivially true after the migration, and boolean expressions that could be flattened.
 A simplification pass is therefore a natural complement to migration, not a replacement for it.
 \end{sloppypar}
