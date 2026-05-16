@@ -12,7 +12,7 @@ On unstable network connections, such as on trains or aeroplanes, these translat
 
 Despite this, the map rendering and geospatial community has largely treated style authoring and data preparation as independent concerns: styles are hand-tuned for visual appearance, while tiles are encoded with general-purpose content and compression.
 The interaction between the two is left unexploited.
-For example, a style filter that matches on a property value may, after constant folding with tile-level statistics, simplify to a form that no longer references that property at all.
+For example, a style filter that matches on a property value may, after constant folding with tile-level statistics, simplify to a form that no longer references this property.
 This in turn allows the data encoder to drop the corresponding column from every tile - a saving that neither style simplification nor data pruning could achieve independently.
 Whether such cross-level interactions produce measurably super-additive gains - or whether the levels compose merely additively - is a central empirical question of this work.
 
