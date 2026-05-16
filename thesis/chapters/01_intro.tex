@@ -27,7 +27,7 @@ Three research questions guide the work:
     \item \textbf{How expensive are these optimisations} in terms of preprocessing time, and what are the \textbf{tradeoffs between decoding latency, rendering throughput, and transfer size}?
 \end{enumerate}
 
-To answer these questions, the thesis designs and implements a standalone optimiser that consumes a MapLibre style document and optional tile-level statistics, and produces a equivalent style whose rendering performance and network utilsation is measurably improved.
+To answer these questions, the thesis designs and implements a standalone optimiser that consumes a MapLibre tyle document and optional tile-level statistics, and produces a equivalent style whose rendering performance and network utilsation is measurably improved.
 
 \newpage
 \section{Contributions}\label{sec:contributions}
@@ -44,7 +44,8 @@ The main contributions of this thesis are:
     The three levels are complementary rather than co-equal:
     each targets a different performance bottleneck, and their relative importance varies by deployment scenario.
 
-    \item \textbf{Style-driven tile shaving}, the single largest contributor to load-time improvements in this work, that computes a pruning advisory from the optimised style, enabling removal of unused properties, geometry types, property values, and feature IDs from tile data.  Style-level passes assist by narrowing the advisory, though the interaction is additive rather than synergistic (\cref{sub:mlt_discussion}).
+    \item \textbf{Style-driven tile shaving}, the dominant source of load-time improvements in this work, which derives a pruning advisory from the optimised style to eliminate unused properties, geometry types, property values, and feature IDs from tile data.
+    Style-level passes further refine the advisory, though the interaction remains additive rather than synergistic (\cref{sub:mlt_discussion}).
 
     \item An \textbf{automatic encoding strategy selection} for the MapLibre Tiles (MLT) columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies, adapting to the changed data characteristics that emerge after style-driven shaving alters value distributions and column cardinalities.
 
