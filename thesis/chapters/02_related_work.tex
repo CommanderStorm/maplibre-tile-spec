@@ -35,7 +35,8 @@ The line simplification algorithms used throughout the geospatial toolchain - Do
 Tile data at different zoom levels is, in effect, a discrete multi-scale generalisation hierarchy, though this thesis does not contribute new generalisation algorithms.
 These heuristics are effective but purely data-driven: Tippecanoe has no knowledge of which style will render the tiles and therefore cannot tailor its decisions to the rendering workload.
 
-From a cartographic perspective, style-driven tile shaving can be understood as a form of \emph{model generalisation}~\cite{mcmasterGeneralizationDigitalCartography1992}: the rendering style serves as the generalisation specification, and the pruning advisory selects which data survives the reduction - analogous to how a target scale determines which features are retained in traditional multi-scale generalisation.
+From a cartographic perspective, style-driven tile shaving can be understood as a form of \emph{model generalisation}~\cite{mcmasterGeneralizationDigitalCartography1992}.
+The rendering style serves as the generalisation specification, and the pruning advisory selects which data survives the reduction - analogous to how a target scale determines which features are retained in traditional multi-scale generalisation.
 The distinction is that classical generalisation selects features by geometric criteria (area, length, density), whereas style-driven shaving selects by attribute criteria (which properties and values the style references).
 
 At a higher level of abstraction, tile schemas themselves embody data-level design decisions.
