@@ -167,7 +167,7 @@ We characterise this interaction fully in \cref{sub:mlt_discussion} and quantify
 \begin{keytakeaways}
 \item Tile shaving dominates: \qty{-71.5}{\percent} median load; style passes contribute additively, not synergistically.
 \item The \ac{MLT} format alone is not the win - \ac{MLT}-Java drifts above $1.0\times$ \ac{MVT} under gzip/Brotli;\newline
-    the gain comes from the encoder's strategy competition in our new encoder and .
+    the gain comes from the encoder's strategy competition and shared dictionary selection in our new encoder.
 \end{keytakeaways}
 
 In \cref{sec:exp_structural,sec:exp_expressions} we optimised the \emph{program} the renderer executes; in this experiment we ask whether we can optimise the \emph{data} it consumes using the same style information, and to what extent the two levels interact - the joint-optimisation question at the heart of Research Goal~R1.
