@@ -21,12 +21,12 @@
 \documentclass[
   a4paper,            % paper size (a4paper, a5paper)
   english,            % define the document language (english, german)
-  % BCOR=5mm,           % define a binding offset for the document
-  % coverBCOR=1cm,      % define a different binding offset for the cover page
+  BCOR=5mm,           % define a binding offset for the document
+  coverBCOR=1cm,      % define a different binding offset for the cover page
   % coverpage=false,    % disable the cover page (e.g. if a tumcover is used)
   % titlepage=false,    % disable the additional title page
-  % oneside,            % use onesided or twosided layout (oneside, twoside)
-  % headmarks=true,     % enable headmarks (true, false)
+  oneside,            % use onesided or twosided layout (oneside, twoside)
+  headmarks=true,     % enable headmarks (true, false)
   % font=times          % define main text font (helvet, times, palatino, libertine)
 ]{tumbook}
 % Set type after \documentclass to avoid the spurious "Unused global option(s): [thesis]" warning caused by tumbook already-consumed pgfopts keys on to scrbook.. grr
@@ -94,6 +94,30 @@
 \usepackage{enumitem}
 \usepackage{tabularray}
 \UseTblrLibrary{booktabs}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins}
+\newenvironment{keytakeaways}{%
+  \begin{tcolorbox}[
+    enhanced,
+    blanker,
+    borderline west={0.7pt}{0pt}{black!50},
+    left=3mm,
+    right=0mm,
+    top=1mm,
+    bottom=1mm,
+    before skip=8pt,
+    after skip=10pt
+  ]
+  \small
+  \textbf{Key takeaways}\par\vspace{2pt}
+  \begin{itemize}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parsep}{0pt}
+    \setlength{\topsep}{2pt}
+}{%
+  \end{itemize}
+  \end{tcolorbox}
+}
 \usepackage[noabbrev,capitalize,nameinlink]{cleveref}
 \newcommand{\crefrangeconjunction}{--}
 \newcommand{\stepcirc}[1]{
