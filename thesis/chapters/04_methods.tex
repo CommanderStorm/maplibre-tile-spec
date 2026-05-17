@@ -364,16 +364,16 @@ We drew both examples from the optimiser's test suite.
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-			["any",
-			["all", 
-			["has","name"],
-			["==",["get","class"],"road"]
-			],
-			["all",
-			["has","name"],
-			["==",["get","class"],"rail"]
-			]
-			]
+["any",
+	["all", 
+		["has","name"],
+		["==",["get","class"],"road"]
+	],
+	["all",
+		["has","name"],
+		["==",["get","class"],"rail"]
+	]
+]
 		\end{lstlisting}
 		
 		\vspace{2mm}
@@ -458,10 +458,10 @@ We drew both examples from the optimiser's test suite.
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-			["all",
-			["==",["get","class"],"road"],
-			["==",["get","class"],"road"]
-			]
+["all",
+	["==",["get","class"],"road"],
+	["==",["get","class"],"road"]
+]
 		\end{lstlisting}
 		
 		\vspace{2mm}
@@ -475,7 +475,7 @@ We drew both examples from the optimiser's test suite.
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-			["==",["get","class"],"road"]
+["==",["get","class"],"road"]
 		\end{lstlisting}
 		
 		\caption{Duplicate predicate elimination via subsumption.}
@@ -497,10 +497,10 @@ We drew both examples from the optimiser's test suite.
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-			["all",
-			["!",["==",["get","class"],"road"]],
-			["!",["==",["get","class"],"rail"]]
-			]
+["all",
+	["!",["==",["get","class"],"road"]],
+	["!",["==",["get","class"],"rail"]]
+]
 		\end{lstlisting}
 		
 		\vspace{2mm}
@@ -514,10 +514,10 @@ We drew both examples from the optimiser's test suite.
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-			["all",
-			["!=","class","road"],
-			["!=","class","rail"]
-			]
+["all",
+	["!=","class","road"],
+	["!=","class","rail"]
+]
 		\end{lstlisting}
 		
 		\caption{Negation pushdown and operator normalization.}
