@@ -166,7 +166,8 @@ We characterise this interaction fully in \cref{sub:mlt_discussion} and quantify
 \section{Experiment 3: Data-Level Optimisations}\label{sec:exp_mlt}
 \begin{keytakeaways}
 \item Tile shaving dominates: \qty{-71.5}{\percent} median load; style passes contribute additively, not synergistically.
-\item The \ac{MLT} format alone is not the win - \ac{MLT}-Java drifts above $1.0\times$ \ac{MVT} under gzip/Brotli; the gain comes from the encoder's strategy competition.
+\item The \ac{MLT} format alone is not the win - \ac{MLT}-Java drifts above $1.0\times$ \ac{MVT} under gzip/Brotli;\newline
+    the gain comes from the encoder's strategy competition and .
 \item The columnar decoder's native speedup (\numrange{4.6}{8.3}$\times$) does not survive the WASM/JS boundary in-browser.
 \end{keytakeaways}
 
