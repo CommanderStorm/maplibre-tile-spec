@@ -10,6 +10,11 @@ In \cref{sec:exp_mlt} we assess data-level optimisations, measuring how style-le
 In \cref{sec:exp_cross_style} we test generalisation by applying the full pipeline to 15 styles beyond the deep benchmarking corpus, and in \cref{sec:exp_combined} we bring all three levels together to quantify the end-to-end effect on tile volume, load time, and rendering stability - and to examine how style-level and data-level optimisations interact.
 
 \section{Experiment 1: Expression-Level Optimisations}\label{sec:exp_expressions}
+\begin{keytakeaways}
+\item Expression passes barely move load time on their own (\qty{-1.8}{\percent} median, within per-style noise).
+\item Their real value is enabling downstream passes: narrowed pruning advisory, exposed dead layers.
+\item Within the family, constant folding dominates; selectivity reordering is empirically unmeasured.
+\end{keytakeaways}
 
 In this experiment we evaluate the eight expression-level passes of \cref{sub:expression_optimisations} - the rewrites that act locally on each style's JSON expressions and run to a fixpoint.
 
@@ -74,6 +79,12 @@ The magnitude of this interaction is quantified in \cref{sec:exp_mlt}.
 
 
 \section{Experiment 2: Structural Optimisations}\label{sec:exp_structural}
+\begin{keytakeaways}
+\item Dead-layer elimination and layer merging produce nearly all the structural-family gains;\newline
+      the other passes are negligible on their own.
+\item Layer merging can grow raw bytes yet still shrink frame time - gzip absorbs the difference.
+\item Symbol-heavy styles benefit less because symbol layers are excluded from merging.
+\end{keytakeaways}
 
 Where the previous experiment rewrote local expressions, in this one we evaluate the passes that reason across layers and sources - the structural family of \cref{sub:structural_optimisations}.
 
@@ -153,6 +164,11 @@ We characterise this interaction fully in \cref{sub:mlt_discussion} and quantify
 
 
 \section{Experiment 3: Data-Level Optimisations}\label{sec:exp_mlt}
+\begin{keytakeaways}
+\item Tile shaving dominates: \qty{-71.5}{\percent} median load; style passes contribute additively, not synergistically.
+\item The \ac{MLT} format alone is not the win - \ac{MLT}-Java drifts above $1.0\times$ \ac{MVT} under gzip/Brotli; the gain comes from the encoder's strategy competition.
+\item The columnar decoder's native speedup (\numrange{4.6}{8.3}$\times$) does not survive the WASM/JS boundary in-browser.
+\end{keytakeaways}
 
 In \cref{sec:exp_structural,sec:exp_expressions} we optimised the \emph{program} the renderer executes; in this experiment we ask whether we can optimise the \emph{data} it consumes using the same style information, and to what extent the two levels interact - the joint-optimisation question at the heart of Research Goal~R1.
 The data-level pipeline we apply here (\cref{sub:data_optimisations}) takes the optimised style and uses it to drive the tile pruning advisory and the encoding strategy competition.
@@ -414,6 +430,11 @@ Style-driven geometry simplification - choosing a simplification tolerance that 
 We therefore quantify the size reductions achievable \emph{without} touching geometry at all, which understates the total optimisations headroom a production pipeline could reach by composing this work with an upstream simplifier.
 
 \section{Cross-Style Generalisation}\label{sec:exp_cross_style}
+\begin{keytakeaways}
+\item Static-only passes generalise: median \qty{44.5}{\percent} raw reduction across 13 unseen styles, none regressed.
+\item Initial style size does not predict reduction ($r = 0.16$, $n = 13$).
+\item These numbers are a lower bound - stats-driven and data-level passes were not applied here.
+\end{keytakeaways}
 
 In the preceding experiments we evaluated optimisations effectiveness on a curated corpus of 15 styles.
 To assess whether the observed gains generalise, we apply the optimiser to 13 styles drawn from the Maputnik style editor catalogue.
@@ -491,6 +512,11 @@ Compact basemaps authored by experienced cartographers, which already use effici
 
 
 \section{Combined Results}\label{sec:exp_combined}
+\begin{keytakeaways}
+\item The three optimisation channels compose additively, not synergistically.
+\item Data-level passes do almost nothing for sustained frame rate; their lever is load time.
+\item No single pass dominates across styles - the multi-pass design is what generalises.
+\end{keytakeaways}
 
 In this section we present the full pipeline ablation - all 17 cumulative steps from baseline through tile rewriting - and analyse the interactions between optimisations categories.
 The combined view is essential because the three optimisation categories (expression, structural, data) can interact: style-level dead elimination narrows tile pruning advisories, and metadata refinement enables more aggressive zoom-stop pruning in the data pipeline, though the aggregate data shows these interactions are additive rather than synergistic.
