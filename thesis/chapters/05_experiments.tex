@@ -86,7 +86,7 @@ The magnitude of this interaction is quantified in \cref{sec:exp_mlt}.
 \item Symbol-heavy styles benefit less because symbol layers are excluded from merging.
 \end{keytakeaways}
 
-Where the previous experiment rewrote local expressions, in this one we evaluate the passes that reason across layers and sources - the structural family of \cref{sub:structural_optimisations}.
+\noindent Where the previous experiment rewrote local expressions, in this one we evaluate the passes that reason across layers and sources - the structural family of \cref{sub:structural_optimisations}.
 
 \subsection{Pass Interactions}\label{sub:structural_interactions}
 
@@ -170,7 +170,7 @@ We characterise this interaction fully in \cref{sub:mlt_discussion} and quantify
     the gain comes from the encoder's strategy competition and shared dictionary selection in our new encoder.
 \end{keytakeaways}
 
-In \cref{sec:exp_structural,sec:exp_expressions} we optimised the \emph{program} the renderer executes; in this experiment we ask whether we can optimise the \emph{data} it consumes using the same style information, and to what extent the two levels interact - the joint-optimisation question at the heart of Research Goal~R1.
+\noindent In \cref{sec:exp_structural,sec:exp_expressions} we optimised the \emph{program} the renderer executes; in this experiment we ask whether we can optimise the \emph{data} it consumes using the same style information, and to what extent the two levels interact - the joint-optimisation question at the heart of Research Goal~R1.
 The data-level pipeline we apply here (\cref{sub:data_optimisations}) takes the optimised style and uses it to drive the tile pruning advisory and the encoding strategy competition.
 
 \textit{We carried out this experiment in collaboration with Rivian Automotive, Inc to optimise performance, correctness and software architecture of the encoder-decoder pair. We fully implemented the encoder and optimisation routine ourselves. Due to the collaboration, we do not discuss encoder performance, even though it is a bit better (taking a minute vs five hours to transcode germany) than the previous encoder/decoder pairs.}
@@ -436,7 +436,7 @@ We therefore quantify the size reductions achievable \emph{without} touching geo
 \item These numbers are a lower bound - stats-driven and data-level passes were not applied here.
 \end{keytakeaways}
 
-In the preceding experiments we evaluated optimisations effectiveness on a curated corpus of 15 styles.
+\noindent In the preceding experiments we evaluated optimisations effectiveness on a curated corpus of 15 styles.
 To assess whether the observed gains generalise, we apply the optimiser to 13 styles drawn from the Maputnik style editor catalogue.
 We use three tiers of breadth because end-to-end rendering benchmarks require tile data and browser automation infrastructure that does not scale to all styles: we benchmark two styles end-to-end with tile data, fifteen at the style-and-shaving level, and evaluate thirteen additional styles with static analysis only.
 
@@ -518,7 +518,7 @@ Compact basemaps authored by experienced cartographers, which already use effici
 \item No single pass dominates across styles - the multi-pass design is what generalises.
 \end{keytakeaways}
 
-In this section we present the full pipeline ablation - all 17 cumulative steps from baseline through tile rewriting - and analyse the interactions between optimisations categories.
+\noindent In this section we present the full pipeline ablation - all 17 cumulative steps from baseline through tile rewriting - and analyse the interactions between optimisations categories.
 The combined view is essential because the three optimisation categories (expression, structural, data) can interact: style-level dead elimination narrows tile pruning advisories, and metadata refinement enables more aggressive zoom-stop pruning in the data pipeline, though the aggregate data shows these interactions are additive rather than synergistic.
 
 \subsection{Full Pipeline Ablation}\label{sub:combined_ablation}
