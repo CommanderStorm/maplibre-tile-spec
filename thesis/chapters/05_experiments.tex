@@ -356,7 +356,6 @@ Format & Zoom~4 & Zoom~7 & Zoom~13 \\
 \ac{MVT} (uncompressed) & \qty{44.2}{\milli\second} & \qty{90.6}{\milli\second} & \qty{16.5}{\milli\second} \\
 \midrule
 Speedup (vs.\ gzip) & $8.3\times$ & $5.3\times$ & $4.6\times$ \\
-\bottomrule
 \end{tblr}
 \caption{Full-decode latency for \ac{MLT}-Rust vs.\ \ac{MVT} on OpenMapTiles fixture tiles, measured by Criterion micro-benchmarks (100~samples per cell).
 \ac{MLT}-Rust achieves \numrange{96}{134}\,MiB/s decode throughput vs.\ \numrange{15}{23}\,MiB/s for \ac{MVT}+gzip (measured over wire-format input size)}
