@@ -287,7 +287,6 @@ To separate the contribution of the multi-strategy competition (this work) from 
     \begin{subfigure}[t]{\linewidth}
         \centering
         \begin{tblr}{colspec={l r r r r}, rows={font=\small}, row{1}={font=\small\bfseries}}
-        \toprule
         Encoder & Plain (GB) & gzip (GB) & Brotli (GB) & zstd (GB) \\
         \midrule
         \ac{MVT}              & 4.24 & 3.08 & 3.13 & 3.16 \\
@@ -295,8 +294,7 @@ To separate the contribution of the multi-strategy competition (this work) from 
         \ac{MLT}-Rust (our work) & \textbf{3.06} &  \textbf{2.70} &  \textbf{2.72} &  \textbf{2.75} \\
         \midrule
         $\Delta$ Rust vs.\ Java & $-28.3\%$ & $-23.8\%$ & $-23.7\%$ & $-23.6\%$ \\
-        $\Delta$ Rust vs.\ \ac{MVT} & $-27.9\%$ & $-12.3\%$ & $-13.1\%$ & $-12.9\%$ \\
-        \bottomrule
+        $\Delta$ Rust vs.\ \ac{MVT} & $-27.9\%$ & $-12.3\%$ & $-13.1\%$ & $-12.9\%$
         \end{tblr}
         \caption{Total tileset size for the three encoders under four wire compressions.
           The \ac{MLT}-Java column reports the baseline from~\cite{tremmelMapLibreTileNext2025}, updated with encoding improvements backported from the Rust encoder development (correct delta-zigzag sequencing, \ac{RLE} viability checks, \ac{FSST} thresholds);
@@ -348,7 +346,6 @@ Each benchmark parses the tile header and materialises all features and properti
 \centering
 \small
 \begin{tblr}{colspec={l r r r}, rows={font=\small}, row{1}={font=\small\bfseries}}
-\toprule
 Format & Zoom~4 & Zoom~7 & Zoom~13 \\
 \midrule
 \ac{MLT}-Rust & \qty{5.73}{\milli\second} & \qty{19.4}{\milli\second} & \qty{4.09}{\milli\second} \\
