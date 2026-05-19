@@ -49,9 +49,9 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
         node distance=0.8cm and 1.4cm,
         box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
                     minimum width=2.0cm, font=\small, align=center},
-        renderer/.style={box, fill=green!10, minimum width=4.5cm, minimum height=0.7cm},
-        server/.style={box, fill=blue!12, minimum width=4.5cm, minimum height=0.7cm},
-        datasource/.style={box, fill=orange!10, minimum width=4.5cm, minimum height=0.7cm},
+        renderer/.style={box, fill=roleGen!20, minimum width=4.5cm, minimum height=0.7cm},
+        server/.style={box, fill=roleSrc!20, minimum width=4.5cm, minimum height=0.7cm},
+        datasource/.style={box, fill=roleData!20, minimum width=4.5cm, minimum height=0.7cm},
         arrow/.style={-Stealth, thick},
         label/.style={font=\scriptsize\itshape, fill=white},
     ]
@@ -59,7 +59,7 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
         \node[renderer] (renderer) {Map Renderer};
 
         % Tile Server
-        \node[server, below=2.6cm of renderer] (server) {Tile Server};
+        \node[server, below=1.4cm of renderer] (server) {Tile Server};
 
         % Arrows from server to renderer with resource labels
         \coordinate (s1) at ($(server.north)!0.25!(server.north east)$);
@@ -79,7 +79,7 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
             {over\\the\\network};
 
         % Data Source (bottom)
-        \node[datasource, below=1.2cm of server] (datasource) {Data Source};
+        \node[datasource, below=1.4cm of server] (datasource) {Data Source};
 
         \draw[arrow] (datasource.north) -- node[label] {convert to serving-friendly representation} (server.south);
     \end{tikzpicture}
