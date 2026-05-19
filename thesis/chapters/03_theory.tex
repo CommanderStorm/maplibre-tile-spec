@@ -43,85 +43,48 @@ These low-level graphics building blocks are linked to map data through sprites,
 As a lower-level representation layer for displaying map content, the following components are required, as shown in \cref{fig:basic-arch}: \emph{styles} define the visual appearance of the map and reference the other required resources; \emph{tiles} provide the geometry (points, lines, polygons) and associated attributes (for example, building heights) displayed on the map; \emph{sprites} supply the icons; and \emph{fonts} provide the glyphs used to render text labels.
 Occasionally, additional assets such as 3D geometry models or terrain are used as well.
 
-\begin{wrapfigure}{r}{0.50\textwidth}
-	\centering
-	\begin{tikzpicture}[
-		node distance=1.8cm,
-		>=Stealth,
-		
-		box/.style={
-			rectangle,
-			rounded corners=1.5pt,
-			draw=black!70,
-			line width=0.5pt,
-			minimum height=0.75cm,
-			minimum width=4.2cm,
-			align=center,
-			font=\small,
-			fill=white
-		},
-		
-		renderer/.style={box},
-		server/.style={box},
-		datasource/.style={box},
-		
-		arrow/.style={
-			-Stealth,
-			draw=black!70,
-			line width=0.6pt
-		},
-		
-		label/.style={
-			font=\scriptsize,
-			fill=white,
-			inner sep=1pt
-		}
-		]
-		
-		% Renderer
-		\node[renderer] (renderer) {Map Renderer};
-		
-		% Server
-		\node[server, below=of renderer] (server) {Tile Server};
-		
-		% Connection anchors
-		\foreach \x/\name in {
-			0.18/style,
-			0.40/tiles,
-			0.62/sprites,
-			0.84/fonts
-		}{
-			\coordinate (s-\name) at ($(server.north west)!\x!(server.north east)$);
-			\coordinate (r-\name) at ($(renderer.south west)!\x!(renderer.south east)$);
-			
-			\draw[arrow]
-			(s-\name) -- node[label] {\name} (r-\name);
-		}
-		
-		% Network annotation
-		\node[
-		font=\scriptsize,
-		text=black!65
-		] at ($(renderer.south)!0.5!(server.north)+(2.8cm,0)$)
-		{network transfer};
-		
-		% Data source
-		\node[datasource, below=of server] (datasource) {Data Source};
-		
-		\draw[arrow]
-		(datasource.north)
-		-- node[label] {preprocess}
-		(server.south);
-		
-	\end{tikzpicture}
-	
-	\caption{
-		Basic building blocks of a map rendering stack.
-		Data is transformed into a serving-friendly representation and delivered
-		to a renderer together with style definitions, sprites, and fonts.
-	}
-	
-	\label{fig:basic-arch}
+\begin{wrapfigure}{r}{0.52\textwidth}
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.8cm and 1.4cm,
+        box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
+                    minimum width=2.0cm, font=\small, align=center},
+        renderer/.style={box, fill=green!10, minimum width=4.5cm, minimum height=0.7cm},
+        server/.style={box, fill=blue!12, minimum width=4.5cm, minimum height=0.7cm},
+        datasource/.style={box, fill=orange!10, minimum width=4.5cm, minimum height=0.7cm},
+        arrow/.style={-Stealth, thick},
+        label/.style={font=\scriptsize\itshape, fill=white},
+    ]
+        % Map Renderer (top)
+        \node[renderer] (renderer) {Map Renderer};
+
+        % Tile Server
+        \node[server, below=2.6cm of renderer] (server) {Tile Server};
+
+        % Arrows from server to renderer with resource labels
+        \coordinate (s1) at ($(server.north)!0.25!(server.north east)$);
+        \coordinate (s2) at ($(server.north)!0.75!(server.north east)$);
+        \coordinate (s3) at ($(server.north)!0.25!(server.north west)$);
+        \coordinate (s4) at ($(server.north)!0.75!(server.north west)$);
+
+        \draw[arrow] (s4) -- node[label] {style}   (s4 |- renderer.south);
+        \draw[arrow] (s3) -- node[label] {tiles}   (s3 |- renderer.south);
+        \draw[arrow] (s1) -- node[label] {sprites} (s1 |- renderer.south);
+        \draw[arrow] (s2) -- node[label] {fonts}   (s2 |- renderer.south);
+
+        % "over the network" brace
+        \draw[decorate, decoration={brace, amplitude=6pt}, thick]
+            ([xshift=4pt]renderer.south east) -- ([xshift=4pt]server.north east)
+            node[midway, right=10pt, font=\scriptsize\itshape, align=left]
+            {over\\the\\network};
+
+        % Data Source (bottom)
+        \node[datasource, below=1.2cm of server] (datasource) {Data Source};
+
+        \draw[arrow] (datasource.north) -- node[label] {convert to serving-friendly representation} (server.south);
+    \end{tikzpicture}
+    \caption{Basic building blocks of a map rendering stack. Data is taken from a data source, converted into a simplified format (for example a spatial index), and served to a client. The visual appearance is defined by a style and supported by fonts and sprites for text and icons.}
+    \label{fig:basic-arch}
 \end{wrapfigure}
 
 There are several approaches to delivering client-side rendered vector maps.
