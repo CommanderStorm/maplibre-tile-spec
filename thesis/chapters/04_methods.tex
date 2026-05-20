@@ -19,11 +19,10 @@ And let MapLibre's rendering function, which maps a style, a tile set, and a vie
 \end{equation}
 
 \noindent The optimiser solves the following problem:
-Given an input pair $(S, T)$ and a cost function $c : \mathcal{S} \times \mathcal{T} \to \mathbb{R}_{\geq 0}$, find $(S', T')$ minimising $c(S', T')$ subject to the \emph{visual equivalence} constraint
+Given an input pair $(S, T)$ and a cost function $c: \mathcal{S} \times \mathcal{T} \to \mathbb{R}_{\geq 0}$, find $(S', T')$ minimising $c(S', T')$ subject to the \emph{visual equivalence} constraint where $\equiv$ denotes pixel-identity under a deterministic rasteriser:
 \begin{equation}\label{eq:visual_equivalence}
     \forall v \in \mathcal{V}:\; R(S, T, v) \equiv R(S', T', v),
 \end{equation}
-where $\equiv$ denotes pixel-identity under a deterministic rasteriser.
 
 In practice, we quantify $v$ only over the discrete grid of zooms and viewports, and verify pixel-identity by direct image comparison rather than by proof.
 The cost function $c$ encodes the deployment-relevant metrics discussed in \cref{sec:benchmarking}; we do not attempt to collapse them into a scalar, instead reporting the effect of each pass on each metric separately.
