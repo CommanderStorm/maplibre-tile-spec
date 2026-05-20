@@ -212,10 +212,10 @@ Contradiction detection identifies filters that are logically unsatisfiable by i
 When two predicates constrain the same property to disjoint values - e.g.\
 %
 \begin{quote}
-\noindent\texttt{["all",}\newline
+\texttt{["all",}\newline
 \texttt{["==",~["get",~"class"],~"a"],}\newline
 \texttt{["==",~["get",~"class"],~"b"]}\newline
-\noindent\texttt{]}
+\texttt{]}
 \end{quote}
 %
 \noindent the enclosing \texttt{all} is rewritten to \texttt{false}, which the structural dead elimination pass will later exploit to remove the enclosing layer.
@@ -334,7 +334,7 @@ Rules either reduce $n_{\mathrm{AST}}$ (e.g.\ constant folding, boolean absorpti
 Two further rules - \texttt{any}$\to$\texttt{in} merging and predicate reordering - are either strictly monotone in the measure (\texttt{any}$\to$\texttt{in} reduces $n_{\mathrm{AST}}$ because the merged \texttt{in} has fewer nodes than the original chain of equalities) or semantically idempotent after one application (selectivity reordering sorts predicates into a canonical order).
 
 Two rules can \emph{temporarily increase} $n_{\mathrm{AST}}$ within a single iteration, which is why the measure alone does not constitute a termination proof.
-De~Morgan's law transforms \texttt{["!",\allowbreak["any",\allowbreak A,\allowbreak B]]} (4~nodes) into \texttt{["all",\allowbreak["!",\allowbreak A],\allowbreak["!",\allowbreak B]]} (5~nodes), and distributive factoring may introduce boolean identity elements in vacuous-remainder cases.
+De~Morgan's law transforms \texttt{["!", \allowbreak["any", \allowbreak A, \allowbreak B]]} (4~nodes) into \texttt{["all", \allowbreak["!", \allowbreak A], \allowbreak["!", \allowbreak B]]} (5~nodes), and distributive factoring may introduce boolean identity elements in vacuous-remainder cases.
 In both cases, subsequent rules within the same or next iteration typically compensate: boolean flattening reduces nesting depth, and constant folding absorbs the identity elements, so the net effect across iterations is a decrease in $\mu$.
 In the general case, however, compensating rules are not guaranteed to fire (e.g., when De~Morgan produces negated predicates that admit no further simplification at the top level of a filter).
 In practice, all styles in the benchmark corpus converge within three iterations - well below the hard cap - because the monotone majority of rules drives $\mu$ toward zero and the non-monotone rules fire at most once per expression.
