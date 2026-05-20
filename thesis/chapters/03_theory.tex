@@ -414,7 +414,7 @@ Implemented algebraic rules include:
 	\end{alignedat}
 	\]
 
-	\item \emph{Boolean-ish Annihilation}:
+	\item \emph{Annihilation}:
 	\[
 	\begin{alignedat}{2}
 		x \land \mathit{false}  & = \mathit{false} \qquad &
@@ -422,7 +422,7 @@ Implemented algebraic rules include:
 	\end{alignedat}
 	\]
 	
-	\item \emph{Integer Annihilation}:
+	\item \emph{Integer Annihilation} (can only be applied to integers because of \texttt{NaN}):
 	\[
 	\begin{alignedat}{1}
 		x \cdot 0               & = 0
