@@ -212,7 +212,10 @@ Contradiction detection identifies filters that are logically unsatisfiable by i
 When two predicates constrain the same property to disjoint values - e.g.\
 %
 \begin{quote}
-\texttt{["==",~["get",~"class"],~"a"]}~~and~~\texttt{["==",~["get",~"class"],~"b"]}
+\texttt{["all",}
+\texttt{["==",~["get",~"class"],~"a"],}
+\texttt{["==",~["get",~"class"],~"b"]}
+\texttt{]}
 \end{quote}
 %
 \noindent the enclosing \texttt{all} is rewritten to \texttt{false}, which the structural dead elimination pass will later exploit to remove the enclosing layer.
