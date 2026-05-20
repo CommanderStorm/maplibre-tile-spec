@@ -416,16 +416,10 @@ Implemented algebraic rules include:
 
 	\item \emph{Annihilation}:
 	\[
-	\begin{alignedat}{2}
+	\begin{alignedat}{3}
 		x \land \mathit{false}  & = \mathit{false} \qquad &
-		x \lor \mathit{true}    & = \mathit{true} \qquad
-	\end{alignedat}
-	\]
-	
-	\item \emph{Integer Annihilation} (integer-only because of \texttt{NaN}):
-	\[
-	\begin{alignedat}{1}
-		x \cdot 0               & = 0
+		x \lor \mathit{true}    & = \mathit{true} \qquad &
+		\forall x \in \mathcal{N}: x \cdot 0               & = 0
 	\end{alignedat}
 	\]
 
