@@ -30,7 +30,8 @@ The cost function $c$ encodes the deployment-relevant metrics discussed in \cref
 The constraint~(\cref{eq:visual_equivalence}) is the \emph{soundness criterion} for every pass in this chapter:
 Any rewrite whose correctness depends on a MapLibre runtime invariant must either preserve the invariant or reject the rewrite when the invariant cannot be established.
 
-\noindent For example, the stats-driven folding pass cannot soundly remove a \texttt{match} arm without a full census of the tile data, because the arm may be reached by features the statistics have not observed; the pass is consequently gated on a sample rate of~1.0.
+\noindent For example, the stats-driven folding pass cannot soundly remove a \texttt{match} arm without a full census of the tile data, because the arm may be reached by features the statistics have not observed;
+the pass is consequently gated on a sample rate of~1.0.
 Similarly, the metadata-refinement pass must reason about overzoom (\cref{sec:tiles}) when tightening \texttt{maxzoom}, because an overzoomed tile counts as a viewing state in~(\ref{eq:visual_equivalence}).
 
 \section{Scope}\label{sec:scope}
