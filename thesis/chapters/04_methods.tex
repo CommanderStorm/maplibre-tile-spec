@@ -666,7 +666,7 @@ A property is mergeable if, according to the MIR field metadata, it supports fea
 Camera-only properties (such as \texttt{line-dasharray} or \texttt{*-translate}) must be uniform across all layers in a merge group, since they cannot be conditioned on feature attributes.
 Layer types that support sort keys (\texttt{fill}, \texttt{line}, \texttt{circle}, \texttt{fill-extrusion}) are candidates; \texttt{symbol} layers are excluded because MapLibre's collision detection algorithm operates per-layer, and merging symbol layers would alter which labels can suppress each other, changing the rendered output.
 
-\noindent \Cref{lst:placement} shows the per-layer processing; \stepcirc{y} constructs a fresh instance when a symbol layer's placement begins, and \stepcirc{z} tears it down before the next layer starts; the underlying \texttt{Placement} object (and its \texttt{CollisionIndex}) is shared across all layers via \texttt{this.placement}, which is what makes the \texttt{LayerPlacement} scope per-layer rather than global.
+\Cref{lst:placement} shows the per-layer processing; \stepcirc{y} constructs a fresh instance when a symbol layer's placement begins, and \stepcirc{z} tears it down before the next layer starts; the underlying \texttt{Placement} object (and its \texttt{CollisionIndex}) is shared across all layers via \texttt{this.placement}, which is what makes the \texttt{LayerPlacement} scope per-layer rather than global.
 Symbols from earlier layers are fully placed before later layers begin, so layer ordering determines placement priority; merging two symbol layers into one would interleave their symbols within a single \texttt{LayerPlacement}, changing which symbols take priority and therefore altering collision outcomes.
 
 \begin{lstlisting}[
