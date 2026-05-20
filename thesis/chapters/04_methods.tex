@@ -715,7 +715,6 @@ This holds for the data-driven expression variants used across all MapLibre vers
 
 \clearpage
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS bucket populate method showing filter-first evaluation (\texttt{src/data/bucket/fill\_bucket.ts:84-106})},label=lst:bucket_populate]
-// src/data/bucket/fill_bucket.ts:84-106 - populate()
 for (const {feature, id, index, sourceLayerIndex} of features) {
     const needGeometry = this.layers[0]._featureFilter.needGeometry;
     const evaluationFeature = toEvaluationFeature(feature, needGeometry);
