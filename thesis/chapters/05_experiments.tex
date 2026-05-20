@@ -249,7 +249,7 @@ Once shaving has fixed what data survives, the encoding stage determines whether
 \cref{fig:shaving_effectiveness_per_zoom} plots total tile size per zoom level for both \ac{MVT} and \ac{MLT}-Rust, with and without shaving via the Liberty advisory.
 The gap between each format and its shaved counterpart quantifies the data removed by the pruning advisory; the gap between \ac{MVT}-shaved and \ac{MLT}-Rust-shaved quantifies the additional contribution of columnar encoding on the already-pruned data.
 Both formats benefit from shaving across all compression schemes, confirming that the advisory operates on the data itself rather than relying on format-specific redundancy.
-\cref{fig:compression_ratio_per_zoom} reframes the same evidence as a ratio against the \ac{MVT} baseline, adding the Tremmel \& Zink \ac{MLT}-Java encoder for comparison: the \ac{MLT}-Rust curves remain at roughly $0.6$-$0.8\times$ \ac{MVT} throughout the zoom range, whereas the \ac{MLT}-Java curves drift above $1.0\times$ at several zoom levels under brotli/zstd, underscoring that the gains attributed to the \ac{MLT} format in this thesis come almost entirely from the encoder-side strategy competition and not from the columnar format alone.
+\cref{fig:encoder_comparison} reframes the same evidence as a ratio against the \ac{MVT} baseline, adding the Tremmel \& Zink \ac{MLT}-Java encoder for comparison: the \ac{MLT}-Rust curves remain at roughly $0.6$-$0.8\times$ \ac{MVT} throughout the zoom range, whereas the \ac{MLT}-Java curves drift above $1.0\times$ at several zoom levels under brotli/zstd, underscoring that the gains attributed to the \ac{MLT} format in this thesis come almost entirely from the encoder-side strategy competition and not from the columnar format alone.
 
 \begin{figure}[htbp]
     \centering
@@ -261,13 +261,6 @@ Both formats benefit from shaving across all compression schemes, confirming tha
       \ac{MLT}-Rust-shaved quantifies the additional contribution of columnar
       encoding}
     \label{fig:shaving_effectiveness_per_zoom}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\linewidth]{figures/compression_ratio_per_zoom}
-    \caption[Per-zoom compression ratio across MVT, MLT-Java, and MLT-Rust]{Per-zoom compression ratio across \ac{MVT}, \ac{MLT}-Java (Tremmel \& Zink baseline), and \ac{MLT}-Rust (this work), under plain/gzip/Brotli/zstd wire compression.  The gap between \ac{MLT}-Java and \ac{MLT}-Rust isolates the contribution of the automatic encoding strategy selection; the gap between \ac{MLT}-Rust and the gzip/Brotli/zstd curves of \ac{MVT} isolates the format-level contribution that survives wire compression}
-    \label{fig:compression_ratio_per_zoom}
 \end{figure}
 
 \paragraph{Isolating the contribution of the Rust encoder's strategy selection}
