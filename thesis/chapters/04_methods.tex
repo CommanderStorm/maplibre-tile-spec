@@ -13,11 +13,10 @@ In \cref{sec:problem_statement} we formalise the optimisation problem and the vi
 With the foundations established in \cref{ch:theoretical_background}, we can state the optimisation problem addressed by this thesis formally.
 Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~JSON documents, and $\mathcal{T}$ be the set of tile sets (a tile set is a finite family of tiles indexed by source, $x$, $y$, $z$).
 Let $\mathcal{V}$ be the set of \emph{viewing states} a renderer can be in - roughly the six degrees of freedom and the viewport, so a $(x, y, z, \text{roll}, \text{pitch}, \text{bearing}, \text{viewport size})$ tuple.
-And let
+And let MapLibre's rendering function, which maps a style, a tile set, and a viewing state to a rasterised image in $\mathcal{I}$ be defined as
 \begin{equation}\label{eq:render_function}
     R : \mathcal{S} \times \mathcal{T} \times \mathcal{V} \to \mathcal{I}
 \end{equation}
-denote MapLibre's rendering function, which maps a style, a tile set, and a viewing state to a rasterised image in $\mathcal{I}$.
 
 The optimiser solves the following problem: given an input pair $(S, T)$ and a cost function $c : \mathcal{S} \times \mathcal{T} \to \mathbb{R}_{\geq 0}$, find $(S', T')$ minimising $c(S', T')$ subject to the \emph{visual equivalence} constraint
 \begin{equation}\label{eq:visual_equivalence}
