@@ -770,9 +770,9 @@ Tighter source bounds allow the tile server (or client-side tile manager) to ski
         check/.style={font=\scriptsize, text=black!90},
     ]
         % Input layers (left)
-        \node[layer, fill=roleSrc!20]   (l0) {line:\\ \texttt{filter: ["get", "class"] == "motorway"}\\\texttt{line-color: \#e892a2}\\\texttt{line-width: 3}};
-        \node[layer, fill=roleData!25, below=0.5cm of l0] (l1) {line:\\\texttt{filter: ["get", "class"] == "primary"}\\\texttt{line-color: \#fcd6a4}\\\texttt{line-width: 2}};
-        \node[layer, fill=roleMir!30, below=0.5cm of l1] (l2) {line:\\\texttt{filter: ["get", "class"] == "secondary"}\\\texttt{line-color: \#f7fabf}\\\texttt{line-width: 1.5}};
+        \node[layer, fill=roleSrc!20]   (l0) {line\\ \texttt{filter: ["get", "class"] == "motorway"}\\\texttt{line-color: \#e892a2}\\\texttt{line-width: 3}};
+        \node[layer, fill=roleData!25, below=0.5cm of l0] (l1) {line\\\texttt{filter: ["get", "class"] == "primary"}\\\texttt{line-color: \#fcd6a4}\\\texttt{line-width: 2}};
+        \node[layer, fill=roleMir!30, below=0.5cm of l1] (l2) {line\\\texttt{filter: ["get", "class"] == "secondary"}\\\texttt{line-color: \#f7fabf}\\\texttt{line-width: 1.5}};
 
         \node[above=0.15cm of l0, font=\small\bfseries] {Input: 3 adjacent line layers};
 
