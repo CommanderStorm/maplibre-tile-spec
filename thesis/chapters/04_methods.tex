@@ -24,7 +24,7 @@ Given an input pair $(S, T)$ and a cost function $c: \mathcal{S} \times \mathcal
     \forall v \in \mathcal{V}:\; R(S, T, v) \equiv R(S', T', v),
 \end{equation}
 
-In practice, we quantify $v$ only over the discrete grid of zooms and viewports, and verify pixel-identity by direct image comparison rather than by proof.
+In practice, we quantify $v$ only over the discrete grid of zooms and viewports, and verify pixel-identity by direct image comparison rather than by formal proof.
 The cost function $c$ encodes the deployment-relevant metrics discussed in \cref{sec:benchmarking}; we do not attempt to collapse them into a scalar, instead reporting the effect of each pass on each metric separately.
 
 The constraint~(\cref{eq:visual_equivalence}) is the \emph{soundness criterion} for every pass in this chapter:
