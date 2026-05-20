@@ -12,7 +12,8 @@ In \cref{sec:problem_statement} we formalise the optimisation problem and the vi
 
 With the foundations established in \cref{ch:theoretical_background}, we can state the optimisation problem addressed by this thesis formally.
 Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~JSON documents, and $\mathcal{T}$ be the set of tile sets (a tile set is a finite family of tiles indexed by source, $x$, $y$, $z$).
-Let $\mathcal{V}$ be the set of \emph{viewing states} a renderer can be in - roughly the six degrees of freedom and the viewport, so a $(x, y, z, \text{roll}, \text{pitch}, \text{bearing}, \text{viewport size})$ tuple. - and let
+Let $\mathcal{V}$ be the set of \emph{viewing states} a renderer can be in - roughly the six degrees of freedom and the viewport, so a $(x, y, z, \text{roll}, \text{pitch}, \text{bearing}, \text{viewport size})$ tuple.
+And let
 \begin{equation}\label{eq:render_function}
     R : \mathcal{S} \times \mathcal{T} \times \mathcal{V} \to \mathcal{I}
 \end{equation}
