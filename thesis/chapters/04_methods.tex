@@ -640,7 +640,7 @@ The motivation is that fewer layers means fewer rendering passes: the renderer p
 Each layer eliminated by the merge therefore shortens \texttt{layerIds} by one entry and removes exactly one \texttt{renderLayer} dispatch from each pass.
 
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS painter render loop (\texttt{src/render/painter.ts:559-596})},label=lst:painter_loop]
-// src/render/painter.ts:559-566 - opaque pass (top-to-bottom)
+// opaque pass (top-to-bottom)
 for (this.currentLayer = layerIds.length - 1;
      this.currentLayer >= 0; this.currentLayer--) {
     const layer = this.style._layers[layerIds[this.currentLayer]];
@@ -650,7 +650,7 @@ for (this.currentLayer = layerIds.length - 1;
     this.renderLayer(this, tileManager, layer, coords, renderOptions);
 }
 
-// src/render/painter.ts:575-596 - translucent pass (bottom-to-top)
+// translucent pass (bottom-to-top)
 for (this.currentLayer = 0;
      this.currentLayer < layerIds.length; this.currentLayer++) {
     const layer = this.style._layers[layerIds[this.currentLayer]];
