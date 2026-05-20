@@ -300,8 +300,7 @@ renderLayer(painter, tileManager, layer, coords, renderOptions) {
 Filters and properties can be specified as literal constants, as \emph{zoom-dependent} expressions (varying with the camera zoom level via \texttt{interpolate} or \texttt{step} ramps), as \emph{data-driven} expressions (varying per feature based on property values via \texttt{match}, \texttt{case}, or \texttt{get} operators), or as a combination of both.
 The resulting expression trees can be deeply nested and may contain redundant or unreachable branches - characteristics that make them amenable to the same kinds of simplification and optimisations techniques used in compilers and database query planners.
 
-\Cref{lst:worker_pipeline} shows the worker's tile-parse pipeline as five named steps, marked inline as
-\stepcirc{a} to \stepcirc{e}.
+\Cref{lst:worker_pipeline} shows the worker's tile-parse pipeline as five named steps, marked inline as \stepcirc{a} to \stepcirc{e}.
 
 \noindent Every optimisation we present in \cref{ch:methods} attaches to one of these steps:
 merging layers reduces work for \stepcirc{a};
