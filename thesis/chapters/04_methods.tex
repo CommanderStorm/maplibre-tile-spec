@@ -12,7 +12,7 @@ In \cref{sec:problem_statement} we formalise the optimisation problem and the vi
 
 With the foundations established in \cref{ch:theoretical_background}, we can state the optimisation problem addressed by this thesis formally.
 Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~JSON documents, and $\mathcal{T}$ be the set of tile sets (a tile set is a finite family of tiles indexed by source, $x$, $y$, $z$).
-Let $\mathcal{V}$ be the set of \emph{viewing states} a renderer can be in - roughly, $(x, y, z, \text{pitch}, \text{bearing}, \text{viewport size})$ tuples - and let
+Let $\mathcal{V}$ be the set of \emph{viewing states} a renderer can be in - roughly the six degrees of freedom and the viewport, so a $(x, y, z, \text{roll}, \text{pitch}, \text{bearing}, \text{viewport size})$ tuple. - and let
 \begin{equation}\label{eq:render_function}
     R : \mathcal{S} \times \mathcal{T} \times \mathcal{V} \to \mathcal{I}
 \end{equation}
@@ -84,21 +84,21 @@ Expression passes run first so that structural passes operate on already-simplif
         node distance=0.8cm and 1.4cm,
         box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
                     minimum width=2.0cm, font=\small, align=center},
-        src/.style={box, fill=blue!12},
-        mir/.style={box, fill=violet!12},
-        gen/.style={box, fill=green!10},
-        data/.style={box, fill=orange!10},
-        opt/.style={box, fill=yellow!12, minimum width=2.4cm},
-        test/.style={box, fill=red!12},
+        src/.style={box, fill=roleSrc!20},
+        mir/.style={box, fill=roleMir!30},
+        gen/.style={box, fill=roleGen!20},
+        data/.style={box, fill=roleData!25},
+        opt/.style={box, fill=roleOpt!35, minimum width=2.4cm},
+        test/.style={box, fill=roleTest!25},
         arrow/.style={-Stealth, thick},
         query/.style={-Stealth, thick, densely dashed},
         label/.style={font=\scriptsize\itshape, text=darkgray},
-        validationlabel/.style={font=\scriptsize\itshape, text=red},
+        validationlabel/.style={font=\scriptsize\itshape, text=cvdvermillion},
         validation/.style={
             dashed,
-            red,
+            cvdvermillion,
             ->,
-            every edge node/.append style={text=red}
+            every edge node/.append style={text=cvdvermillion}
         },
     ]
         % Codegen pipeline (top row)
@@ -769,30 +769,30 @@ Tighter source bounds allow the tile server (or client-side tile manager) to ski
         check/.style={font=\scriptsize, text=black!90},
     ]
         % Input layers (left)
-        \node[layer, fill=red!12]   (l0) {line:\\ \texttt{filter: ["get", "class"] == "motorway"}\\\texttt{line-color: \#e892a2}\\\texttt{line-width: 3}};
-        \node[layer, fill=orange!12, below=0.5cm of l0] (l1) {line:\\\texttt{filter: ["get", "class"] == "primary"}\\\texttt{line-color: \#fcd6a4}\\\texttt{line-width: 2}};
-        \node[layer, fill=yellow!15, below=0.5cm of l1] (l2) {line:\\\texttt{filter: ["get", "class"] == "secondary"}\\\texttt{line-color: \#f7fabf}\\\texttt{line-width: 1.5}};
+        \node[layer, fill=roleSrc!20]   (l0) {\stepcirc{1}~line:\\ \texttt{filter: ["get", "class"] == "motorway"}\\\texttt{line-color: \#e892a2}\\\texttt{line-width: 3}};
+        \node[layer, fill=roleData!25, below=0.5cm of l0] (l1) {\stepcirc{2}~line:\\\texttt{filter: ["get", "class"] == "primary"}\\\texttt{line-color: \#fcd6a4}\\\texttt{line-width: 2}};
+        \node[layer, fill=roleMir!30, below=0.5cm of l1] (l2) {\stepcirc{3}~line:\\\texttt{filter: ["get", "class"] == "secondary"}\\\texttt{line-color: \#f7fabf}\\\texttt{line-width: 1.5}};
 
         \node[above=0.15cm of l0, font=\small\bfseries] {Input: 3 adjacent line layers};
 
         % Phase annotations (middle)
         \node[right=1.4cm of l0, check, text width=4.2cm] (p1) {%
-            \textbf{1. Candidate check}\\[2pt]
+            \stepcirc{1}~\textbf{Candidate check}\\[2pt]
             same type and source,
             source-layer differing props are feature-driven,
             no zoom ramps in diffs,
             no existing sort-key};
         \node[right=1.4cm of l1, check, text width=4.2cm] (p2) {%
-            \textbf{2. Match detection}\\[2pt]
+            \stepcirc{2}~\textbf{Match detection}\\[2pt]
             all filters access the same property \texttt{"class"} with unique literals\\
             $\Rightarrow$ use \texttt{match} pattern};
         \node[right=1.4cm of l2, check, text width=4.2cm] (p3) {%
-            \textbf{3. Zoom check}\\[2pt]
+            \stepcirc{3}~\textbf{Zoom check}\\[2pt]
             all zoom ranges identical\\
             $\Rightarrow$ no guards needed};
 
         % Output (right)
-        \node[merged, fill=green!8, right=1.4cm of p2, text width=6.0cm] (out) {%
+        \node[merged, fill=roleGen!20, right=1.4cm of p2, text width=6.0cm] (out) {%
             \textbf{Merged line layer}\\[3pt]
             \texttt{filter:}\\
             \texttt{~~["match",\,["get",\,"class"],}\\
@@ -894,9 +894,9 @@ This cascade mirrors the materialized-view maintenance problem described in \cre
     \centering
     \begin{tikzpicture}[
         box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.65cm, font=\small, align=center},
-        style/.style={box, fill=blue!10, minimum width=2.8cm},
-        data/.style={box, fill=orange!10, minimum width=2.8cm},
-        both/.style={box, fill=green!10, minimum width=2.8cm},
+        style/.style={box, fill=roleStyle!20, minimum width=2.8cm},
+        data/.style={box, fill=roleData!25, minimum width=2.8cm},
+        both/.style={box, fill=roleBoth!20, minimum width=2.8cm},
         arrow/.style={-Stealth, thick},
         lbl/.style={font=\scriptsize\itshape, text=darkgray, align=center},
         steps/.style={rectangle, draw, dashed, rounded corners=2pt, font=\small,
@@ -987,8 +987,8 @@ A no-copy alternatives mechanism lets each candidate write into the encoder's bu
         \begin{tikzpicture}[
             box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
                         minimum width=2.4cm, font=\small, align=center},
-            decode/.style={box, fill=blue!12},
-            dec/.style={box, fill=yellow!12, minimum width=1.6cm},
+            decode/.style={box, fill=roleSrc!20},
+            dec/.style={box, fill=roleOpt!35, minimum width=1.6cm},
             io/.style={font=\small\ttfamily},
             arrow/.style={-Stealth, thick},
             lbl/.style={font=\scriptsize\itshape, text=darkgray},
@@ -1024,8 +1024,8 @@ A no-copy alternatives mechanism lets each candidate write into the encoder's bu
         \begin{tikzpicture}[
             box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
                         minimum width=2.0cm, font=\small, align=center},
-            encode/.style={box, fill=orange!10},
-            enc/.style={box, fill=yellow!12, minimum width=1.6cm},
+            encode/.style={box, fill=roleData!25},
+            enc/.style={box, fill=roleOpt!35, minimum width=1.6cm},
             io/.style={font=\small\ttfamily},
             arrow/.style={-Stealth, thick},
             lbl/.style={font=\scriptsize\itshape, text=darkgray},
@@ -1085,13 +1085,13 @@ We considered property-based sort strategies but did not include them in the cur
         node distance=0.5cm,
         box/.style={rectangle, draw, rounded corners=2pt, minimum width=4.2cm,
             minimum height=0.65cm, font=\small, align=center},
-        input/.style={box, fill=gray!15},
-        prep/.style={box, fill=violet!10},
-        stage/.style={box, fill=blue!10},
-        encoder/.style={box, fill=orange!10},
-        decision/.style={diamond, draw, fill=yellow!15, aspect=2.8,
+        input/.style={box, fill=roleInput!40},
+        prep/.style={box, fill=roleMir!30},
+        stage/.style={box, fill=roleStyle!20},
+        encoder/.style={box, fill=roleData!25},
+        decision/.style={diamond, draw, fill=roleDecision!35, aspect=2.8,
             font=\small, inner sep=1pt},
-        output/.style={box, fill=green!15},
+        output/.style={box, fill=roleOutput!25},
         arrow/.style={-Stealth, thick},
         label/.style={font=\scriptsize\itshape, text=darkgray},
         ]
@@ -1482,7 +1482,7 @@ Per run, the benchmark harness collects the following metrics:
     \item \textbf{Frames per second} (\texttt{fps}): average rendering throughput during the animation phase.
     \item \textbf{Frame time percentiles} (\texttt{p50}, \texttt{p95}, \texttt{p99FrameMs}): distribution of per-frame render times, capturing both typical and worst-case latency.
     \item \textbf{Jank count} (\texttt{jankCount}): number of frames exceeding \qty{16.67}{\milli\second} (the 60\,\ac{FPS} budget), indicating visible stuttering.
-    \item \textbf{Heap memory} (\texttt{heapUsedMB}, \texttt{peakHeapMB}): JavaScript heap usage during the benchmark, capturing the memory cost of style structures and tile data.
+    \item \textbf{Heap memory} (\texttt{heapUsedMB}): JavaScript heap usage during the benchmark, capturing the memory cost of style structures and tile data.
     \item \textbf{Idle time} (\texttt{idleMs}): time the renderer spends idle (waiting for tiles or GPU sync), indicating headroom.
 \end{itemize}
 
