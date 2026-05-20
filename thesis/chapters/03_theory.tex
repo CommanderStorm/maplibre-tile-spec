@@ -40,52 +40,53 @@ Instead, they operate on lower-level graphics primitives such as textures, trian
 These low-level graphics building blocks are linked to map data through sprites, fonts, and styles, which are then interpreted by a rendering engine.
 
 \newpage
-As a lower-level representation layer for displaying map content, the following components are required, as shown in \cref{fig:basic-arch}: \emph{styles} define the visual appearance of the map and reference the other required resources; \emph{tiles} provide the geometry (points, lines, polygons) and associated attributes (for example, building heights) displayed on the map; \emph{sprites} supply the icons; and \emph{fonts} provide the glyphs used to render text labels.
-Occasionally, additional assets such as 3D geometry models or terrain are used as well.
 
 \begin{wrapfigure}{r}{0.52\textwidth}
-    \centering
-    \begin{tikzpicture}[
-        node distance=0.8cm and 1.4cm,
-        box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
-                    minimum width=2.0cm, font=\small, align=center},
-        renderer/.style={box, fill=roleGen!20, minimum width=4.5cm, minimum height=0.7cm},
-        server/.style={box, fill=roleSrc!20, minimum width=4.5cm, minimum height=0.7cm},
-        datasource/.style={box, fill=roleData!20, minimum width=4.5cm, minimum height=0.7cm},
-        arrow/.style={-Stealth, thick},
-        label/.style={font=\scriptsize\itshape, fill=white},
-    ]
-        % Map Renderer (top)
-        \node[renderer] (renderer) {Map Renderer};
-
-        % Tile Server
-        \node[server, below=1.4cm of renderer] (server) {Tile Server};
-
-        % Arrows from server to renderer with resource labels
-        \coordinate (s1) at ($(server.north)!0.25!(server.north east)$);
-        \coordinate (s2) at ($(server.north)!0.75!(server.north east)$);
-        \coordinate (s3) at ($(server.north)!0.25!(server.north west)$);
-        \coordinate (s4) at ($(server.north)!0.75!(server.north west)$);
-
-        \draw[arrow] (s4) -- node[label] {style}   (s4 |- renderer.south);
-        \draw[arrow] (s3) -- node[label] {tiles}   (s3 |- renderer.south);
-        \draw[arrow] (s1) -- node[label] {sprites} (s1 |- renderer.south);
-        \draw[arrow] (s2) -- node[label] {fonts}   (s2 |- renderer.south);
-
-        % "over the network" brace
-        \draw[decorate, decoration={brace, amplitude=6pt}, thick]
-            ([xshift=4pt]renderer.south east) -- ([xshift=4pt]server.north east)
-            node[midway, right=10pt, font=\scriptsize\itshape, align=left]
-            {over\\the\\network};
-
-        % Data Source (bottom)
-        \node[datasource, below=1.4cm of server] (datasource) {Data Source};
-
-        \draw[arrow] (datasource.north) -- node[label] {convert to serving-friendly representation} (server.south);
-    \end{tikzpicture}
-    \caption{Basic building blocks of a map rendering stack. Data is taken from a data source, converted into a simplified format (for example a spatial index), and served to a client. The visual appearance is defined by a style and supported by fonts and sprites for text and icons.}
-    \label{fig:basic-arch}
+	\centering
+	\begin{tikzpicture}[
+		node distance=0.8cm and 1.4cm,
+		box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
+			minimum width=2.0cm, font=\small, align=center},
+		renderer/.style={box, fill=roleGen!20, minimum width=4.5cm, minimum height=0.7cm},
+		server/.style={box, fill=roleSrc!20, minimum width=4.5cm, minimum height=0.7cm},
+		datasource/.style={box, fill=roleData!20, minimum width=4.5cm, minimum height=0.7cm},
+		arrow/.style={-Stealth, thick},
+		label/.style={font=\scriptsize\itshape, fill=white},
+		]
+		% Map Renderer (top)
+		\node[renderer] (renderer) {Map Renderer};
+		
+		% Tile Server
+		\node[server, below=1.4cm of renderer] (server) {Tile Server};
+		
+		% Arrows from server to renderer with resource labels
+		\coordinate (s1) at ($(server.north)!0.25!(server.north east)$);
+		\coordinate (s2) at ($(server.north)!0.75!(server.north east)$);
+		\coordinate (s3) at ($(server.north)!0.25!(server.north west)$);
+		\coordinate (s4) at ($(server.north)!0.75!(server.north west)$);
+		
+		\draw[arrow] (s4) -- node[label] {style}   (s4 |- renderer.south);
+		\draw[arrow] (s3) -- node[label] {tiles}   (s3 |- renderer.south);
+		\draw[arrow] (s1) -- node[label] {sprites} (s1 |- renderer.south);
+		\draw[arrow] (s2) -- node[label] {fonts}   (s2 |- renderer.south);
+		
+		% "over the network" brace
+		\draw[decorate, decoration={brace, amplitude=6pt}, thick]
+		([xshift=4pt]renderer.south east) -- ([xshift=4pt]server.north east)
+		node[midway, right=10pt, font=\scriptsize\itshape, align=left]
+		{over\\the\\network};
+		
+		% Data Source (bottom)
+		\node[datasource, below=1.4cm of server] (datasource) {Data Source};
+		
+		\draw[arrow] (datasource.north) -- node[label] {convert to serving-friendly representation} (server.south);
+	\end{tikzpicture}
+	\caption{Basic building blocks of a map rendering stack. Data is taken from a data source, converted into a simplified format (for example a spatial index), and served to a client. The visual appearance is defined by a style and supported by fonts and sprites for text and icons.}
+	\label{fig:basic-arch}
 \end{wrapfigure}
+
+As a lower-level representation layer for displaying map content, the following components are required, as shown in \cref{fig:basic-arch}: \emph{styles} define the visual appearance of the map and reference the other required resources; \emph{tiles} provide the geometry (points, lines, polygons) and associated attributes (for example, building heights) displayed on the map; \emph{sprites} supply the icons; and \emph{fonts} provide the glyphs used to render text labels.
+Occasionally, additional assets such as 3D geometry models or terrain are used as well.
 
 There are several approaches to delivering client-side rendered vector maps.
 
@@ -314,7 +315,7 @@ filter-to-property propagation simplifies the per-feature work inside
 \begin{lstlisting}[
     language=TypeScript,
     escapeinside={(*@}{@*)},
-    caption={MapLibre GL-JS WorkerTile.parse processing pipeline (\texttt{src/source/worker\_tile.ts:85-127})},
+    caption={MapLibre GL-JS WorkerTile.parse processing pipeline (\texttt{src/source/worker\_tile.ts})},
     label=lst:worker_pipeline
 ]
 // (*@\stepcirc{a}@*) Iterate source layers
