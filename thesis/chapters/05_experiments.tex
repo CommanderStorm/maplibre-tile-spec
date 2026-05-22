@@ -98,9 +98,9 @@ We give the full ordering rationale in \cref{sub:pipeline}; the practical conseq
 
 \subsection{Evaluation}\label{sub:structural_evaluation}
 
-Structural passes correspond to ablation steps~8-15.
+Structural passes correspond to ablation steps~8-15 within the cumulative ablation of \cref{sub:ablation}.
 In addition to the rendering metrics from Experiment~1 (\cref{sub:metrics}), we report complexity metrics for the structural evaluation: layer count, filter count, and total expression node count.
-We report the effects on Performance in \cref{sub:cross_results,sub:generalisation_corpus} and the effect of the steps this work builds upon in \cref{sec:exp_expressions}.
+We report the effects on performance generalised in \cref{sub:cross_results} (over the generalisation corpus of \cref{sub:generalisation_corpus}) and the effect of the expression-level steps this work builds upon in \cref{sec:exp_expressions}.
 
 \subsection{Results}\label{sub:structural_results}
 
@@ -111,14 +111,14 @@ We report the effects on Performance in \cref{sub:cross_results,sub:generalisati
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{figures/complexity_layer_count.pdf}
-	\caption{Layer count across cumulative ablation steps on the liberty style showing a representative behavior that only layer merging reduces the amount of layers. Dead elimination usually is unable to entirely remove layers because styles are usually designed to show parts of the map and thus cannot be safely removed.}
+	\caption{Layer count across cumulative ablation steps on the liberty style: only layer merging reduces the layer count. Dead elimination rarely removes whole layers, because styles are designed to expose parts of the map rather than leave entire layers unreferenced.}
 	\label{fig:complexity_layer_count}
 \end{figure}
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{figures/style_size_ablation.pdf}
-	\caption{Style size (raw, gzip, Brotli) across ablation steps shows that the effect on this metric exists, but is iterative rather than transformative}
+	\caption{Style size (raw, gzip, Brotli) across ablation steps: the effect on this metric is incremental rather than transformative.}
 	\label{fig:style_size_ablation}
 \end{figure}
 
@@ -171,14 +171,14 @@ We characterise this interaction fully in \cref{sub:mlt_discussion} and quantify
     the gain comes from the encoder's strategy competition and shared dictionary selection in our new encoder.
 \end{keytakeaways}
 
-\noindent In \cref{sec:exp_structural,sec:exp_expressions} we optimised the \emph{program} the renderer executes; in this experiment we ask whether we can optimise the \emph{data} it consumes using the same style information, and to what extent the two levels interact - the joint-optimisation question at the heart of Research Goal~R1.
+\noindent In \cref{sec:exp_structural,sec:exp_expressions} we optimised the \emph{program} the renderer executes; in this experiment we ask whether we can optimise the \emph{data} it consumes using the same style information, and to what extent the two levels interact - the joint-optimisation question at the heart of Research Goal~R1 and formalised in \cref{sec:problem_statement}.
 The data-level pipeline we apply here (\cref{sub:data_optimisations}) takes the optimised style and uses it to drive the tile pruning advisory and the encoding strategy competition.
 
 \textit{We carried out this experiment in collaboration with Rivian Automotive, Inc to optimise performance, correctness and software architecture of the encoder-decoder pair. We fully implemented the encoder and optimisation routine ourselves. Due to the collaboration, we do not discuss encoder performance, even though it is a bit better (taking a minute vs five hours to transcode germany) than the previous encoder/decoder pairs.}
 
 \subsection{Problem Statement}\label{sub:mlt_problem}
 
-Two open problems frame the experiment:
+Beyond the thesis-wide formal optimisation problem of \cref{sec:problem_statement}, two open problems specific to the data-level pipeline frame this experiment:
 
 \begin{enumerate}
     \item \textbf{Tiles carry data the style never uses - and how much depends on the style.}
@@ -430,8 +430,8 @@ We therefore quantify the size reductions achievable \emph{without} touching geo
 \item These numbers are a lower bound - stats-driven and data-level passes were not applied here.
 \end{keytakeaways}
 
-\noindent In the preceding experiments we evaluated optimisations effectiveness on a curated corpus of 15 styles.
-To assess whether the observed gains generalise, we apply the optimiser to 13 styles drawn from the Maputnik style editor catalogue.
+\noindent In the preceding experiments we evaluated optimisations effectiveness on the curated benchmarking corpus of 15 styles described in \cref{sub:deep_corpus}.
+To assess whether the observed gains generalise, we apply the optimiser to the 13~styles of the Maputnik generalisation corpus introduced in \cref{sub:generalisation_corpus}.
 We use three tiers of breadth because end-to-end rendering benchmarks require tile data and browser automation infrastructure that does not scale to all styles: we benchmark two styles end-to-end with tile data, fifteen at the style-and-shaving level, and evaluate thirteen additional styles with static analysis only.
 
 \subsection{Methodology}\label{sub:cross_methodology}
@@ -512,8 +512,9 @@ Compact basemaps authored by experienced cartographers, which already use effici
 \item No single pass dominates across styles - the multi-pass design is what generalises.
 \end{keytakeaways}
 
-\noindent In this section we present the full pipeline ablation - all 17 cumulative steps from baseline through tile rewriting - and analyse the interactions between optimisations categories.
-The combined view is essential because the three optimisation categories (expression, structural, data) can interact: style-level dead elimination narrows tile pruning advisories, and metadata refinement enables more aggressive zoom-stop pruning in the data pipeline, though the aggregate data shows these interactions are additive rather than synergistic.
+\noindent In this section we present the full pipeline ablation - all 17 cumulative steps from baseline through tile rewriting, as defined in \cref{sub:ablation} - and analyse the interactions between optimisations categories.
+The combined view is essential because the three optimisation categories (expression, structural, data, introduced in \cref{sub:expression_optimisations,sub:structural_optimisations,sub:data_optimisations}) can interact:
+style-level dead elimination narrows tile pruning advisories, and metadata refinement enables more aggressive zoom-stop pruning in the data pipeline, though the aggregate data shows these interactions are additive rather than synergistic.
 
 \subsection{Full Pipeline Ablation}\label{sub:combined_ablation}
 
@@ -684,9 +685,9 @@ Where the same step appears across two complexity axes, we describe the connecti
 
 \paragraph{Three plausible improvement channels}
 The full pipeline ablation suggests three plausible channels by which optimisations improve rendering performance, which we infer from proxy metrics (AST node count, layer count, tile size) rather than direct per-mechanism instrumentation.
-\emph{Style simplification} (expression passes) plausibly reduces per-feature evaluation cost: fewer \ac{AST} nodes mean fewer interpreter steps per feature per frame.
-\emph{Structural reduction} (dead elimination, layer merging) plausibly reduces per-frame overhead: fewer layers mean fewer draw calls, fewer GPU state changes, and fewer filter evaluations at the layer level.
-\emph{Data reduction} (tile shaving, re-encoding) reduces transfer cost: smaller tiles mean shorter download times and lower decode overhead, primarily improving load time and time to first tile, but because of lower \ac{GC}-spend also average frame times.
+\emph{Style simplification} (expression passes from \cref{sub:expression_optimisations}) plausibly reduces per-feature evaluation cost: fewer \ac{AST} nodes mean fewer interpreter steps per feature per frame.
+\emph{Structural reduction} (dead elimination and layer merging from \cref{sub:structural_optimisations}) plausibly reduces per-frame overhead: fewer layers mean fewer draw calls, fewer GPU state changes, and fewer filter evaluations at the layer level.
+\emph{Data reduction} (tile shaving and re-encoding from \cref{sub:data_optimisations}) reduces transfer cost: smaller tiles mean shorter download times and lower decode overhead, primarily improving load time and time to first tile, but because of lower \ac{GC}-spend also average frame times.
 No renderer instrumentation separates these channels directly; we infer the decomposition from the proxy metrics and the time breakdown (\cref{fig:time_breakdown}).
 The three channels target non-overlapping costs - simplification cannot shrink tiles and shaving cannot prune expressions - so they compose additively in the aggregate, as we already established quantitatively in \cref{sub:mlt_results}.
 
@@ -716,7 +717,7 @@ We partially self-inflict this variance: using real GPU hardware (ANGLE/Vulkan) 
 
 \section{Visual Correctness Validation}\label{sec:visual_correctness}
 
-We verified visual losslessness (\cref{sec:problem_statement}) with pixelmatch across all 15 benchmark styles at zoom levels~0-14, across all 18 scenarios, in both axis-aligned and pitched views, at \texttt{pixelRatio}~1 and using MapLibre GL~JS's Node-side software rasteriser for determinism rather than a GPU backend.
+We verified visual losslessness (\cref{eq:visual_equivalence}, with the per-pass soundness arguments collected in \cref{sec:building_optimisations}) with pixelmatch across all 15 benchmark styles at zoom levels~0-14, across all 18 scenarios from \cref{sub:scenarios}, in both axis-aligned and pitched views, at \texttt{pixelRatio}~1 and using MapLibre GL~JS's Node-side software rasteriser.
 Across every comparison, pixelmatch reported zero differing pixels at a strict (zero-tolerance) threshold, confirming that every optimisations pass preserves visual identity on the software rasteriser.
 
 \section{Threats to Validity}\label{sec:threats}
@@ -742,12 +743,12 @@ The remaining limitation is that tile statistics at a sample rate of~1.0 require
 The style-only results (Experiments~1-2) cover all 15 styles and are not affected by this limitation.
 
 \paragraph{Construct validity}
-We simulate network conditions via a fixed bandwidth throttle rather than measuring under real \ac{CDN} latency profiles.
-We designed the synthetic camera animations (zigzag, spiral, zoomdrill, pansweep, bearingspin) to exercise diverse rendering workloads, but they may not capture typical user interaction patterns such as search-and-zoom workflows.
+We simulate network conditions via a fixed bandwidth throttle (\cref{sub:tile_data}) rather than measuring under real \ac{CDN} latency profiles.
+We designed the synthetic camera animations of \cref{sub:scenarios} (zigzag, spiral, zoomdrill, pansweep, bearingspin) to exercise diverse rendering workloads, but they may not capture typical user interaction patterns such as search-and-zoom workflows.
 
 \paragraph{Statistical validity}
-The tile statistics count feature \emph{occurrences} across tiles, not unique geographic entities: a highway spanning 50 tiles is counted 50 times.
-This inflates total feature counts and distorts absolute selectivity estimates, though relative selectivity ordering (which is all the reordering heuristic consumes) is less affected.
+The tile statistics (\cref{sub:tile_statistics}) count feature \emph{occurrences} across tiles, not unique geographic entities: a highway spanning 50 tiles is counted 50 times.
+This inflates total feature counts and distorts absolute selectivity estimates, though relative selectivity ordering (which is all the reordering heuristic of \cref{sec:selectivity_reordering} consumes) is less affected.
 We made this choice deliberatiley because the underlying features are not a concearn for the renderer on most layers (exception being symbol placement which is map-global instead of tile-local).
 
 The selectivity estimation model assumes independence between filter predicates (\cref{eq:selectivity_compound}), which may not hold for correlated properties; map-style filters in practice do exhibit correlations (e.g.\ \texttt{class} and \texttt{subclass} in OpenMapTiles), so we treat the estimator as a first-order approximation rather than a calibrated model, and we understand selectivity-based reordering as a heuristic that produces a locally-good ordering rather than a provably-optimal one.
@@ -760,7 +761,7 @@ Because the 18 scenarios share hardware, tile data, and styles, they are not ful
 
 Style-only effects on load time are smaller and, for individual styles, not consistently distinguishable from measurement noise.
 
-The cumulative ablation design means that the reported marginal contribution of each pass depends on the ordering of preceding passes; a leave-one-out or fractional-factorial design would isolate each pass's standalone contribution more cleanly but we did not run it for cost reasons.
+The cumulative ablation design (\cref{sub:ablation}) means that the reported marginal contribution of each pass depends on the ordering of preceding passes; a leave-one-out or fractional-factorial design would isolate each pass's standalone contribution more cleanly but we did not run it for cost reasons.
 
 Tail metrics (p99 frame time, jank count) are particularly sensitive to sample size: with $n=15$ runs, the tail carries only a handful of informative samples per cell, and the reported numbers should be read as directional rather than conclusive.
 The full-pipeline ablation performs thousands of pairwise comparisons across metrics, styles, scenarios, and ablation steps; we apply no multiple-comparisons correction (Bonferroni, Benjamini-Hochberg), so individual per-cell \enquote{significant} differences should not be read as hypothesis tests, only as descriptive summaries.
