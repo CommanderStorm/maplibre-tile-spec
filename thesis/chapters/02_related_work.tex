@@ -47,7 +47,7 @@ These systems define the data that enters the pipeline.
 Our optimisations operate downstream, on the data and style that emerge from such pipelines, and do not require re-running the generator.
 
 A complementary framing connects tile shaving directly to relational query processing.
-The transformations we develop in \cref{ch:methods} that compute a tile pruning advisory from the style and apply it to the tile data are a form of \emph{projection pushdown}~\cite{graefeQueryEvaluationTechniques1993}.
+The transformations we develop in \cref{ch:methods} -- formalised as the $(S, T) \to (S', T')$ problem of \cref{sec:problem_statement} -- that compute a tile pruning advisory from the style and apply it to the tile data are a form of \emph{projection pushdown}~\cite{graefeQueryEvaluationTechniques1993}.
 The rendering style is the \enquote{query} (specifying which columns, geometry types, and property values it reads), the tile set is the \enquote{base relation}, and the advisory is the pushdown plan that moves the projection and predicate evaluation upstream of the wire format.
 Columnar analytical systems built on Parquet - whose columnar nested-data representation originates in Dremel's record shredding and assembly algorithm~\cite{melnikDremelInteractiveAnalysis} - or ORC rely on precisely this pushdown to avoid reading unreferenced columns.
 Abadi et~al.~\cite{abadiMaterializationStrategiesColumnOriented2007} formalised the trade-off between \emph{early} and \emph{late materialisation} in column stores: early materialisation reconstructs full tuples before applying operators, while late materialisation defers reconstruction until the final projection, accessing only the columns that survive filtering.
@@ -154,7 +154,7 @@ The benchmarking studies by Netek et al., Balla and Gede, and Rechsteiner establ
 Mapbox's proprietary style-optimised tiles are the only precedent that couples style and data, but the approach is closed-source and cannot be inspected, extended, or independently deployed.
 The recent formalisation of vector tile delivery in the OGC API-Tiles standard~\cite{OGCAPITiles} underscores the need for optimisation techniques that are compatible to standardised, open infrastructure rather than tied to a single vendors' API.
 
-Notably, no existing open-source tool or published resarch performs \emph{systematic composition} of style and data optimisations.
+Notably, no existing open-source tool or published resarch performs \emph{systematic composition} of style and data optimisations -- the unified $(S, T) \to (S', T')$ optimisation we formalise in \cref{sec:problem_statement}.
 This means that using tile statistics to inform style simplification, and using the simplified style to derive a pruning advisory for the data is novel territory.
 We fill this gap by applying compiler and database optimisation techniques to the map style and tile data as a unified optimisation target, measuring the interaction between levels through a cumulative ablation methodology that isolates each pass's contribution and quantifies whether the composition is additive or synergistic.
 We quantify the magnitude of this gap in \cref{ch:experiments}, demonstrating that composing these techniques reduces load times by up to \qty{75}{\percent} and tile volume by \qty{28}{\percent}.

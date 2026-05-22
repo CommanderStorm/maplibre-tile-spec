@@ -14,7 +14,7 @@ Despite this, the map rendering and geospatial community has largely treated sty
 The interaction between the two is left unexploited.
 For example, a style filter that matches on a property value may, after constant folding with tile-level statistics, simplify to a form that no longer references this property.
 This in turn allows the data encoder to drop the corresponding column from every tile - a saving that neither style simplification nor data pruning could achieve independently.
-We ask whether such cross-level interactions produce measurably super-additive gains, or whether the levels compose merely additively, as a central empirical question of this work.
+We ask whether such cross-level interactions produce measurably super-additive gains, or whether the levels compose merely additively, as a central empirical question of this work that we formalise in \cref{sec:problem_statement}.
 
 \section{Research Goals}\label{sec:research_goals}
 
@@ -27,7 +27,7 @@ Three research questions guide our work:
     \item \textbf{How expensive are these optimisations} in terms of preprocessing time, and what are the \textbf{tradeoffs between decoding latency, rendering throughput, and transfer size}?
 \end{enumerate}
 
-To answer these questions, we design and implement a standalone optimiser that consumes a MapLibre tyle document and optional tile-level statistics, and produces a equivalent style whose rendering performance and network utilsation is measurably improved.
+To answer these questions, we design and implement a standalone optimiser that consumes a MapLibre tyle document and optional tile-level statistics, and produces a equivalent (\cref{eq:visual_equivalence}) style whose rendering performance and network utilsation is measurably improved.
 
 \newpage
 \section{Contributions}\label{sec:contributions}

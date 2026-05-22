@@ -27,13 +27,32 @@ FORMATS = ["png", "pdf"]
 FIG_WIDTH = 700
 FIG_HEIGHT = 450
 
-# Colorblind-friendly palette (Tol muted)
+# Okabe-Ito CVD-safe palette (https://jfly.uni-koeln.de/color/).
+# Ordered to maximise pairwise contrast for the most common sources.
 SOURCE_COLORS = {
-    "MVT": "#5E94D4",              # light blue
-    "MVT-shaved": "#8F81EA",       # purple
-    "MLT-Java": "#F7811E",         # orange
-    "MLT-Rust": "#9FBA36",         # green
-    "MLT-Rust-shaved": "#B55CA5",  # pink
+    "MVT": "#0072B2",              # blue
+    "MVT-shaved": "#56B4E9",       # sky blue
+    "MLT-Java": "#E69F00",          # orange
+    "MLT-Rust": "#009E73",          # bluish green
+    "MLT-Rust-shaved": "#CC79A7",  # reddish purple
+}
+
+# Redundant non-colour channel for bar/box plots (Plotly pattern shapes).
+SOURCE_PATTERNS = {
+    "MVT": "",
+    "MVT-shaved": "/",
+    "MLT-Java": "\\",
+    "MLT-Rust": "x",
+    "MLT-Rust-shaved": ".",
+}
+
+# Redundant marker symbols for scatter/box overlays.
+SOURCE_MARKERS = {
+    "MVT": "circle",
+    "MVT-shaved": "square",
+    "MLT-Java": "diamond",
+    "MLT-Rust": "triangle-up",
+    "MLT-Rust-shaved": "cross",
 }
 
 COMPRESSION_DASHES = {
@@ -120,23 +139,34 @@ def fmt_bytes(val: float) -> str:
 
 
 def plot_encoder_comparison_per_zoom(df: pd.DataFrame) -> None:
-    """Grouped bar chart: total tile size per zoom for MVT, MLT-Java, MLT-Rust."""
+    """Two-panel composite: absolute bytes per zoom (top 2×2) and % of MVT (bottom 2×2)."""
     print("Generating encoder_comparison_per_zoom…")
 
+    compressions = ["plain", "gzip", "brotli", "zstd"]
+    comp_titles = {
+        "plain": "Plain (uncompressed)",
+        "gzip": "Gzip",
+        "brotli": "Brotli",
+        "zstd": "Zstd",
+    }
+    abs_positions = {"plain": (1, 1), "gzip": (1, 2), "brotli": (2, 1), "zstd": (2, 2)}
+    rel_positions = {"plain": (3, 1), "gzip": (3, 2), "brotli": (4, 1), "zstd": (4, 2)}
+
     fig = make_subplots(
-        rows=2, cols=2,
-        subplot_titles=["Plain (uncompressed)", "Gzip", "Brotli", "Zstd"],
-        shared_xaxes=True,
-        shared_yaxes=True,
-        vertical_spacing=0.12,
+        rows=4, cols=2,
+        subplot_titles=[comp_titles[c] for c in compressions] +
+                       [f"{comp_titles[c]} — % of MVT" for c in compressions],
+        shared_xaxes=False,
+        vertical_spacing=0.10,
         horizontal_spacing=0.08,
     )
 
-    positions = {"plain": (1, 1), "gzip": (1, 2), "brotli": (2, 1), "zstd": (2, 2)}
-    show_legend_for = set()
+    show_legend_for: set[str] = set()
 
-    for comp, (row, col) in positions.items():
+    for comp in compressions:
         sub = df[df["compression"] == comp]
+        # Absolute bytes panel (top)
+        row, col = abs_positions[comp]
         for source in ["MVT", "MLT-Java", "MLT-Rust"]:
             s = sub[sub["source"] == source].sort_values("zoom")
             if s.empty:
@@ -148,21 +178,68 @@ def plot_encoder_comparison_per_zoom(df: pd.DataFrame) -> None:
                 y=s["total_bytes"],
                 name=source,
                 marker_color=SOURCE_COLORS[source],
+                marker_pattern_shape=SOURCE_PATTERNS[source],
                 showlegend=show,
                 legendgroup=source,
             ), row=row, col=col)
 
+        # % of MVT panel (bottom); MVT itself is the 100 % baseline reference line
+        mvt = sub[sub["source"] == "MVT"].set_index("zoom")["total_bytes"]
+        row, col = rel_positions[comp]
+        for source in ["MLT-Java", "MLT-Rust"]:
+            s = sub[sub["source"] == source].sort_values("zoom").set_index("zoom")
+            if s.empty:
+                continue
+            common = mvt.index.intersection(s.index)
+            ratio_pct = (s.loc[common, "total_bytes"] / mvt.loc[common]) * 100
+            fig.add_trace(go.Bar(
+                x=list(common),
+                y=ratio_pct.values,
+                marker_color=SOURCE_COLORS[source],
+                marker_pattern_shape=SOURCE_PATTERNS[source],
+                showlegend=False,
+                legendgroup=source,
+            ), row=row, col=col)
+        if col == 2:
+            fig.add_hline(
+                y=100, line_dash="dash", line_color=SOURCE_COLORS["MVT"],
+                row=row, col=col,
+                annotation_text="MVT",
+                annotation_position="top right",
+            )
+        else:
+            fig.add_hline(
+                y=100, line_dash="dash", line_color=SOURCE_COLORS["MVT"],
+                row=row, col=col,
+            )
+
     fig.update_layout(
         **LAYOUT_DEFAULTS,
         barmode="group",
-        legend=dict(x=0.02, y=1.12, orientation="h", bgcolor="rgba(255,255,255,0.8)"),
-        height=600,
+        legend=dict(
+            orientation="h",
+            xanchor="center",
+            x=0.5,
+            yanchor="top",
+            y=-0.08,
+            bgcolor="rgba(255,255,255,0.8)",
+        ),
+        height=720,
     )
-    fig.update_xaxes(title_text="Zoom level", dtick=2, row=2)
+    for r in (1, 2, 3, 4):
+        fig.update_xaxes(
+            title_text="Zoom level",
+            title_standoff=5,
+            title_font_size=11,
+            dtick=2,
+            row=r,
+        )
     fig.update_yaxes(row=1, col=1, title_text="Total size (bytes)")
     fig.update_yaxes(row=2, col=1, title_text="Total size (bytes)")
+    fig.update_yaxes(row=3, col=1, title_text="% of MVT")
+    fig.update_yaxes(row=4, col=1, title_text="% of MVT")
 
-    export_figure(fig, "encoder_comparison_per_zoom")
+    export_figure(fig, "encoder_comparison_per_zoom", height=720)
 
 
 def plot_shaving_effectiveness_per_zoom(df: pd.DataFrame) -> None:
@@ -195,6 +272,7 @@ def plot_shaving_effectiveness_per_zoom(df: pd.DataFrame) -> None:
                 y=s["total_bytes"],
                 name=source,
                 marker_color=SOURCE_COLORS[source],
+                marker_pattern_shape=SOURCE_PATTERNS[source],
                 showlegend=show,
                 legendgroup=source,
             ), row=row, col=col)
@@ -202,7 +280,14 @@ def plot_shaving_effectiveness_per_zoom(df: pd.DataFrame) -> None:
     fig.update_layout(
         **LAYOUT_DEFAULTS,
         barmode="group",
-        legend=dict(x=0.02, y=1.12, orientation="h", bgcolor="rgba(255,255,255,0.8)"),
+        legend=dict(
+            orientation="h",
+            xanchor="center",
+            x=0.5,
+            yanchor="top",
+            y=-0.12,
+            bgcolor="rgba(255,255,255,0.8)",
+        ),
         height=600,
     )
     fig.update_xaxes(title_text="Zoom level", dtick=2, row=2)
@@ -234,12 +319,12 @@ def plot_compression_ratio_per_zoom(df: pd.DataFrame) -> None:
                 y=ratio.values,
                 mode="lines+markers",
                 name=f"{source} / {comp}",
-                marker=dict(color=SOURCE_COLORS[source], size=6),
+                marker=dict(color=SOURCE_COLORS[source], size=7, symbol=SOURCE_MARKERS[source]),
                 line=dict(color=SOURCE_COLORS[source], width=2, dash=COMPRESSION_DASHES[comp]),
                 hovertemplate=f"{source} ({comp})<br>Zoom %{{x}}<br>Ratio: %{{y:.3f}}<extra></extra>",
             ))
 
-    fig.add_hline(y=1.0, line_dash="dash", line_color="grey", annotation_text="1.0 (parity)")
+    fig.add_hline(y=1.0, line_dash="dash", line_color=SOURCE_COLORS["MVT"], annotation_text="1.0 (parity)")
 
     fig.update_layout(
         **LAYOUT_DEFAULTS,
@@ -252,9 +337,15 @@ def plot_compression_ratio_per_zoom(df: pd.DataFrame) -> None:
 
 
 MODE_COLORS = {
-    "hybrid": "#9FBA36",       # green
-    "only-trigram": "#F7811E",  # orange
-    "only-plain": "#5E94D4",   # light blue
+    "hybrid": "#009E73",       # bluish green
+    "only-trigram": "#E69F00",  # orange
+    "only-plain": "#0072B2",   # blue
+}
+
+MODE_PATTERNS = {
+    "hybrid": "",
+    "only-trigram": "/",
+    "only-plain": "\\",
 }
 
 
@@ -271,6 +362,7 @@ def plot_minhash_sweep(df: pd.DataFrame) -> None:
             y=sub["total_bytes"],
             name=mode,
             marker_color=MODE_COLORS[mode],
+            marker_pattern_shape=MODE_PATTERNS[mode],
         ))
 
     y_min = df["total_bytes"].min()
@@ -379,15 +471,15 @@ def plot_waterfall_loadMs() -> None:
         if i == 0:
             bases.append(0.0)
             heights.append(0.0)
-            colors.append("#AAAAAA")  # neutral baseline
+            colors.append("#BBBBBB")  # neutral baseline (Okabe-Ito grey)
         elif d <= 0:
             bases.append(running + d)
             heights.append(abs(d))
-            colors.append("#9FBA36")  # green = improvement
+            colors.append("#009E73")  # bluish green = improvement
         else:
             bases.append(running)
             heights.append(d)
-            colors.append("#F7811E")  # orange = regression
+            colors.append("#D55E00")  # vermillion = regression
         running += d
 
     fig = go.Figure()
@@ -452,7 +544,7 @@ def plot_marginal_loadMs() -> None:
         deltas.append(m)
         err_lo.append(m - lo)
         err_hi.append(hi - m)
-        colors.append("#9FBA36" if m <= 0 else "#F7811E")
+        colors.append("#009E73" if m <= 0 else "#D55E00")
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -528,11 +620,19 @@ CONFIG_MAP = {
 }
 
 CONFIG_COLORS = {
-    "1: MVT baseline": "#5E94D4",
-    "2: Style-only": "#F7811E",
-    "3: Shaving-only": "#8F81EA",
-    "4: Style+shaving": "#9FBA36",
-    "5: Style+shaving+MLT": "#B55CA5",
+    "1: MVT baseline":      "#0072B2",  # blue
+    "2: Style-only":        "#E69F00",  # orange
+    "3: Shaving-only":      "#56B4E9",  # sky blue
+    "4: Style+shaving":     "#009E73",  # bluish green
+    "5: Style+shaving+MLT": "#CC79A7",  # reddish purple
+}
+
+CONFIG_PATTERNS = {
+    "1: MVT baseline":      "",
+    "2: Style-only":        "/",
+    "3: Shaving-only":      "\\",
+    "4: Style+shaving":     "x",
+    "5: Style+shaving+MLT": ".",
 }
 
 
@@ -585,9 +685,11 @@ def plot_interaction(df: pd.DataFrame) -> None:
 
     fig = go.Figure()
     fig.add_trace(go.Bar(name="Shaving-only (baseline advisory)", x=styles, y=shave_pct,
-                         marker_color=CONFIG_COLORS["3: Shaving-only"]))
+                         marker_color=CONFIG_COLORS["3: Shaving-only"],
+                         marker_pattern_shape=CONFIG_PATTERNS["3: Shaving-only"]))
     fig.add_trace(go.Bar(name="Style+shaving (optimised advisory)", x=styles, y=combined_pct,
-                         marker_color=CONFIG_COLORS["4: Style+shaving"]))
+                         marker_color=CONFIG_COLORS["4: Style+shaving"],
+                         marker_pattern_shape=CONFIG_PATTERNS["4: Style+shaving"]))
 
     fig.update_layout(
         **LAYOUT_DEFAULTS,
@@ -640,6 +742,7 @@ def plot_rendering_metrics_mlt() -> None:
                 x=config_order,
                 y=sub["median"].values,
                 marker_color=[CONFIG_COLORS.get(c, "#999") for c in config_order],
+                marker_pattern_shape=[CONFIG_PATTERNS.get(c, "") for c in config_order],
                 error_y=dict(
                     type="data", symmetric=False,
                     array=(sub["ci_hi"] - sub["median"]).values,

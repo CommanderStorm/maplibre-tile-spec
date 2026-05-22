@@ -22,9 +22,9 @@ FORMATS = ["png", "pdf"]
 FIG_WIDTH = 700
 FIG_HEIGHT = 400
 
-# Match thesis palette
-BAR_COLOR = "#5E94D4"       # light blue
-BAR_COLOR_ALT = "#8F81EA"   # purple
+# Okabe-Ito palette (matches generate_plots.py SOURCE_COLORS)
+BAR_COLOR = "#0072B2"       # blue
+BAR_COLOR_ALT = "#56B4E9"   # sky blue
 
 LAYOUT_DEFAULTS = dict(
     template="plotly_white",

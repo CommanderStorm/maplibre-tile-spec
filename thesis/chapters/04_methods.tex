@@ -68,9 +68,10 @@ Around it are three supporting components, each detailed in its own section: a c
 The three pass levels at the centre are:
 
 \begin{enumerate}
-    \item \textbf{Expression passes} (\cref{sub:expression_optimisations}) operate directly on the JSON representation of style expressions, applying peephole rewrites, constant folding, and algebraic simplifications without deserialising the style into typed structures.
-    They run to a fixpoint with a hard cap of eight iterations; in practice every style in the benchmarking and Maputnik corpora converges within two to three iterations, well below the cap, because human-authored styles tend to reuse a small repertoire of patterns.
-    The formal termination measure and confluence discussion are given alongside the pass descriptions.
+    \item \textbf{Expression passes} (\cref{sub:expression_optimisations}) operate directly on the JSON representation of style expressions, applying peephole rewrites, constant folding, and algebraic simplifications (\cref{sec:compiler_optimisations}) without deserialising the style into typed structures.
+    They run to a fixpoint with a hard cap of eight iterations.
+    In practice every style in the benchmarking and Maputnik corpora converges within two to three iterations, well below the cap, because human-authored styles tend to reuse a small repertoire of patterns.
+    The formal termination measure and confluence (\cref{sub:fixpoint}) discussion are given alongside the pass descriptions.
     \item \textbf{Structural passes} (\cref{sub:structural_optimisations}) deserialise the style into the typed Rust spec produced by the codegen front end and apply transformations that require cross-layer or cross-source reasoning -- dead layer elimination, metadata refinement, layer merging, and cleanup.
     A cross-phase \emph{filter-to-property constant propagation} -- substituting equality constraints extracted from a layer's filter into that layer's paint and layout expressions -- bridges the expression and structural phases and is detailed in \cref{sub:structural_optimisations}.
     \item \textbf{Data passes} (\cref{sub:data_optimisations}) transform the served tile data via a style-driven pruning advisory and the conversion from \ac{MVT} to \ac{MLT}.

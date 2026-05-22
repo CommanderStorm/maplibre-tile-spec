@@ -51,6 +51,30 @@
 \input{acro.tex}
 \usepackage{tikz-cd}
 \usetikzlibrary{positioning, arrows.meta, shapes.geometric, fit, calc, backgrounds, decorations.pathreplacing}
+
+% Okabe-Ito CVD-safe palette (https://jfly.uni-koeln.de/color/)
+\definecolor{cvdblack}{HTML}{000000}
+\definecolor{cvdorange}{HTML}{E69F00}
+\definecolor{cvdskyblue}{HTML}{56B4E9}
+\definecolor{cvdgreen}{HTML}{009E73}
+\definecolor{cvdyellow}{HTML}{F0E442}
+\definecolor{cvdblue}{HTML}{0072B2}
+\definecolor{cvdvermillion}{HTML}{D55E00}
+\definecolor{cvdpurple}{HTML}{CC79A7}
+\definecolor{cvdgrey}{HTML}{BBBBBB}
+
+% Semantic role aliases used by figures (rename here, not in every figure)
+\colorlet{roleSrc}{cvdblue}
+\colorlet{roleMir}{cvdpurple}
+\colorlet{roleGen}{cvdgreen}
+\colorlet{roleData}{cvdorange}
+\colorlet{roleOpt}{cvdyellow}
+\colorlet{roleTest}{cvdvermillion}
+\colorlet{roleStyle}{cvdblue}
+\colorlet{roleBoth}{cvdgreen}
+\colorlet{roleDecision}{cvdyellow}
+\colorlet{roleInput}{cvdgrey}
+\colorlet{roleOutput}{cvdgreen}
 \usepackage{listings, listings-rust}
 \lstdefinelanguage{TypeScript}{
   keywords={function, return, if, else, for, while, const, let, var, new, delete, true, false, in, of, continue, break, export, class, extends, implements, import, from, type, interface, enum, readonly, static, async, await, this, void, number, string, boolean, any, null, undefined},
@@ -120,6 +144,10 @@
 }
 \usepackage[noabbrev,capitalize,nameinlink]{cleveref}
 \newcommand{\crefrangeconjunction}{--}
+\renewcommand{\lstlistingname}{Algorithm}
+\renewcommand{\lstlistlistingname}{List of Algorithms}
+\crefname{listing}{Algorithm}{Algorithms}
+\Crefname{listing}{Algorithm}{Algorithms}
 \newcommand{\stepcirc}[1]{
 	\tikz[baseline=(char.base)]{
 		\node[
