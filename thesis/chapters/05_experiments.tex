@@ -20,9 +20,10 @@ In \cref{sec:exp_cross_style} we test generalisation by applying the full pipeli
 
 \subsection{Evaluation}\label{sub:expr_evaluation}
 
-The first seven passes correspond to ablation steps~1-7 in the benchmark harness; we evaluate selectivity reordering separately as step~16 because it requires tile statistics.
+The first seven passes correspond to ablation steps~1-7 in the cumulative ablation defined in \cref{sub:ablation}.
+We evaluate selectivity reordering separately as step~16 because it requires the tile statistics introduced in \cref{sub:tile_statistics}.
 We describe the full rendering and static-size metric set in \cref{sub:metrics}.
-We report the effects on Performance in \cref{sub:cross_results,sub:generalisation_corpus}.
+We report the effects on performance generalised beyond the benchmarking corpus in \cref{sub:cross_results} using the generalisation corpus of \cref{sub:generalisation_corpus}.
 
 \subsection{Results}\label{sub:expr_results}
 
