@@ -361,7 +361,7 @@ for (const sourceLayerId in layerFamilies) {
 
 \section{Compiler Optimisation Techniques}\label{sec:compiler_optimisations}
 
-The style expressions used by map renderers such as MapLibre are, in essence, small programs:
+The style expressions used by map renderers such as MapLibre are small programs in a special purpose \ac{DSL}:
 they contain conditionals (\texttt{case}, \texttt{match}), boolean operators (\texttt{all}, \texttt{any}), arithmetic, and data access (\texttt{get}, \texttt{has}), variables (global state, local state, feature state).
 Optimising these expressions draws directly on techniques developed over decades in compiler construction~\cite{ahoCompilersPrinciplesTechniques2007}.
 In this section we introduce the foundational concepts we apply in \cref{ch:methods}.

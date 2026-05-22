@@ -201,10 +201,11 @@ Selectivity reordering runs as a separate pass after the rewrite table has stabi
 We further classify rules by their \emph{type}: \emph{pure} rules operate on the expression array alone, \emph{MIR-aware} rules additionally consult the specification's type metadata (e.g.\ to determine whether an operator is pure or to look up default values), and \emph{stats-driven} rules are recursive tree folds that receive tile statistics and layer-level context.
 A post-order visitor walks every expression node in the style; at each node, it tests all applicable peephole rules and the first matching rule fires.
 Stats-driven rules run as separate tree folds after the peephole pass, because they require recursive context threading that the node-local peephole architecture does not provide.
-We modelled this architecture on peephole optimisers in production compilers: individual rules are simple and local, but their composition through fixpoint iteration achieves globally significant simplification.
+We modelled this architecture on peephole optimisers in production compilers.
+Individual rules are simple and local, but their composition through fixpoint iteration (\cref{sub:fixpoint}) achieves global simplifications.
 
 \paragraph{Constant folding}
-The constant folding pass implements 17~rewrite rules that collectively perform the role of a compiler's constant propagation and dead code elimination.
+The constant folding pass implements 17~rewrite rules that collectively perform the role of constant propagation and dead code elimination in a compiler (\cref{sec:compiler_optimisations}).
 Boolean algebra rules evaluate \texttt{all}/\texttt{any} nodes with known operands: a vacuous \texttt{["all"]} rewrites to \texttt{true} (vacuous truth), a vacuous \texttt{["any"]} to \texttt{false} (vacuous disjunction), and boolean absorption removes known-true operands from \texttt{all} and known-false operands from \texttt{any}.
 Comparison rules evaluate binary comparisons with two literal operands.
 Dead-branch elimination removes arms from \texttt{case} and \texttt{match} expressions whose guard is statically false.
@@ -268,7 +269,7 @@ The threshold therefore separates the \enquote{folding-useful} properties from t
 We gate folds whose effect is irreversible (those that change the set of rendered features) on a full-census sample rate, as discussed in \cref{sub:tile_statistics}; at lower sample rates the statistics are used only for reordering and selectivity estimation.
 
 \paragraph{Expression simplification}
-De~Morgan's laws push negations inward to expose further folding:
+Applying the algebraic identities from \cref{sec:compiler_optimisations}, De~Morgan's laws push negations inward to expose further folding:
 %
 \begin{quote}
 \texttt{["!",~["all",~a,~b]]}~$\to$~\texttt{["any",~["!",~a],~["!",~b]]}
@@ -294,8 +295,8 @@ The pass removes properties whose value equals the specification default.
 We derive the defaults from the code-generated Rust types: each property's default is known from the upstream \texttt{v8.json}.
 The pass strips only plain scalar values; it never removes expression-valued properties, even if they would evaluate to the default at all zoom levels, to avoid the risk of changing renderer behaviour when the expression's mere presence affects layout (e.g.\ \texttt{text-radial-offset} suppresses \texttt{text-offset} regardless of its value).
 
-\paragraph{Selectivity reordering}\label{sec:seletivity_reordering}
-For variadic boolean expressions (\texttt{all}, \texttt{any}), the pass reorders predicates by estimated selectivity to exploit short-circuit evaluation.
+\paragraph{Selectivity reordering}\label{sec:selectivity_reordering}
+For variadic boolean expressions (\texttt{all}, \texttt{any}), the pass reorders predicates by estimated selectivity to exploit short-circuit evaluation, applying the selectivity-estimation framework of \cref{sec:query_optimisations}.
 For \texttt{all} (conjunction), it sorts predicates by ascending selectivity (the predicate most likely to be false is evaluated first).
 For \texttt{any} (disjunction), it sorts predicates by descending selectivity (the predicate most likely to be true is evaluated first).
 The selectivity estimation formulas follow the independence assumption introduced by Selinger et al.~\cite{selingerAccessPathSelection1979}.
@@ -324,6 +325,7 @@ Because the rendering benefit of predicate reordering depends on the proportion 
 
 \paragraph{Termination and confluence of the fixpoint}
 The expression-level phase applies the entire rewrite rule set until the style JSON stops changing.
+In the \ac{TRS} framing of \cref{sub:fixpoint}, this is the standard normal-form criterion.
 We impose a hard cap of \texttt{8} iterations; this is the \emph{formal} termination guarantee - the fixpoint loop executes at most 8 passes regardless of rule behaviour.
 
 The majority of the rules described above strictly decrease a lexicographic measure
@@ -571,7 +573,8 @@ The pass treats a layer as dead - and removes it - if any of the following condi
 (2)~its source layer contains zero features according to tile statistics;
 (3)~its geometry type does not match the source layer's geometry types (e.g.\ a \texttt{fill} layer targeting a source layer that contains only points).
 After removing dead layers, the pass prunes sources that are no longer referenced by any surviving layer.
-This mirrors dead code elimination followed by unreachable function removal in a compiler.
+This mirrors dead code elimination followed by unreachable function removal in a compiler (\cref{sec:compiler_optimisations}).
+Its downstream effect on the tile pruning advisory (\cref{sub:tile_shaving}) is the entry point for the data-level cascade evaluated in \cref{sub:mlt_results}.
 
 Geometry-type mismatch detection is particularly effective for tile schemas such as OpenMapTiles, where a single source layer (e.g.\ \texttt{transportation}) may contain mixed geometry types:
 A \texttt{fill} layer referencing such a source is dead if the source contains no polygons; a \texttt{circle} layer is dead if it contains no points.
@@ -734,7 +737,8 @@ for (const {feature, id, index, sourceLayerIndex} of features) {
     bucketFeatures.push(bucketFeature);
 }
 \end{lstlisting}
-The propagation is strictly \emph{intra-layer} (intra-procedural, in compiler terminology): constraints from one layer never flow into another, even if two layers share a source-layer, because the filter of one layer has no bearing on features rendered by a sibling layer.
+The propagation is strictly \emph{intra-layer} (intra-procedural, in the compiler terminology of \cref{sec:compiler_optimisations}).
+Constraints from one layer never flow into another, even if two layers share a source-layer, because the filter of one layer has no bearing on features rendered by a sibling layer.
 The propagation also intentionally ignores \texttt{["feature-state", \ldots]} references, because the feature state is updated from the client at render time and cannot be statically constrained by the filter.
 
 \emph{Phase~2} (match-pattern detection) checks whether all filters within a candidate group match the pattern \texttt{["==",~["get",~P],~literal]} on the same property~$P$.
@@ -753,7 +757,8 @@ The pass synthesises sort keys only for layer types that support the \texttt{*-s
 
 \paragraph{Source zoom tightening}
 After all layer-level passes, this pass tightens source \texttt{minzoom}/\texttt{maxzoom} bounds to the effective zoom range of the layers that reference each source.
-This is a liveness analysis: a source is \enquote{live} at a zoom level only if at least one layer referencing it is active at that zoom.
+This is a liveness analysis in the sense of \cref{sec:compiler_optimisations}.
+A source is \enquote{live} at a zoom level only if at least one layer referencing it is active at that zoom.
 Tighter source bounds allow the tile server (or client-side tile manager) to skip tile requests for zoom levels where no layer needs data from that source.
 
 \begin{figure}[H]
@@ -830,7 +835,8 @@ Tighter source bounds allow the tile server (or client-side tile manager) to ski
 
 \subsection{Data-Level Optimisations}\label{sub:data_optimisations}
 
-Data-level optimisations transform the tile data itself, reducing transfer size and decoding cost without altering the rendered output.
+Data-level optimisations transform the tile data itself, reducing transfer size and decoding cost without altering the rendered output (constraint to \cref{eq:visual_equivalence}).
+The encoding techniques used are surveyed in \cref{sec:data_encoding}.
 \cref{tab:data_passes} summarises the techniques we implemented.
 
 \begin{table}[htbp]
@@ -852,7 +858,8 @@ Compression optimisations & full scan & Apply column-aware compression strategie
 \label{tab:data_passes}
 \end{table}
 
-The pipeline operates in three stages that mirror the structure of a database query optimiser: \emph{logical} rewriting (what data to keep), \emph{physical} strategy selection (how to encode it), and \emph{cost-based} competition (which encoding is smallest).
+The pipeline operates in three stages that mirror the structure of a database query optimiser.
+\emph{Logical} rewriting (what data to keep), \emph{physical} strategy selection (how to encode it), and \emph{cost-based} competition (which encoding is smallest).
 
 \begin{enumerate}
     \item \textbf{Style-driven tile shaving} (\cref{sub:tile_shaving}): the pipeline analyses the optimised style to produce a \emph{tile pruning advisory} that specifies, per source-layer and zoom level, which properties, geometry types, and property values to retain.
@@ -872,7 +879,7 @@ The bridge between style-level and data-level optimisations is the \emph{tile pr
 We compute the advisory from the \emph{optimised} style (after all expression and structural passes) together with tile statistics.
 \noindent
 This ordering is important: style-level dead layer elimination, metadata refinement, and layer merging reduce the set of live style layers, which in turn reduces the set of referenced properties and geometry types in the advisory.
-The preceding style optimisations thus feed into data-level savings, though the aggregate interaction is additive rather than synergistic (\cref{sub:mlt_results}).
+The preceding style optimisations thus feed into data-level savings, jointly reducing $c(S', T')$ in the sense of \cref{sec:problem_statement}, though the aggregate interaction is additive rather than synergistic (\cref{sub:mlt_results}).
 This cascade mirrors the materialized-view maintenance problem described in \cref{sub:materialized_views}: the rendering style acts as the view definition, the tile set as the base relation, and the shaved tile as the materialized view.
 
 \noindent The advisory captures the following per source-layer:
@@ -948,7 +955,7 @@ We derive the interning table from the tile statistics: we sort all distinct val
 The most common value receives index~0, the second most common receives~1, and so on.
 
 This transformation has two benefits.
-First, it reduces the per-feature storage cost from a variable-length string (with length prefix and dictionary overhead) to a small integer (typically \qtyrange{1}{2}{\byte} as a \ac{VarInt}).
+First, it reduces the per-feature storage cost from a variable-length string (with length prefix and dictionary overhead) to a small integer (typically \qtyrange{1}{2}{\byte} as a \ac{VarInt}, see \cref{sub:integer_encoding}).
 Second, the frequency ordering means that common values receive small indices, which compress well under \ac{VarInt} and delta encoding.
 
 The optimiser rewrites the corresponding style expressions to reference the integer indices rather than the original string values.
@@ -971,13 +978,13 @@ This is done via
 The re-encoding proceeds in three stages: (1)~the encoder converts the row-oriented \ac{MVT} features into an owned columnar representation (\texttt{StagedLayer01}), with separate arrays for each property column, the geometry vertex buffer, and the feature ID column; (2)~it optionally reorders the columnar data according to the sort strategy competition; (3)~it independently encodes each column using the per-stream encoding competition.\newline
 The final wire format consists of three concatenated sections per layer: a header (layer name, tile extent, column count), a metadata section (column types, encoding descriptors), and a data section (the encoded streams).
 
-We reformulate the encoding problem in the Rust-based encoder as a \emph{multi-strategy competition} inspired by \ac{PGO} in compilers~\cite{changUsingProfileInformation1991} and the instance-optimised systems vision of SageDB~\cite{dingSageDBInstanceOptimizedData2022}:
+We reformulate the encoding problem in the Rust-based encoder as a \emph{multi-strategy competition} inspired by \ac{PGO} in compilers (\cref{sub:pgo})~\cite{changUsingProfileInformation1991} and the instance-optimised systems vision of SageDB~\cite{dingSageDBInstanceOptimizedData2022}:
 rather than committing to a single encoding plan, the encoder uses the data distribution of each tile to try multiple strategies, measures the output size of each, and selects the smallest result.
 
 This competition operates at two nested levels.
 An \emph{outer loop} that trials multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
 We deliberately make the inner competition criterion \emph{single-objective} (smallest encoded size).
-We do not resolve multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - inside the encoder; we report them separately per metric in the ablation evaluation (\cref{ch:experiments}), where each pass's contribution can be assessed against the deployment-relevant axis.
+We do not resolve multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - inside the encoder; we report them separately per metric in the ablation evaluation (\cref{ch:experiments}), consistent with \cref{sec:problem_statement}'s decision not to collapse the cost function $c$ into a scalar, so each pass's contribution can be assessed against the deployment-relevant axis.
 
 A no-copy alternatives mechanism lets each candidate write into the encoder's buffers and rolls losing candidates back by resetting cursor positions, so the inner and outer competitions nest without redundant allocation.
 \Cref{fig:arch_enc} summarises the encoder and decoder data-flow in \texttt{mlt-core}.
@@ -1071,7 +1078,7 @@ The implemented strategies and their rationale are:
 
 \begin{enumerate}
     \item \textbf{Unsorted}: the encoder preserves the original feature order.
-    \item \textbf{Spatial (Morton/Z-order)}: the encoder sorts features by the Z-order curve index of their first vertex, computed via bit-interleaving.  Fast to compute; provides reasonable spatial locality.
+    \item \textbf{Spatial (Morton/Z-order)}: the encoder sorts features by the Z-order curve index of their first vertex, computed via bit-interleaving.  Fast to compute; provides reasonable spatial locality (\cref{sub:space_filling_curves}).
     \item \textbf{Spatial (Hilbert)}: the encoder sorts features by the Hilbert curve index of their first vertex.  Slower to compute than Morton but achieves superior spatial locality, as the Hilbert curve avoids the long jumps inherent in the Z-order curve's recursive structure~\cite{moonAnalysisClusteringProperties2001}.
     \item \textbf{ID}: the encoder sorts features by feature ID in ascending order.
 \end{enumerate}
@@ -1185,7 +1192,8 @@ String columns compete across four strategies, reflecting the two orthogonal dim
     The length stream is itself subject to the integer encoding competition.
     \item \textbf{Dictionary}: a deduplicated corpus with per-string offset indices.
     Effective when many features share the same string value (e.g., road names that repeat across tiles).
-    \item \textbf{\ac{FSST}}~\cite{bonczFSSTFastRandom2020}: a lightweight, random-access string compressor that learns a symbol table of up to~255 frequent byte sequences and replaces occurrences with single-byte codes.
+    \item \textbf{\ac{FSST}} (\cref{sub:string_compression})~\cite{bonczFSSTFastRandom2020}:
+    A lightweight, random-access string compressor that learns a symbol table of up to~255 frequent byte sequences and replaces occurrences with single-byte codes.
     The encoder stores the symbol table once per column; the compressed corpus remains directly scannable without decompression.
     \item \textbf{\ac{FSST} + Dictionary}: \ac{FSST} applied to a deduplicated dictionary, combining both deduplication and byte-level compression.
 \end{enumerate}
@@ -1199,7 +1207,7 @@ The \ac{MLT} format supports shared dictionaries where multiple string columns r
 The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \texttt{name:en}, \texttt{name:de}), which misses semantic overlaps (e.g., \texttt{class} and \texttt{subclass} in OpenMapTiles share many values).
 
 \begin{sloppypar}
-    Our Rust encoder replaces prefix matching with -based similarity clustering~\cite{broderResemblanceContainmentDocuments1998}.
+    Our Rust encoder replaces prefix matching with MinHash-based similarity clustering (\cref{sub:lsh})~\cite{broderResemblanceContainmentDocuments1998}.
     \Cref{fig:minhash_clustering} walks through the four-step pipeline from per-column vocabularies through MinHash signatures and pairwise Jaccard estimation to the final Union-Find clustering.
     For each string column, the encoder computes two MinHash sketches of $128$ permutations: one over exact string values and one over byte trigrams (3-byte sliding windows).
     The choice of 128 permutations corresponds to an expected standard error of approximately $1/\sqrt{128} \approx 8.8\%$ on the Jaccard estimate, which is adequate for the binary accept/reject decision of the clustering step.
@@ -1361,7 +1369,7 @@ Metadata optimisations provide the client with more accurate information, enabli
 
 \subsection{Tile Statistics Collection}\label{sub:tile_statistics}
 
-Several optimisations passes - stats-driven constant folding, dead elimination with geometry-type mismatch, metadata refinement, selectivity reordering, and the tile pruning advisory - require knowledge of the actual tile data.
+Several optimisations passes - stats-driven constant folding and selectivity reordering (\cref{sub:expression_optimisations}), dead elimination with geometry-type mismatch and metadata refinement (\cref{sub:structural_optimisations}), and the tile pruning advisory (\cref{sub:tile_shaving}) - require knowledge of the actual tile data.
 A statistics collection phase provides this knowledge by scanning the tile set and producing a per-source, per-source-layer statistical profile.
 
 For each source layer, the phase collects the following statistics:
@@ -1435,6 +1443,7 @@ To ensure reproducibility across benchmark runs, we route all tile requests thro
 This eliminates network variability and guarantees that every ablation step operates on identical tile data (after an initial, discarded run).
 The model does not simulate packet loss, HTTP/2 multiplexing, TCP slow-start, or HTTP/3 (QUIC) with its 0-RTT connection resumption and absence of head-of-line blocking - all of which would amplify the benefit of smaller tiles - so the measured load-time improvements from tile shaving are a conservative lower bound on what a real deployment would observe.
 This ensures that we measure tile-fetch improvements (e.g.\ smaller tiles due to shaving) under conditions representative of a \ac{CDN}-served deployment while remaining deterministic across runs.
+The same network model also feeds the per-style \ac{CDN} break-even analysis in \cref{sub:mlt_discussion}, which extends this single-client setup to a multi-style cache.
 
 \subsection{Geographic and Use-Case Scenarios}\label{sub:scenarios}
 
@@ -1461,7 +1470,8 @@ we do not claim it is unbiased across all real-world usage patterns, but we clai
 \section{Evaluation}\label{sec:evaluation}
 
 Since many of the investigated optimisations techniques have not previously been studied in the context of map rendering pipelines, we must evaluate their effectiveness empirically.
-Our evaluation considers several dimensions:
+We carry out this empirical evaluation in \cref{ch:experiments}; the rest of this section defines the methodology that chapter applies.
+Our evaluation considers several dimensions, which together instantiate the cost function $c$ of \cref{sec:problem_statement} as a per-metric vector rather than a single scalar:
 
 \begin{itemize}
     \item \textbf{Data savings}: reduction in style size (raw, gzip, and Brotli) and tile transfer volume.
@@ -1500,6 +1510,7 @@ Per run, the benchmark harness collects the following metrics:
 Our primary evaluation methodology is cumulative ablation: we add passes one at a time in a fixed order and re-run the full benchmark suite after each addition.
 This reveals both the marginal contribution of each pass and the interactions between passes.
 The ablation comprises 17~steps: a baseline (no optimisations) followed by 16~passes added incrementally in the order listed in \crefrange{tab:expression_passes}{tab:data_passes}.
+\cref{sub:combined_ablation,tab:marginal_contribution} present the step-by-step results.
 
 We execute each scenario/style combination for 15~runs.
 We report the median and standard deviation of each metric; we prefer the median over the mean because rendering performance distributions are right-skewed (occasional long frames inflate the mean).
