@@ -223,12 +223,15 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \node[trajstart] at (zz0) {};
             \node[trajend]   at (zz7) {};
 
-            % zoom strip — 8 bars alternating z10/z14 (heights: z/24 * 0.46)
+            % zoom strip — 8 bars alternating z10/z14
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
             \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
-            \foreach \i/\h in {0/0.191, 1/0.268, 2/0.191, 3/0.268, 4/0.191, 5/0.268, 6/0.191, 7/0.268} {
-                \pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/8 - 0.08}
-                \draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+0.16, \zstripy+\h);
+            
+            \foreach \i/\z in {0/10, 1/14, 2/10, 3/14, 4/10, 5/14, 6/10, 7/14} {
+            	\pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/8 - 0.08}
+            	\pgfmathsetmacro{\h}{(\z/24) * 0.46}
+            	
+            	\draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+0.16, \zstripy+\h);
             }
             \node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+0.268) {14};
             \node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+0.191) {10};
