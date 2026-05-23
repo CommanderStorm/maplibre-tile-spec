@@ -271,7 +271,10 @@
 				\pgfmathsetmacro{\hC}{\zTop{12}}
 				\draw[constline] (\stripx+0.06, \zstripy+\hC)
 				-- (\stripx+\stripw-0.06, \zstripy+\hC);
-				\node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\hC) {12};
+				\pgfmathsetmacro{\hHi}{\zTop{24}}
+				\pgfmathsetmacro{\hLo}{\zTop{1}}
+				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+\hHi) {24};
+				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+\hLo) {1};
 
 				% bearing strip — 8 arrows 0..315
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
