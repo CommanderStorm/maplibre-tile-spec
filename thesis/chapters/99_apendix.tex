@@ -170,11 +170,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
 
 \section{Camera Animation Patterns}\label{app:animation_patterns}
 
-The five synthetic camera animation patterns referenced in \cref{sub:scenarios} are visualised in \cref{fig:app_animation_patterns}.
-\Cref{fig:app_anim_zigzag,fig:app_anim_spiral,fig:app_anim_zoomdrill,fig:app_anim_pansweep,fig:app_anim_bearingspin} each show one pattern: the square at the left is a top-down view of the pan trajectory (origin at the location centre; the hollow circle marks the first keyframe and the filled square the last); the two strips on the right show how zoom level and bearing $\theta$ (in degrees, measured clockwise from north) evolve across keyframes.
-Constant dimensions are drawn as flat dashed lines.
-Pitch $\phi$ is held constant throughout each animation and is reported per pattern in \cref{fig:app_anim_dofs}, which also tabulates which of the five camera degrees of freedom each pattern exercises and how many keyframes it spans.
-Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.
+\Cref{fig:app_animation_patterns} visualises each used animation pattern.
 
 \begin{figure}[htbp]
     \centering
@@ -211,8 +207,8 @@ Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.
             \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
             \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
-            \node[axislabel, anchor=south east] at (\mapsize-0.05, \mapcy+0.02) {lng};
-            \node[axislabel, anchor=south west, rotate=90] at (\mapcx+0.02, \mapsize-0.05) {lat};
+            \node[axislabel] at (\mapcx, -0.15) {lng};
+            \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
             \foreach \i/\nx/\ny in {%
                 0/0.125/0.125, 1/0.25/-0.25, 2/0.375/0.375, 3/0.5/-0.5,%
                 4/0.625/0.625, 5/0.75/-0.75, 6/0.875/0.875, 7/1.0/-1.0} {
@@ -223,19 +219,19 @@ Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.
             \node[trajstart] at (zz0) {};
             \node[trajend]   at (zz7) {};
 
-            % zoom strip — 8 bars alternating 10/14
+            % zoom strip — 8 bars alternating z10/z14 (heights: z/24 * 0.46)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
             \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
-            \foreach \i/\h in {0/0.12, 1/0.42, 2/0.12, 3/0.42, 4/0.12, 5/0.42, 6/0.12, 7/0.42} {
+            \foreach \i/\h in {0/0.232, 1/0.308, 2/0.232, 3/0.308, 4/0.232, 5/0.308, 6/0.232, 7/0.308} {
                 \pgfmathsetmacro{\bx}{\stripx + \i*0.3125 + 0.045}
                 \draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+0.22, \zstripy+\h);
             }
-            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\striph-0.05) {14};
-            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.12) {10};
+            \node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+0.308) {14};
+            \node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+0.232) {10};
 
             % bearing strip — 8 arrows, 0..105
             \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
-            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta\,(^{\circ})$};
+            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
             \foreach \i/\b in {0/0, 1/15, 2/30, 3/45, 4/60, 5/75, 6/90, 7/105} {
                 \pgfmathsetmacro{\bcx}{\stripx + (\i+0.5)*0.3125}
                 \pgfmathsetmacro{\bcy}{\bstripy + \striph/2}
@@ -263,8 +259,8 @@ Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.
             \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
             \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
-            \node[axislabel, anchor=south east] at (\mapsize-0.05, \mapcy+0.02) {lng};
-            \node[axislabel, anchor=south west, rotate=90] at (\mapcx+0.02, \mapsize-0.05) {lat};
+            \node[axislabel] at (\mapcx, -0.15) {lng};
+            \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
             \foreach \i in {0,...,11} {
                 \pgfmathsetmacro{\ang}{\i*30}
                 \coordinate (sp\i) at ({\mapcx + \trajscale*cos(\ang)},
@@ -275,17 +271,16 @@ Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.
             \node[trajstart] at (sp0)  {};
             \node[trajend]   at (sp11) {};
 
-            % zoom strip — constant 12
+            % zoom strip — constant z12 (12/24 * 0.46 = 0.27 above base)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
             \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
-            \draw[constline] (\stripx+0.06, \zstripy+\striph/2)
-                          -- (\stripx+\stripw-0.06, \zstripy+\striph/2);
-            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\striph/2)
-                {const 12};
+            \draw[constline] (\stripx+0.06, \zstripy+0.27)
+                          -- (\stripx+\stripw-0.06, \zstripy+0.27);
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.27) {12};
 
             % bearing strip — 12 arrows, 0..330
             \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
-            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta\,(^{\circ})$};
+            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
             \foreach \i in {0,...,11} {
                 \pgfmathsetmacro{\b}{\i*30}
                 \pgfmathsetmacro{\bcx}{\stripx + (\i+0.5)*\stripw/12}
@@ -314,25 +309,25 @@ Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.
             \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
             \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
-            \node[axislabel, anchor=south east] at (\mapsize-0.05, \mapcy+0.02) {lng};
-            \node[axislabel, anchor=south west, rotate=90] at (\mapcx+0.02, \mapsize-0.05) {lat};
+            \node[axislabel] at (\mapcx, -0.15) {lng};
+            \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
             \node[stationary] at (\mapcx, \mapcy) {};
             \node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
 
-            % zoom strip — 7 bars: 4, 8, 12, 16, 12, 8, 4
+            % zoom strip — 7 bars z4,8,12,16,12,8,4 (heights: z/24 * 0.46)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
             \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
-            \foreach \i/\h in {0/0.12, 1/0.22, 2/0.32, 3/0.42, 4/0.32, 5/0.22, 6/0.12} {
+            \foreach \i/\h in {0/0.117, 1/0.193, 2/0.270, 3/0.347, 4/0.270, 5/0.193, 6/0.117} {
                 \pgfmathsetmacro{\bw}{0.24}
                 \pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/7 - \bw/2}
                 \draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+\bw, \zstripy+\h);
             }
-            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\striph-0.05) {16};
-            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.12) {4};
+            \node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+0.347) {16};
+            \node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+0.117) {4};
 
             % bearing strip — constant
             \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
-            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta\,(^{\circ})$};
+            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
             \draw[constline] (\stripx+0.06, \bstripy+\striph/2)
                           -- (\stripx+\stripw-0.06, \bstripy+\striph/2);
             \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph/2)
@@ -357,8 +352,8 @@ Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.
             \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
             \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
-            \node[axislabel, anchor=south east] at (\mapsize-0.05, \mapcy+0.02) {lng};
-            \node[axislabel, anchor=south west, rotate=90] at (\mapcx+0.02, \mapsize-0.05) {lat};
+            \node[axislabel] at (\mapcx, -0.15) {lng};
+            \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
             \foreach \i/\nx/\ny in {%
                 0/-1.0/0.167, 1/-0.667/-0.167, 2/-0.333/0.167,
                 3/0.0/-0.167, 4/0.333/0.167,   5/0.667/-0.167} {
@@ -370,17 +365,16 @@ Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.
             \node[trajstart] at (ps0) {};
             \node[trajend]   at (ps5) {};
 
-            % zoom strip — constant 12
+            % zoom strip — constant z12 (12/24 * 0.46 = 0.27 above base)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
             \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
-            \draw[constline] (\stripx+0.06, \zstripy+\striph/2)
-                          -- (\stripx+\stripw-0.06, \zstripy+\striph/2);
-            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\striph/2)
-                {const 12};
+            \draw[constline] (\stripx+0.06, \zstripy+0.27)
+                          -- (\stripx+\stripw-0.06, \zstripy+0.27);
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.27) {12};
 
             % bearing strip — constant
             \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
-            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta\,(^{\circ})$};
+            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
             \draw[constline] (\stripx+0.06, \bstripy+\striph/2)
                           -- (\stripx+\stripw-0.06, \bstripy+\striph/2);
             \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph/2)
@@ -403,22 +397,21 @@ Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.
             \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
             \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
-            \node[axislabel, anchor=south east] at (\mapsize-0.05, \mapcy+0.02) {lng};
-            \node[axislabel, anchor=south west, rotate=90] at (\mapcx+0.02, \mapsize-0.05) {lat};
+            \node[axislabel] at (\mapcx, -0.15) {lng};
+            \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
             \node[stationary] at (\mapcx, \mapcy) {};
             \node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
 
-            % zoom strip — constant 12
+            % zoom strip — constant z12 (12/24 * 0.46 = 0.27 above base)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
             \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
-            \draw[constline] (\stripx+0.06, \zstripy+\striph/2)
-                          -- (\stripx+\stripw-0.06, \zstripy+\striph/2);
-            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\striph/2)
-                {const 12};
+            \draw[constline] (\stripx+0.06, \zstripy+0.27)
+                          -- (\stripx+\stripw-0.06, \zstripy+0.27);
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.27) {12};
 
             % bearing strip — 8 arrows 0..315
             \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
-            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta\,(^{\circ})$};
+            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
             \foreach \i in {0,...,7} {
                 \pgfmathsetmacro{\b}{\i*45}
                 \pgfmathsetmacro{\bcx}{\stripx + (\i+0.5)*\stripw/8}
@@ -456,13 +449,10 @@ Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.
         bearingspin  & --         & --         & \checkmark & $60^{\circ}$ &  8 \\
         \bottomrule
         \end{tblr}
-        \caption{Camera \acs{DOF} exercised by each pattern, the constant pitch $\phi$ used, and the keyframe count. Coordinate values lng and lat are in degrees, z is dimensionless zoom level, $\theta$ in degrees.}
+        \caption{\acs{DOF} matrix, pitch~$\phi$, and keyframe count.}
         \label{fig:app_anim_dofs}
     \end{subfigure}
 
-    \caption{The five synthetic camera animation patterns used to drive the rendering benchmark (\cref{sub:scenarios}).
-    Subfigures \subref{fig:app_anim_zigzag}--\subref{fig:app_anim_bearingspin} visualise each pattern with a top-down pan trajectory at left (axes: longitude/latitude offset from the location centre, in degrees; hollow circle = first keyframe, filled square = last) and zoom/bearing time-strips at right (z is the dimensionless map zoom level; $\theta$ is the bearing in degrees, $0^{\circ}$ pointing up and increasing clockwise).
-    Panel~\subref{fig:app_anim_dofs} tabulates which of the five camera degrees of freedom -- centre longitude/latitude, zoom, bearing $\theta$, and pitch $\phi$ -- each pattern exercises, alongside the constant pitch value and the keyframe count.
-    Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.}
+    \caption{Synthetic camera animation patterns (\cref{sub:scenarios}). Each panel shows a top-down pan trajectory (hollow circle = first keyframe, filled square = last) with zoom~($z$, scale 0--24) and bearing~($\theta$, clockwise from north) strips; dashed lines indicate constant values. Panel~\subref{fig:app_anim_dofs} tabulates the exercised \acp{DOF}.}
     \label{fig:app_animation_patterns}
 \end{figure}
