@@ -72,10 +72,10 @@
 					\pgfmathsetmacro{\h}{\zTop{\z}}
 					\draw[bar] (\bx, \zstripy+\zPad) rectangle (\bx+0.16, \zstripy+\h);
 				}
-				\pgfmathsetmacro{\hHi}{\zTop{14}}
-				\pgfmathsetmacro{\hLo}{\zTop{10}}
-				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+\hHi) {14};
-				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+\hLo) {10};
+				\pgfmathsetmacro{\hHi}{\zTop{24}}
+				\pgfmathsetmacro{\hLo}{\zTop{1}}
+				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+\hHi) {24};
+				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+\hLo) {1};
 
 				% bearing strip — 8 arrows, 0..105
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
