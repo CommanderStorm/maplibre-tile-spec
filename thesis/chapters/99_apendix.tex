@@ -166,3 +166,303 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
 \caption{Complete Maputnik generalisation corpus with per-style size metrics}
 \label{tab:maputnik_full}
 \end{table}
+
+
+\section{Camera Animation Patterns}\label{app:animation_patterns}
+
+The five synthetic camera animation patterns referenced in \cref{sub:scenarios} are visualised in \cref{fig:app_animation_patterns}.
+\Cref{fig:app_anim_zigzag,fig:app_anim_spiral,fig:app_anim_zoomdrill,fig:app_anim_pansweep,fig:app_anim_bearingspin} each show one pattern: the square at the left is a top-down view of the pan trajectory (origin at the location centre; the hollow circle marks the first keyframe and the filled square the last); the two strips on the right show how zoom level and bearing $\theta$ (in degrees, measured clockwise from north) evolve across keyframes.
+Constant dimensions are drawn as flat dashed lines.
+Pitch $\phi$ is held constant throughout each animation and is reported per pattern in \cref{fig:app_anim_dofs}, which also tabulates which of the five camera degrees of freedom each pattern exercises and how many keyframes it spans.
+Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.
+
+\begin{figure}[htbp]
+    \centering
+    % Shared TikZ styles for all five animation panels.
+    % Note: text colours use cvdgrey!40!black (60% black) rather than pure cvdgrey
+    % so axis labels and value annotations remain legible at print scale.
+    \tikzset{
+        framebox/.style={draw=cvdgrey, line width=0.3pt, fill=white},
+        crosshair/.style={draw=cvdgrey!60, line width=0.2pt},
+        trajpath/.style={draw=cvdblue, line width=0.7pt, line join=round},
+        trajdot/.style={circle, fill=cvdblue, inner sep=0pt, minimum size=2.6pt, draw=none},
+        trajstart/.style={circle, draw=cvdblue, line width=0.8pt, fill=white,
+                          inner sep=0pt, minimum size=4.6pt},
+        trajend/.style={rectangle, fill=cvdblue, inner sep=0pt, minimum size=3.8pt, draw=none},
+        stationary/.style={circle, fill=cvdvermillion, draw=black, line width=0.3pt,
+                           inner sep=0pt, minimum size=4pt},
+        statlabel/.style={font=\scriptsize, text=black},
+        bar/.style={fill=cvdblue, draw=none},
+        constline/.style={draw=cvdgrey!60!black, line width=0.4pt, dashed},
+        axislabel/.style={font=\scriptsize, text=black},
+        striplabel/.style={font=\scriptsize, text=black},
+        bearingarrow/.style={-{Stealth[length=1.4mm, width=1.0mm]}, draw=cvdblue, line width=0.45pt},
+    }
+
+    %% ── (a) zigzag ────────────────────────────────────────────────────────────
+    \begin{subfigure}[t]{0.31\linewidth}
+        \centering\vspace{0pt}%
+        \resizebox{\linewidth}{!}{%
+        \begin{tikzpicture}
+            \def\mapsize{1.8} \def\stripw{2.5} \def\striph{0.5}
+            \def\stripx{2.05} \def\zstripy{0.975} \def\bstripy{0.325}
+            \def\mapcx{0.9} \def\mapcy{0.9} \def\trajscale{0.78}
+
+            \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
+            \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
+            \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
+            \node[axislabel, anchor=south east] at (\mapsize-0.05, \mapcy+0.02) {lng};
+            \node[axislabel, anchor=south west, rotate=90] at (\mapcx+0.02, \mapsize-0.05) {lat};
+            \foreach \i/\nx/\ny in {%
+                0/0.125/0.125, 1/0.25/-0.25, 2/0.375/0.375, 3/0.5/-0.5,%
+                4/0.625/0.625, 5/0.75/-0.75, 6/0.875/0.875, 7/1.0/-1.0} {
+                \coordinate (zz\i) at ({\mapcx + \trajscale*\nx}, {\mapcy + \trajscale*\ny});
+            }
+            \draw[trajpath] (zz0) foreach \i in {1,...,7} { -- (zz\i) };
+            \foreach \i in {0,...,7} { \node[trajdot] at (zz\i) {}; }
+            \node[trajstart] at (zz0) {};
+            \node[trajend]   at (zz7) {};
+
+            % zoom strip — 8 bars alternating 10/14
+            \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
+            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
+            \foreach \i/\h in {0/0.12, 1/0.42, 2/0.12, 3/0.42, 4/0.12, 5/0.42, 6/0.12, 7/0.42} {
+                \pgfmathsetmacro{\bx}{\stripx + \i*0.3125 + 0.045}
+                \draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+0.22, \zstripy+\h);
+            }
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\striph-0.05) {14};
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.12) {10};
+
+            % bearing strip — 8 arrows, 0..105
+            \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
+            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta\,(^{\circ})$};
+            \foreach \i/\b in {0/0, 1/15, 2/30, 3/45, 4/60, 5/75, 6/90, 7/105} {
+                \pgfmathsetmacro{\bcx}{\stripx + (\i+0.5)*0.3125}
+                \pgfmathsetmacro{\bcy}{\bstripy + \striph/2}
+                \pgfmathsetmacro{\dx}{0.13*sin(\b)}
+                \pgfmathsetmacro{\dy}{0.13*cos(\b)}
+                \draw[bearingarrow] (\bcx, \bcy) -- ($(\bcx, \bcy) + (\dx, \dy)$);
+            }
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph-0.05)
+                {$105^{\circ}$};
+        \end{tikzpicture}%
+        }
+        \caption{zigzag}
+        \label{fig:app_anim_zigzag}
+    \end{subfigure}
+    \hfill
+    %% ── (b) spiral ────────────────────────────────────────────────────────────
+    \begin{subfigure}[t]{0.31\linewidth}
+        \centering\vspace{0pt}%
+        \resizebox{\linewidth}{!}{%
+        \begin{tikzpicture}
+            \def\mapsize{1.8} \def\stripw{2.5} \def\striph{0.5}
+            \def\stripx{2.05} \def\zstripy{0.975} \def\bstripy{0.325}
+            \def\mapcx{0.9} \def\mapcy{0.9} \def\trajscale{0.78}
+
+            \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
+            \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
+            \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
+            \node[axislabel, anchor=south east] at (\mapsize-0.05, \mapcy+0.02) {lng};
+            \node[axislabel, anchor=south west, rotate=90] at (\mapcx+0.02, \mapsize-0.05) {lat};
+            \foreach \i in {0,...,11} {
+                \pgfmathsetmacro{\ang}{\i*30}
+                \coordinate (sp\i) at ({\mapcx + \trajscale*cos(\ang)},
+                                       {\mapcy + \trajscale*sin(\ang)});
+            }
+            \draw[trajpath] (sp0) foreach \i in {1,...,11} { -- (sp\i) } -- cycle;
+            \foreach \i in {0,...,11} { \node[trajdot] at (sp\i) {}; }
+            \node[trajstart] at (sp0)  {};
+            \node[trajend]   at (sp11) {};
+
+            % zoom strip — constant 12
+            \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
+            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
+            \draw[constline] (\stripx+0.06, \zstripy+\striph/2)
+                          -- (\stripx+\stripw-0.06, \zstripy+\striph/2);
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\striph/2)
+                {const 12};
+
+            % bearing strip — 12 arrows, 0..330
+            \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
+            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta\,(^{\circ})$};
+            \foreach \i in {0,...,11} {
+                \pgfmathsetmacro{\b}{\i*30}
+                \pgfmathsetmacro{\bcx}{\stripx + (\i+0.5)*\stripw/12}
+                \pgfmathsetmacro{\bcy}{\bstripy + \striph/2}
+                \pgfmathsetmacro{\dx}{0.13*sin(\b)}
+                \pgfmathsetmacro{\dy}{0.13*cos(\b)}
+                \draw[bearingarrow] (\bcx, \bcy) -- ($(\bcx, \bcy) + (\dx, \dy)$);
+            }
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph-0.05)
+                {$330^{\circ}$};
+        \end{tikzpicture}%
+        }
+        \caption{spiral}
+        \label{fig:app_anim_spiral}
+    \end{subfigure}
+    \hfill
+    %% ── (c) zoomdrill ─────────────────────────────────────────────────────────
+    \begin{subfigure}[t]{0.31\linewidth}
+        \centering\vspace{0pt}%
+        \resizebox{\linewidth}{!}{%
+        \begin{tikzpicture}
+            \def\mapsize{1.8} \def\stripw{2.5} \def\striph{0.5}
+            \def\stripx{2.05} \def\zstripy{0.975} \def\bstripy{0.325}
+            \def\mapcx{0.9} \def\mapcy{0.9}
+
+            \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
+            \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
+            \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
+            \node[axislabel, anchor=south east] at (\mapsize-0.05, \mapcy+0.02) {lng};
+            \node[axislabel, anchor=south west, rotate=90] at (\mapcx+0.02, \mapsize-0.05) {lat};
+            \node[stationary] at (\mapcx, \mapcy) {};
+            \node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
+
+            % zoom strip — 7 bars: 4, 8, 12, 16, 12, 8, 4
+            \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
+            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
+            \foreach \i/\h in {0/0.12, 1/0.22, 2/0.32, 3/0.42, 4/0.32, 5/0.22, 6/0.12} {
+                \pgfmathsetmacro{\bw}{0.24}
+                \pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/7 - \bw/2}
+                \draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+\bw, \zstripy+\h);
+            }
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\striph-0.05) {16};
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.12) {4};
+
+            % bearing strip — constant
+            \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
+            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta\,(^{\circ})$};
+            \draw[constline] (\stripx+0.06, \bstripy+\striph/2)
+                          -- (\stripx+\stripw-0.06, \bstripy+\striph/2);
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph/2)
+                {const $0^{\circ}$};
+        \end{tikzpicture}%
+        }
+        \caption{zoomdrill}
+        \label{fig:app_anim_zoomdrill}
+    \end{subfigure}
+
+    \vspace{0.5em}
+
+    %% ── (d) pansweep ──────────────────────────────────────────────────────────
+    \begin{subfigure}[t]{0.31\linewidth}
+        \centering\vspace{0pt}%
+        \resizebox{\linewidth}{!}{%
+        \begin{tikzpicture}
+            \def\mapsize{1.8} \def\stripw{2.5} \def\striph{0.5}
+            \def\stripx{2.05} \def\zstripy{0.975} \def\bstripy{0.325}
+            \def\mapcx{0.9} \def\mapcy{0.9} \def\trajscale{0.78}
+
+            \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
+            \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
+            \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
+            \node[axislabel, anchor=south east] at (\mapsize-0.05, \mapcy+0.02) {lng};
+            \node[axislabel, anchor=south west, rotate=90] at (\mapcx+0.02, \mapsize-0.05) {lat};
+            \foreach \i/\nx/\ny in {%
+                0/-1.0/0.167, 1/-0.667/-0.167, 2/-0.333/0.167,
+                3/0.0/-0.167, 4/0.333/0.167,   5/0.667/-0.167} {
+                \coordinate (ps\i) at ({\mapcx + \trajscale*\nx},
+                                       {\mapcy + \trajscale*\ny});
+            }
+            \draw[trajpath] (ps0) foreach \i in {1,...,5} { -- (ps\i) };
+            \foreach \i in {0,...,5} { \node[trajdot] at (ps\i) {}; }
+            \node[trajstart] at (ps0) {};
+            \node[trajend]   at (ps5) {};
+
+            % zoom strip — constant 12
+            \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
+            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
+            \draw[constline] (\stripx+0.06, \zstripy+\striph/2)
+                          -- (\stripx+\stripw-0.06, \zstripy+\striph/2);
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\striph/2)
+                {const 12};
+
+            % bearing strip — constant
+            \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
+            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta\,(^{\circ})$};
+            \draw[constline] (\stripx+0.06, \bstripy+\striph/2)
+                          -- (\stripx+\stripw-0.06, \bstripy+\striph/2);
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph/2)
+                {const $0^{\circ}$};
+        \end{tikzpicture}%
+        }
+        \caption{pansweep}
+        \label{fig:app_anim_pansweep}
+    \end{subfigure}
+    \hfill
+    %% ── (e) bearingspin ───────────────────────────────────────────────────────
+    \begin{subfigure}[t]{0.31\linewidth}
+        \centering\vspace{0pt}%
+        \resizebox{\linewidth}{!}{%
+        \begin{tikzpicture}
+            \def\mapsize{1.8} \def\stripw{2.5} \def\striph{0.5}
+            \def\stripx{2.05} \def\zstripy{0.975} \def\bstripy{0.325}
+            \def\mapcx{0.9} \def\mapcy{0.9}
+
+            \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
+            \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
+            \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
+            \node[axislabel, anchor=south east] at (\mapsize-0.05, \mapcy+0.02) {lng};
+            \node[axislabel, anchor=south west, rotate=90] at (\mapcx+0.02, \mapsize-0.05) {lat};
+            \node[stationary] at (\mapcx, \mapcy) {};
+            \node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
+
+            % zoom strip — constant 12
+            \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
+            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
+            \draw[constline] (\stripx+0.06, \zstripy+\striph/2)
+                          -- (\stripx+\stripw-0.06, \zstripy+\striph/2);
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\striph/2)
+                {const 12};
+
+            % bearing strip — 8 arrows 0..315
+            \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
+            \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta\,(^{\circ})$};
+            \foreach \i in {0,...,7} {
+                \pgfmathsetmacro{\b}{\i*45}
+                \pgfmathsetmacro{\bcx}{\stripx + (\i+0.5)*\stripw/8}
+                \pgfmathsetmacro{\bcy}{\bstripy + \striph/2}
+                \pgfmathsetmacro{\dx}{0.13*sin(\b)}
+                \pgfmathsetmacro{\dy}{0.13*cos(\b)}
+                \draw[bearingarrow] (\bcx, \bcy) -- ($(\bcx, \bcy) + (\dx, \dy)$);
+            }
+            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph-0.05)
+                {$315^{\circ}$};
+        \end{tikzpicture}%
+        }
+        \caption{bearingspin}
+        \label{fig:app_anim_bearingspin}
+    \end{subfigure}
+    \hfill
+    %% ── (f) DOF matrix + keyframe counts ──────────────────────────────────────
+    \begin{subfigure}[t]{0.31\linewidth}
+        \centering\vspace{0pt}%
+        \begin{tblr}{
+            colspec = {l *{5}{c} r},
+            rows = {font=\scriptsize},
+            row{1} = {font=\scriptsize\bfseries},
+            column{1} = {font=\scriptsize},
+            colsep = 2.5pt,
+            rowsep = 1pt,
+        }
+        \toprule
+                     & lng/lat        & z          & $\theta$   & $\phi$     & \# kf \\
+        \midrule
+        zigzag       & \checkmark & \checkmark & \checkmark & $0^{\circ}$  &  8 \\
+        spiral       & \checkmark & --         & \checkmark & $0^{\circ}$  & 12 \\
+        zoomdrill    & --         & \checkmark & --         & $0^{\circ}$  &  7 \\
+        pansweep     & \checkmark & --         & --         & $0^{\circ}$  &  6 \\
+        bearingspin  & --         & --         & \checkmark & $60^{\circ}$ &  8 \\
+        \bottomrule
+        \end{tblr}
+        \caption{Camera \acs{DOF} exercised by each pattern, the constant pitch $\phi$ used, and the keyframe count. Coordinate values lng and lat are in degrees, z is dimensionless zoom level, $\theta$ in degrees.}
+        \label{fig:app_anim_dofs}
+    \end{subfigure}
+
+    \caption{The five synthetic camera animation patterns used to drive the rendering benchmark (\cref{sub:scenarios}).
+    Subfigures \subref{fig:app_anim_zigzag}--\subref{fig:app_anim_bearingspin} visualise each pattern with a top-down pan trajectory at left (axes: longitude/latitude offset from the location centre, in degrees; hollow circle = first keyframe, filled square = last) and zoom/bearing time-strips at right (z is the dimensionless map zoom level; $\theta$ is the bearing in degrees, $0^{\circ}$ pointing up and increasing clockwise).
+    Panel~\subref{fig:app_anim_dofs} tabulates which of the five camera degrees of freedom -- centre longitude/latitude, zoom, bearing $\theta$, and pitch $\phi$ -- each pattern exercises, alongside the constant pitch value and the keyframe count.
+    Keyframe spacing is uniform at $750\,\text{ms}$ across all patterns.}
+    \label{fig:app_animation_patterns}
+\end{figure}
