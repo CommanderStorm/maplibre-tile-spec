@@ -421,12 +421,12 @@ We drew both examples from the optimiser's test suite.
 			]
 filter: ["==",["get","class"],"road"]
 paint:
-	fill-color: ["match",
-		["get","class"],
-		"road", "#333",
-		"rail", "#666",
-		"#999"
-	]
+  fill-color: ["match",
+    ["get","class"],
+    "road", "#333",
+    "rail", "#666",
+    "#999"
+  ]
 		\end{lstlisting}
 		
 		\vspace{2mm}
@@ -442,7 +442,7 @@ paint:
 			]
 filter: ["==",["get","class"],"road"]
 paint:
-	fill-color: "#333"
+  fill-color: "#333"
 		\end{lstlisting}
 		
 		\caption{Constant propagation simplifies rendering expressions.}
@@ -464,8 +464,8 @@ paint:
 			belowskip=0pt
 			]
 ["all",
-	["==",["get","class"],"road"],
-	["==",["get","class"],"road"]
+  ["==",["get","class"],"road"],
+  ["==",["get","class"],"road"]
 ]
 		\end{lstlisting}
 		
