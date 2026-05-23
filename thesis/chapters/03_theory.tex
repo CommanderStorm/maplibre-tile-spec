@@ -2,7 +2,7 @@
 
 The gap we identified in \cref{ch:related_work} is that no existing tool composes style rewrites with data-level pruning into a joint pipeline.
 Closing this gap calls for foundations from several fields:
-The map rendering architecture that defines what we are optimising, the compiler techniques whose analogues drive our expression-level passes, the query optimisation concepts that inform our filter rewriting and predicate reordering, and the columnar encoding strategies that underpin our data-level passes.
+The map rendering architecture that defines what we are optimising, the compiler techniques whose analogues drive our expression-level passes, the query optimisation concepts that inform our filter rewriting and predicate reordering, and the columnar encoding strategies behind our data-level passes.
 
 We introduce these foundations in the order in which the optimiser consumes them.
 In \cref{sec:map_rendering_approaches} we describe the map rendering process and its resource pipeline.
@@ -588,19 +588,17 @@ Our encoding competition in \cref{sub:encoding_strategies} takes an exhaustive r
 \subsection{String Compression}\label{sub:string_compression}
 
 String data in vector tiles includes feature names, road classes, land-use categories, and administrative identifiers.
-Two complementary compression strategies address different aspects of string redundancy:
+Two complementary compression strategies address different aspects of string redundancy.
 
-\begin{itemize}
-    \item \textbf{Dictionary encoding} deduplicates string values by storing each unique string once in a dictionary and replacing occurrences with integer indices into the dictionary.
-    This is effective when many features share the same string value (e.g., thousands of features with \texttt{class = "residential"}).
-    The integer indices are themselves amenable to the integer encoding schemes described above.
+\textbf{Dictionary encoding} deduplicates string values by storing each unique string once in a dictionary and replacing occurrences with integer indices into the dictionary.
+This is effective when many features share the same string value (e.g., thousands of features with \texttt{class = "residential"}).
+The integer indices are themselves amenable to the integer encoding schemes described above.
 
-    \item \textbf{\acf{FSST}}~\cite{bonczFSSTFastRandom2020} is a lightweight, block-oriented string compressor that learns a \emph{symbol table} of up to 255 frequent byte sequences from the input corpus and replaces occurrences with single-byte codes.
-    Unlike general-purpose compressors such as LZ77 or zstd, \ac{FSST} preserves random access, so each compressed string can be decompressed independently without context from prior strings.
-    The symbol table is stored once and amortised over all strings in the column.
-    \ac{FSST} and dictionary encoding can be combined.
-    This means that applying \ac{FSST} to the deduplicated dictionary strings compresses both the unique values and the byte-level redundancy within them.
-\end{itemize}
+\textbf{\acf{FSST}}~\cite{bonczFSSTFastRandom2020} is a lightweight, block-oriented string compressor that learns a \emph{symbol table} of up to 255 frequent byte sequences from the input corpus and replaces occurrences with single-byte codes.
+Unlike general-purpose compressors such as LZ77 or zstd, \ac{FSST} preserves random access, so each compressed string can be decompressed independently without context from prior strings.
+The symbol table is stored once and amortised over all strings in the column.
+
+The two strategies compose by applying \ac{FSST} to the deduplicated dictionary strings compresses both the unique values and the byte-level redundancy within them.
 
 \subsection{Space-Filling Curves}\label{sub:space_filling_curves}
 
@@ -608,21 +606,19 @@ Two complementary compression strategies address different aspects of string red
 Points that are close in two-dimensional space tend to receive nearby positions on the curve~\cite{moonAnalysisClusteringProperties2001}.
 This property is exploited in tile encoding to reorder features so that spatially adjacent features are stored contiguously, improving the effectiveness of delta and \ac{RLE} encoding on geometry and property columns.
 
-Two space-filling curves are commonly used:
+Two space-filling curves are commonly used.
 
-\begin{itemize}
-    \item The \textbf{Z-order (Morton) curve} interleaves the binary representations of the $x$ and $y$ coordinates to form a single index.
-    For coordinates $(x, y)$ with $b$-bit components, the Morton code is:
-    \begin{equation}\label{eq:morton}
-        M(x, y) = \sum_{i=0}^{b-1} \bigl( x_i \cdot 2^{2i} + y_i \cdot 2^{2i+1} \bigr),
-    \end{equation}
-    where $x_i$ and $y_i$ are the $i$-th bits of $x$ and $y$, respectively.
-    Morton codes are fast to compute via bit-interleaving instructions, but the Z-order curve exhibits \enquote{jumps} between quadrants that break spatial continuity.
+The \textbf{Z-order (Morton) curve} interleaves the binary representations of the $x$ and $y$ coordinates to form a single index.
+For coordinates $(x, y)$ with $b$-bit components, the Morton code is
+\begin{equation}\label{eq:morton}
+    M(x, y) = \sum_{i=0}^{b-1} \bigl( x_i \cdot 2^{2i} + y_i \cdot 2^{2i+1} \bigr),
+\end{equation}
+where $x_i$ and $y_i$ are the $i$-th bits of $x$ and $y$, respectively.
+Morton codes are fast to compute via bit-interleaving instructions, but the Z-order curve exhibits \enquote{jumps} between quadrants that break spatial continuity.
 
-    \item The \textbf{Hilbert curve} traces a continuous path through the grid without the inter-quadrant jumps of the Z-order curve, achieving better locality preservation at the cost of a more complex index computation~\cite{moonAnalysisClusteringProperties2001}.
-    The Hilbert curve has also been used as the basis for spatial index structures: the Hilbert R-tree~\cite{kamelHilbertRtreeImproved1994} orders rectangles along the Hilbert curve to achieve tighter node packing than conventional R-trees, and FlatGeobuf~\cite{FlatGeobuf} uses a packed Hilbert R-tree for spatial indexing of its features.
-    The Hilbert index is computed recursively: the unit square is divided into four quadrants, each mapped to a sub-range of the curve; the quadrant containing the point determines the high-order bits of the index, and the process recurses on the sub-quadrant.
-\end{itemize}
+The \textbf{Hilbert curve} traces a continuous path through the grid without the inter-quadrant jumps of the Z-order curve, achieving better locality preservation at the cost of a more complex index computation~\cite{moonAnalysisClusteringProperties2001}.
+The Hilbert curve has also been used as the basis for spatial index structures: the Hilbert R-tree~\cite{kamelHilbertRtreeImproved1994} orders rectangles along the Hilbert curve to achieve tighter node packing than conventional R-trees, and FlatGeobuf~\cite{FlatGeobuf} uses a packed Hilbert R-tree for spatial indexing of its features.
+The Hilbert index is computed recursively: the unit square is divided into four quadrants, each mapped to a sub-range of the curve; the quadrant containing the point determines the high-order bits of the index, and the process recurses on the sub-quadrant.
 
 For tile data, we assign each feature a curve index based on its first vertex coordinate, and our encoding competition described in \cref{ch:methods} selects the feature ordering that produces the smallest encoded output (across Morton, Hilbert, and non-spatial orderings).
 
@@ -678,8 +674,8 @@ Our benchmark harness controls for network variability (via a caching proxy) and
 
 With these theoretical tools in place, we can now make the mapping from theory to our optimiser's three-level pipeline explicit.
 
-The compiler techniques surveyed above - peephole rewriting, constant folding, and fixpoint iteration - supply the rewrite strategies for the expression-level passes that simplify individual style expressions without schema knowledge.
-The query-optimisation concepts - predicate pushdown and selectivity estimation - inform the structural passes and, critically, the pruning advisory that bridges style and data: the advisory is a pushdown plan derived from the optimised style, analogous to a query planner projecting only the columns a query reads.
-The encoding techniques - columnar storage, integer coding, \ac{FSST}, and space-filling curves - underpin the data-level passes that re-encode shaved tiles with automatic strategy selection.
+The compiler analogues we surveyed (peephole rewriting, constant folding, fixpoint iteration) drive the expression-level passes that simplify individual style expressions without schema knowledge.
+Predicate pushdown and selectivity estimation, the query-optimisation concepts from above, shape the structural passes and the pruning advisory that bridges style and data: the advisory is a pushdown plan derived from the optimised style, analogous to a query planner projecting only the columns a query reads.
+And the encoding techniques covered last - columnar storage, integer coding, \ac{FSST}, and space-filling curves - feed into the data-level passes that re-encode shaved tiles with automatic strategy selection.
 
 The following chapter formalises the optimisation problem and applies these foundations to the concrete design and implementation of the optimiser.

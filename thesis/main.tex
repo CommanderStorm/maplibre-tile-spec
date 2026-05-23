@@ -142,6 +142,22 @@
   \end{itemize}
   \end{tcolorbox}
 }
+\newenvironment{chaptersummary}{%
+  \begin{tcolorbox}[
+    enhanced,
+    blanker,
+    borderline west={0.7pt}{0pt}{black!50},
+    left=3mm,
+    right=0mm,
+    top=1mm,
+    bottom=1mm,
+    before skip=8pt,
+    after skip=10pt
+  ]
+  \small
+}{%
+  \end{tcolorbox}
+}
 \usepackage[noabbrev,capitalize,nameinlink]{cleveref}
 \newcommand{\crefrangeconjunction}{--}
 \renewcommand{\lstlistingname}{Algorithm}

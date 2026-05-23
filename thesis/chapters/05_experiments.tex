@@ -136,10 +136,11 @@ Dead elimination directly reduces the number of layers the renderer must process
 The interaction between the two is synergistic: styles with many narrowly-filtered layers (e.g., road styles that define separate layers for each road class) benefit most, as dead elimination first removes layers for road classes absent from the data, and layer merging then combines the remaining layers into a single multi-class layer.
 
 \paragraph{Layer merging can trade raw size for runtime savings}
-Layer merging does not always reduce the raw serialised byte count: a merged layer replaces $k$ small filter expressions with a single \texttt{match}-keyed filter and $k$-armed \texttt{match} expressions for every differing paint property, which for small $k$ can produce a slightly larger textual representation than the sum of the originals.
-The per-style ablation tables in \cref{sec:app_per_style} show one such case (OSM Liberty: \num{27.6}$\to$\qty{28.3}{\kilo\byte} after layer merging), where the raw count increases while the layer count drops from 105 to 103.
-We observe that raw byte count is a proxy metric for parse time and transfer cost, whereas the driver of rendering performance is layer count and per-frame draw calls; the merged layer is still cheaper to render even when its serialised form is larger.
-The gzip and Brotli columns of the same table show that the compressed size is essentially unchanged, confirming that the raw increase disappears under realistic wire compression.
+Layer merging does not always reduce the raw serialised byte count.
+A merged layer replaces $k$ small filter expressions with a single \texttt{match}-keyed filter and $k$-armed \texttt{match} expressions for every differing paint property, which for small $k$ can produce a slightly larger textual representation than the sum of the originals.
+The per-style ablation tables in \cref{sec:app_per_style} show one such case (OSM Liberty: \num{27.6}$\to$\qty{28.3}{\kilo\byte} after layer merging), where the raw count creeps up while the layer count drops from 105 to 103.
+This was uncomfortable when we first saw it in the runs, since the intuition is that merging should shrink the style, but raw byte count turns out to be a proxy for parse time and transfer cost rather than for rendering cost, which is driven by layer count and per-frame draw calls.
+The merged layer is still cheaper to render even when its serialised form is bigger, and the gzip and Brotli columns of the same table show the compressed size essentially unchanged, so the raw increase disappears under realistic wire compression anyway.
 
 \paragraph{Metadata refinement has indirect effects}
 Metadata refinement does not directly reduce the number of layers or the complexity of expressions; instead, it enables the renderer to skip layers at zoom levels where they are invisible.
@@ -219,7 +220,9 @@ Comparing the gzip-size reductions of style-only, shaving-only, and their combin
 For Fiord, the style-only reduction is \qty{14.1}{\percent} and shaving-only contributes a negligible reduction, yet the combined style+shaving reduction is \qty{14.7}{\percent} - a modest additional \qty{0.6}{\percent} from dead-layer elimination narrowing the pruning advisory.
 For Liberty, shaving-only also contributes negligibly (Liberty's broad layer structure already references most tile properties), and the combined reduction (\qty{4.8}{\percent}) is close to the style-only reduction (\qty{4.9}{\percent}), indicating approximately additive behaviour.
 
-The aggregate across both styles shows no super-additive interaction at the median level, though per-scenario synergy is present in 16 of the 26 scenarios with complete data.
+The aggregate across both styles shows no super-additive interaction at the median level.
+This was the central empirical question of the thesis and the one we expected to answer in the affirmative going in; the result that the levels compose additively, not synergistically, is what the data actually returned.
+Per-scenario synergy is present in 16 of the 26 scenarios with complete data, but it is too sparse to lift the aggregate above the additive expectation.
 
 \paragraph{Rendering metrics across configurations}
 \cref{fig:rendering_metrics_mlt} reveals that the dominant rendering improvement comes from tile shaving, not from style optimisations.
@@ -301,17 +304,17 @@ To separate the contribution of the multi-strategy competition (this work) from 
 \label{fig:encoder_comparison}
 \end{figure}
 
-We draw three observations.
-\emph{First}, under no wire compression the Rust encoder reduces the \ac{MLT}-Java baseline by \qty{28.3}{\percent}, confirming that the sort-strategy competition, per-stream profiler, and shared-dictionary clustering add substantial savings over a columnar encoder that simply picks a fixed encoding plan.
-Note that the Java baseline we use here incorporates encoding improvements backported from the Rust encoder development (correct delta-zigzag sequencing, \ac{RLE} viability checks, \ac{FSST} thresholds); the \qty{28}{\percent} reduction therefore isolates the contribution of the automatic strategy selection - sort competition, per-stream profiling, and MinHash-based shared-dictionary clustering - over a correctly-implemented fixed-plan encoder, rather than conflating bug-fixes with innovation.
-\emph{Second}, the \ac{MLT}-Java baseline is \emph{worse} than gzip-compressed \ac{MVT} (\qty{3.54}{\giga\byte} vs.\ \qty{3.08}{\giga\byte})  -  a finding that is easy to overlook when comparing \enquote{raw \ac{MLT}} to \enquote{raw \ac{MVT}} alone.
-General-purpose LZ77-family compressors already exploit most of the row-level redundancy in the protobuf wire format; a columnar encoder that uses fixed per-column schemes cannot keep up.
-The data-driven encoding strategy selection of the Rust encoder reclaims this gap: \ac{MLT}-Rust under gzip is \qty{12.3}{\percent} smaller than \ac{MVT} under gzip.
-This advantage is preserved (\qty{12.9}{\percent}) even against zstd-22, the strongest general-purpose compressor in the comparison.
-\emph{Third}, the relative gap between Rust and Java is stable across all four compressors (\qty{-23}{\percent} to \qty{-28}{\percent}).
-While we see this stability as consistent with the profiler capturing genuine redundancy beyond what general-purpose compressors exploit, it could equally reflect that the profiler removes the same redundancy that compressors would.
-We take the stronger evidence for the profiler's value to be the absolute comparison: \ac{MLT}-Rust uncompressed (\qty{3.06}{\giga\byte}) is already smaller than \ac{MVT}+gzip (\qty{3.08}{\giga\byte}), confirming that the per-stream encoding captures type-specific redundancy that LZ77-family compressors miss on the interleaved protobuf byte stream.
-This isolation directly answers the question we posed at the start of \cref{sec:exp_mlt}: the \ac{MLT}-Rust contribution is not in the columnar format alone, but in the joint strategy-selection layer that sits on top of it.
+The headline number is the \qty{28.3}{\percent} reduction the Rust encoder achieves over the \ac{MLT}-Java baseline under no wire compression, confirming that the sort-strategy competition, per-stream profiler, and shared-dictionary clustering add substantial savings over a columnar encoder that simply picks a fixed encoding plan.
+The Java baseline we use here already incorporates encoding improvements backported from the Rust encoder's development (correct delta-zigzag sequencing, \ac{RLE} viability checks, \ac{FSST} thresholds), so the \qty{28}{\percent} isolates the contribution of the automatic strategy selection - sort competition, per-stream profiling, and MinHash-based shared-dictionary clustering - over a correctly-implemented fixed-plan encoder, rather than conflating bug fixes with the innovation we want to attribute to.
+
+The finding in the table that is easiest to overlook, and the one we found most uncomfortable when we first plotted it, is that the \ac{MLT}-Java baseline is \emph{worse} than gzip-compressed \ac{MVT} (\qty{3.54}{\giga\byte} vs.\ \qty{3.08}{\giga\byte}).
+General-purpose LZ77-family compressors already exploit most of the row-level redundancy in the protobuf wire format, and a columnar encoder that uses fixed per-column schemes cannot keep up.
+The data-driven strategy selection in the Rust encoder reclaims this gap and goes past it: \ac{MLT}-Rust under gzip is \qty{12.3}{\percent} smaller than \ac{MVT} under gzip, and the advantage holds (\qty{12.9}{\percent}) even against zstd-22, the strongest general-purpose compressor in the comparison.
+
+The relative gap between Rust and Java is roughly constant across all four compressors (\qty{-23}{\percent} to \qty{-28}{\percent}).
+This stability is consistent with the profiler capturing genuine redundancy that general-purpose compressors miss, but it could equally reflect that the profiler removes the same redundancy the compressors would have.
+The cleaner evidence for the profiler's value is the absolute comparison: \ac{MLT}-Rust uncompressed (\qty{3.06}{\giga\byte}) is already smaller than \ac{MVT}+gzip (\qty{3.08}{\giga\byte}), confirming that per-stream encoding captures type-specific redundancy that LZ77-family compressors miss on the interleaved protobuf byte stream.
+This directly answers the question we posed at the start of \cref{sec:exp_mlt}: the \ac{MLT}-Rust contribution lives in the joint strategy-selection layer that sits on top of the columnar format, not in the format alone.
 
 \paragraph{Scope of the encoder contribution}
 We measured the \qty{28}{\percent} reduction reported in \cref{tab:mvt_mlt_comparison} on the \emph{unshaved} Germany tileset, so it is an encoder-only improvement, independent of the style-driven optimisations.
@@ -363,7 +366,7 @@ These micro-benchmark results complement the browser-based \texttt{loadMs} metri
 \subsection{Discussion}\label{sub:mlt_discussion}
 
 \paragraph{Tile shaving dominates; style passes assist additively}
-We regard the most significant finding of this experiment as the fact that tile shaving is the dominant contributor to load-time and transfer-size improvements, while style-level passes provide a modest, additive assist.
+The headline finding of this experiment is that tile shaving is the dominant contributor to load-time and transfer-size improvements, while style-level passes provide a modest, additive assist.
 Dead layer elimination (Experiment~2) removes style layers whose filters are unsatisfiable.
 Each removed layer reduces the set of referenced properties in the pruning advisory, which in turn can eliminate columns from the encoded tile.
 Metadata refinement tightens zoom bounds, which causes the advisory to mark additional zoom levels as unused, potentially eliminating tiles entirely.
@@ -519,10 +522,12 @@ style-level dead elimination narrows tile pruning advisories, and metadata refin
 \subsection{Full Pipeline Ablation}\label{sub:combined_ablation}
 
 \cref{fig:heatmap_loadMs} presents the full scenario$\times$step load-time heatmap.
-We observe from the heatmap that load-time improvements are unevenly distributed across scenarios: urban, tile-dense scenarios (New York, Tokyo, Paris) show larger absolute improvements than sparse scenarios (Sahara, Amazon), because the tile-fetch component of load time dominates in dense areas.
+Load-time improvements are unevenly distributed across scenarios: urban, tile-dense scenarios (New York, Tokyo, Paris) show larger absolute improvements than sparse scenarios (Sahara, Amazon), because the tile-fetch component of load time dominates in dense areas.
 Expression passes (steps~1-7) produce a diffuse, moderate improvement across most scenarios, whereas the improvement from structural passes (steps~8-15) is concentrated in the few styles and scenarios where dead elimination or layer merging applies.
-As a consequence of this large improvement in frame time, previously hidden frame time consistency issues become more obvious as shown in \cref{fig:heatmapjankcount}.
-We attribute these consistency issues mostly to \ac{GC}-pauses.
+
+A side effect we did not expect on first reading was that the frame-time consistency metric in \cref{fig:heatmapjankcount} \emph{got worse} as the pipeline got faster - the jank count goes up across the ablation.
+The explanation, once we plotted it next to FPS, is that we are now running well above 2000\,FPS, where smaller variations such as \ac{GC}-pauses register as proportionally large frame-time outliers; on real consumer hardware capped well below that rate the same pauses would not cross the jank threshold.
+The metric is doing what it should - flagging fragile frames - but it is reading a regime the renderer was never expected to enter, which is worth keeping in mind when interpreting the heatmap.
 
 \begin{figure}[htbp]
 	\centering
@@ -684,35 +689,30 @@ Where the same step appears across two complexity axes, we describe the connecti
 \subsection{Discussion}\label{sub:combined_discussion}
 
 \paragraph{Three plausible improvement channels}
-The full pipeline ablation suggests three plausible channels by which optimisations improve rendering performance, which we infer from proxy metrics (AST node count, layer count, tile size) rather than direct per-mechanism instrumentation.
-\emph{Style simplification} (expression passes from \cref{sub:expression_optimisations}) plausibly reduces per-feature evaluation cost: fewer \ac{AST} nodes mean fewer interpreter steps per feature per frame.
-\emph{Structural reduction} (dead elimination and layer merging from \cref{sub:structural_optimisations}) plausibly reduces per-frame overhead: fewer layers mean fewer draw calls, fewer GPU state changes, and fewer filter evaluations at the layer level.
-\emph{Data reduction} (tile shaving and re-encoding from \cref{sub:data_optimisations}) reduces transfer cost: smaller tiles mean shorter download times and lower decode overhead, primarily improving load time and time to first tile, but because of lower \ac{GC}-spend also average frame times.
-No renderer instrumentation separates these channels directly; we infer the decomposition from the proxy metrics and the time breakdown (\cref{fig:time_breakdown}).
-The three channels target non-overlapping costs - simplification cannot shrink tiles and shaving cannot prune expressions - so they compose additively in the aggregate, as we already established quantitatively in \cref{sub:mlt_results}.
+The full pipeline ablation points to three plausible channels by which the optimiser improves rendering performance, which we infer from proxy metrics (AST node count, layer count, tile size) rather than direct per-mechanism instrumentation.
+The expression passes (\cref{sub:expression_optimisations}) plausibly reduce per-feature evaluation cost - fewer AST nodes mean fewer interpreter steps per feature per frame.
+Dead elimination and layer merging (\cref{sub:structural_optimisations}) operate one level up, cutting draw calls, GPU state changes, and per-layer filter evaluations.
+Tile shaving and re-encoding (\cref{sub:data_optimisations}) sit on a different axis entirely: they reduce transfer and decode cost so that load time and time-to-first-tile drop, with a secondary effect on average frame time via lower \ac{GC}-spend.
+No renderer instrumentation separates these channels directly; the decomposition is inferred from the proxy metrics and the time breakdown (\cref{fig:time_breakdown}).
+What makes them additive in the aggregate (as already shown quantitatively in \cref{sub:mlt_results}) is that they target non-overlapping costs: simplification cannot shrink tiles, shaving cannot prune expressions.
 
 \paragraph{Load time vs.\ frame rate}
 Expression and structural passes improve both load time and frame rate, because a simpler style is both faster to parse and faster to render.
-Data-level passes primarily improve load time (smaller tiles arrive faster) and have a smaller effect on sustained frame rate, since once tiles are decoded and resident in the GPU, the per-frame cost is dominated by expression evaluation and draw-call overhead rather than data size.
-The exception is tile shaving at overview zoom levels, where removing entire source-layers reduces the number of features the renderer must process.
+Data-level passes primarily improve load time (smaller tiles arrive faster) and have a smaller effect on sustained frame rate, since once tiles are decoded and resident in the GPU the per-frame cost is dominated by expression evaluation and draw-call overhead rather than data size.
+The exception is tile shaving at overview zoom levels, where removing entire source-layers reduces the number of features the renderer must process per frame.
 
-\paragraph{Diminishing returns and pass ordering}
-We observe diminishing marginal returns in the ablation as more passes are added.
-Early passes (constant folding, dead elimination) capture the largest improvements because they address the most common sources of waste.
-Later passes (colour minification, metadata stripping) address less frequent patterns and contribute smaller marginal improvements.
-This ordering effect is inherent to cumulative ablation: the reported marginal contribution of a pass depends on which passes precede it.
-Our isolated-impact analysis (non-cumulative) confirms that each pass has a non-trivial standalone contribution, even if its marginal contribution in the cumulative sequence is small.
+\paragraph{What varies, and why}
+The cumulative ablation shows diminishing marginal returns:
+early passes (constant folding, dead elimination) capture the largest improvements because they address the most common sources of waste, while later passes (colour minification, metadata stripping) address less frequent patterns and contribute correspondingly less.
+The non-cumulative isolated-impact analysis confirms that each pass has a non-trivial standalone contribution, even when its cumulative-sequence contribution looks small - the marginal number is sensitive to which passes precede it, but the standalone number is not.
 
-\paragraph{Per-style variation}
-We observe substantial variation in the magnitude of improvement across styles.
-Styles with many narrowly-filtered layers (e.g., detailed road styles) benefit most from layer merging; styles with broad filters benefit most from stats-driven dead elimination; styles with large expression trees benefit most from constant folding.
-No single pass dominates across all styles, which justifies the multi-pass design of the optimiser.
+Variation across styles is similarly structured:
+styles with many narrowly-filtered layers (e.g.\ detailed road styles) benefit most from layer merging, styles with broad filters from stats-driven dead elimination, and styles with large expression trees from constant folding.
+No single pass dominates across all styles, which is the empirical justification for the multi-pass design.
 
 \paragraph{Measurement noise}
-The 15-run median smooths out most measurement noise, but tail metrics (p99 frame time, jank count) exhibit higher variance than central-tendency metrics (median frame time, FPS).
-GPU thermals, browser garbage collection, and OS scheduling contribute to this variance.
-
-We partially self-inflict this variance: using real GPU hardware (ANGLE/Vulkan) rather than a software rasteriser captures realistic rendering costs, including GPU buffer management and shader compilation, at the expense of slightly higher measurement noise compared to deterministic software rendering.
+The 15-run median smooths out most measurement noise, but tail metrics (p99 frame time, jank count) carry higher variance than central-tendency metrics; GPU thermals, browser garbage collection, and OS scheduling all contribute.
+We partly self-inflict this: using real GPU hardware (ANGLE/Vulkan) rather than a software rasteriser captures realistic rendering costs - GPU buffer management, shader compilation - at the expense of slightly higher noise compared to deterministic software rendering.
 
 
 \section{Visual Correctness Validation}\label{sec:visual_correctness}

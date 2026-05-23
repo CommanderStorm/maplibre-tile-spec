@@ -1,9 +1,9 @@
 \chapter{Introduction}\label{ch:introduction}
 
-Interactive web maps have become a ubiquitous interface for geographic information, powering applications from navigation and logistics to urban planning and journalism.
-Modern map renderers such as MapLibre GL~JS\footnote{We target MapLibre GL~JS, the open-source fork of Mapbox GL~JS, because its source code permits the static analysis and runtime instrumentation that a style optimiser requires.
-The proprietary Mapbox codebase does not allow independent research evaluation.} and Mapbox GL~JS deliver client-side rendered vector maps by streaming tiled geometry data to the browser, where a client side style specification drives a WebGL- or WebGPU-based rendering pipeline.
-This architecture enables smooth panning, zooming, and rotation, but it also places competing demands on the network (tile fetching), the CPU (decoding, style expression evaluation), and the GPU (draw calls)- all within a single frame budget.
+A single rendered frame in an interactive vector map has to fit a tile fetch, an evaluation of style expressions over every visible feature, and a GPU submit inside the same frame budget, and on a slow connection or a battery-bound device any of the three can become the bottleneck.
+MapLibre GL~JS\footnote{We target MapLibre GL~JS, the open-source fork of Mapbox GL~JS, because its source code permits the static analysis and runtime instrumentation that a style optimiser requires.
+The proprietary Mapbox codebase does not allow independent research evaluation.} and Mapbox GL~JS deliver these maps by streaming tiled geometry to the browser and letting a client-side style document drive a WebGL- or WebGPU-based rendering pipeline.
+This architecture is what makes panning, zooming, and rotation smooth when it works, and what makes them stutter when it does not.
 
 As map deployments scale - from personal projects to platforms serving millions of daily users - the cost of suboptimal performance compounds.
 Larger tiles increase transfer time and bandwidth cost, redundant style layers waste rendering cycles and unnecessary properties inflate decoding overhead.
@@ -55,9 +55,6 @@ We make the following main contributions:
 
 \section{Outline}\label{sec:outline}
 
-The remainder of this thesis is structured as follows.
-In \cref{ch:related_work} we survey tile data pruning, encoding formats, style-level tooling, and rendering benchmarking, identifying the gap that motivates a joint style-data optimiser.
-\cref{ch:theoretical_background} establishes the compiler, database, and encoding foundations that the optimiser draws on.
-\cref{ch:methods} formalises the visual-equivalence-constrained optimisation problem and presents the three-level pipeline and evaluation methodology.
-\cref{ch:experiments} evaluates each optimisation level in isolation and combined, tests generalisation across 15 styles, and quantifies the full pipeline's end-to-end effect on tile volume, load time, and rendering stability.
-\cref{ch:conclusion} revisits the research questions, summarises the key findings, and identifies directions for future work.
+\cref{ch:related_work} surveys the literature this work draws on and the gap it leaves, and \cref{ch:theoretical_background} introduces the compiler, database, and encoding ideas the pipeline reuses.
+\cref{ch:methods} states the optimisation problem formally and details the passes that implement it.
+\cref{ch:experiments} measures their isolated and combined effects across 15~styles, and \cref{ch:conclusion} returns to the research questions with the results in hand.

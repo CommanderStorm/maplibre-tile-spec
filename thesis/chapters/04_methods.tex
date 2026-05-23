@@ -3,10 +3,7 @@
 The preceding chapters established that no existing tool jointly optimises map styles and tile data, and introduced the compiler, database, and encoding techniques whose analogues make such joint optimisation possible.
 In this chapter we apply those foundations to the design and implementation of our concrete optimiser - a standalone Rust tool that consumes a MapLibre style~JSON document and, optionally, tile-level statistics, and produces a visually equivalent style together with optimised tile data.
 
-The chapter proceeds as follows.
-In \cref{sec:problem_statement} we formalise the optimisation problem and the visual-equivalence constraint that all passes must satisfy.
-\cref{sec:scope} scopes the work to MapLibre GL~JS and describes the implementation platform.
-\cref{sec:approach} then describes the three-level pipeline, and the subsequent sections detail the individual passes at each level.
+The chapter opens with a formal statement of the optimisation problem and its visual-equivalence constraint (\cref{sec:problem_statement}), then scopes the work to MapLibre GL~JS (\cref{sec:scope}), and proceeds level by level through the three-level pipeline (\cref{sec:approach}) and the individual passes that implement it.
 
 \section{Formalised Problem Statement}\label{sec:problem_statement}
 
@@ -565,7 +562,6 @@ Source zoom tightening       & none      & Tighten source \texttt{minzoom}/\text
 \label{tab:structural_passes}
 \end{table}
 
-\noindent The following paragraphs describe the algorithm and rationale for each structural pass.
 
 \paragraph{Dead layer and source elimination}
 The pass treats a layer as dead - and removes it - if any of the following conditions hold:
@@ -1420,12 +1416,9 @@ We employ a two-tier strategy.
 \subsection{Benchmarking Corpus}\label{sub:deep_corpus}
 
 For rendering benchmarks that require tile data and animated camera scenarios, we curated a corpus of 15 publicly available styles that use the OpenMapTiles or BasemapDE schema:
-
-\begin{itemize}
-    \item \textbf{4 OpenFreeMap styles}: liberty, bright, positron, fiord.
-    \item \textbf{7 OpenMapTiles community styles}: dark-matter, osm-bright, klokan-basic, toner, osm-liberty, americana, stadia-outdoors.
-    \item \textbf{4 Government and institutional styles}: ICGC~fosc, ICGC~gris, Basemap\-DE topo\-graphic, Basemap\-DE colour.
-\end{itemize}
+four \textbf{OpenFreeMap} styles (liberty, bright, positron, fiord);
+seven \textbf{OpenMapTiles community} styles (dark-matter, osm-bright, klokan-basic, toner, osm-liberty, americana, stadia-outdoors);
+and four \textbf{government and institutional} styles (ICGC~fosc, ICGC~gris, Basemap\-DE topo\-graphic, Basemap\-DE colour).
 
 These styles span a range of complexity-from minimal basemaps with fewer than 50~layers to verbose institutional styles with several hundred layers-and exercise different subsets of the expression language.
 
@@ -1447,17 +1440,14 @@ The same network model also feeds the per-style \ac{CDN} break-even analysis in 
 
 \subsection{Geographic and Use-Case Scenarios}\label{sub:scenarios}
 
-The benchmark harness defines 18 scenarios drawn from a matrix of 15 geographic locations and 5 camera animation types:
-
-\begin{itemize}
-    \item \textbf{Locations} span high-density cities with Latin scripts (Munich, Berlin, Paris, New York, Rome), cities with non-Latin scripts (Tokyo, Beijing, Seoul, Cairo), and low-density or special nature regions (Black Forest, Amazon, Swiss Alps, Sahara, Venice, Stockholm Archipelago).
-    \item \textbf{Animations} exercise different rendering workloads:
-    \emph{zigzag} alternates zoom levels while panning;
-    \emph{spiral} traces a circle at constant zoom with rotating bearing;
-    \emph{zoomdrill} zooms from overview to street level and back;
-    \emph{pansweep} sweeps across a region at constant zoom;
-    \emph{bearingspin} rotates bearing at high pitch.
-\end{itemize}
+The benchmark harness defines 18 scenarios drawn from a matrix of 15 geographic locations and 5 camera animation types.
+\textbf{locations} span high-density cities with Latin scripts (Munich, Berlin, Paris, New York, Rome), cities with non-Latin scripts (Tokyo, Beijing, Seoul, Cairo), and low-density or special nature regions (Black Forest, Amazon, Swiss Alps, Sahara, Venice, Stockholm Archipelago).
+\textbf{animations} exercise different rendering workloads:
+\emph{zigzag} alternates zoom levels while panning;
+\emph{spiral} traces a circle at constant zoom with rotating bearing;
+\emph{zoomdrill} zooms from overview to street level and back;
+\emph{pansweep} sweeps across a region at constant zoom;
+and \emph{bearingspin} rotates bearing at high pitch.
 
 Each scenario is a specific (location, animation) pair.
 The full cross-product of 15 locations and 5 animations is 75 pairs, which is too expensive\footnote{Each cell requires 15 repeat runs for statistical validity across 17 ablation steps and 15 styles, as this would result in $75 \times 15 \times 17 \times 15 = \num{286875}$ full animations} to run for every ablation step.
@@ -1498,12 +1488,7 @@ Per run, the benchmark harness collects the following metrics:
     \item \textbf{Idle time} (\texttt{idleMs}): time the renderer spends idle (waiting for tiles or GPU sync), indicating headroom.
 \end{itemize}
 
-\noindent Additionally, we compute the following static metrics for each optimised style without running the renderer:
-
-\begin{itemize}
-    \item \textbf{Style size}: raw byte count, gzip-compressed size, and Brotli-compressed size.
-    \item \textbf{Complexity metrics}: total \ac{AST} node count, maximum expression depth, layer count, filter count, and expression operator histogram.
-\end{itemize}
+\noindent Additionally, we compute static metrics for each optimised style without running the renderer: \textbf{style size} as raw byte count, gzip-compressed size, and Brotli-compressed size; and \textbf{complexity metrics} comprising total \ac{AST} node count, maximum expression depth, layer count, filter count, and expression operator histogram.
 
 \subsection{Ablation Methodology}\label{sub:ablation}
 
