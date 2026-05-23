@@ -50,7 +50,7 @@
 \usepackage{acro}
 \input{acro.tex}
 \usepackage{tikz-cd}
-\usetikzlibrary{positioning, arrows.meta, shapes.geometric, fit, calc, backgrounds, decorations.pathreplacing}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, fit, calc, backgrounds, decorations.pathreplacing, decorations.markings}
 
 % Okabe-Ito CVD-safe palette (https://jfly.uni-koeln.de/color/)
 \definecolor{cvdblack}{HTML}{000000}
@@ -143,7 +143,6 @@
   \end{tcolorbox}
 }
 \newenvironment{chaptersummary}{%
-  \textbf{Summary}\par\vspace{2pt}
   \begin{tcolorbox}[
     enhanced,
     blanker,
@@ -155,6 +154,7 @@
     before skip=18pt,
     after skip=10pt
   ]
+  \textbf{Summary}\par\vspace{2pt}
 }{%
   \end{tcolorbox}
 }
