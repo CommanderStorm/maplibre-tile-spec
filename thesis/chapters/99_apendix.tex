@@ -1,4 +1,6 @@
 \chapter{Appendix}\label{ch:appendix}
+\renewcommand{\thefigure}{A\arabic{figure}}
+\renewcommand{\thetable}{A\arabic{table}}
 
 \section{Camera Animation Patterns}\label{app:animation_patterns}
 
@@ -65,8 +67,6 @@
 					
 					\draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+0.16, \zstripy+\h);
 				}
-				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+0.268) {14};
-				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+0.191) {10};
 				
 				% bearing strip — 8 arrows, 0..105
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
@@ -109,12 +109,12 @@
 				\node[trajstart] at (sp0)  {};
 				\node[trajend]   at (sp11) {};
 				
-				% zoom strip — constant z12 (12/24 * 0.46 = 0.27 above base)
+				% zoom strip — constant z12 (12/24 * 0.46 = 0.23 above base)
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
-				\draw[constline] (\stripx+0.06, \zstripy+0.27)
-				-- (\stripx+\stripw-0.06, \zstripy+0.27);
-				\node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.27) {12};
+				\draw[constline] (\stripx+0.06, \zstripy+0.23)
+				-- (\stripx+\stripw-0.06, \zstripy+0.23);
+				\node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.23) {12};
 				
 				% bearing strip — 12 arrows, 0..330
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
@@ -162,8 +162,8 @@
 					
 					\draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+\bw, \zstripy+\h);
 				}
-				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+0.347) {16};
-				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+0.117) {4};
+				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+0.347) {24};
+				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+0.117) {0};
 				
 				% bearing strip — constant
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
@@ -206,12 +206,12 @@
 				\node[trajstart] at (ps0) {};
 				\node[trajend]   at (ps5) {};
 				
-				% zoom strip — constant z12 (12/24 * 0.46 = 0.27 above base)
+				% zoom strip — constant z12 (12/24 * 0.46 = 0.23 above base)
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
-				\draw[constline] (\stripx+0.06, \zstripy+0.27)
-				-- (\stripx+\stripw-0.06, \zstripy+0.27);
-				\node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.27) {12};
+				\draw[constline] (\stripx+0.06, \zstripy+0.23)
+				-- (\stripx+\stripw-0.06, \zstripy+0.23);
+				\node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.23) {12};
 				
 				% bearing strip — constant
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
@@ -244,12 +244,12 @@
 				\node[stationary] at (\mapcx, \mapcy) {};
 				\node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
 				
-				% zoom strip — constant z12 (12/24 * 0.46 = 0.27 above base)
+				% zoom strip — constant z12 (12/24 * 0.46 = 0.23 above base)
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
-				\draw[constline] (\stripx+0.06, \zstripy+0.27)
-				-- (\stripx+\stripw-0.06, \zstripy+0.27);
-				\node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.27) {12};
+				\draw[constline] (\stripx+0.06, \zstripy+0.23)
+				-- (\stripx+\stripw-0.06, \zstripy+0.23);
+				\node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.23) {12};
 				
 				% bearing strip — 8 arrows 0..315
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
@@ -461,6 +461,6 @@ Stadia Outdoors      & 110 &     \num{43208} &     \num{35372} & \num{-18.1} & \
 Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \num{-18.1} \\
 \bottomrule
 \end{tblr}
-\caption{Complete Maputnik generalisation corpus with per-style size metrics}
+\caption{Complete Maputnik generalisation corpus with per-style size metrics.  Two catalogue entries were unavailable at the time of measurement and are excluded; all remaining styles were optimised with static passes only (no tile statistics).}
 \label{tab:maputnik_full}
 \end{table}
