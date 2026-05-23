@@ -121,6 +121,7 @@
 				% zoom strip — constant z12
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
+				\pgfmathsetmacro{\hC}{\zTop{12}}
 				\draw[constline] (\stripx+0.06, \zstripy+\hC)
 				-- (\stripx+\stripw-0.06, \zstripy+\hC);
 				\pgfmathsetmacro{\hHi}{\zTop{24}}
@@ -225,7 +226,10 @@
 				\pgfmathsetmacro{\hC}{\zTop{12}}
 				\draw[constline] (\stripx+0.06, \zstripy+\hC)
 				-- (\stripx+\stripw-0.06, \zstripy+\hC);
-				\node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+\hC) {12};
+				\pgfmathsetmacro{\hHi}{\zTop{24}}
+				\pgfmathsetmacro{\hLo}{\zTop{1}}
+				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+\hHi) {24};
+				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+\hLo) {1};
 
 				% bearing strip — constant
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
