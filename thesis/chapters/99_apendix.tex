@@ -177,7 +177,13 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
     \tikzset{
         framebox/.style={draw=gray, line width=0.3pt, fill=white},
         crosshair/.style={draw=gray!60, line width=0.2pt},
-        trajpath/.style={draw=cvdblue, line width=0.7pt, line join=round},
+        trajpath/.style={draw=cvdblue, line width=0.7pt,
+            postaction={decorate, decoration={markings,
+                mark=at position 0.5 with {
+                    \arrow{Stealth[length=0.9mm, width=0.55mm]}
+                }
+            }}
+        },
         trajdot/.style={circle, fill=cvdblue, inner sep=0pt, minimum size=2.6pt, draw=none},
         trajstart/.style={circle, draw=cvdblue, line width=0.8pt, fill=white,
                           inner sep=0pt, minimum size=4.6pt},
@@ -212,7 +218,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
                 4/0.625/0.625, 5/0.75/-0.75, 6/0.875/0.875, 7/1.0/-1.0} {
                 \coordinate (zz\i) at ({\mapcx + \trajscale*\nx}, {\mapcy + \trajscale*\ny});
             }
-            \draw[trajpath] (zz0) foreach \i in {1,...,7} { -- (zz\i) };
+            \foreach \a/\b in {0/1,1/2,2/3,3/4,4/5,5/6,6/7} { \draw[trajpath] (zz\a) -- (zz\b); }
             \foreach \i in {0,...,7} { \node[trajdot] at (zz\i) {}; }
             \node[trajstart] at (zz0) {};
             \node[trajend]   at (zz7) {};
@@ -220,12 +226,12 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             % zoom strip — 8 bars alternating z10/z14 (heights: z/24 * 0.46)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
             \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
-            \foreach \i/\h in {0/0.232, 1/0.308, 2/0.232, 3/0.308, 4/0.232, 5/0.308, 6/0.232, 7/0.308} {
+            \foreach \i/\h in {0/0.232, 1/0.308, 2/0.0, 3/1.0, 4/0.0, 5/1.0, 6/0.0, 7/1.0} {
                 \pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/8 - 0.08}
                 \draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+0.16, \zstripy+\h);
             }
-            \node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+0.308) {14};
-            \node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+0.232) {10};
+            \node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+1.0) {14};
+            \node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+0.0) {10};
 
             % bearing strip — 8 arrows, 0..105
             \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
@@ -263,7 +269,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
                 \coordinate (sp\i) at ({\mapcx + \trajscale*cos(\ang)},
                                        {\mapcy + \trajscale*sin(\ang)});
             }
-            \draw[trajpath] (sp0) foreach \i in {1,...,11} { -- (sp\i) } -- cycle;
+            \foreach \a/\b in {0/1,1/2,2/3,3/4,4/5,5/6,6/7,7/8,8/9,9/10,10/11,11/0} { \draw[trajpath] (sp\a) -- (sp\b); }
             \foreach \i in {0,...,11} { \node[trajdot] at (sp\i) {}; }
             \node[trajstart] at (sp0)  {};
             \node[trajend]   at (sp11) {};
@@ -357,7 +363,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
                 \coordinate (ps\i) at ({\mapcx + \trajscale*\nx},
                                        {\mapcy + \trajscale*\ny});
             }
-            \draw[trajpath] (ps0) foreach \i in {1,...,5} { -- (ps\i) };
+            \foreach \a/\b in {0/1,1/2,2/3,3/4,4/5} { \draw[trajpath] (ps\a) -- (ps\b); }
             \foreach \i in {0,...,5} { \node[trajdot] at (ps\i) {}; }
             \node[trajstart] at (ps0) {};
             \node[trajend]   at (ps5) {};
