@@ -44,7 +44,7 @@ These low-level graphics building blocks are linked to map data through sprites,
 \begin{wrapfigure}{r}{0.52\textwidth}
 	\centering
 	\begin{tikzpicture}[
-		node distance=0.8cm and 1.4cm,
+		node distance=0.8cm and 1cm,
 		box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.7cm,
 			minimum width=2.0cm, font=\small, align=center},
 		renderer/.style={box, fill=roleGen!20, minimum width=4.5cm, minimum height=0.7cm},
@@ -57,7 +57,7 @@ These low-level graphics building blocks are linked to map data through sprites,
 		\node[renderer] (renderer) {Map Renderer};
 		
 		% Tile Server
-		\node[server, below=1.4cm of renderer] (server) {Tile Server};
+		\node[server, below=1cm of renderer] (server) {Tile Server};
 		
 		% Arrows from server to renderer with resource labels
 		\coordinate (s1) at ($(server.north)!0.25!(server.north east)$);
@@ -672,10 +672,9 @@ These can be benchmarked at different workload levels~\cite{jainArtComputerSyste
 \noindent We primarily use macro-benchmarks: we load a full style, fetch and decode tiles, and exercise the renderer with a scripted camera animation.
 Our benchmark harness controls for network variability (via a caching proxy) and GPU variability (via hardware-accelerated rendering with ANGLE/Vulkan) to achieve reproducible results at the macro level.
 
-With these theoretical tools in place, we can now make the mapping from theory to our optimiser's three-level pipeline explicit.
+\begin{chaptersummary}
+Three theoretical traditions map onto the three levels of the pipeline: compiler optimisation (peephole rewriting, constant folding, fixpoint iteration) drives the expression-level passes that simplify each style's JSON expressions without schema knowledge; query optimisation (projection pushdown, selectivity estimation) shapes the structural passes and the pruning advisory that bridges style and data; and the encoding techniques surveyed last - columnar storage, integer coding, \ac{FSST}, and space-filling curves - feed the data-level passes that re-encode shaved tiles with automatic strategy selection.
+We adopt the benchmarking literature's statistical methodology (bootstrap confidence intervals, warm-up handling, metric separation) rather than extending it.
 
-The compiler analogues we surveyed (peephole rewriting, constant folding, fixpoint iteration) drive the expression-level passes that simplify individual style expressions without schema knowledge.
-Predicate pushdown and selectivity estimation, the query-optimisation concepts from above, shape the structural passes and the pruning advisory that bridges style and data: the advisory is a pushdown plan derived from the optimised style, analogous to a query planner projecting only the columns a query reads.
-And the encoding techniques covered last - columnar storage, integer coding, \ac{FSST}, and space-filling curves - feed into the data-level passes that re-encode shaved tiles with automatic strategy selection.
-
-The following chapter formalises the optimisation problem and applies these foundations to the concrete design and implementation of the optimiser.
+The following chapter formalises the joint optimisation problem and turns these foundations into concrete passes and an evaluation methodology.
+\end{chaptersummary}
