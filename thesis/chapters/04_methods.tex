@@ -351,7 +351,7 @@ In the first, the pass factors two equality tests within an \texttt{any} node an
 In the second, filter-to-property constant propagation resolves a data-driven \texttt{match} to a literal by substituting a constraint extracted from the layer's filter.
 We drew both examples from the optimiser's test suite.
 
-\begin{figure}[H]
+\begin{figure}[ht]
 	\centering
 	
 	\begin{subfigure}[t]{0.48\linewidth}
@@ -1273,7 +1273,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             	\quad $\hat{J}_{\text{exact}}\!=\!0.00$\enspace
             	$\hat{J}_{\text{tri}}\!=\!0.00$
             };
-            \node[steplabel, below=1pt of sim] {\circled{3} Pairwise comparison ($\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| \,/\, 128$ for each sketch)};
+            \node[steplabel, below=1pt of sim] {\circled{3} Pairwise comparison ($\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| \,/\, 128$)};
 
             % Bottom-left (Step 4): Union-Find result
             \node[stepbox, cmp] at ($(tbl |- sim)$)  (res) {%
@@ -1446,7 +1446,7 @@ The benchmark harness defines 18 scenarios drawn from a matrix of 15 geographic 
 \emph{spiral} traces a circle at constant zoom with rotating bearing;
 \emph{zoomdrill} zooms from overview to street level and back;
 \emph{pansweep} sweeps across a region at constant zoom;
-and \emph{bearingspin} rotates bearing at high pitch.
+and \emph{bearingspin} rotates bearing at high pitch (keyframe diagrams in \cref{app:animation_patterns}).
 
 Each scenario is a specific (location, animation) pair.
 The full cross-product of 15 locations and 5 animations is 75 pairs, which is too expensive\footnote{Each cell requires 15 repeat runs for statistical validity across 17 ablation steps and 15 styles, as this would result in $75 \times 15 \times 17 \times 15 = \num{286875}$ full animations} to run for every ablation step.
