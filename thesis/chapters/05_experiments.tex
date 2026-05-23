@@ -717,7 +717,7 @@ We partly self-inflict this: using real GPU hardware (ANGLE/Vulkan) rather than 
 
 \section{Visual Correctness Validation}\label{sec:visual_correctness}
 
-We verified visual losslessness (\cref{eq:visual_equivalence}, with the per-pass soundness arguments collected in \cref{sec:building_optimisations}) with pixelmatch across all 15 benchmark styles at zoom levels~0-14, across all 18 scenarios from \cref{sub:scenarios}, in both axis-aligned and pitched views, at \texttt{pixelRatio}~1 and using MapLibre GL~JS's Node-side software rasteriser.
+We verified visual losslessness (\cref{eq:visual_equivalence}, with the per-pass soundness arguments collected in \cref{sec:building_optimisations}) with pixelmatch\footnote{\url{https://github.com/mapbox/pixelmatch}, last accessed 2026-05-23} across all 15 benchmark styles at zoom levels~0-14, across all 18 scenarios from \cref{sub:scenarios}, in both axis-aligned and pitched views, at \texttt{pixelRatio}~1 and using MapLibre GL~JS's Node-side software rasteriser.
 Across every comparison, pixelmatch reported zero differing pixels at a strict (zero-tolerance) threshold, confirming that every optimisations pass preserves visual identity on the software rasteriser.
 
 \section{Threats to Validity}\label{sec:threats}

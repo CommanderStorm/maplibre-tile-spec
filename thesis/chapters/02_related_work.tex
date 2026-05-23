@@ -28,7 +28,7 @@ This is the closest commercial precedent for style-data co-optimisations, but it
 The exact set of optimisations is not disclosed and given that MapBox does not have a open research stance (their terms of service explicitly forbid this), reverse-engineering would likely be illegal\footnote{\url{https://media.ccc.de/v/36c3-11089-reflections_on_the_new_reverse_engineering_law}}.
 
 Vilardaga built \texttt{vt-optimizer}\footnote{\url{https://github.com/ibesora/vt-optimizer}, last accessed 2025-10-20}, which drops invisible or unused layers and fields in both the style and data.
-The tool also provides an inspection mode that checks conformance to Mapbox's recommended tile size limits (\qty{50}{\kilo\byte} average, \qty{500}{\kilo\byte} maximum).
+The tool also provides an inspection mode that checks conformance to Mapbox's recommended tile size limits (\qty{50}{\kilo\byte} average, \qty{500}{\kilo\byte} maximum)\footnote{\url{https://docs.mapbox.com/mapbox-tiling-service/guides/frequentlyaskedquestions/}, last accessed 2026-05-23}.
 However, the optimisations are limited to visibility-based pruning.
 It does not perform expression-level rewrites, cross-layer merging, or data-driven constant folding.
 

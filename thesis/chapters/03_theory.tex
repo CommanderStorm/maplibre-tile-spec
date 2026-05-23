@@ -135,7 +135,7 @@ This is why a simpler way exists:
 Cutting fonts up into Unicode slices (\texttt{start..end}) and serving only the ranges that are needed to the client.
 This cutting of fonts has the implicit advantage of pruning the space of possible font data to just the data that is needed to render the map.
 
-Common open-source renderers like MapLibre or source-available renderers like Mapbox do this by shipping pre-rasterised glyph ranges as \acp{PBF} encoded \acp{SDF}, indexed by Unicode range (e.g.\ \texttt{0-255.pbf}, \texttt{256-511.pbf}).
+Common open-source renderers like MapLibre or source-available renderers like Mapbox do this by shipping pre-rasterised glyph ranges as \acp{PBF} encoded \acp{SDF}~\cite{greenImprovedAlphatestedMagnification2007}, indexed by Unicode range (e.g.\ \texttt{0-255.pbf}, \texttt{256-511.pbf}).
 
 \subsection{Sprites}
 
