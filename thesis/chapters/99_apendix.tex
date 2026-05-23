@@ -184,7 +184,10 @@
 				\node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
 				\draw[constline] (\stripx+0.06, \bstripy+\striph/2)
 				-- (\stripx+\stripw-0.06, \bstripy+\striph/2);
-				\node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph/2)
+				\pgfmathsetmacro{\hHi}{\zTop{24}}
+				\pgfmathsetmacro{\hLo}{\zTop{1}}
+				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+\hHi) {24};
+				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+\hLo) {1};
 				{$0^{\circ}$};
 			\end{tikzpicture}%
 		}
