@@ -167,31 +167,28 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
 \label{tab:maputnik_full}
 \end{table}
 
-
+\clearpage
 \section{Camera Animation Patterns}\label{app:animation_patterns}
 
 \Cref{fig:app_animation_patterns} visualises the five patterns; \cref{fig:app_anim_dofs} tabulates exercised \acp{DOF}, pitch~$\phi$, and keyframe count.
 
 \begin{figure}[htbp]
     \centering
-    % Shared TikZ styles for all five animation panels.
-    % Note: text colours use cvdgrey!40!black (60% black) rather than pure cvdgrey
-    % so axis labels and value annotations remain legible at print scale.
     \tikzset{
-        framebox/.style={draw=cvdgrey, line width=0.3pt, fill=white},
-        crosshair/.style={draw=cvdgrey!60, line width=0.2pt},
+        framebox/.style={draw=gray, line width=0.3pt, fill=white},
+        crosshair/.style={draw=gray!60, line width=0.2pt},
         trajpath/.style={draw=cvdblue, line width=0.7pt, line join=round},
         trajdot/.style={circle, fill=cvdblue, inner sep=0pt, minimum size=2.6pt, draw=none},
         trajstart/.style={circle, draw=cvdblue, line width=0.8pt, fill=white,
                           inner sep=0pt, minimum size=4.6pt},
         trajend/.style={rectangle, fill=cvdblue, inner sep=0pt, minimum size=3.8pt, draw=none},
-        stationary/.style={circle, fill=cvdvermillion, draw=black, line width=0.3pt,
+        stationary/.style={circle, fill=cvdvermillion, draw=darkgray, line width=0.3pt,
                            inner sep=0pt, minimum size=4pt},
-        statlabel/.style={font=\tiny, text=black},
+        statlabel/.style={font=\tiny, text=darkgray},
         bar/.style={fill=cvdblue, draw=none},
-        constline/.style={draw=cvdgrey!60!black, line width=0.4pt, dashed},
-        axislabel/.style={font=\tiny, text=black},
-        striplabel/.style={font=\tiny, text=black},
+        constline/.style={draw=darkgray, line width=0.4pt, dashed},
+        axislabel/.style={font=\tiny, text=darkgray},
+        striplabel/.style={font=\tiny, text=darkgray},
         bearingarrow/.style={-{Stealth[length=1.4mm, width=1.0mm]}, draw=cvdblue, line width=0.45pt},
     }
 
