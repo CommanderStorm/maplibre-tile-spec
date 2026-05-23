@@ -17,7 +17,7 @@ and \cref{sec:rw_benchmarking} for rendering benchmarking.
 
 The most direct approach to reducing tile transfer cost is to remove data that the rendering style does not reference.
 
-Mapbox developed \texttt{vtshaver}~\cite{mapboxVtshaverTileShaving2018}, a C++/Node.js tool that takes a vector tile and a Mapbox GL style, analyses which layers, features, and properties the style references, and strips everything else.
+Mapbox developed \texttt{vtshaver}\footnote{\url{https://github.com/mapbox/vtshaver}, last accessed 2025-10-20}, a C++/Node.js tool that takes a vector tile and a Mapbox GL style, analyses which layers, features, and properties the style references, and strips everything else.
 This reduces tile size and decoding cost, but \texttt{vtshaver} operates exclusively on the data side.
 It does not modify the style itself and therefore cannot simplify filter expressions, merge redundant layers, or reduce per-frame rendering overhead.
 It also only shaves on a zoom-property-unaware row-column approach.
@@ -27,12 +27,12 @@ When a tile request includes style metadata, the server analyses the style's sou
 This is the closest commercial precedent for style-data co-optimisations, but it is opaque, closed-source, and API-only - it cannot be extended, audited, or deployed independently.
 The exact set of optimisations is not disclosed and given that MapBox does not have a open research stance (their terms of service explicitly forbid this), reverse-engineering would likely be illegal\footnote{\url{https://media.ccc.de/v/36c3-11089-reflections_on_the_new_reverse_engineering_law}}.
 
-Vilardaga built \texttt{vt-optimizer}~\cite{vilardagaVtoptimizerVectorTile2023}, which drops invisible or unused layers and fields in both the style and data.
+Vilardaga built \texttt{vt-optimizer}\footnote{\url{https://github.com/ibesora/vt-optimizer}, last accessed 2025-10-20}, which drops invisible or unused layers and fields in both the style and data.
 The tool also provides an inspection mode that checks conformance to Mapbox's recommended tile size limits (\qty{50}{\kilo\byte} average, \qty{500}{\kilo\byte} maximum).
 However, the optimisations are limited to visibility-based pruning.
 It does not perform expression-level rewrites, cross-layer merging, or data-driven constant folding.
 
-Tippecanoe~\cite{FeltTippecanoe2026} is the standard open-source tool for building vector tilesets from large GeoJSON or FlatGeobuf~\cite{FlatGeobuf} collections.
+Tippecanoe\footnote{\url{https://github.com/felt/tippecanoe}, last accessed 2026-04-21} is the standard open-source tool for building vector tilesets from large GeoJSON or FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11} collections.
 It implements several data-level optimisations heuristics: feature dropping based on density budgets (\texttt{--drop-densest-as-needed}), polygon coalescing at low zoom levels, Visvalingam line simplification~\cite{visvalingamLineGeneralisationRepeated1993}, and attribute exclusion.
 The line simplification algorithms used throughout the geospatial toolchain - Douglas-Peucker~\cite{douglasALGORITHMSREDUCTIONNUMBER1973} for its computational simplicity and Visvalingam-Whyatt for its area-based perceptual fidelity - are instances of \emph{cartographic generalisation}: the principled reduction of map detail to match the target scale.
 Tile data at different zoom levels is, in effect, a discrete multi-scale generalisation hierarchy, though this thesis does not contribute new generalisation algorithms.
@@ -45,7 +45,7 @@ The distinction is that classical generalisation selects features by geometric c
 At a higher level of abstraction, tile schemas themselves embody data-level design decisions.
 The OpenMapTiles schema~\cite{VectorTilesAre2025} defines which attributes are included at which zoom levels for OpenStreetMap data.
 Wallner et al.~\cite{wallnerOpenSourceVector2022} describe a PostGIS-based pipeline for dynamic vector tile creation with runtime geometry simplification and \ac{MVT} encoding for spatial data infrastructures.
-Tile generators such as Planetiler~\cite{OnthegomapPlanetiler2026} and Tilemaker~\cite{TilemakerDIYVector} apply schema-aware rules during the initial tile build step, and Protomaps basemap~\cite{brandonProtomaps} ships a style-specific schema in which column selection is effectively hard-coded into the tile generator.
+Tile generators such as Planetiler\footnote{\url{https://github.com/onthegomap/planetiler}, last accessed 2026-04-21} and Tilemaker\footnote{\url{https://tilemaker.org/}, last accessed 2026-04-21} apply schema-aware rules during the initial tile build step, and Protomaps basemap\footnote{\url{https://protomaps.com}, last accessed 2026-04-21} ships a style-specific schema in which column selection is effectively hard-coded into the tile generator.
 These systems define the data that enters the pipeline.
 Our optimisations operate downstream, on the data and style that emerge from such pipelines, and do not require re-running the generator.
 
@@ -62,7 +62,7 @@ This framing does not appear in prior map-rendering work - neither \texttt{vtsha
 
 \section{Tile Encoding and Format Innovation}\label{sec:rw_tile_encoding}
 
-The dominant wire format for vector tiles is \ac{MVT}~\cite{Vectortilespec21Master}, which uses Protocol Buffers~\cite{ProtocolBuffers} to encode features in a row-oriented layout.
+The dominant wire format for vector tiles is \ac{MVT}\footnote{\url{https://github.com/mapbox/vector-tile-spec/tree/master/2.1}, last accessed 2026-04-21}, which uses Protocol Buffers\footnote{\url{https://protobuf.dev/}, last accessed 2026-04-21} to encode features in a row-oriented layout.
 \ac{MVT} has since been adopted as a conformance class in the OGC API-Tiles standard~\cite{OGCAPITiles}, making it the baseline format for any standards-compliant tile delivery.
 Its row orientation means that accessing a single property column requires scanning the entire feature table, and its protobuf encoding does not exploit the statistical properties of individual columns.
 
@@ -102,7 +102,7 @@ A purpose-built tile format earns its keep here despite the ecosystem support th
 In contrast to data-level optimisations, style-level optimisation techniques have attracted comparatively little research attention.
 
 \begin{sloppypar}
-The MapLibre style specification includes the utilities \texttt{gl\allowbreak-style\allowbreak-validate} and \texttt{gl\allowbreak-style\allowbreak-migrate}~\cite{MapLibreStyleSpec}, which validate style documents against the specification and mechanically migrate legacy function syntax to the expression language.
+The MapLibre style specification includes the utilities \texttt{gl\allowbreak-style\allowbreak-validate} and \texttt{gl\allowbreak-style\allowbreak-migrate}\footnote{\url{https://www.maplibre.org/maplibre-style-spec/}, last accessed 2025-10-24}, which validate style documents against the specification and mechanically migrate legacy function syntax to the expression language.
 These tools are not simplifiers - they are deliberately conservative transformers - but the mechanical migration they produce often contains redundancy that a simplifier could improve.
 Deeply nested \texttt{case} chains where a \texttt{match} is sufficent, explicit \texttt{typeof} guards that are trivially true after the migration, and boolean expressions that could be flattened.
 A simplification pass is therefore a natural complement to migration, not a replacement for it.

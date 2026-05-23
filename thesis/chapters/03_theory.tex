@@ -19,15 +19,15 @@ A user interacts with an input device (mouse, touch, keyboard) to control the ma
 The map view is rendered using one of the following approaches:
 
 \begin{itemize}
-\item \begin{sloppypar}\textbf{SVG} is a vector graphics format that can be used to render maps as shown by the ID Editor~\cite{OpenstreetmapID2026} or Leaflet~\cite{LeafletOpensourceJavaScript}.
+\item \begin{sloppypar}\textbf{SVG} is a vector graphics format that can be used to render maps as shown by the ID Editor\footnote{\url{https://github.com/openstreetmap/iD}, last accessed 2026-03-16} or Leaflet\footnote{\url{https://leafletjs.com/}, last accessed 2026-03-16}.
 Using SVGs means one is limited to a 2D rendering approach due to not having a camera.\end{sloppypar}
 
 \item \textbf{Canvas 2D} is the HTML5 \texttt{<canvas>} immediate-mode drawing API.
-OpenLayers~\cite{OpenLayersWelcome} uses Canvas~2D as its primary renderer, rasterising vector features on the CPU rather than submitting them to the GPU.
+OpenLayers\footnote{\url{https://openlayers.org/}, last accessed 2026-04-21} uses Canvas~2D as its primary renderer, rasterising vector features on the CPU rather than submitting them to the GPU.
 This avoids the complexity of GPU pipeline management and shader compilation, but rendering throughput is CPU-bound and does not benefit from hardware-accelerated geometry processing.
 Like SVG, Canvas~2D is limited to 2D views without pitch or rotation.
 
-\item \begin{sloppypar}\textbf{Low-level 3D Graphics APIs} like WebGL~\cite{Getwebglorg}, WebGPU~\cite{WebGPU}, OpenGL~\cite{OpenGL4Reference}, Metal~\cite{incMetalOverview}, Vulkan~\cite{HomeVulkanCross}, DirectX~\cite{DirectXSpecs}, etc.\ for rendering 3D graphics as shown by mapbox~\cite{MapboxMapsNavigation}, maplibre~\cite{maplibreMapLibre}, deck.gl~\cite{HomeDeckgl}, here~\cite{HERETechnologiesWorlds} and many more.
+\item \begin{sloppypar}\textbf{Low-level 3D Graphics APIs} like WebGL\footnote{\url{https://get.webgl.org/}, last accessed 2026-03-16}, WebGPU~\cite{WebGPU}, OpenGL\footnote{\url{https://registry.khronos.org/OpenGL-Refpages/gl4/}, last accessed 2026-03-16}, Metal\footnote{\url{https://developer.apple.com/metal/}, last accessed 2026-03-16}, Vulkan\footnote{\url{https://www.vulkan.org/}, last accessed 2026-03-16}, DirectX\footnote{\url{https://microsoft.github.io/DirectX-Specs/}, last accessed 2026-03-16}, etc.\ for rendering 3D graphics as shown by mapbox\footnote{\url{https://www.mapbox.com/}, last accessed 2026-03-16}, maplibre\footnote{\url{https://maplibre.org/}, last accessed 2026-03-16}, deck.gl\footnote{\url{https://deck.gl/}, last accessed 2026-03-16}, here\footnote{\url{https://www.here.com}, last accessed 2026-03-16} and many more.
 This allows a more complex 3D-based rendering with pitch, yaw, and roll.
 Due to having better hardware access, these APIs can render more complex scenes with better performance.\end{sloppypar}
 \end{itemize}
@@ -205,15 +205,15 @@ The following formats are used for encoding and transferring data to the client:
     \item \textbf{Raster tiles} deliver pre-rendered images (PNG, JPEG, WebP, Avif, JPEGXL) rather than vector geometry.
     They require no client-side rendering logic but cannot be restyled, rotated at arbitrary angles (beyond the affine transform imposed by globe mode), or queried interactively, as the visual representation is fixed at generation time.
 
-    \item \textbf{Analysis-focused formats} such as FlatGeobuf~\cite{FlatGeobuf}, GeoParquet~\cite{Geoparquetorg}, and GeoArrow are optimised for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
+    \item \textbf{Analysis-focused formats} such as FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11}, GeoParquet\footnote{\url{https://geoparquet.org/}, last accessed 2026-05-11}, and GeoArrow are optimised for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
     They support random access and columnar scans but do not follow the tiled spatial access pattern required by interactive map renderers, so we do not consider them further.
     GeoParquet in particular supports row-group-level predicate pushdown and column pruning - operations analogous to the tile shaving and selective column access we apply to \ac{MLT} - but operates on large per-file datasets rather than on the small, spatially-partitioned tiles that interactive renderers fetch individually; the per-tile overhead of Parquet's row-group and column-chunk metadata would dominate at typical tile sizes (\qtyrange{10}{100}{\kilo\byte}).
 
     \item \textbf{GeoJSON}~\cite{butlerGeoJSONFormat2016} is a JSON-based geospatial interchange format.
     Its human-readable structure makes it useful for debugging and small overlays, but its verbosity - text-encoded coordinates and repeated property keys per feature - makes it impractical for the continuous tile streaming required by interactive map renderers.
 
-    \item \textbf{\acf{MVT}}~\cite{Vectortilespec21Master} is the dominant vector tile format, adopted as a \emph{de~facto} standard across open-source map renderers including MapLibre.
-    It uses \acp{PBF}~\cite{ProtocolBuffers} as its wire format and stores features in a \emph{row-oriented} layout:
+    \item \textbf{\acf{MVT}}\footnote{\url{https://github.com/mapbox/vector-tile-spec/tree/master/2.1}, last accessed 2026-04-21} is the dominant vector tile format, adopted as a \emph{de~facto} standard across open-source map renderers including MapLibre.
+    It uses \acp{PBF}\footnote{\url{https://protobuf.dev/}, last accessed 2026-04-21} as its wire format and stores features in a \emph{row-oriented} layout:
 \begin{itemize}
     \item each feature carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
     \item Geometry is encoded as a sequence of \texttt{MoveTo}, \texttt{LineTo}, and \texttt{ClosePath} commands with delta-encoded integer coordinates relative to the tile extent (typically \texttt{4096} units per tile edge).
@@ -243,17 +243,17 @@ Three architectural approaches to map styling have been established:
     The server evaluates the style against the data and produces pre-rendered raster tiles that the client displays without further interpretation.
     This simplifies the client but prevents client-side restyling and limits interactivity.
 
-    \item \begin{sloppypar}\textbf{Client-side declarative} styles, as used by MapLibre~\cite{maplibreMapLibre} and Mapbox~\cite{MapboxMapsNavigation}, transmit a machine-readable style document to the client, which interprets the style at render time.
+    \item \begin{sloppypar}\textbf{Client-side declarative} styles, as used by MapLibre\footnote{\url{https://maplibre.org/}, last accessed 2026-03-16} and Mapbox\footnote{\url{https://www.mapbox.com/}, last accessed 2026-03-16}, transmit a machine-readable style document to the client, which interprets the style at render time.
     This style can also be shipped with the code of the rendering engine to the client or partially constructed (e.g. road shields) there.
     This enables dynamic restyling, data-driven visualisation, and interactive features such as hover effects and click queries without regenerating tiles.\end{sloppypar}
 
-    \item \textbf{Callback-based} styling, as proposed by Gleo~\cite{ortegaGleoWebGLMap} or Navara~\cite{Navara}, replace declarative rules with imperative callbacks that the application registers with the renderer.
+    \item \textbf{Callback-based} styling, as proposed by Gleo\footnote{\url{https://ivansanchez.gitlab.io/gleo/}, last accessed 2026-03-16} or Navara\footnote{\url{https://navara-docs.netlify.app/}, last accessed 2026-04-21}, replace declarative rules with imperative callbacks that the application registers with the renderer.
     This offers maximum flexibility but makes static analysis and automatic optimisations impossible, since the styling logic is opaque to the rendering engine.
 \end{itemize}
 
 We focus on client-side declarative styles, specifically the MapLibre style specification, as it is the most widely adopted approach in open-source map rendering and - its declarative nature makes it amenable to static analysis and automatic optimisations.
 
-The MapLibre style specification~\cite{MapLibreStyleSpec} defines a map's appearance as a JSON document with the following key components:
+The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre-style-spec/}, last accessed 2025-10-24} defines a map's appearance as a JSON document with the following key components:
 
 \begin{itemize}
     \item \textbf{Sources} declare where tile data comes from (tile server URL, or inline GeoJSON) and at which zoom levels tiles are available (\texttt{minzoom}, \texttt{maxzoom}).
@@ -564,7 +564,7 @@ Several encoding schemes exploit structural properties of integer sequences:
 
 \begin{itemize}
     \item \textbf{\acf{VarInt}} represents each integer using a variable number of bytes, where smaller values require fewer bytes.
-    The encoding uses 7~bits per byte for data and 1~bit as a continuation flag, so values in $[0, 127]$ require 1~byte, values in $[128, 16383]$ require 2~bytes, and so on~\cite{ProtocolBuffers}.
+    The encoding uses 7~bits per byte for data and 1~bit as a continuation flag, so values in $[0, 127]$ require 1~byte, values in $[128, 16383]$ require 2~bytes, and so on\footnote{\url{https://protobuf.dev/}, last accessed 2026-04-21}.
     Signed integers are mapped to unsigned integers via \emph{zigzag encoding} ($n \mapsto 2n$ for $n \geq 0$, $n \mapsto -2n-1$ for $n < 0$), ensuring that small-magnitude negative numbers also produce small encoded values.
 
     \item \textbf{Delta encoding} replaces each value with the difference from its predecessor: given a sequence $v_0, v_1, \ldots, v_n$, the encoded sequence is $v_0,\, v_1 - v_0,\, v_2 - v_1,\, \ldots,\, v_n - v_{n-1}$.
@@ -617,7 +617,7 @@ where $x_i$ and $y_i$ are the $i$-th bits of $x$ and $y$, respectively.
 Morton codes are fast to compute via bit-interleaving instructions, but the Z-order curve exhibits \enquote{jumps} between quadrants that break spatial continuity.
 
 The \textbf{Hilbert curve} traces a continuous path through the grid without the inter-quadrant jumps of the Z-order curve, achieving better locality preservation at the cost of a more complex index computation~\cite{moonAnalysisClusteringProperties2001}.
-The Hilbert curve has also been used as the basis for spatial index structures: the Hilbert R-tree~\cite{kamelHilbertRtreeImproved1994} orders rectangles along the Hilbert curve to achieve tighter node packing than conventional R-trees, and FlatGeobuf~\cite{FlatGeobuf} uses a packed Hilbert R-tree for spatial indexing of its features.
+The Hilbert curve has also been used as the basis for spatial index structures: the Hilbert R-tree~\cite{kamelHilbertRtreeImproved1994} orders rectangles along the Hilbert curve to achieve tighter node packing than conventional R-trees, and FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11} uses a packed Hilbert R-tree for spatial indexing of its features.
 The Hilbert index is computed recursively: the unit square is divided into four quadrants, each mapped to a sub-range of the curve; the quadrant containing the point determines the high-order bits of the index, and the process recurses on the sub-quadrant.
 
 For tile data, we assign each feature a curve index based on its first vertex coordinate, and our encoding competition described in \cref{ch:methods} selects the feature ordering that produces the smallest encoded output (across Morton, Hilbert, and non-spatial orderings).
