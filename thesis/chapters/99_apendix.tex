@@ -248,7 +248,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             }
         \end{tikzpicture}%
         }
-        \caption{\textbf{Zigzag.} Combines pan with alternating zoom levels ($z=10\leftrightarrow14$) to stress zoom-triggered layer-visibility changes alongside tile loading.}
+        \caption{\textbf{Zigzag.} Stresses zoom-triggered layer-visibility changes alongside tile loading.}
         \label{fig:app_anim_zigzag}
     \end{subfigure}
     \hfill
@@ -297,7 +297,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             }
         \end{tikzpicture}%
         }
-        \caption{\textbf{Spiral.} Closed circular pan with full bearing rotation at constant zoom; the stable tile set isolates render cost from tiles.}
+        \caption{\textbf{Spiral.} Isolates render cost from tile-load cost via a stable tile set.}
         \label{fig:app_anim_spiral}
     \end{subfigure}
     \hfill
@@ -342,7 +342,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
                 {$0^{\circ}$};
         \end{tikzpicture}%
         }
-        \caption{\textbf{Zoomdrill.} Pure zoom workload at a fixed location ($z=4\to16\to4$); maximises tile-cache churn and LOD switching without any pan.}
+        \caption{\textbf{Zoomdrill.} Maximises tile-cache churn and LOD switching.}
         \label{fig:app_anim_zoomdrill}
     \end{subfigure}
 
@@ -390,7 +390,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
                 {$0^{\circ}$};
         \end{tikzpicture}%
         }
-        \caption{\textbf{Pansweep.} Unidirectional pan at constant zoom and bearing; drives a sustained stream of one-directional tile cache misses in isolation.}
+        \caption{\textbf{Pansweep.} Drives sustained unidirectional tile cache misses in isolation.}
         \label{fig:app_anim_pansweep}
     \end{subfigure}
     \hfill
@@ -432,7 +432,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             }
         \end{tikzpicture}%
         }
-        \caption{\textbf{Bearingspin.} Full bearing rotation at $\phi=60^{\circ}$ pitch and fixed position; the tile set never changes, so only GPU re-rendering cost is exercised.}
+        \caption{\textbf{Bearingspin.} Exercises $\theta$ and $\phi$-based GPU re-rendering cost without any tile loading.}
         \label{fig:app_anim_bearingspin}
     \end{subfigure}
     \hfill
