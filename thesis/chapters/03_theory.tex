@@ -2,12 +2,12 @@
 
 The gap we identified in \cref{ch:related_work} is that no existing tool composes style rewrites with data-level pruning into a joint pipeline.
 Closing this gap calls for foundations from several fields:
-The map rendering architecture that defines what we are optimising, the compiler techniques whose analogues drive our expression-level passes, the query optimisation concepts that inform our filter rewriting and predicate reordering, and the columnar encoding strategies behind our data-level passes.
+The map rendering architecture that defines what we are optimizing, the compiler techniques whose analogues drive our expression-level passes, the query optimization concepts that inform our filter rewriting and predicate reordering, and the columnar encoding strategies behind our data-level passes.
 
-We introduce these foundations in the order in which the optimiser consumes them.
+We introduce these foundations in the order in which the optimizer consumes them.
 In \cref{sec:map_rendering_approaches} we describe the map rendering process and its resource pipeline.
-In \cref{sec:compiler_optimisations} we survey compiler optimisation techniques - peephole rewriting, constant folding, and fixpoint iteration - whose analogues we apply to style expressions.
-In \cref{sec:query_optimisations} we present query optimisation concepts - predicate pushdown and selectivity estimation - that we use for filter rewriting and reordering.
+In \cref{sec:compiler_optimizations} we survey compiler optimization techniques - peephole rewriting, constant folding, and fixpoint iteration - whose analogues we apply to style expressions.
+In \cref{sec:query_optimizations} we present query optimization concepts - predicate pushdown and selectivity estimation - that we use for filter rewriting and reordering.
 In \cref{sec:data_encoding} we cover the columnar encoding and compression schemes we employ at the tile level.
 In \cref{sec:benchmarking} we cover our benchmarking methodology.
 
@@ -33,7 +33,7 @@ Due to having better hardware access, these APIs can render more complex scenes 
 \end{itemize}
 
 Due to the more advanced features and mostly better performance, we focus exclusively on renderers based on open-source 3D graphics APIs.
-While these renderers are powerful, they require data to be preprocessed and optimised specifically for rendering.
+While these renderers are powerful, they require data to be preprocessed and optimized specifically for rendering.
 As a result, they cannot directly render high-level primitives such as shapes (polygons, lines, points), text, or images.
 Instead, they operate on lower-level graphics primitives such as textures, triangles, and quads.
 
@@ -99,7 +99,7 @@ Tiles, by contrast, can be stored and accessed using three major approaches:
 \begin{itemize}
 \item
     \textbf{Dynamic}:
-    Store geospatial data in a database (for example, PostGIS) and use a tile server to generate and serve tiles on demand.
+    Store geospatial data in a database (for example, PostGIS\footnote{\url{https://postgis.net/}, last accessed 2026-05-23}) and use a tile server to generate and serve tiles on demand.
 \item
     \textbf{Client-driven}:
     Store encoded tiles as a single file in a blob store using a format that includes an internal tile index (for example, PMTiles or VersaTiles).
@@ -112,14 +112,14 @@ Tiles, by contrast, can be stored and accessed using three major approaches:
 Dynamic data sources can be updated frequently by applying incremental diffs, whereas the other approaches typically require a full rebuild when the underlying data changes.
 At larger scales, in-memory caching of tiles via regional or \ac{CDN}-style infrastructure - combined with fallback to runtime-dynamic data - is essential for performance and cost.
 
-Although all of these resources can be optimised, tiles are usually the most critical due to their continuously streaming nature as a user moves the map.
+Although all of these resources can be optimized, tiles are usually the most critical due to their continuously streaming nature as a user moves the map.
 They usualy have a cumulatively higher data volume due to this, even though their individual tiles may be much smaller.
 All other resources may depend on locale slightly (for example loading different Unicode ranges or fonts), but are only handled one time.
 
 Real-world observations support this:
-the performance of highly optimised systems such as Microsoft Bing Maps differs significantly from less optimised deployments, such as basemap.de.
+the performance of highly optimized systems such as Microsoft Bing Maps differs significantly from less optimized deployments, such as basemap.de.
 
-In the following sections we examine each resource in detail, focusing on the performance characteristics and optimisation strategies relevant to our work:
+In the following sections we examine each resource in detail, focusing on the performance characteristics and optimization strategies relevant to our work:
 
 \subsection{Fonts}
 
@@ -156,7 +156,7 @@ The client requests only the tiles intersecting the current viewport, and as the
 When a client requests a tile at a zoom level beyond the source's maximum, the renderer \emph{overzooms}: it upscales the nearest available tile from the source's highest available zoom to fill the viewport.
 
 The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched, which means that a layer's effective visibility at a given camera zoom cannot be determined from filter or data bounds alone - it is a function of both the layer's filter and the source's \texttt{maxzoom}.
-This observation has direct consequences for any optimiser that rewrites zoom bounds, and we revisit it in \cref{ch:methods}.
+This observation has direct consequences for any optimizer that rewrites zoom bounds, and we revisit it in \cref{ch:methods}.
 In particular, tightening a layer's \texttt{maxzoom} is only sound when it accounts for overzoom: removing a layer at zoom~14 would suppress its rendering at zoom~15 and beyond if the source's maximum zoom is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.
 \Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \texttt{maxzoom} tile: \stepcirc{1}~rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/\texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}), and \stepcirc{2}~clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
 Both operations consume the source's \texttt{maxzoom} tile as input; tightening that \texttt{maxzoom} removes the upstream tile the slicer rescales and clips, which is why the soundness rule above forbids any rewrite that does not preserve every layer's effective overzoom range.
@@ -192,11 +192,11 @@ function sliceVectorTileLayer(sourceLayer, maxZoomTileID, targetTileID) {
 }
 \end{lstlisting}
 
-No symmetric \enquote{underzoom} behaviour exists:
+No symmetric \enquote{underzoom} behavior exists:
 If a source has no tile at a zoom lower than \texttt{minzoom}, the layer is  not rendered there.
 
 A \emph{vector tile} encodes map data in a compact binary format rather than as a pre-rendered image.
-Each tile is organised into \emph{source layers} (for example, roads, buildings, water), and each source layer contains a set of \emph{features}.
+Each tile is organized into \emph{source layers} (for example, roads, buildings, water), and each source layer contains a set of \emph{features}.
 A feature consists of geometry (point, linestring, or polygon encoded as integer coordinates relative to the tile's extent), optionally a set of key-value \emph{properties} (for example, \texttt{class=motorway} or \texttt{name=Main~Street}), optionally a set of IDs, and metadata such as the tile extent.
 
 The following formats are used for encoding and transferring data to the client:
@@ -205,7 +205,7 @@ The following formats are used for encoding and transferring data to the client:
     \item \textbf{Raster tiles} deliver pre-rendered images (PNG, JPEG, WebP, Avif, JPEGXL) rather than vector geometry.
     They require no client-side rendering logic but cannot be restyled, rotated at arbitrary angles (beyond the affine transform imposed by globe mode), or queried interactively, as the visual representation is fixed at generation time.
 
-    \item \textbf{Analysis-focused formats} such as FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11}, GeoParquet\footnote{\url{https://geoparquet.org/}, last accessed 2026-05-11}, and GeoArrow are optimised for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
+    \item \textbf{Analysis-focused formats} such as FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11}, GeoParquet\footnote{\url{https://geoparquet.org/}, last accessed 2026-05-11}, and GeoArrow are optimized for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
     They support random access and columnar scans but do not follow the tiled spatial access pattern required by interactive map renderers, so we do not consider them further.
     GeoParquet in particular supports row-group-level predicate pushdown and column pruning - operations analogous to the tile shaving and selective column access we apply to \ac{MLT} - but operates on large per-file datasets rather than on the small, spatially-partitioned tiles that interactive renderers fetch individually; the per-tile overhead of Parquet's row-group and column-chunk metadata would dominate at typical tile sizes (\qtyrange{10}{100}{\kilo\byte}).
 
@@ -228,14 +228,14 @@ The following formats are used for encoding and transferring data to the client:
     Tremmel et~al.\ report 2-6$\times$ tile size reductions over \ac{MVT} depending on data characteristics.\end{sloppypar}
 \end{itemize}
 
-Beyond the choice of tile format, a number of transfer-layer optimisations can improve delivery performance:
+Beyond the choice of tile format, a number of transfer-layer optimizations can improve delivery performance:
 utilising the approximately \qty{14}{\kilo\byte} TCP slow-start window as discussed by Nathaniel~\cite{WhyYourWebsite}, edge caching~\cite{BestPracticesMap}, HTTP/2 multiplexing~\cite{belsheHypertextTransferProtocol2015} (and its QUIC-based successor HTTP/3~\cite{bishopHTTP32022} for lossy mobile networks), and modern content-encoding algorithms such as Zstandard~\cite{colletZstandardCompressionApplication2021} and Brotli~\cite{alakuijalaBrotliCompressedData2016} that achieve higher compression ratios than gzip's LZ77 foundation~\cite{zivUniversalAlgorithmSequential1977}.
 Tile archive formats such as PMTiles~\cite{PMTilesConceptsProtomaps} and COMTiles~\cite{tremmelCOMTILESCASESTUDY2023} address the container layer by enabling serverless, cloud-native tile delivery from a single file in blob storage.
-Since \ac{MVT} is the established baseline and \ac{MLT} aims to improve upon it, we evaluate both formats and use the transition from \ac{MVT} to \ac{MLT} as one of our data-level optimisation strategies.
+Since \ac{MVT} is the established baseline and \ac{MLT} aims to improve upon it, we evaluate both formats and use the transition from \ac{MVT} to \ac{MLT} as one of our data-level optimization strategies.
 
 \subsection{Styles}\label{sec:styles}
 
-A map style defines the complete visual appearance of a map: which data is shown, how it is coloured, sized, and labelled, and at which zoom levels each element appears.
+A map style defines the complete visual appearance of a map: which data is shown, how it is colored, sized, and labelled, and at which zoom levels each element appears.
 Three architectural approaches to map styling have been established:
 
 \begin{itemize}
@@ -245,13 +245,13 @@ Three architectural approaches to map styling have been established:
 
     \item \begin{sloppypar}\textbf{Client-side declarative} styles, as used by MapLibre\footnote{\url{https://maplibre.org/}, last accessed 2026-03-16} and Mapbox\footnote{\url{https://www.mapbox.com/}, last accessed 2026-03-16}, transmit a machine-readable style document to the client, which interprets the style at render time.
     This style can also be shipped with the code of the rendering engine to the client or partially constructed (e.g. road shields) there.
-    This enables dynamic restyling, data-driven visualisation, and interactive features such as hover effects and click queries without regenerating tiles.\end{sloppypar}
+    This enables dynamic restyling, data-driven visualization, and interactive features such as hover effects and click queries without regenerating tiles.\end{sloppypar}
 
     \item \textbf{Callback-based} styling, as proposed by Gleo\footnote{\url{https://ivansanchez.gitlab.io/gleo/}, last accessed 2026-03-16} or Navara\footnote{\url{https://navara-docs.netlify.app/}, last accessed 2026-04-21}, replace declarative rules with imperative callbacks that the application registers with the renderer.
-    This offers maximum flexibility but makes static analysis and automatic optimisations impossible, since the styling logic is opaque to the rendering engine.
+    This offers maximum flexibility but makes static analysis and automatic optimizations impossible, since the styling logic is opaque to the rendering engine.
 \end{itemize}
 
-We focus on client-side declarative styles, specifically the MapLibre style specification, as it is the most widely adopted approach in open-source map rendering and - its declarative nature makes it amenable to static analysis and automatic optimisations.
+We focus on client-side declarative styles, specifically the MapLibre style specification, as it is the most widely adopted approach in open-source map rendering and - its declarative nature makes it amenable to static analysis and automatic optimizations.
 
 The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre-style-spec/}, last accessed 2025-10-24} defines a map's appearance as a JSON document with the following key components:
 
@@ -267,7 +267,7 @@ The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre
     A feature is drawn by a layer only if the layer's filter evaluates to \texttt{true} for that feature's properties and geometry type.
 
     \item \textbf{Paint and layout properties} control the visual appearance and placement of rendered features.
-    Paint properties (colours, opacities, widths) can be changed without triggering a re-layout; layout properties (text anchoring, icon rotation, symbol spacing) affect feature placement and require re-evaluation when modified.
+    Paint properties (colors, opacities, widths) can be changed without triggering a re-layout; layout properties (text anchoring, icon rotation, symbol spacing) affect feature placement and require re-evaluation when modified.
 
     \item \textbf{Metadata bounds} (\texttt{minzoom}, \texttt{maxzoom}) restrict the zoom range at which a layer is active, allowing the renderer to skip entire layers outside their visible range without evaluating their filters.
     \Cref{lst:ishidden} shows the implementation: the method checks the layer's zoom bounds and evaluated visibility in a single guard, and is called at both tile-parse time (the worker skips bucket creation) and draw-call time (the painter skips rendering).
@@ -298,11 +298,11 @@ renderLayer(painter, tileManager, layer, coords, renderOptions) {
 \end{itemize}
 
 Filters and properties can be specified as literal constants, as \emph{zoom-dependent} expressions (varying with the camera zoom level via \texttt{interpolate} or \texttt{step} ramps), as \emph{data-driven} expressions (varying per feature based on property values via \texttt{match}, \texttt{case}, or \texttt{get} operators), or as a combination of both.
-The resulting expression trees can be deeply nested and may contain redundant or unreachable branches - characteristics that make them amenable to the same kinds of simplification and optimisations techniques used in compilers and database query planners.
+The resulting expression trees can be deeply nested and may contain redundant or unreachable branches - characteristics that make them amenable to the same kinds of simplification and optimizations techniques used in compilers and database query planners.
 
 \Cref{lst:worker_pipeline} shows the worker's tile-parse pipeline as five named steps, marked inline as \stepcirc{a} to \stepcirc{e}.
 
-\noindent Every optimisation we present in \cref{ch:methods} attaches to one of these steps:
+\noindent Every optimization we present in \cref{ch:methods} attaches to one of these steps:
 merging layers reduces work for \stepcirc{a};
 pruning features server-side makes \stepcirc{b} not handle them;
 tightening \texttt{minzoom}/\texttt{maxzoom} makes the
@@ -359,7 +359,7 @@ for (const sourceLayerId in layerFamilies) {
 }
 \end{lstlisting}
 
-\section{Compiler Optimisation Techniques}\label{sec:compiler_optimisations}
+\section{Compiler Optimisation Techniques}\label{sec:compiler_optimizations}
 
 The style expressions used by map renderers such as MapLibre are small programs in a special purpose \ac{DSL}:
 they contain conditionals (\texttt{case}, \texttt{match}), boolean operators (\texttt{all}, \texttt{any}), arithmetic, and data access (\texttt{get}, \texttt{has}), variables (global state, local state, feature state).
@@ -369,15 +369,15 @@ In this section we introduce the foundational concepts we apply in \cref{ch:meth
 \subsection{Peephole Optimisation}
 
 \begin{sloppypar}
-A \emph{peephole optimiser} examines a small, fixed-size window of code (the \enquote{peephole}) and applies local pattern-matching rewrites that replace instruction sequences with shorter or faster equivalents~\cite{davidsonCodeSelectionObject1984}.
+A \emph{peephole optimizer} examines a small, fixed-size window of code (the \enquote{peephole}) and applies local pattern-matching rewrites that replace instruction sequences with shorter or faster equivalents~\cite{davidsonCodeSelectionObject1984}.
 Each rewrite rule is independent:
 it matches a local pattern and emits a replacement, without requiring knowledge of the surrounding program.
-The simplicity of individual rules is offset by their composition through repeated application - many small, local improvements accumulate into significant global optimisations.
+The simplicity of individual rules is offset by their composition through repeated application - many small, local improvements accumulate into significant global optimizations.
 \end{sloppypar}
 
-Peephole optimisers are classified by the level at which they operate.
-\emph{Machine-level} peephole optimisers replace instruction sequences (e.g., replacing a multiply by a power of two with a shift).
-\emph{\ac{IR}-level} peephole optimisers apply algebraic simplifications, identity eliminations, and strength reductions to expression trees.
+Peephole optimizers are classified by the level at which they operate.
+\emph{Machine-level} peephole optimizers replace instruction sequences (e.g., replacing a multiply by a power of two with a shift).
+\emph{\ac{IR}-level} peephole optimizers apply algebraic simplifications, identity eliminations, and strength reductions to expression trees.
 In the context of style expressions, the peephole window corresponds to a single expression node and its immediate children.
 A post-order visitor walks the expression tree and attempts to apply each rule at every node, producing a locally simplified tree.
 
@@ -385,7 +385,7 @@ A post-order visitor walks the expression tree and attempts to apply each rule a
 
 \emph{Constant folding} evaluates expressions whose operands are all compile-time constants, replacing the expression with its result~\cite{ahoCompilersPrinciplesTechniques2007}.
 For example, the expression $3 + 5$ is replaced by $8$.
-In a style context, a comparison such as \texttt{["==",~2,~3]} can be evaluated at optimisations time and replaced by \texttt{false}.
+In a style context, a comparison such as \texttt{["==",~2,~3]} can be evaluated at optimizations time and replaced by \texttt{false}.
 \emph{Constant propagation} extends this idea by tracking the known values of variables through the program's control flow and substituting them at their use sites.
 If a variable is assigned a constant, all subsequent references to that variable can be replaced by the constant, potentially enabling further constant folding at the use sites.
 
@@ -454,18 +454,18 @@ A filter \texttt{["all", true, x]} is simplified to~\texttt{x} by identity elimi
 
 \subsection{Fixpoint Iteration}\label{sub:fixpoint}
 
-Individual peephole rules may expose further optimisations opportunities:
+Individual peephole rules may expose further optimizations opportunities:
 constant folding a subexpression may create a new constant parent, which in turn enables dead branch elimination.
 A single traversal is therefore generally insufficient.
 
 \begin{sloppypar}
 \emph{Fixpoint iteration} addresses this by applying the entire rule set repeatedly until no rule fires - that is, until the expression reaches a \emph{fixpoint} at which no further rewrites apply.
-We treat our expression-level optimiser formally as a \ac{TRS}: the style expressions are terms, and the peephole rules are rewrite rules applied modulo a traversal strategy~\cite{baaderTermRewritingAll1999}.
+We treat our expression-level optimizer formally as a \ac{TRS}: the style expressions are terms, and the peephole rules are rewrite rules applied modulo a traversal strategy~\cite{baaderTermRewritingAll1999}.
 For a monotone transformation $f$ on a finite domain, the sequence $x,\, f(x),\, f(f(x)),\, \ldots$ is guaranteed to converge~\cite{ahoCompilersPrinciplesTechniques2007}.
 In practice, convergence is rapid:
 most programs stabilise within a small number of iterations, and a conservative upper bound on iterations serves as a safety limit.
-We revisit the standard \ac{TRS} notions of confluence (whether all rule-application sequences converge to the same normal form) and termination (whether all sequences reach a normal form) in the context of our concrete rewrite system in \cref{sub:expression_optimisations}.
-A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcombVerifyingImprovingHalides2020} showed that Halide's \ac{DSL} optimiser - which, like our expression passes, applies a set of hand-written rewrite rules in a fixed order to simplify \ac{DSL} expression trees - suffers from the same confluence and termination concerns, and developed synthesis-based techniques to verify correctness and discover missing rules.
+We revisit the standard \ac{TRS} notions of confluence (whether all rule-application sequences converge to the same normal form) and termination (whether all sequences reach a normal form) in the context of our concrete rewrite system in \cref{sub:expression_optimizations}.
+A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcombVerifyingImprovingHalides2020} showed that Halide's \ac{DSL} optimizer - which, like our expression passes, applies a set of hand-written rewrite rules in a fixed order to simplify \ac{DSL} expression trees - suffers from the same confluence and termination concerns, and developed synthesis-based techniques to verify correctness and discover missing rules.
 \end{sloppypar}
 
 
@@ -473,25 +473,25 @@ A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcomb
 
 \emph{\ac{PGO}} uses runtime execution profiles to specialise a program for its observed workload~\cite{changUsingProfileInformation1991}.
 Classical PGO instruments a program, collects execution frequencies and branch probabilities from representative inputs, and feeds this profile back into the compiler to guide inlining, code layout, and branch prediction hints.
-Arnold et~al.~\cite{arnoldSurveyAdaptiveOptimization2005} survey how virtual machines extend \ac{PGO} to an \emph{adaptive} setting, where profiles are collected and optimisations applied continuously at runtime.
+Arnold et~al.~\cite{arnoldSurveyAdaptiveOptimization2005} survey how virtual machines extend \ac{PGO} to an \emph{adaptive} setting, where profiles are collected and optimizations applied continuously at runtime.
 
-Our style optimiser performs an analogous form of \ac{PGO}:
+Our style optimizer performs an analogous form of \ac{PGO}:
 we treat tile-level statistics (value cardinalities, per-property frequency distributions, geometry-type counts) as the ``profile data,'' and our stats-driven folding pass uses this profile to specialise the style for the observed data distribution - collapsing \texttt{match} arms whose values never occur in the tile census, tightening zoom bounds based on observed data ranges, and converting high-selectivity predicates into constants.
-The key difference from classical \ac{PGO} is that our profile is exact (the tile census covers every feature in the tileset at a sample rate of~1.0) rather than sampled, and our optimisation target is a declarative style document rather than machine code.
+The key difference from classical \ac{PGO} is that our profile is exact (the tile census covers every feature in the tileset at a sample rate of~1.0) rather than sampled, and our optimization target is a declarative style document rather than machine code.
 
-\section{Query Optimisation}\label{sec:query_optimisations}
+\section{Query Optimisation}\label{sec:query_optimizations}
 
 Style filters in map rendering are structurally equivalent to database query predicates:
 both select a subset of records (features) from a dataset (tile) based on attribute conditions.
-Techniques from relational query optimisations therefore apply directly.
+Techniques from relational query optimizations therefore apply directly.
 
 \subsection{Cost-Based Query Optimisation}
 
-A \emph{cost-based query optimiser} selects among semantically equivalent query execution plans by estimating the cost of each plan and choosing the cheapest~\cite{selingerAccessPathSelection1979}.
-The pioneering System~R optimiser introduced this approach for SQL queries, estimating costs based on I/O operations and CPU time.
+A \emph{cost-based query optimizer} selects among semantically equivalent query execution plans by estimating the cost of each plan and choosing the cheapest~\cite{selingerAccessPathSelection1979}.
+The pioneering System~R optimizer introduced this approach for SQL queries, estimating costs based on I/O operations and CPU time.
 
 The key insight is that the \emph{order} in which predicates are evaluated affects performance even when the final result is identical.
-In a conjunction $p_1 \land p_2 \land \cdots \land p_n$ evaluated with short-circuit semantics, placing the predicate most likely to evaluate to \texttt{false} first minimises the expected number of evaluations, because once any predicate evaluates to \texttt{false}, the remaining predicates are skipped.
+In a conjunction $p_1 \land p_2 \land \cdots \land p_n$ evaluated with short-circuit semantics, placing the predicate most likely to evaluate to \texttt{false} first minimizes the expected number of evaluations, because once any predicate evaluates to \texttt{false}, the remaining predicates are skipped.
 For disjunction ($p_1 \lor p_2 \lor \cdots \lor p_n$), the opposite ordering is optimal: the predicate most likely to be \texttt{true} should come first.
 
 \subsection{Selectivity Estimation}
@@ -528,18 +528,18 @@ The future direction of serving-time applicability we outline in \cref{sec:concl
 \subsection{Partial Evaluation and Superoptimization}\label{sub:partial_eval}
 
 \emph{Partial evaluation} (also called program specialization) transforms a program with respect to known static inputs, producing a residual program that depends only on the remaining dynamic inputs~\cite{jonesPartialEvaluationAutomatic1993}.
-The style optimiser performs partial evaluation of the rendering function: the style (static input) is known at optimisation time, while tile data (dynamic input) varies at runtime.
-Filter-to-property constant propagation (\cref{sub:structural_optimisations}) is a textbook instance:
+The style optimizer performs partial evaluation of the rendering function: the style (static input) is known at optimization time, while tile data (dynamic input) varies at runtime.
+Filter-to-property constant propagation (\cref{sub:structural_optimizations}) is a textbook instance:
 an equality constraint in the filter (static) is substituted into paint expressions, collapsing data-dependent branches that can never be reached given the known filter.
 
 The encoding strategy competition (\cref{sub:encoding_strategies}) shares the spirit of \emph{superoptimization}~\cite{massalinSuperoptimizerLookSmallest1987} in that we exhaustively evaluate all candidate strategies over the actual data and retain the smallest result, rather than using profile data to guide a heuristic decision as in classical \ac{PGO} (\cref{sub:pgo}).
-Unlike true superoptimization, however, the candidate set is designer-specified (sort orders $\times$ encoding schemes) and the profiler prunes the search space before exhaustive evaluation; we therefore characterise it more precisely as \emph{exhaustive strategy selection} over a bounded candidate space.
+Unlike true superoptimization, however, the candidate set is designer-specified (sort orders $\times$ encoding schemes) and the profiler prunes the search space before exhaustive evaluation; we therefore characterize it more precisely as \emph{exhaustive strategy selection} over a bounded candidate space.
 The approach is optimal over its search space but does not discover strategies outside it.
 
 \section{Data Encoding and Compression}\label{sec:data_encoding}
 
 Efficient encoding of tile data is essential for interactive map performance, as tiles are fetched continuously during map interaction.
-In this section we survey the encoding and compression techniques we use in our data-level optimisations of \cref{ch:methods}.
+In this section we survey the encoding and compression techniques we use in our data-level optimizations of \cref{ch:methods}.
 
 \subsection{Column-Oriented Storage}\label{sub:column_storage}
 
@@ -608,7 +608,7 @@ This property is exploited in tile encoding to reorder features so that spatiall
 
 Two space-filling curves are commonly used.
 
-The \textbf{Z-order (Morton) curve} interleaves the binary representations of the $x$ and $y$ coordinates to form a single index.
+The \textbf{Z-order (Morton) curve}~\cite{morton1966computer} interleaves the binary representations of the $x$ and $y$ coordinates to form a single index.
 For coordinates $(x, y)$ with $b$-bit components, the Morton code is
 \begin{equation}\label{eq:morton}
     M(x, y) = \sum_{i=0}^{b-1} \bigl( x_i \cdot 2^{2i} + y_i \cdot 2^{2i+1} \bigr),
@@ -644,7 +644,7 @@ The estimate is unbiased with variance $\mathcal{O}(1/k)$~\cite{broderResemblanc
 \section{Benchmarking}\label{sec:benchmarking}
 
 Benchmarking refers to the systematic measurement of system performance using controlled workloads and standardized metrics.
-The purpose of benchmarking is to evaluate system behaviour, compare alternative implementations, and quantify the effects of optimisations.
+The purpose of benchmarking is to evaluate system behavior, compare alternative implementations, and quantify the effects of optimizations.
 
 According to Jain~\cite{jainArtComputerSystems1991}, a good evaluation must start with selecting relevant metrics.
 Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that na\"ive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent JVM/engine invocations - a principle that informs the bootstrap CI methodology we use.
@@ -653,7 +653,7 @@ Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} codified twel
 In the context of web maps, the candidate metrics span a range from deployment-critical on battery-constrained targets to directly user-visible on the desktop:
 
 \begin{itemize}
-    \item \textbf{Resource utilisation}, such as CPU load, GPU utilisation, and memory consumption to have pointers where further optimisations is possible.
+    \item \textbf{Resource utilisation}, such as CPU load, GPU utilisation, and memory consumption to have pointers where further optimizations is possible.
     \item \textbf{Latency and responsiveness}, measuring the time between initiating an operation (for example zooming) and the first visible result.
     \item \textbf{Throughput}, typically measured in \acp{FPS} or frame time, describing how many frames can be rendered per second.
     \item \textbf{Frame stability}, which captures variations in frame time and identifies dropped frames or rendering stutters.
@@ -666,15 +666,15 @@ These can be benchmarked at different workload levels~\cite{jainArtComputerSyste
 \begin{itemize}
     \item \textbf{Micro-benchmarks} isolate a single operation (e.g.\ decoding a single tile, evaluating a single filter expression) and measure its cost in isolation. They are useful for identifying bottlenecks but may not reflect real-world performance due to caching and concurrency effects.
     \item \textbf{Macro-benchmarks} measure the performance of a complete subsystem (e.g.\ loading a full style and rendering a fixed camera path) under controlled conditions. They capture interactions between components but require careful setup to ensure reproducibility.
-    \item \textbf{Application-level benchmarks} measure end-to-end user-perceived performance (e.g.\ time from page load to interactive map) in a realistic deployment. They are the most representative but also the noisiest due to network variability, browser behaviour, and hardware differences.
+    \item \textbf{Application-level benchmarks} measure end-to-end user-perceived performance (e.g.\ time from page load to interactive map) in a realistic deployment. They are the most representative but also the noisiest due to network variability, browser behavior, and hardware differences.
 \end{itemize}
 
 \noindent We primarily use macro-benchmarks: we load a full style, fetch and decode tiles, and exercise the renderer with a scripted camera animation.
 Our benchmark harness controls for network variability (via a caching proxy) and GPU variability (via hardware-accelerated rendering with ANGLE/Vulkan) to achieve reproducible results at the macro level.
 
 \begin{chaptersummary}
-Three theoretical traditions map onto the three levels of the pipeline: compiler optimisation (peephole rewriting, constant folding, fixpoint iteration) drives the expression-level passes that simplify each style's JSON expressions without schema knowledge; query optimisation (projection pushdown, selectivity estimation) shapes the structural passes and the pruning advisory that bridges style and data; and the encoding techniques surveyed last - columnar storage, integer coding, \ac{FSST}, and space-filling curves - feed the data-level passes that re-encode shaved tiles with automatic strategy selection.
+Three theoretical traditions map onto the three levels of the pipeline: \textbf{compiler optimization} (peephole rewriting, constant folding, fixpoint iteration) drives the expression-level passes that simplify each style's JSON expressions without schema knowledge; \textbf{query optimization} (projection pushdown, selectivity estimation) shapes the structural passes and the pruning advisory that bridges style and data; and the \textbf{encoding techniques} surveyed last - columnar storage, integer coding, \ac{FSST}, and space-filling curves - feed the data-level passes that re-encode shaved tiles with automatic strategy selection.
 We adopt the benchmarking literature's statistical methodology (bootstrap confidence intervals, warm-up handling, metric separation) rather than extending it.
 
-The following chapter formalises the joint optimisation problem and turns these foundations into concrete passes and an evaluation methodology.
+The following chapter formalises the joint optimization problem and turns these foundations into concrete passes and an evaluation methodology.
 \end{chaptersummary}

@@ -1,13 +1,13 @@
-We investigate automatic, joint style and data optimisation for MapLibre-based map rendering pipelines, asking whether composing style-level and data-level transformations yields additive or synergistic gains.
+We investigate automatic, joint style and data optimization for MapLibre-based map rendering pipelines, asking whether composing style-level and data-level transformations yields additive or synergistic gains.
 Interactive web maps built on vector tiles face a complex performance landscape: every frame requires fetching tiles over the network, decoding them, evaluating style expressions for each feature, and submitting draw calls to the graphics API.
 Despite this, style authoring and tile data preparation have traditionally been treated as independent concerns, leaving the interaction between the two unexploited.
 
-We design and implement a standalone optimiser that operates at three levels.
+We design and implement a standalone optimizer that operates at three levels.
 Expression rewrites come first: a set of peephole rules - constant folding, algebraic simplification, stats-driven folding from tile statistics, and selectivity-based predicate reordering - is applied to the style's JSON expressions via fixpoint iteration.
 On top of that, structural passes work on a typed representation of the full style document to do dead layer elimination, metadata refinement, layer merging, and cleanup.
-The third level leaves the style behind and reaches into the tile data: a pruning advisory derived from the optimised style removes unused properties, geometry types, and feature values, and the surviving content is re-encoded into the columnar MapLibre Tiles format with automatic encoding strategy selection.
+The third level leaves the style behind and reaches into the tile data: a pruning advisory derived from the optimized style removes unused properties, geometry types, and feature values, and the surviving content is re-encoded into the columnar MapLibre Tiles format with automatic encoding strategy selection.
 
 We evaluated across 15~styles, 18~scenarios, and 17~cumulative ablation steps, and we observe that tile shaving dominates load-time improvements, achieving \qtyrange{71}{75}{\percent} reductions (bootstrap \qty{95}{\percent} CIs $\leq$\qty{1}{pp} wide) for the two styles we benchmarked end-to-end (Fiord and Liberty; we evaluated the remaining styles at the style level only, with tile-shaving effectiveness varying \qtyrange{19.8}{46.3}{\percent} across styles).
 The Rust-based \ac{MLT} encoder reduces total tile volume by \qty{28}{\percent} over the reference Java encoder and \qty{12}{\percent} over gzip-compressed \ac{MVT} on the Germany OpenMapTiles tileset.
-Style-level optimisations alone reduce style transfer size by \qtyrange{3}{47}{\percent} (gzip), primarily benefiting initial load.
+Style-level optimizations alone reduce style transfer size by \qtyrange{3}{47}{\percent} (gzip), primarily benefiting initial load.
 We find that the two levels compose additively rather than synergistically at the aggregate level, though per-scenario synergy is present in a minority of style-scenario pairs dominated by low-zoom overview tiles.

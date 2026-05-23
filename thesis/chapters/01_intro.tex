@@ -1,7 +1,7 @@
 \chapter{Introduction}\label{ch:introduction}
 
 A single rendered frame in an interactive vector map has to fit a tile fetch, an evaluation of style expressions over every visible feature, and a GPU submit inside the same frame budget, and on a slow connection or a battery-bound device any of the three can become the bottleneck.
-MapLibre GL~JS\footnote{We target MapLibre GL~JS, the open-source fork of Mapbox GL~JS, because its source code permits the static analysis and runtime instrumentation that a style optimiser requires.
+MapLibre GL~JS\footnote{We target MapLibre GL~JS, the open-source fork of Mapbox GL~JS, because its source code permits the static analysis and runtime instrumentation that a style optimizer requires.
 The proprietary Mapbox codebase does not allow independent research evaluation.} and Mapbox GL~JS deliver these maps by streaming tiled geometry to the browser and letting a client-side style document drive a WebGL- or WebGPU-based rendering pipeline.
 This architecture is what makes panning, zooming, and rotation smooth when it works, and what makes them stutter when it does not.
 
@@ -18,16 +18,16 @@ We ask whether such cross-level interactions produce measurably super-additive g
 
 \section{Research Goals}\label{sec:research_goals}
 
-We investigate automatic, style- and data-driven co-optimisation for MapLibre-based map rendering pipelines.
+We investigate automatic, style- and data-driven co-optimization for MapLibre-based map rendering pipelines.
 Three research questions guide our work:
 
 \begin{enumerate}[label=\textbf{R\arabic*}]
-    \item To what extent \textbf{can automatic data and style co-optimisation improve rendering performance and reduce map tile size}?
-    \item \textbf{Which techniques} - such as expression simplification, dead layer elimination, layer merging, tile shaving, and columnar re-encoding - \textbf{are most effective}, \textbf{and how do they interact}?  In particular, R2 asks whether the composition of style-level and data-level optimisations is additive or synergistic.
-    \item \textbf{How expensive are these optimisations} in terms of preprocessing time, and what are the \textbf{tradeoffs between decoding latency, rendering throughput, and transfer size}?
+    \item To what extent \textbf{can automatic data and style co-optimization improve rendering performance and reduce map tile size}?
+    \item \textbf{Which techniques} - such as expression simplification, dead layer elimination, layer merging, tile shaving, and columnar re-encoding - \textbf{are most effective}, \textbf{and how do they interact}?  In particular, R2 asks whether the composition of style-level and data-level optimizations is additive or synergistic.
+    \item \textbf{How expensive are these optimizations} in terms of preprocessing time, and what are the \textbf{tradeoffs between decoding latency, rendering throughput, and transfer size}?
 \end{enumerate}
 
-To answer these questions, we design and implement a standalone optimiser that consumes a MapLibre tyle document and optional tile-level statistics, and produces a equivalent (\cref{eq:visual_equivalence}) style whose rendering performance and network utilsation is measurably improved.
+To answer these questions, we design and implement a standalone optimizer that consumes a MapLibre tyle document and optional tile-level statistics, and produces a equivalent (\cref{eq:visual_equivalence}) style whose rendering performance and network utilsation is measurably improved.
 
 \newpage
 \section{Contributions}\label{sec:contributions}
@@ -35,7 +35,7 @@ To answer these questions, we design and implement a standalone optimiser that c
 We make the following main contributions:
 
 \begin{enumerate}
-    \item A \textbf{three-level optimisation pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering), structural passes (dead layer elimination, metadata refinement, layer merging), and data-level transformations (tile shaving, encoding strategy selection), modeled on peephole optimisers and query planners from the compiler and database literature.
+    \item A \textbf{three-level optimization pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering), structural passes (dead layer elimination, metadata refinement, layer merging), and data-level transformations (tile shaving, encoding strategy selection), modeled on peephole optimizers and query planners from the compiler and database literature.
     We decompose the pipeline along three distinct input representations:
     Expression passes operate on raw JSON arrays with no schema knowledge, enabling fast, composable peephole rules.
     Structural passes require a typed model of the full style document to reason across layers and sources.
@@ -44,7 +44,7 @@ We make the following main contributions:
     We treat the three levels as complementary rather than co-equal:
     each targets a different performance bottleneck, and their relative importance varies by deployment scenario.
 
-    \item \textbf{Style-driven tile shaving}, the dominant source of load-time improvements we observe in this work, which derives a pruning advisory from the optimised style to eliminate unused properties, geometry types, property values, and feature IDs from tile data.
+    \item \textbf{Style-driven tile shaving}, the dominant source of load-time improvements we observe in this work, which derives a pruning advisory from the optimized style to eliminate unused properties, geometry types, property values, and feature IDs from tile data.
     Style-level passes further refine the advisory, though we find the interaction remains additive rather than synergistic (\cref{sub:mlt_discussion}).
 
 	\item An \textbf{automatic encoding strategy selection} for the MapLibre Tiles (MLT) columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies
@@ -56,5 +56,5 @@ We make the following main contributions:
 \section{Outline}\label{sec:outline}
 
 \cref{ch:related_work} surveys the literature this work draws on and the gap it leaves, and \cref{ch:theoretical_background} introduces the compiler, database, and encoding ideas the pipeline reuses.
-\cref{ch:methods} states the optimisation problem formally and details the passes that implement it.
+\cref{ch:methods} states the optimization problem formally and details the passes that implement it.
 \cref{ch:experiments} measures their isolated and combined effects across 15~styles, and \cref{ch:conclusion} returns to the research questions with the results in hand.

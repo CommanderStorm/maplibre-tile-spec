@@ -118,12 +118,15 @@
 				\node[trajstart] at (sp0)  {};
 				\node[trajend]   at (sp11) {};
 				
-				% zoom strip — constant z12
+				% zoom strip — constant z12, 12 bars
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
 				\pgfmathsetmacro{\hC}{\zTop{12}}
-				\draw[constline] (\stripx+0.06, \zstripy+\hC)
-				-- (\stripx+\stripw-0.06, \zstripy+\hC);
+				\foreach \i in {0,...,11} {
+					\pgfmathsetmacro{\bw}{0.11}
+					\pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/12 - \bw/2}
+					\draw[bar] (\bx, \zstripy+\zPad) rectangle (\bx+\bw, \zstripy+\hC);
+				}
 				\pgfmathsetmacro{\hHi}{\zTop{24}}
 				\pgfmathsetmacro{\hLo}{\zTop{1}}
 				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hHi) {24};
@@ -179,13 +182,14 @@
 				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hHi) {24};
 				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hLo) {1};
 				
-				% bearing strip — constant
+				% bearing strip — constant 0°, 7 north arrows
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
-				\draw[constline] (\stripx+0.06, \bstripy+\striph/2)
-				-- (\stripx+\stripw-0.06, \bstripy+\striph/2);
-				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \bstripy+\striph/2)
-				{$0^{\circ}$};
+				\foreach \i in {0,...,6} {
+					\pgfmathsetmacro{\bcx}{\stripx + (\i+0.5)*\stripw/7}
+					\pgfmathsetmacro{\bcy}{\bstripy + \striph/2}
+					\draw[bearingarrow] (\bcx, \bcy) -- ($(\bcx, \bcy) + (0, 0.13)$);
+				}
 			\end{tikzpicture}%
 		}
 		\caption{\textbf{Zoomdrill.} Maximises tile-cache churn.}
@@ -220,24 +224,28 @@
 				\node[trajstart] at (ps0) {};
 				\node[trajend]   at (ps5) {};
 				
-				% zoom strip — constant z12
+				% zoom strip — constant z12, 6 bars
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
 				\pgfmathsetmacro{\hC}{\zTop{12}}
-				\draw[constline] (\stripx+0.06, \zstripy+\hC)
-				-- (\stripx+\stripw-0.06, \zstripy+\hC);
+				\foreach \i in {0,...,5} {
+					\pgfmathsetmacro{\bw}{0.2}
+					\pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/6 - \bw/2}
+					\draw[bar] (\bx, \zstripy+\zPad) rectangle (\bx+\bw, \zstripy+\hC);
+				}
 				\pgfmathsetmacro{\hHi}{\zTop{24}}
 				\pgfmathsetmacro{\hLo}{\zTop{1}}
 				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hHi) {24};
 				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hLo) {1};
 
-				% bearing strip — constant
+				% bearing strip — constant 0°, 6 north arrows
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
-				\draw[constline] (\stripx+0.06, \bstripy+\striph/2)
-				-- (\stripx+\stripw-0.06, \bstripy+\striph/2);
-				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \bstripy+\striph/2)
-				{$0^{\circ}$};
+				\foreach \i in {0,...,5} {
+					\pgfmathsetmacro{\bcx}{\stripx + (\i+0.5)*\stripw/6}
+					\pgfmathsetmacro{\bcy}{\bstripy + \striph/2}
+					\draw[bearingarrow] (\bcx, \bcy) -- ($(\bcx, \bcy) + (0, 0.13)$);
+				}
 			\end{tikzpicture}%
 		}
 		\caption{\textbf{Pansweep.} Drives sustained unidirectional (thus predictable) tile cache misses in isolation.}
@@ -262,12 +270,15 @@
 				\node[stationary] at (\mapcx, \mapcy) {};
 				\node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
 				
-				% zoom strip — constant z12
+				% zoom strip — constant z12, 8 bars
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
 				\pgfmathsetmacro{\hC}{\zTop{12}}
-				\draw[constline] (\stripx+0.06, \zstripy+\hC)
-				-- (\stripx+\stripw-0.06, \zstripy+\hC);
+				\foreach \i in {0,...,7} {
+					\pgfmathsetmacro{\bw}{0.16}
+					\pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/8 - \bw/2}
+					\draw[bar] (\bx, \zstripy+\zPad) rectangle (\bx+\bw, \zstripy+\hC);
+				}
 				\pgfmathsetmacro{\hHi}{\zTop{24}}
 				\pgfmathsetmacro{\hLo}{\zTop{1}}
 				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hHi) {24};
@@ -315,7 +326,7 @@
 		\label{fig:app_anim_dofs}
 	\end{subfigure}
 	
-	\caption{Synthetic camera animation patterns (\cref{sub:scenarios}). Each panel shows a top-down pan trajectory (hollow circle = first keyframe, filled square = last) with zoom~($z$, scale 1--24) and bearing~($\theta$, clockwise from north) strips; dashed lines indicate constant values. Panel~\subref{fig:app_anim_dofs} tabulates the exercised \acp{DOF}.}
+	\caption{Synthetic camera animation patterns (\cref{sub:scenarios}). Each panel shows a top-down pan trajectory (hollow circle = first keyframe, filled square = last) with zoom~($z$, scale 1--24) and bearing~($\theta$, clockwise from north) strips. Panel~\subref{fig:app_anim_dofs} tabulates the exercised \acp{DOF}.}
 	\label{fig:app_animation_patterns}
 \end{figure}
 \clearpage
