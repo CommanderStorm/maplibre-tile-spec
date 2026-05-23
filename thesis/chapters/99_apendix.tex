@@ -319,15 +319,15 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             % zoom strip — 7 bars z4,8,12,16,12,8,4 (heights: z/24 * 0.46)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
             \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
-            \foreach \i/\h in {0/0.117, 1/0.193, 2/0.270, 3/0.347, 4/0.270, 5/0.193, 6/0.117} {
-                \pgfmathsetmacro{\bw}{0.17}
-                \pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/7 - \bw/2}
-                \pgfmathsetmacro{\h}{(\z/24) * 0.46}
-                
-                \draw[bar]
-                (\bx, \zstripy+0.04)
-                rectangle
-                (\bx+\bw, \zstripy+\h);
+            \foreach \i/\z in {0/4, 1/8, 2/12, 3/16, 4/12, 5/8, 6/4} {
+            	\pgfmathsetmacro{\bw}{0.17}
+            	\pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/7 - \bw/2}
+            	\pgfmathsetmacro{\h}{(\z/24) * 0.46}
+            	
+            	\draw[bar]
+            	(\bx, \zstripy+0.04)
+            	rectangle
+            	(\bx+\bw, \zstripy+\h);
             }
             \node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+0.347) {16};
             \node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+0.117) {4};
