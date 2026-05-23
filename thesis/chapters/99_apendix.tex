@@ -170,6 +170,8 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
 
 \section{Camera Animation Patterns}\label{app:animation_patterns}
 
+\Cref{fig:app_animation_patterns} visualises the five patterns; \cref{fig:app_anim_dofs} tabulates exercised \acp{DOF}, pitch~$\phi$, and keyframe count.
+
 \begin{figure}[htbp]
     \centering
     % Shared TikZ styles for all five animation panels.
@@ -185,11 +187,11 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
         trajend/.style={rectangle, fill=cvdblue, inner sep=0pt, minimum size=3.8pt, draw=none},
         stationary/.style={circle, fill=cvdvermillion, draw=black, line width=0.3pt,
                            inner sep=0pt, minimum size=4pt},
-        statlabel/.style={font=\scriptsize, text=black},
+        statlabel/.style={font=\tiny, text=black},
         bar/.style={fill=cvdblue, draw=none},
         constline/.style={draw=cvdgrey!60!black, line width=0.4pt, dashed},
-        axislabel/.style={font=\scriptsize, text=black},
-        striplabel/.style={font=\scriptsize, text=black},
+        axislabel/.style={font=\tiny, text=black},
+        striplabel/.style={font=\tiny, text=black},
         bearingarrow/.style={-{Stealth[length=1.4mm, width=1.0mm]}, draw=cvdblue, line width=0.45pt},
     }
 
@@ -198,14 +200,15 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
         \centering\vspace{0pt}%
         \resizebox{\linewidth}{!}{%
         \begin{tikzpicture}
-            \def\mapsize{1.8} \def\stripw{2.5} \def\striph{0.5}
-            \def\stripx{2.05} \def\zstripy{0.975} \def\bstripy{0.325}
-            \def\mapcx{0.9} \def\mapcy{0.9} \def\trajscale{0.78}
+            \def\mapsize{1.8} \def\stripw{1.8} \def\striph{0.5}
+            \def\stripx{0} \def\zstripy{0.65} \def\bstripy{0}
+            \def\mapy{1.35}
+            \def\mapcx{0.9} \def\mapcy{2.25} \def\trajscale{0.78}
 
-            \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
+            \draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
-            \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
-            \node[axislabel] at (\mapcx, -0.15) {lng};
+            \draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
+            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {lng};
             \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
             \foreach \i/\nx/\ny in {%
                 0/0.125/0.125, 1/0.25/-0.25, 2/0.375/0.375, 3/0.5/-0.5,%
@@ -221,8 +224,8 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
             \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
             \foreach \i/\h in {0/0.232, 1/0.308, 2/0.232, 3/0.308, 4/0.232, 5/0.308, 6/0.232, 7/0.308} {
-                \pgfmathsetmacro{\bx}{\stripx + \i*0.3125 + 0.045}
-                \draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+0.22, \zstripy+\h);
+                \pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/8 - 0.08}
+                \draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+0.16, \zstripy+\h);
             }
             \node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+0.308) {14};
             \node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+0.232) {10};
@@ -231,14 +234,12 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
             \node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
             \foreach \i/\b in {0/0, 1/15, 2/30, 3/45, 4/60, 5/75, 6/90, 7/105} {
-                \pgfmathsetmacro{\bcx}{\stripx + (\i+0.5)*0.3125}
+                \pgfmathsetmacro{\bcx}{\stripx + (\i+0.5)*\stripw/8}
                 \pgfmathsetmacro{\bcy}{\bstripy + \striph/2}
                 \pgfmathsetmacro{\dx}{0.13*sin(\b)}
                 \pgfmathsetmacro{\dy}{0.13*cos(\b)}
                 \draw[bearingarrow] (\bcx, \bcy) -- ($(\bcx, \bcy) + (\dx, \dy)$);
             }
-            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph-0.05)
-                {$105^{\circ}$};
         \end{tikzpicture}%
         }
         \caption{zigzag}
@@ -250,14 +251,15 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
         \centering\vspace{0pt}%
         \resizebox{\linewidth}{!}{%
         \begin{tikzpicture}
-            \def\mapsize{1.8} \def\stripw{2.5} \def\striph{0.5}
-            \def\stripx{2.05} \def\zstripy{0.975} \def\bstripy{0.325}
-            \def\mapcx{0.9} \def\mapcy{0.9} \def\trajscale{0.78}
+            \def\mapsize{1.8} \def\stripw{1.8} \def\striph{0.5}
+            \def\stripx{0} \def\zstripy{0.65} \def\bstripy{0}
+            \def\mapy{1.35}
+            \def\mapcx{0.9} \def\mapcy{2.25} \def\trajscale{0.78}
 
-            \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
+            \draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
-            \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
-            \node[axislabel] at (\mapcx, -0.15) {lng};
+            \draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
+            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {lng};
             \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
             \foreach \i in {0,...,11} {
                 \pgfmathsetmacro{\ang}{\i*30}
@@ -287,8 +289,6 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
                 \pgfmathsetmacro{\dy}{0.13*cos(\b)}
                 \draw[bearingarrow] (\bcx, \bcy) -- ($(\bcx, \bcy) + (\dx, \dy)$);
             }
-            \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph-0.05)
-                {$330^{\circ}$};
         \end{tikzpicture}%
         }
         \caption{spiral}
@@ -300,14 +300,15 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
         \centering\vspace{0pt}%
         \resizebox{\linewidth}{!}{%
         \begin{tikzpicture}
-            \def\mapsize{1.8} \def\stripw{2.5} \def\striph{0.5}
-            \def\stripx{2.05} \def\zstripy{0.975} \def\bstripy{0.325}
-            \def\mapcx{0.9} \def\mapcy{0.9}
+            \def\mapsize{1.8} \def\stripw{1.8} \def\striph{0.5}
+            \def\stripx{0} \def\zstripy{0.65} \def\bstripy{0}
+            \def\mapy{1.35}
+            \def\mapcx{0.9} \def\mapcy{2.25}
 
-            \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
+            \draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
-            \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
-            \node[axislabel] at (\mapcx, -0.15) {lng};
+            \draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
+            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {lng};
             \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
             \node[stationary] at (\mapcx, \mapcy) {};
             \node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
@@ -316,7 +317,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
             \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
             \foreach \i/\h in {0/0.117, 1/0.193, 2/0.270, 3/0.347, 4/0.270, 5/0.193, 6/0.117} {
-                \pgfmathsetmacro{\bw}{0.24}
+                \pgfmathsetmacro{\bw}{0.17}
                 \pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/7 - \bw/2}
                 \draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+\bw, \zstripy+\h);
             }
@@ -329,7 +330,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \draw[constline] (\stripx+0.06, \bstripy+\striph/2)
                           -- (\stripx+\stripw-0.06, \bstripy+\striph/2);
             \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph/2)
-                {const $0^{\circ}$};
+                {$0^{\circ}$};
         \end{tikzpicture}%
         }
         \caption{zoomdrill}
@@ -343,14 +344,15 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
         \centering\vspace{0pt}%
         \resizebox{\linewidth}{!}{%
         \begin{tikzpicture}
-            \def\mapsize{1.8} \def\stripw{2.5} \def\striph{0.5}
-            \def\stripx{2.05} \def\zstripy{0.975} \def\bstripy{0.325}
-            \def\mapcx{0.9} \def\mapcy{0.9} \def\trajscale{0.78}
+            \def\mapsize{1.8} \def\stripw{1.8} \def\striph{0.5}
+            \def\stripx{0} \def\zstripy{0.65} \def\bstripy{0}
+            \def\mapy{1.35}
+            \def\mapcx{0.9} \def\mapcy{2.25} \def\trajscale{0.78}
 
-            \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
+            \draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
-            \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
-            \node[axislabel] at (\mapcx, -0.15) {lng};
+            \draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
+            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {lng};
             \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
             \foreach \i/\nx/\ny in {%
                 0/-1.0/0.167, 1/-0.667/-0.167, 2/-0.333/0.167,
@@ -376,7 +378,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \draw[constline] (\stripx+0.06, \bstripy+\striph/2)
                           -- (\stripx+\stripw-0.06, \bstripy+\striph/2);
             \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph/2)
-                {const $0^{\circ}$};
+                {$0^{\circ}$};
         \end{tikzpicture}%
         }
         \caption{pansweep}
@@ -388,14 +390,15 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
         \centering\vspace{0pt}%
         \resizebox{\linewidth}{!}{%
         \begin{tikzpicture}
-            \def\mapsize{1.8} \def\stripw{2.5} \def\striph{0.5}
-            \def\stripx{2.05} \def\zstripy{0.975} \def\bstripy{0.325}
-            \def\mapcx{0.9} \def\mapcy{0.9}
+            \def\mapsize{1.8} \def\stripw{1.8} \def\striph{0.5}
+            \def\stripx{0} \def\zstripy{0.65} \def\bstripy{0}
+            \def\mapy{1.35}
+            \def\mapcx{0.9} \def\mapcy{2.25}
 
-            \draw[framebox] (0, 0) rectangle (\mapsize, \mapsize);
+            \draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
-            \draw[crosshair] (\mapcx, 0) -- (\mapcx, \mapsize);
-            \node[axislabel] at (\mapcx, -0.15) {lng};
+            \draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
+            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {lng};
             \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
             \node[stationary] at (\mapcx, \mapcy) {};
             \node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
