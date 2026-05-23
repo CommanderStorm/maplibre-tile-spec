@@ -766,5 +766,10 @@ The cumulative ablation design (\cref{sub:ablation}) means that the reported mar
 Tail metrics (p99 frame time, jank count) are particularly sensitive to sample size: with $n=15$ runs, the tail carries only a handful of informative samples per cell, and the reported numbers should be read as directional rather than conclusive.
 The full-pipeline ablation performs thousands of pairwise comparisons across metrics, styles, scenarios, and ablation steps; we apply no multiple-comparisons correction (Bonferroni, Benjamini-Hochberg), so individual per-cell \enquote{significant} differences should not be read as hypothesis tests, only as descriptive summaries.
 
-\medskip\noindent
-With the empirical evaluation complete - expression, structural, and data-level passes measured individually and in combination, generalisation tested across 15~styles, and validity threats assessed - in the following chapter we synthesise these findings, revisit the research questions posed in \cref{sec:research_goals}, and identify directions for future work.
+\begin{chaptersummary}
+Each pass family behaves differently in isolation: expression passes barely move load time on their own but enable the downstream passes; the structural family's gains come almost entirely from dead-layer elimination and layer merging; and on the data side, tile shaving dominates with a \qty{-71.5}{\percent} median load reduction, while the \ac{MLT} encoder's per-stream strategy competition - not the format itself - delivers a further \qty{28}{\percent} tile-volume cut over the Java reference (\qty{12}{\percent} over gzip-compressed \ac{MVT}).
+Composed end-to-end on Fiord and Liberty, the full pipeline reduces load time by \qtyrange{71}{75}{\percent} and improves \ac{FPS} by \qtyrange{162}{213}{\percent}, but the cross-family interaction is additive rather than synergistic.
+The static passes generalise: a median \qty{44.5}{\percent} raw style reduction across 13 unseen styles, with none regressed.
+
+The following chapter consolidates these findings into architectural claims, answers the research questions of \cref{sec:research_goals}, and identifies the directions left open.
+\end{chaptersummary}

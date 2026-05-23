@@ -1505,4 +1505,10 @@ This ensures that we measure GPU-bound workloads (fragment shading, texture samp
 We serve all tile requests from a local caching proxy as described in \cref{sub:tile_data}.
 The benchmark harness itself is a Puppeteer-driven headless browser that programmatically loads the MapLibre GL~JS renderer, applies a camera animation scenario, and collects performance counters via the \texttt{Performance} \ac{API} and custom instrumentation hooks in the renderer.
 
-With the optimiser pipeline, its individual passes, and the evaluation methodology now defined, in the following chapter we apply this methodology to evaluate each optimisation category - expression-level, structural, and data-level - and then analyse their combined effect across the full benchmark corpus.
+\begin{chaptersummary}
+The optimiser is a three-level pipeline (\cref{sub:pipeline}) operating on the $(S, T) \to (S', T')$ problem of \cref{sec:problem_statement}: eight expression-level passes run to a fixpoint, six structural passes act on a typed style document, and data-level passes re-encode shaved tiles into \ac{MLT} via per-stream strategy competition.
+The pruning advisory derived from the optimised style is what ties the levels together - a projection-pushdown plan over the tile data.
+We measure the pipeline with a 17-step cumulative ablation across 15~styles, 18~stratified scenarios, and 15~repeat runs per cell on the Germany OpenMapTiles tileset, plus a 13-style generalisation corpus and a preprocessing-cost model that decomposes the offline cost into four additive stages.
+
+The following chapter applies this methodology to evaluate each optimisation category in isolation, tests generalisation beyond the benchmarking corpus, and analyses the full pipeline's combined effect.
+\end{chaptersummary}

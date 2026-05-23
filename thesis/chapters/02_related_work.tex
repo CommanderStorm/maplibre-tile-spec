@@ -158,9 +158,10 @@ The style-side work is sparser still: Stamen's default-stripping utility and a h
 Tremmel and Zink's \ac{MLT} format advances the encoding layer but picks strategies without consulting the style.
 The benchmarking literature is in better shape; we adopt its statistical methodology rather than extending it.
 
-Pulling these together, no open-source tool or published study composes style and data optimisations into a single pipeline.
-That composition - the unified $(S, T) \to (S', T')$ optimisation we formalise in \cref{sec:problem_statement} - is what we contribute, together with a cumulative ablation methodology that lets us ask whether the composition is additive or synergistic.
-The OGC API-Tiles standard~\cite{OGCAPITiles} is what makes the openness here matter in practice: optimisation techniques that depend on a single vendor's API cannot be applied to standards-compliant tile delivery, but the techniques we develop here can.
-\cref{ch:experiments} quantifies the result: load times down by up to \qty{75}{\percent} and tile volume down by \qty{28}{\percent} on the styles we benchmarked end-to-end.
+\begin{chaptersummary}
+No prior work composes style and data optimisations into a single open pipeline: the data-side tools ignore the style, the only commercial precedent is closed-source, and the encoding format's strategy selection is style-blind.
+Our contribution is the joint $(S, T) \to (S', T')$ optimisation formalised in \cref{sec:problem_statement}, together with a cumulative ablation methodology that measures whether the composition is additive or synergistic.
+\cref{ch:experiments} quantifies the payoff - load times down by up to \qty{75}{\percent} and tile volume by \qty{28}{\percent} on the styles we benchmarked end-to-end - and the OGC API-Tiles standard~\cite{OGCAPITiles} keeps these gains deployable without vendor lock-in.
 
-The next chapter introduces the foundations these techniques draw on: the map rendering architecture, the compiler analogues used by the expression passes, the query-optimisation concepts behind filter rewriting and selectivity, and the columnar encoding strategies for the data-level passes.
+The next chapter introduces the foundations these techniques draw on: the rendering architecture, the compiler analogues behind the expression passes, the query-optimisation concepts behind filter rewriting and selectivity, and the columnar encoding strategies for the data-level passes.
+\end{chaptersummary}
