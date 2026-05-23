@@ -208,8 +208,8 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
             \draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
-            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {lng};
-            \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
+            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {$\mathrm{lng}$};
+            \node[axislabel, rotate=90] at (-0.25, \mapcy) {$\mathrm{xy}$};
             \foreach \i/\nx/\ny in {%
                 0/0.125/0.125, 1/0.25/-0.25, 2/0.375/0.375, 3/0.5/-0.5,%
                 4/0.625/0.625, 5/0.75/-0.75, 6/0.875/0.875, 7/1.0/-1.0} {
@@ -222,7 +222,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
 
             % zoom strip — 8 bars alternating z10/z14 (heights: z/24 * 0.46)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
-            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
+            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
             \foreach \i/\h in {0/0.232, 1/0.308, 2/0.232, 3/0.308, 4/0.232, 5/0.308, 6/0.232, 7/0.308} {
                 \pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/8 - 0.08}
                 \draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+0.16, \zstripy+\h);
@@ -259,8 +259,8 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
             \draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
-            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {lng};
-            \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
+            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {$\mathrm{lng}$};
+            \node[axislabel, rotate=90] at (-0.25, \mapcy) {$\mathrm{xy}$};
             \foreach \i in {0,...,11} {
                 \pgfmathsetmacro{\ang}{\i*30}
                 \coordinate (sp\i) at ({\mapcx + \trajscale*cos(\ang)},
@@ -273,7 +273,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
 
             % zoom strip — constant z12 (12/24 * 0.46 = 0.27 above base)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
-            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
+            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
             \draw[constline] (\stripx+0.06, \zstripy+0.27)
                           -- (\stripx+\stripw-0.06, \zstripy+0.27);
             \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.27) {12};
@@ -308,14 +308,14 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
             \draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
-            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {lng};
-            \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
+            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {$\mathrm{lng}$};
+            \node[axislabel, rotate=90] at (-0.25, \mapcy) {$\mathrm{xy}$};
             \node[stationary] at (\mapcx, \mapcy) {};
             \node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
 
             % zoom strip — 7 bars z4,8,12,16,12,8,4 (heights: z/24 * 0.46)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
-            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
+            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
             \foreach \i/\h in {0/0.117, 1/0.193, 2/0.270, 3/0.347, 4/0.270, 5/0.193, 6/0.117} {
                 \pgfmathsetmacro{\bw}{0.17}
                 \pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/7 - \bw/2}
@@ -352,8 +352,8 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
             \draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
-            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {lng};
-            \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
+            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {$\mathrm{lng}$};
+            \node[axislabel, rotate=90] at (-0.25, \mapcy) {$\mathrm{xy}$};
             \foreach \i/\nx/\ny in {%
                 0/-1.0/0.167, 1/-0.667/-0.167, 2/-0.333/0.167,
                 3/0.0/-0.167, 4/0.333/0.167,   5/0.667/-0.167} {
@@ -367,7 +367,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
 
             % zoom strip — constant z12 (12/24 * 0.46 = 0.27 above base)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
-            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
+            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
             \draw[constline] (\stripx+0.06, \zstripy+0.27)
                           -- (\stripx+\stripw-0.06, \zstripy+0.27);
             \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.27) {12};
@@ -398,14 +398,14 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
             \draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
             \draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
-            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {lng};
-            \node[axislabel, rotate=90] at (-0.25, \mapcy) {lat};
+            \node[axislabel, anchor=north] at (\mapcx, \mapy-0.1) {$\mathrm{lng}$};
+            \node[axislabel, rotate=90] at (-0.25, \mapcy) {$\mathrm{xy}$};
             \node[stationary] at (\mapcx, \mapcy) {};
             \node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
 
             % zoom strip — constant z12 (12/24 * 0.46 = 0.27 above base)
             \draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
-            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {z};
+            \node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
             \draw[constline] (\stripx+0.06, \zstripy+0.27)
                           -- (\stripx+\stripw-0.06, \zstripy+0.27);
             \node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \zstripy+0.27) {12};
@@ -439,7 +439,7 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             rowsep = 1pt,
         }
         \toprule
-                     & lng/lat        & z          & $\theta$   & $\phi$     & \# kf \\
+                     & xy         & z          & $\theta$   & $\phi$     & \# kf \\
         \midrule
         zigzag       & \checkmark & \checkmark & \checkmark & $0^{\circ}$  &  8 \\
         spiral       & \checkmark & --         & \checkmark & $0^{\circ}$  & 12 \\
