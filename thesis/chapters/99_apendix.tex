@@ -322,7 +322,12 @@ Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \
             \foreach \i/\h in {0/0.117, 1/0.193, 2/0.270, 3/0.347, 4/0.270, 5/0.193, 6/0.117} {
                 \pgfmathsetmacro{\bw}{0.17}
                 \pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/7 - \bw/2}
-                \draw[bar] (\bx, \zstripy+0.04) rectangle (\bx+\bw, \zstripy+\h);
+                \pgfmathsetmacro{\h}{(\z/24) * 0.46}
+                
+                \draw[bar]
+                (\bx, \zstripy+0.04)
+                rectangle
+                (\bx+\bw, \zstripy+\h);
             }
             \node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+0.347) {16};
             \node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+0.117) {4};
