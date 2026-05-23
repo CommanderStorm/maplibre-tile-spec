@@ -28,15 +28,15 @@
 		bar/.style={fill=cvdblue, draw=none},
 		constline/.style={draw=darkgray, line width=0.4pt, dashed},
 		axislabel/.style={font=\tiny, text=darkgray},
-		striplabel/.style={font=\tiny, text=darkgray},
+		striplabel/.style={font=\fontsize{3pt}{3.6pt}\selectfont, text=darkgray},
 		bearingarrow/.style={-{Stealth[length=1.4mm, width=1.0mm]}, draw=cvdblue, line width=0.45pt},
 	}
 	% z-strip geometry: single source of truth for the z->y mapping used
 	% by bar tops, numeric labels and dashed constant lines across all panels.
-	% Strip has total height \striph=0.5; bar/strip floor sits \zPad above
-	% \zstripy; \zTop{z} gives the y offset (above \zstripy) for zoom z in [0,24].
+	% Strip has total height \striph=0.5; drawable area is [\zPad, \striph-\zPad].
+	% \zTop{z} linearly maps zoom z in [1,24] to that drawable area.
 	\providecommand{\zPad}{0.04}%
-	\providecommand{\zTop}[1]{(#1/24)*0.46}%
+	\providecommand{\zTop}[1]{\zPad + ((#1-1)/23)*(\striph-2*\zPad)}%
 
 	%% ── (a) zigzag ────────────────────────────────────────────────────────────
 	\begin{subfigure}[t]{0.31\linewidth}
@@ -74,8 +74,8 @@
 				}
 				\pgfmathsetmacro{\hHi}{\zTop{24}}
 				\pgfmathsetmacro{\hLo}{\zTop{1}}
-				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+\hHi) {24};
-				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+\hLo) {1};
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hHi) {24};
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hLo) {1};
 
 				% bearing strip — 8 arrows, 0..105
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
@@ -113,7 +113,7 @@
 					\coordinate (sp\i) at ({\mapcx + \trajscale*cos(\ang)},
 					{\mapcy + \trajscale*sin(\ang)});
 				}
-				\foreach \a/\b in {0/1,1/2,2/3,3/4,4/5,5/6,6/7,7/8,8/9,9/10,10/11,11/0} { \draw[trajpath] (sp\a) -- (sp\b); }
+				\foreach \a/\b in {0/1,1/2,2/3,3/4,4/5,5/6,6/7,7/8,8/9,9/10,10/11} { \draw[trajpath] (sp\a) -- (sp\b); }
 				\foreach \i in {0,...,11} { \node[trajdot] at (sp\i) {}; }
 				\node[trajstart] at (sp0)  {};
 				\node[trajend]   at (sp11) {};
@@ -126,14 +126,14 @@
 				-- (\stripx+\stripw-0.06, \zstripy+\hC);
 				\pgfmathsetmacro{\hHi}{\zTop{24}}
 				\pgfmathsetmacro{\hLo}{\zTop{1}}
-				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+\hHi) {24};
-				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+\hLo) {1};
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hHi) {24};
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hLo) {1};
 
-				% bearing strip — 12 arrows, 0..330
+				% bearing strip — 12 arrows; camera tracks centre, so \b=270-30i (mod 360)
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
 				\foreach \i in {0,...,11} {
-					\pgfmathsetmacro{\b}{\i*30}
+					\pgfmathsetmacro{\b}{270-\i*30}
 					\pgfmathsetmacro{\bcx}{\stripx + (\i+0.5)*\stripw/12}
 					\pgfmathsetmacro{\bcy}{\bstripy + \striph/2}
 					\pgfmathsetmacro{\dx}{0.13*sin(\b)}
@@ -142,7 +142,7 @@
 				}
 			\end{tikzpicture}%
 		}
-		\caption{\textbf{Spiral.} Isolates render cost from tile-load cost via a stable tile set.}
+		\caption{\textbf{Spiral.} Camera orbits its target while pointing at it; isolates render cost from tile-load cost via a stable tile set.}
 		\label{fig:app_anim_spiral}
 	\end{subfigure}
 	\hfill
@@ -176,19 +176,15 @@
 				}
 				\pgfmathsetmacro{\hHi}{\zTop{24}}
 				\pgfmathsetmacro{\hLo}{\zTop{1}}
-				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+\hHi) {24};
-				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+\hLo) {1};
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hHi) {24};
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hLo) {1};
 				
 				% bearing strip — constant
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
 				\draw[constline] (\stripx+0.06, \bstripy+\striph/2)
 				-- (\stripx+\stripw-0.06, \bstripy+\striph/2);
-				\pgfmathsetmacro{\hHi}{\zTop{24}}
-				\pgfmathsetmacro{\hLo}{\zTop{1}}
-				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+\hHi) {24};
-				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+\hLo) {1};
-				\node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph/2)
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \bstripy+\striph/2)
 				{$0^{\circ}$};
 			\end{tikzpicture}%
 		}
@@ -232,15 +228,15 @@
 				-- (\stripx+\stripw-0.06, \zstripy+\hC);
 				\pgfmathsetmacro{\hHi}{\zTop{24}}
 				\pgfmathsetmacro{\hLo}{\zTop{1}}
-				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+\hHi) {24};
-				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+\hLo) {1};
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hHi) {24};
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hLo) {1};
 
 				% bearing strip — constant
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
 				\draw[constline] (\stripx+0.06, \bstripy+\striph/2)
 				-- (\stripx+\stripw-0.06, \bstripy+\striph/2);
-				\node[striplabel, anchor=west] at (\stripx+\stripw+0.04, \bstripy+\striph/2)
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \bstripy+\striph/2)
 				{$0^{\circ}$};
 			\end{tikzpicture}%
 		}
@@ -274,8 +270,8 @@
 				-- (\stripx+\stripw-0.06, \zstripy+\hC);
 				\pgfmathsetmacro{\hHi}{\zTop{24}}
 				\pgfmathsetmacro{\hLo}{\zTop{1}}
-				\node[striplabel, anchor=south west] at (\stripx+\stripw+0.04, \zstripy+\hHi) {24};
-				\node[striplabel, anchor=north west] at (\stripx+\stripw+0.04, \zstripy+\hLo) {1};
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hHi) {24};
+				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hLo) {1};
 
 				% bearing strip — 8 arrows 0..315
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
@@ -319,7 +315,7 @@
 		\label{fig:app_anim_dofs}
 	\end{subfigure}
 	
-	\caption{Synthetic camera animation patterns (\cref{sub:scenarios}). Each panel shows a top-down pan trajectory (hollow circle = first keyframe, filled square = last) with zoom~($z$, scale 0--24) and bearing~($\theta$, clockwise from north) strips; dashed lines indicate constant values. Panel~\subref{fig:app_anim_dofs} tabulates the exercised \acp{DOF}.}
+	\caption{Synthetic camera animation patterns (\cref{sub:scenarios}). Each panel shows a top-down pan trajectory (hollow circle = first keyframe, filled square = last) with zoom~($z$, scale 1--24) and bearing~($\theta$, clockwise from north) strips; dashed lines indicate constant values. Panel~\subref{fig:app_anim_dofs} tabulates the exercised \acp{DOF}.}
 	\label{fig:app_animation_patterns}
 \end{figure}
 \clearpage
