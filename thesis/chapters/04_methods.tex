@@ -825,7 +825,7 @@ This cascade mirrors the materialized-view maintenance problem described in \cre
     \item \textbf{Unused zoom levels}: zoom levels at which no style layer targets the source-layer.
     Tiles at these zoom levels need not be encoded at all.
     \item \textbf{Unused property values}: specific values of categorical properties that are never matched by any style filter.
-    For example, if no style layer allows for a line with \texttt{class=ferry}}, the pass can remove features with that value.
+    For example, if no style layer allows for a line with \texttt{class=ferry}, the pass can remove features with that value.
     \item \textbf{Feature ID requirement}: whether any style layer uses \texttt{[\mlop{"id"}]} or \texttt{[\mlop{"feature-state"},~\ldots]}.
     When IDs are unused, the pass strips the entire ID column.
 \end{itemize}
