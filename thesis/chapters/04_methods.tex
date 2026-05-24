@@ -210,13 +210,19 @@ Dead-branch elimination removes arms from \texttt{case} and \texttt{match} expre
 Contradiction detection identifies filters that are logically unsatisfiable by inspecting siblings within an \texttt{all} node.
 When two predicates constrain the same property to disjoint values - e.g.\
 %
-\begin{quote}
+\begin{lstlisting}[
+	style=maplibrestyle,
+	basicstyle=\ttfamily\scriptsize,
+	frame=single,
+	aboveskip=0pt,
+	belowskip=0pt
+	]
 \texttt{["all",}\newline
 \texttt{["==",~["get",~"class"],~"a"],}\newline
 \texttt{["==",~["get",~"class"],~"b"]}\newline
 \texttt{]}
-\end{quote}
-%
+\end{lstlisting}
+
 \noindent the enclosing \texttt{all} is rewritten to \texttt{false}, which the structural dead elimination pass will later exploit to remove the enclosing layer.
 This is the expression-level analogue of unsatisfiable-query detection in a database query planner.
 
