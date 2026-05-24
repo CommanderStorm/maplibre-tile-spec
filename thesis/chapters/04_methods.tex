@@ -178,7 +178,7 @@ Expression passes operate directly on the JSON representation, applying rewrites
 Pass & Data & Description [compiler analogy] \\
 \midrule
 Unary simplification         & none     & Unwrap single-argument \texttt{any}/\texttt{all} wrappers [identity elimination] \\
-Expression kind normalization & none     & Rewrite negated comparisons to their direct form, e.g.\ \texttt{["!",["==",a,b]]} $\to$ \texttt{["!=",a,b]} [operator strength reduction] \\
+Expression kind normalization & none     & Rewrite negated comparisons to their direct form, e.g.\ \texttt{["!", ["==",a,b]]} $\to$ \texttt{["!=",a,b]} [operator strength reduction] \\
 Constant folding              & none     & Evaluate statically determinable expressions: boolean algebra, dead branch elimination, redundant coercion removal [constant folding, \acs{SCCP}] \\
 Stats-driven constant folding & sampling & Fold \texttt{has}/\texttt{get}/\texttt{geometry-type} expressions using tile statistics; prune unreachable \texttt{match}/\texttt{in} arms; fold comparisons against known value ranges [sparse conditional constant propagation] \\
 Expression simplification     & none     & De~Morgan's laws, boolean flattening, coalesce flattening, \texttt{case}$\to$\texttt{match} rewriting, \texttt{let}/\texttt{var} inlining, \texttt{any}$\to$\texttt{in} merging, interpolate/step collapsing [algebraic simplification] \\
@@ -362,7 +362,7 @@ We drew both examples from the optimizer's test suite.
 		\vspace{2mm}
 
 		\begin{lstlisting}[
-			language={},
+			style=maplibrestyle,
 			basicstyle=\ttfamily\scriptsize,
 			frame=single,
 			aboveskip=0pt,
@@ -371,11 +371,11 @@ We drew both examples from the optimizer's test suite.
 ["any",
   ["all",
     ["has","name"],
-    ["==",["get","class"],"road"]
+    ["==", ["get","class"], "road"]
   ],
   ["all",
     ["has","name"],
-    ["==",["get","class"],"rail"]
+    ["==", ["get","class"], "rail"]
   ]
 ]
 		\end{lstlisting}
@@ -385,17 +385,17 @@ We drew both examples from the optimizer's test suite.
 		After
 
 		\begin{lstlisting}[
-			language={},
+			style=maplibrestyle,
 			basicstyle=\ttfamily\scriptsize,
 			frame=single,
 			aboveskip=0pt,
 			belowskip=0pt
 			]
 ["all",
-  ["has","name"],
+  ["has", "name"],
   ["in",
-    ["get","class"],
-    ["literal",["road","rail"]]
+    ["get", "class"],
+    ["literal", ["road", "rail"]]
   ]
 ]
 		\end{lstlisting}
@@ -413,16 +413,16 @@ We drew both examples from the optimizer's test suite.
 		\vspace{2mm}
 
 		\begin{lstlisting}[
-			language={},
+			style=maplibrestyle,
 			basicstyle=\ttfamily\scriptsize,
 			frame=single,
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-filter: ["==",["get","class"],"road"]
+filter: ["==", ["get", "class"], "road"]
 paint:
   fill-color: ["match",
-    ["get","class"],
+    ["get", "class"],
     "road", "#333",
     "rail", "#666",
     "#999"
@@ -434,13 +434,13 @@ paint:
 		After
 
 		\begin{lstlisting}[
-			language={},
+			style=maplibrestyle,
 			basicstyle=\ttfamily\scriptsize,
 			frame=single,
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-filter: ["==",["get","class"],"road"]
+filter: ["==", ["get", "class"], "road"]
 paint:
   fill-color: "#333"
 		\end{lstlisting}
@@ -457,15 +457,15 @@ paint:
 		\vspace{2mm}
 
 		\begin{lstlisting}[
-			language={},
+			style=maplibrestyle,
 			basicstyle=\ttfamily\scriptsize,
 			frame=single,
 			aboveskip=0pt,
 			belowskip=0pt
 			]
 ["all",
-  ["==",["get","class"],"road"],
-  ["==",["get","class"],"road"]
+  ["==", ["get", "class"], "road"],
+  ["==", ["get", "class"], "road"]
 ]
 		\end{lstlisting}
 
@@ -474,13 +474,13 @@ paint:
 		After
 
 		\begin{lstlisting}[
-			language={},
+			style=maplibrestyle,
 			basicstyle=\ttfamily\scriptsize,
 			frame=single,
 			aboveskip=0pt,
 			belowskip=0pt
 			]
-["==",["get","class"],"road"]
+["==", ["get", "class"], "road"]
 		\end{lstlisting}
 
 		\caption{Duplicate predicate elimination via subsumption.}
@@ -496,15 +496,15 @@ paint:
 		\vspace{2mm}
 
 		\begin{lstlisting}[
-			language={},
+			style=maplibrestyle,
 			basicstyle=\ttfamily\scriptsize,
 			frame=single,
 			aboveskip=0pt,
 			belowskip=0pt
 			]
 ["all",
-	["!",["==",["get","class"],"road"]],
-	["!",["==",["get","class"],"rail"]]
+	["!", ["==", ["get", "class"], "road"]],
+	["!", ["==", ["get", "class"], "rail"]]
 ]
 		\end{lstlisting}
 
@@ -513,15 +513,15 @@ paint:
 		After
 
 		\begin{lstlisting}[
-			language={},
+			style=maplibrestyle,
 			basicstyle=\ttfamily\scriptsize,
 			frame=single,
 			aboveskip=0pt,
 			belowskip=0pt
 			]
 ["all",
-	["!=","class","road"],
-	["!=","class","rail"]
+	["!=", ["get", "class"], "road"],
+	["!=", ["get", "class"], "rail"]
 ]
 		\end{lstlisting}
 
