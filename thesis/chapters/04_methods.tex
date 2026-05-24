@@ -217,10 +217,10 @@ When two predicates constrain the same property to disjoint values - e.g.\
 	aboveskip=0pt,
 	belowskip=0pt
 	]
-\texttt{["all",}\newline
-\texttt{["==",~["get",~"class"],~"a"],}\newline
-\texttt{["==",~["get",~"class"],~"b"]}\newline
-\texttt{]}
+["all",
+	["==", ["get", "class"], "a"],
+	["==", ["get", "class"], "b"]
+]
 \end{lstlisting}
 
 \noindent the enclosing \texttt{all} is rewritten to \texttt{false}, which the structural dead elimination pass will later exploit to remove the enclosing layer.
