@@ -764,9 +764,9 @@ Tail metrics (p99 frame time, jank count) are particularly sensitive to sample s
 The full-pipeline ablation performs thousands of pairwise comparisons across metrics, styles, scenarios, and ablation steps; we apply no multiple-comparisons correction (Bonferroni, Benjamini-Hochberg), so individual per-cell \enquote{significant} differences should not be read as hypothesis tests, only as descriptive summaries.
 
 \begin{chaptersummary}
-Each pass family behaves differently in isolation: expression passes barely move load time on their own but enable the downstream passes; the structural family's gains come almost entirely from dead-layer elimination and layer merging; and on the data side, \textbf{tile shaving dominates} with a \textbf{\qty{-71.5}{\percent} median load reduction}, while the \ac{MLT} encoder's per-stream strategy competition - not the format itself - delivers a further \qty{28}{\percent} tile-volume cut over the Java reference (\qty{12}{\percent} over gzip-compressed \ac{MVT}).
-Composed end-to-end on Fiord and Liberty, the full pipeline \textbf{reduces load time by \qtyrange{71}{75}{\percent} and improves \ac{FPS} by \qtyrange{162}{213}{\percent}}, but the cross-family interaction is \textbf{additive rather than synergistic}.
-The static passes generalize: a \textbf{median \qty{44.5}{\percent} raw style reduction across 13 unseen styles}, with none regressed.
+Each pass family behaves differently in isolation: expression passes barely move load time on their own but enable the downstream passes; the structural family's gains come almost entirely from dead-layer elimination and layer merging; and on the data side, \textbf{tile shaving dominates} with a \textbf{$-$71.5\,\% median load reduction}, while the \ac{MLT} encoder's per-stream strategy competition - not the format itself - delivers a further \qty{28}{\percent} tile-volume cut over the Java reference (\qty{12}{\percent} over gzip-compressed \ac{MVT}).
+Composed end-to-end on Fiord and Liberty, the full pipeline \textbf{reduces load time by 71--75\,\% and improves \ac{FPS} by 162--213\,\%}, but the cross-family interaction is \textbf{additive rather than synergistic}.
+The static passes generalize: a \textbf{median 44.5\,\% raw style reduction across 13 unseen styles}, with none regressed.
 
 The following chapter consolidates these findings into architectural claims, answers the research questions of \cref{sec:research_goals}, and identifies the directions left open.
 \end{chaptersummary}

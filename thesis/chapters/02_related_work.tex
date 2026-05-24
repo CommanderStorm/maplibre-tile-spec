@@ -161,7 +161,7 @@ The benchmarking literature is in better shape; we adopt its statistical methodo
 \begin{chaptersummary}
 No prior work composes style and data optimizations into a single open pipeline: the data-side tools ignore the style, the only commercial precedent is closed-source, and the encoding format's strategy selection is style-blind.
 Our contribution is the joint $(S, T) \to (S', T')$ optimization formalised in \cref{sec:problem_statement}, together with a cumulative ablation methodology that measures whether the composition is additive or synergistic.
-\cref{ch:experiments} quantifies the payoff - \textbf{load times down by up to \qty{75}{\percent} and tile volume by \qty{28}{\percent}} on the styles we benchmarked end-to-end - and the OGC API-Tiles standard~\cite{OGCAPITiles} keeps these gains deployable without vendor lock-in.
+\cref{ch:experiments} quantifies the payoff - \textbf{load times down by up to 75\,\% and tile volume by 28\,\%} on the styles we benchmarked end-to-end - and the OGC API-Tiles standard~\cite{OGCAPITiles} keeps these gains deployable without vendor lock-in.
 
 The next chapter introduces the foundations these techniques draw on: the rendering architecture, the compiler analogues behind the expression passes, the query-optimization concepts behind filter rewriting and selectivity, and the columnar encoding strategies for the data-level passes.
 \end{chaptersummary}
