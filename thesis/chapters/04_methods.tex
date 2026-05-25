@@ -1174,7 +1174,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
                     \texttt{\mlval{name:de}}  & Straßburg, Freiburg, Mühlhausen, \ldots \\
                     \texttt{\mlval{name:fr}}  & Strasbourg, Fribourg, Muhlhouse, \ldots \\
                     \texttt{\mlval{class}}    & motorway, trunk, primary, \ldots \\
-                    \texttt{\mlval{subclass}} & motorway, trunk, primary, \ldots \\
+                    \texttt{\mlval{subclass}} & motorway, trunk, primark, \ldots \\
                     \texttt{\mlval{maxspeed}} & 30, 50, 80, \ldots
                 \end{tabular}%
             };
@@ -1204,7 +1204,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             		\midrule
             		\texttt{\mlval{name:de}} vs.\ \texttt{\mlval{name:fr}}
             		& 0.14 & \textbf{0.35}
-            		& shared trigrams (\texttt{\mlval{Str}}, \ldots) \\
+            		& shared trigrams\\
             		
             		\texttt{\mlval{class}} vs.\ \texttt{\mlval{subclass}}
             		& 0.45 & \textbf{0.57}
@@ -1243,7 +1243,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
         \circled{1}~Each string column's distinct values form a set.
         \circled{2}~Two 128-permutation MinHash sketches are computed per column: one over exact string values, one over byte trigrams (3-byte sliding windows).
         \circled{3}~Pairwise Jaccard similarity is estimated by counting matching hash positions; the maximum of the two sketch types is compared against threshold $\tau = 0.075$.
-        Exact matching detects columns that share literal values (\texttt{\mlval{class}/\texttt{\mlval{subclass}}); trigram matching detects cross-language morphological variants (\texttt{\mlval{name:de}}/\texttt{\mlval{name:fr}} in a border region).
+        Exact matching detects columns that share literal values (\texttt{\mlval{class}}/\texttt{\mlval{subclass}}); trigram matching detects cross-language morphological variants (\texttt{\mlval{name:de}}/\texttt{\mlval{name:fr}} in a border region).
         \circled{4}~Column pairs exceeding the threshold are unified via Union-Find; the resulting groups share a single deduplicated dictionary corpus}
     \label{fig:minhash_clustering}
 \end{figure}
