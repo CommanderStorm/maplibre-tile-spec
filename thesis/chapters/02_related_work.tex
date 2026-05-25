@@ -27,7 +27,7 @@ When a tile request includes style metadata, the server analyses the style's sou
 This is the closest commercial precedent for style-data co-optimizations, but it is opaque, closed-source, and API-only - it cannot be extended, audited, or deployed independently.
 The exact set of optimizations is not disclosed and given that MapBox does not have a open research stance (their terms of service explicitly forbid this), reverse-engineering would likely be illegal\footnote{\url{https://media.ccc.de/v/36c3-11089-reflections_on_the_new_reverse_engineering_law}}.
 
-Vilardaga built \texttt{\mlprop{vt-optimizer}}\footnote{\url{https://github.com/ibesora/vt-optimizer}, last accessed 2025-10-20}, which drops invisible or unused layers and fields in both the style and data.
+Vilardaga built \texttt{vt-optimizer}\footnote{\url{https://github.com/ibesora/vt-optimizer}, last accessed 2025-10-20}, which drops invisible or unused layers and fields in both the style and data.
 The tool also provides an inspection mode that checks conformance to Mapbox's recommended tile size limits (\qty{50}{\kilo\byte} average, \qty{500}{\kilo\byte} maximum)\footnote{\url{https://docs.mapbox.com/mapbox-tiling-service/guides/frequentlyaskedquestions/}, last accessed 2026-05-23}.
 However, the optimizations are limited to visibility-based pruning.
 It does not perform expression-level rewrites, cross-layer merging, or data-driven constant folding.
@@ -58,7 +58,7 @@ Our tile shaving is a form of early materialisation (columns are removed at enco
 Modern query engines extend the pushdown with predicate filters~\cite{abadiDesignImplementationModern2013}.
 Modern distributed query engines such as Spark SQL~\cite{armbrustSparkSQLRelational2015} implement predicate and projection pushdown as composable tree-transformation rules applied in batches by a rule-based optimizer - a direct descendant of the extensible rule-based query rewriting architecture introduced by Pirahesh et~al.~\cite{piraheshExtensibleRuleBased1992} in the Starburst system - an architecture structurally parallel to the three-phase pipeline we develop in this thesis.
 Our contribution is to lift these DB-internal optimizations across the network boundary between the tile server and the MapLibre renderer, treating the declarative style as a readable query plan.
-This framing does not appear in prior map-rendering work - neither \texttt{vtshaver} nor \texttt{\mlprop{vt-optimizer}} positions its pruning as query-engine pushdown, and neither tool composes with style-level rewrites to enlarge the pushdown.
+This framing does not appear in prior map-rendering work - neither \texttt{vtshaver} nor \texttt{vt-optimizer} positions its pruning as query-engine pushdown, and neither tool composes with style-level rewrites to enlarge the pushdown.
 
 \section{Tile Encoding and Format Innovation}\label{sec:rw_tile_encoding}
 
@@ -111,7 +111,7 @@ A simplification pass is therefore a natural complement to migration, not a repl
 More broadly, style documents in practice accumulate redundancy through several channels: iterative authoring that leaves superseded properties in place, copy-paste development across layers, automated migration that introduces mechanically correct but verbose expression forms, and multi-author editing where conventions drift over successive contributions.
 The result is that production styles routinely contain default-valued properties, unreachable filter branches, and duplicated paint blocks - creating a practical demand for automatic simplification that no existing tool meets.
 
-Stamen Design published \texttt{\mlprop{mapbox-gl-style-remove-defaults}}\footnote{\url{https://github.com/stamen/mapbox-gl-style-remove-defaults}}, a tool that removes properties set to their specification default values from Mapbox GL style JSON.
+Stamen Design published \texttt{mapbox-gl-style-remove-defaults}\footnote{\url{https://github.com/stamen/mapbox-gl-style-remove-defaults}}, a tool that removes properties set to their specification default values from Mapbox GL style JSON.
 This corresponds to the default stripping pass we describe in \cref{ch:methods}, implemented as a standalone tool.
 This ecosystem tooling demonstrates that individual style optimizations are recognized as valuable by practitioners, but no existing tool encomposes multiple optimizations passes.
 

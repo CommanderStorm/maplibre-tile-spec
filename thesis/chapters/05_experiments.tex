@@ -65,7 +65,8 @@ Fixpoint iteration amplifies the effect: a single successful fold can cascade th
 \paragraph{Size reduction vs.\ rendering improvement}
 Passes that primarily reduce serialized style size - default stripping, color minification - show smaller rendering improvements but contribute meaningfully to transfer size under compression.
 This primarily benefits time to first render (discussed in \cref{sub:combined_marginal}).
-We note the distinction between raw, gzip, and Brotli reductions: some rewrites (e.g., \texttt{any}$\to$\texttt{in}) increase raw token count while decreasing compressed size, because the repetitive structure of \texttt{in} operand lists compresses well.
+We note the distinction between raw, gzip, and Brotli reductions:
+some rewrites (e.g., \mlop{any}$\to$\mlop{in}) increase raw token count while decreasing compressed size, because the repetitive structure of \mlop{in} operand lists compresses well.
 
 \paragraph{Selectivity reordering is empirically unmeasured}
 Selectivity reordering (step~16) is a theoretically motivated heuristic whose isolated rendering impact we did not measure in this evaluation.
@@ -74,8 +75,8 @@ We acknowledge the independence assumption underlying the selectivity estimates 
 
 \paragraph{Downstream interaction with the data pipeline}
 Beyond their direct rendering benefit, expression-level simplifications feed into the data-level pipeline evaluated in \cref{sec:exp_mlt}.
-Each folded filter predicate and each pruned \texttt{match} arm reduces the set of property names and categorical values that the tile pruning advisory (\cref{sub:tile_shaving}) must track; each filter reduced to \texttt{false} enables dead layer elimination in the structural phase, which removes that layer's entire property footprint from the advisory.
-Simpler filters are also more amenable to the advisory's static analysis, because canonical forms (e.g., a direct \texttt{["==",~\ldots]} rather than a double-negated comparison) expose referenced property values more readily.
+Each folded filter predicate and each pruned \mlop{match} arm reduces the set of property names and categorical values that the tile pruning advisory (\cref{sub:tile_shaving}) must track; each filter reduced to \mlval{false} enables dead layer elimination in the structural phase, which removes that layer's entire property footprint from the advisory.
+Simpler filters are also more amenable to the advisory's static analysis, because canonical forms (e.g., a direct \texttt{[\mlop{"=="},~\ldots]} rather than a double-negated comparison) expose referenced property values more readily.
 The magnitude of this interaction is quantified in \cref{sec:exp_mlt}.
 
 
@@ -93,7 +94,7 @@ The magnitude of this interaction is quantified in \cref{sec:exp_mlt}.
 
 Several pairwise dependencies between structural passes shape what we measure in the cumulative ablation in \cref{sub:structural_results}.
 Expression passes must run first so that metadata refinement sees zoom predicates in their canonical form; dead elimination must precede layer merging because a dead layer between two otherwise-mergeable live layers blocks the merge.
-Similarly, metadata refinement must precede cleanup so the residual \texttt{true} filters and zero-opacity layers it produces can be removed.
+Similarly, metadata refinement must precede cleanup so the residual \mlval{true} filters and zero-opacity layers it produces can be removed.
 We give the full ordering rationale in \cref{sub:pipeline}; the practical consequence here is that the marginal contribution of each later pass in the ablation will reflect work that an earlier pass enabled, not just the pass itself.
 
 \subsection{Evaluation}\label{sub:structural_evaluation}
@@ -123,7 +124,7 @@ We report the effects on performance generalized in \cref{sub:cross_results} (ov
 \end{figure}
 
 The magnitude of structural improvement is style-dependent.
-Fiord's layer count drops from 48 to 46 (\qty{-4.2}{\percent}), with dead elimination removing one layer (step~9) and cleanup removing another (step~14) after metadata refinement lifts zoom predicates that leave a filter as \texttt{true} on an invisible layer.
+Fiord's layer count drops from 48 to 46 (\qty{-4.2}{\percent}), with dead elimination removing one layer (step~9) and cleanup removing another (step~14) after metadata refinement lifts zoom predicates that leave a filter as \mlval{true} on an invisible layer.
 Liberty's layer count drops from 111 to 107 (\qty{-3.6}{\percent}), concentrated entirely in the layer-merge step (step~15), which merges four pairs of adjacent layers with compatible filters.
 In terms of gzip transfer size, Fiord benefits substantially (\qty{-14.1}{\percent} from baseline to step~15), while Liberty sees a modest \qty{-4.9}{\percent}, with layer merging slightly \emph{increasing} gzip by \qty{36}{\byte} due to the larger merged filter expressions.
 AST complexity tells a similar per-style story: Fiord's expression nodes drop by \qty{36.8}{\percent} (\num{1610}$\to$\num{1018}), whereas Liberty's drop by \qty{10.5}{\percent} (\num{3537}$\to$\num{3167}).
@@ -137,19 +138,19 @@ The interaction between the two is synergistic: styles with many narrowly-filter
 
 \paragraph{Layer merging can trade raw size for runtime savings}
 Layer merging does not always reduce the raw serialized byte count.
-A merged layer replaces $k$ small filter expressions with a single \texttt{match}-keyed filter and $k$-armed \texttt{match} expressions for every differing paint property, which for small $k$ can produce a slightly larger textual representation than the sum of the originals.
+A merged layer replaces $k$ small filter expressions with a single \mlop{match}-keyed filter and $k$-armed \mlop{match} expressions for every differing paint property, which for small $k$ can produce a slightly larger textual representation than the sum of the originals.
 The per-style ablation tables in \cref{sec:app_per_style} show one such case (OSM Liberty: \num{27.6}$\to$\qty{28.3}{\kilo\byte} after layer merging), where the raw count creeps up while the layer count drops from 105 to 103.
 This was uncomfortable when we first saw it in the runs, since the intuition is that merging should shrink the style, but raw byte count turns out to be a proxy for parse time and transfer cost rather than for rendering cost, which is driven by layer count and per-frame draw calls.
 The merged layer is still cheaper to render even when its serialized form is bigger, and the gzip and Brotli columns of the same table show the compressed size essentially unchanged, so the raw increase disappears under realistic wire compression anyway.
 
 \paragraph{Metadata refinement has indirect effects}
 Metadata refinement does not directly reduce the number of layers or the complexity of expressions; instead, it enables the renderer to skip layers at zoom levels where they are invisible.
-The rendering improvement is therefore zoom-dependent: at overview zoom levels (where many layers are filtered out by tightened \texttt{minzoom}), the improvement is large; at street-level zoom (where most layers are active), the improvement is smaller.
+The rendering improvement is therefore zoom-dependent: at overview zoom levels (where many layers are filtered out by tightened \mlprop{minzoom}), the improvement is large; at street-level zoom (where most layers are active), the improvement is smaller.
 Paint-based refinement captures a class of optimizations that are invisible to filter analysis - a layer whose opacity interpolates from~0 at zoom~12 is indistinguishable from a fully visible layer when examining only the filter.
 
 \paragraph{Stats-driven passes amplify style-only passes}
 The marginal contribution of stats-driven dead elimination (step~10) over non-stats dead elimination (step~9) quantifies the value of tile statistics for style optimizations.
-Styles that use broad \texttt{source-layer} references benefit most, as statistics reveal which geometry types and property values actually exist.
+Styles that use broad \mlprop{source-layer} references benefit most, as statistics reveal which geometry types and property values actually exist.
 For styles that already have precise filters (e.g., hand-tuned Americana), the marginal gain is smaller.
 
 \paragraph{Symbol layer exclusion}

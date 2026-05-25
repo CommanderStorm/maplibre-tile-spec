@@ -1,9 +1,170 @@
 \chapter{Appendix}\label{ch:appendix}
 \renewcommand{\thefigure}{A\arabic{figure}}
 \renewcommand{\thetable}{A\arabic{table}}
+\renewcommand{\thelstlisting}{A\arabic{lstlisting}}
+\renewcommand{\thesection}{A\arabic{section}}
+
+\section{Expression Rewrite Rules}\label{app_rewrite_rules}
+
+In \cref{tab:all_rewrite_rules}, we list the complete set of expression rewrite rules we implemented in the optimizer, grouped by pass.
+We characterize each rule by its pass assignment, scope (filter-only or both filters and paint/layout properties), type (pure, MIR-aware, or stats-driven), and a brief description of the pattern it matches and the rewrite it produces.
+
+\begin{longtblr}[
+  caption = {Complete list of expression rewrite rules},
+  label = {tab:all_rewrite_rules},
+]{
+  colspec = {r l l l X},
+  row{1} = {font=\bfseries},
+  rowhead = 1,
+}
+\toprule
+\# & Pass & Scope & Type & Description \\
+\midrule
+% Expression Kind
+1 & Expr.\ kind & both & MIR & Negate comparison: \texttt{[\mlop{"!"},[\mlval{"op"},a,b]]} $\to$ \texttt{[neg(op),a,b]} when negated operator exists \\
+\midrule
+% Constant Fold
+2 & Const.\ fold & both & pure & Boolean algebra: fold \mlop{any}/ \mlop{all} with literal operands; absorb \mlval{true} from \mlop{all}, \mlval{false} from \mlop{any} \\
+3 & Const.\ fold & both & pure & Fold negation: \texttt{[\mlop{"!"}, \mlval{true}]} $\to$ \mlval{false} \\
+4 & Const.\ fold & both & pure & Fold comparisons (\mlop{==}, \mlop{!=}, \texttt{<}, etc.) with two literal operands \\
+5 & Const.\ fold & both & MIR & Evaluate pure operators when all arguments are literals \\
+6 & Const.\ fold & both & pure & Algebraic identity: \texttt{x \^{} 0} $\to$ \texttt{1} \\
+7 & Const.\ fold & both & pure & Strip redundant \mlop{typeof} guards from migrated filters \\
+8 & Const.\ fold & both & pure & Resolve \mlop{case} arms with known boolean conditions \\
+9 & Const.\ fold & both & pure & Resolve \mlop{match} when input is a known literal \\
+10 & Const.\ fold & both & pure & \acs{SCCP}: substitute equality bindings into \mlop{case} arm bodies \\
+11 & Const.\ fold & both & pure & \acs{SCCP}: substitute equality bindings into \mlop{match} arm bodies \\
+12 & Const.\ fold & both & pure & Detect contradictory \mlop{==}/ \mlop{!=} predicates in \mlop{all} $\to$ \mlval{false} \\
+13 & Const.\ fold & both & pure & Substitute equality bindings into sibling predicates in \mlop{all} \\
+14 & Const.\ fold & both & pure & Subsume weaker range bounds: keep tighter of two bounds on same variable \\
+15 & Const.\ fold & both & pure & Remove \mlop{has} subsumed by comparison on the same property \\
+16 & Const.\ fold & both & pure & Boolean absorption: \texttt{[\mlop{"all"},A,[\mlop{"any"},A,\ldots]]} $\to$ \texttt{[\mlop{"all"},A]} \\
+17 & Const.\ fold & both & pure & Remove redundant type coercions on already-typed values \\
+18 & Const.\ fold & both & pure & Strip explicit \texttt{[\mlop{"properties"}]} argument from \mlop{get}/ \mlop{has} \\
+\midrule
+% Constant Fold Stats
+19 & Fold (stats) & filter & stats & Fold \texttt{[\mlop{"has"},p]} $\to$ true/false when stats confirm property presence \\
+20 & Fold (stats) & both & stats & Fold \texttt{[\mlop{"get"},p]} to literal when property has a single value \\
+21 & Fold (stats) & filter & stats & Fold geometry-type comparison from observed types in tile statistics \\
+22 & Fold (stats) & both & stats & Fold comparison to true/false when value distribution proves constant result \\
+23 & Fold (stats) & both & stats & Prune impossible labels from \mlop{in} expression using value statistics \\
+24 & Fold (stats) & both & stats & Prune \mlop{match} arms whose labels never appear in property value counts \\
+25 & Fold (stats) & both & stats & Reorder \mlop{match} arms by descending value frequency \\
+26 & Fold (stats) & both & stats & Fold \mlop{coalesce} when \mlop{get} arm is always or never present \\
+27 & Fold (stats) & both & stats & Prune unreachable \mlop{interpolate}/ \mlop{step} stops outside observed data range \\
+\midrule
+% Simplify Expressions
+28 & Simplify & both & pure & Factor common operands: \texttt{[\mlop{"any"},[\mlop{"all"},A,B],[\mlop{"all"},A,C]]} $\to$ \texttt{[\mlop{"all"},A,[\mlop{"any"},B,C]]} \\
+29 & Simplify & both & pure & Canonicalise \texttt{[\mlop{"exponential"},1]} $\to$ \texttt{[\mlop{"linear"}]} in interpolate curves \\
+30 & Simplify & both & pure & Collapse \mlop{interpolate}/ \mlop{step} when all output values are structurally equal \\
+31 & Simplify & both & pure & Merge \mlop{match} arms with identical outputs; drop arms that equal the fallback \\
+32 & Simplify & both & pure & Strip \mlop{coalesce} wrapper from comparison when default fails anyway \\
+33 & Simplify & both & pure & Strip \mlop{coalesce} from \mlop{match} input when default not in any label \\
+34 & Simplify & both & pure & Strip \mlop{coalesce} from \mlop{in} needle when default not in haystack \\
+35 & Simplify & both & pure & Rewrite single-arm boolean \mlop{match} to \mlop{in}/ \mlop{==}/ \mlop{!=} \\
+36 & Simplify & both & pure & Rewrite \texttt{[\mlop{"any"},[\mlop{"=="},x,a],\ldots]} $\to$ \texttt{[\mlop{"in"},x,[\ldots]]} \\
+37 & Simplify & both & pure & Flatten nested \mlop{case}: inline the fallback's arms \\
+38 & Simplify & both & pure & Remove trailing \mlop{case} arms whose output equals the fallback \\
+39 & Simplify & both & pure & Rewrite \mlop{case} to \mlop{match} for $\mathcal{O}(1)$ dispatch when all arms test equality on the same expression \\
+40 & Simplify & both & pure & Simplify \mlop{coalesce}: remove null literals, truncate after first non-null literal \\
+41 & Simplify & both & pure & Flatten nested \mlop{coalesce} expressions \\
+42 & Simplify & both & pure & Flatten nested \mlop{all}/ \mlop{any} operators \\
+43 & Simplify & both & pure & De Morgan's laws: \texttt{[\mlop{"!"},[\mlop{"any"},A,B]]} $\to$ \texttt{[\mlop{"all"},[\mlop{"!"},A],[\mlop{"!"},B]]} \\
+44 & Simplify & both & pure & Single-element \mlop{in} $\to$ \mlop{==} \\
+45 & Simplify & both & pure & Merge adjacent \mlop{in} expressions on the same variable inside \mlop{any} \\
+46 & Simplify & both & pure & Inline single-use \mlop{let}/ \mlop{var} bindings \\
+\midrule
+% Selectivity
+47 & Selectivity & both & stats & Reorder \mlop{any}/ \mlop{all} operands by estimated selectivity for short-circuit evaluation \\
+\bottomrule
+\end{longtblr}
+\clearpage
+
+\section{MapLibre GL-JS Reference Excerpts}
+
+The two render-pass loops the painter runs over \texttt{layerIds}.
+The opaque pass top-to-bottom and the translucent pass bottom-to-top - are the basis for the layer-merging savings discussed in \cref{sub:structural_optimizations}.
+Every layer eliminated by a merge shortens \texttt{layerIds} and removes one texttt{renderLayer} dispatch from each pass.
+
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS painter render loop (\texttt{src/render/painter.ts})},label=lst:painter_loop]
+// opaque pass (top-to-bottom)
+for (this.currentLayer = layerIds.length - 1;
+     this.currentLayer >= 0; this.currentLayer--) {
+    const layer = this.style._layers[layerIds[this.currentLayer]];
+    const tileManager = tileManagers[layer.source];
+    const coords = coordsAscending[layer.source];
+    this._renderTileClippingMasks(layer, coords, false);
+    this.renderLayer(this, tileManager, layer, coords, renderOptions);
+}
+
+// translucent pass (bottom-to-top)
+for (this.currentLayer = 0;
+     this.currentLayer < layerIds.length; this.currentLayer++) {
+    const layer = this.style._layers[layerIds[this.currentLayer]];
+    const tileManager = tileManagers[layer.source];
+    // ...
+    this.renderLayer(this, tileManager, layer, coords, renderOptions);
+}
+\end{lstlisting}
+
+The per-layer placement loop reproduced below justifies the exclusion of symbol layers from the merge candidate set in \cref{sub:structural_optimizations}.
+\stepcirc{y} constructs a fresh \texttt{LayerPlacement} when a symbol layer's placement begins and \stepcirc{z} tears it down before the next layer starts.
+This means that two symbol layers fused into one would interleave their symbols within a single \texttt{LayerPlacement} and alter collision outcomes.
+
+\begin{lstlisting}[
+	language=TypeScript,
+	escapeinside={(*@}{@*)},
+	caption={MapLibre GL-JS  symbol placement (\texttt{src/style/pauseable\_placement.ts})},
+	label=lst:placement]
+while (this._currentPlacementIndex >= 0) {
+    const layerId = order[this._currentPlacementIndex];
+    const layer = layers[layerId];
+    const placementZoom = this.placement.collisionIndex.transform.zoom;
+    if (isSymbolStyleLayer(layer) && layer.layout &&
+        (!layer.minzoom || layer.minzoom <= placementZoom) &&
+        (!layer.maxzoom || layer.maxzoom > placementZoom)) {
+
+        if (!this._inProgressLayer) {
+          (*@\stepcirc{y}@*) this._inProgressLayer = new LayerPlacement(layer);
+        }
+        const pausePlacement = this._inProgressLayer.continuePlacement(
+            layerTiles[layer.source], this.placement,
+            this._showCollisionBoxes, layer, shouldPausePlacement
+        );
+        if (pausePlacement) return;
+      (*@\stepcirc{z}@*) delete this._inProgressLayer;
+    }
+    this._currentPlacementIndex--;
+}
+\end{lstlisting}
+
+The \texttt{FillBucket.populate} method below witnesses the filter-first evaluation order on which the filter-to-property constant-propagation pass in \cref{sub:structural_optimizations} depends.
+The early \texttt{if (!this.layers[0].\_featureFilter.filter(\dots)) continue} guard rejects a feature before any paint or layout expression is evaluated.
+This means that any equality constraint extracted from a layer's filter is guaranteed to hold for every feature that reaches the \texttt{bucketFeatures.push} below.
+
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS bucket populate method showing filter-first evaluation (\texttt{src/data/bucket/fill\_bucket.ts})},label=lst:bucket_populate]
+for (const {feature, id, index, sourceLayerIndex} of features) {
+    const needGeometry = this.layers[0]._featureFilter.needGeometry;
+    const evaluationFeature = toEvaluationFeature(feature, needGeometry);
+
+    if (!this.layers[0]._featureFilter.filter(
+        new EvaluationParameters(this.zoom), evaluationFeature, canonical
+    )) continue;  // feature rejected: no paint evaluation occurs
+
+    // Only reached for features that passed the filter:
+    const bucketFeature: BucketFeature = {
+        id, properties: feature.properties, type: feature.type,
+        sourceLayerIndex, index,
+        geometry: needGeometry ? evaluationFeature.geometry
+                               : loadGeometry(feature),
+        patterns: {}, sortKey
+    };
+    bucketFeatures.push(bucketFeature);
+}
+\end{lstlisting}
+\clearpage
 
 \section{Camera Animation Patterns}\label{app:animation_patterns}
-
 \Cref{fig:app_animation_patterns} visualizes the five animation patterns.
 
 \begin{figure}[htbp]
@@ -47,7 +208,7 @@
 				\def\stripx{0} \def\zstripy{0.65} \def\bstripy{0}
 				\def\mapy{1.35}
 				\def\mapcx{0.9} \def\mapcy{2.25} \def\trajscale{0.78}
-				
+
 				\draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
 				\draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
 				\draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
@@ -62,11 +223,11 @@
 				\foreach \i in {0,...,7} { \node[trajdot] at (zz\i) {}; }
 				\node[trajstart] at (zz0) {};
 				\node[trajend]   at (zz7) {};
-				
+
 				% zoom strip — 8 bars alternating z10/z14
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
-				
+
 				\foreach \i/\z in {0/10, 1/14, 2/10, 3/14, 4/10, 5/14, 6/10, 7/14} {
 					\pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/8 - 0.08}
 					\pgfmathsetmacro{\h}{\zTop{\z}}
@@ -102,7 +263,7 @@
 				\def\stripx{0} \def\zstripy{0.65} \def\bstripy{0}
 				\def\mapy{1.35}
 				\def\mapcx{0.9} \def\mapcy{2.25} \def\trajscale{0.78}
-				
+
 				\draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
 				\draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
 				\draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
@@ -117,7 +278,7 @@
 				\foreach \i in {0,...,11} { \node[trajdot] at (sp\i) {}; }
 				\node[trajstart] at (sp0)  {};
 				\node[trajend]   at (sp11) {};
-				
+
 				% zoom strip — constant z12, 12 bars
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
@@ -158,7 +319,7 @@
 				\def\stripx{0} \def\zstripy{0.65} \def\bstripy{0}
 				\def\mapy{1.35}
 				\def\mapcx{0.9} \def\mapcy{2.25}
-				
+
 				\draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
 				\draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
 				\draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
@@ -166,11 +327,11 @@
 				\node[axislabel] at (-0.25, \mapcy) {$\mathrm{xy}$};
 				\node[stationary] at (\mapcx, \mapcy) {};
 				\node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
-				
+
 				% zoom strip — 7 bars z4,8,12,16,12,8,4
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
-				
+
 				\foreach \i/\z in {0/4, 1/8, 2/12, 3/16, 4/12, 5/8, 6/4} {
 					\pgfmathsetmacro{\bw}{0.17}
 					\pgfmathsetmacro{\bx}{\stripx + (\i+0.5)*\stripw/7 - \bw/2}
@@ -181,7 +342,7 @@
 				\pgfmathsetmacro{\hLo}{\zTop{1}}
 				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hHi) {24};
 				\node[striplabel, anchor=west] at (\stripx+\stripw-0.01, \zstripy+\hLo) {1};
-				
+
 				% bearing strip — constant 0°, 7 north arrows
 				\draw[framebox] (\stripx, \bstripy) rectangle (\stripx+\stripw, \bstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \bstripy+\striph/2) {$\theta$};
@@ -195,9 +356,9 @@
 		\caption{\textbf{Zoomdrill.} Maximises tile-cache churn.}
 		\label{fig:app_anim_zoomdrill}
 	\end{subfigure}
-	
+
 	\vspace{0.5em}
-	
+
 	%% ── (d) pansweep ──────────────────────────────────────────────────────────
 	\begin{subfigure}[b]{0.31\linewidth}
 		\centering\vspace{0pt}%
@@ -207,7 +368,7 @@
 				\def\stripx{0} \def\zstripy{0.65} \def\bstripy{0}
 				\def\mapy{1.35}
 				\def\mapcx{0.9} \def\mapcy{2.25} \def\trajscale{0.78}
-				
+
 				\draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
 				\draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
 				\draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
@@ -223,7 +384,7 @@
 				\foreach \i in {0,...,5} { \node[trajdot] at (ps\i) {}; }
 				\node[trajstart] at (ps0) {};
 				\node[trajend]   at (ps5) {};
-				
+
 				% zoom strip — constant z12, 6 bars
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
@@ -261,7 +422,7 @@
 				\def\stripx{0} \def\zstripy{0.65} \def\bstripy{0}
 				\def\mapy{1.35}
 				\def\mapcx{0.9} \def\mapcy{2.25}
-				
+
 				\draw[framebox] (0, \mapy) rectangle (\mapsize, \mapy+\mapsize);
 				\draw[crosshair] (0, \mapcy) -- (\mapsize, \mapcy);
 				\draw[crosshair] (\mapcx, \mapy) -- (\mapcx, \mapy+\mapsize);
@@ -269,7 +430,7 @@
 				\node[axislabel] at (-0.25, \mapcy) {$\mathrm{xy}$};
 				\node[stationary] at (\mapcx, \mapcy) {};
 				\node[statlabel, anchor=north] at (\mapcx, \mapcy-0.15) {stationary};
-				
+
 				% zoom strip — constant z12, 8 bars
 				\draw[framebox] (\stripx, \zstripy) rectangle (\stripx+\stripw, \zstripy+\striph);
 				\node[axislabel, anchor=east] at (\stripx-0.04, \zstripy+\striph/2) {$z$};
@@ -325,87 +486,11 @@
 		\caption{\acs{DOF} matrix, pitch~$\phi$, and keyframe count showing which the most important differientiating factors}
 		\label{fig:app_anim_dofs}
 	\end{subfigure}
-	
+
 	\caption{Synthetic camera animation patterns (\cref{sub:scenarios}). Each panel shows a top-down pan trajectory (hollow circle = first keyframe, filled square = last) with zoom~($z$, scale 1--24) and bearing~($\theta$, clockwise from north) strips. Panel~\subref{fig:app_anim_dofs} tabulates the exercised \acp{DOF}.}
 	\label{fig:app_animation_patterns}
 \end{figure}
 \clearpage
-
-\section{Expression Rewrite Rules}\label{app_rewrite_rules}
-
-In \cref{tab:all_rewrite_rules}, we list the complete set of expression rewrite rules we implemented in the optimizer, grouped by pass.
-We characterize each rule by its pass assignment, scope (filter-only or both filters and paint/layout properties), type (pure, MIR-aware, or stats-driven), and a brief description of the pattern it matches and the rewrite it produces.
-
-\begin{longtblr}[
-  caption = {Complete list of expression rewrite rules},
-  label = {tab:all_rewrite_rules},
-]{
-  colspec = {r l l l X},
-  row{1} = {font=\bfseries},
-  rowhead = 1,
-}
-\toprule
-\# & Pass & Scope & Type & Description \\
-\midrule
-% Expression Kind
-1 & Expr.\ kind & both & MIR & Negate comparison: \texttt{["!",["op",a,b]]} $\to$ \texttt{[neg(op),a,b]} when negated operator exists \\
-\midrule
-% Constant Fold
-2 & Const.\ fold & both & pure & Boolean algebra: fold \texttt{any}/\texttt{all} with literal operands; absorb \texttt{true} from \texttt{all}, \texttt{false} from \texttt{any} \\
-3 & Const.\ fold & both & pure & Fold negation: \texttt{["!", true]} $\to$ \texttt{false} \\
-4 & Const.\ fold & both & pure & Fold comparisons (\texttt{==}, \texttt{!=}, \texttt{<}, etc.) with two literal operands \\
-5 & Const.\ fold & both & MIR & Evaluate pure operators when all arguments are literals \\
-6 & Const.\ fold & both & pure & Algebraic identity: \texttt{x \^{} 0} $\to$ \texttt{1} \\
-7 & Const.\ fold & both & pure & Strip redundant \texttt{typeof} guards from migrated filters \\
-8 & Const.\ fold & both & pure & Resolve \texttt{case} arms with known boolean conditions \\
-9 & Const.\ fold & both & pure & Resolve \texttt{match} when input is a known literal \\
-10 & Const.\ fold & both & pure & \acs{SCCP}: substitute equality bindings into \texttt{case} arm bodies \\
-11 & Const.\ fold & both & pure & \acs{SCCP}: substitute equality bindings into \texttt{match} arm bodies \\
-12 & Const.\ fold & both & pure & Detect contradictory \texttt{==}/\texttt{!=} predicates in \texttt{all} $\to$ \texttt{false} \\
-13 & Const.\ fold & both & pure & Substitute equality bindings into sibling predicates in \texttt{all} \\
-14 & Const.\ fold & both & pure & Subsume weaker range bounds: keep tighter of two bounds on same variable \\
-15 & Const.\ fold & both & pure & Remove \texttt{has} subsumed by comparison on the same property \\
-16 & Const.\ fold & both & pure & Boolean absorption: \texttt{["all",A,["any",A,\ldots]]} $\to$ \texttt{["all",A]} \\
-17 & Const.\ fold & both & pure & Remove redundant type coercions on already-typed values \\
-18 & Const.\ fold & both & pure & Strip explicit \texttt{["properties"]} argument from \texttt{get}/\texttt{has} \\
-\midrule
-% Constant Fold Stats
-19 & Fold (stats) & filter & stats & Fold \texttt{["has",p]} $\to$ true/false when stats confirm property presence \\
-20 & Fold (stats) & both & stats & Fold \texttt{["get",p]} to literal when property has a single value \\
-21 & Fold (stats) & filter & stats & Fold geometry-type comparison from observed types in tile statistics \\
-22 & Fold (stats) & both & stats & Fold comparison to true/false when value distribution proves constant result \\
-23 & Fold (stats) & both & stats & Prune impossible labels from \texttt{in} expression using value statistics \\
-24 & Fold (stats) & both & stats & Prune \texttt{match} arms whose labels never appear in property value counts \\
-25 & Fold (stats) & both & stats & Reorder \texttt{match} arms by descending value frequency \\
-26 & Fold (stats) & both & stats & Fold \texttt{coalesce} when \texttt{get} arm is always or never present \\
-27 & Fold (stats) & both & stats & Prune unreachable \texttt{interpolate}/\texttt{step} stops outside observed data range \\
-\midrule
-% Simplify Expressions
-28 & Simplify & both & pure & Factor common operands: \texttt{["any",["all",A,B],["all",A,C]]} $\to$ \texttt{["all",A,["any",B,C]]} \\
-29 & Simplify & both & pure & Canonicalise \texttt{["exponential",1]} $\to$ \texttt{["linear"]} in interpolate curves \\
-30 & Simplify & both & pure & Collapse \texttt{interpolate}/\texttt{step} when all output values are structurally equal \\
-31 & Simplify & both & pure & Merge \texttt{match} arms with identical outputs; drop arms that equal the fallback \\
-32 & Simplify & both & pure & Strip \texttt{coalesce} wrapper from comparison when default fails anyway \\
-33 & Simplify & both & pure & Strip \texttt{coalesce} from \texttt{match} input when default not in any label \\
-34 & Simplify & both & pure & Strip \texttt{coalesce} from \texttt{in} needle when default not in haystack \\
-35 & Simplify & both & pure & Rewrite single-arm boolean \texttt{match} to \texttt{in}/\texttt{==}/\texttt{!=} \\
-36 & Simplify & both & pure & Rewrite \texttt{["any",["==",x,a],\ldots]} $\to$ \texttt{["in",x,[\ldots]]} \\
-37 & Simplify & both & pure & Flatten nested \texttt{case}: inline the fallback's arms \\
-38 & Simplify & both & pure & Remove trailing \texttt{case} arms whose output equals the fallback \\
-39 & Simplify & both & pure & Rewrite \texttt{case} to \texttt{match} for $\mathcal{O}(1)$ dispatch when all arms test equality on the same expression \\
-40 & Simplify & both & pure & Simplify \texttt{coalesce}: remove null literals, truncate after first non-null literal \\
-41 & Simplify & both & pure & Flatten nested \texttt{coalesce} expressions \\
-42 & Simplify & both & pure & Flatten nested \texttt{all}/\texttt{any} operators \\
-43 & Simplify & both & pure & De Morgan's laws: \texttt{["!",["any",A,B]]} $\to$ \texttt{["all",["!",A],["!",B]]} \\
-44 & Simplify & both & pure & Single-element \texttt{in} $\to$ \texttt{==} \\
-45 & Simplify & both & pure & Merge adjacent \texttt{in} expressions on the same variable inside \texttt{any} \\
-46 & Simplify & both & pure & Inline single-use \texttt{let}/\texttt{var} bindings \\
-\midrule
-% Selectivity
-47 & Selectivity & both & stats & Reorder \texttt{any}/\texttt{all} operands by estimated selectivity for short-circuit evaluation \\
-\bottomrule
-\end{longtblr}
-
 
 \section{Per-Style Ablation Results}\label{sec:app_per_style}
 
