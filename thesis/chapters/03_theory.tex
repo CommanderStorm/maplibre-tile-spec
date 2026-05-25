@@ -153,11 +153,11 @@ Lower zoom levels cover large geographic areas with simplified geometry with hig
 The client requests only the tiles intersecting the current viewport, and as the user pans or zooms, new tiles are fetched while old ones are discarded or cached.
 When a client requests a tile at a zoom level beyond the source's maximum, the renderer \emph{overzooms}: it upscales the nearest available tile from the source's highest available zoom to fill the viewport.
 
-The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched, which means that a layer's effective visibility at a given camera zoom cannot be determined from filter or data bounds alone - it is a function of both the layer's filter and the source's \texttt{maxzoom}.
+The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched, which means that a layer's effective visibility at a given camera zoom cannot be determined from filter or data bounds alone - it is a function of both the layer's filter and the source's \mlprop{maxzoom}.
 This observation has direct consequences for any optimizer that rewrites zoom bounds, and we revisit it in \cref{ch:methods}.
-In particular, tightening a layer's \texttt{maxzoom} is only sound when it accounts for overzoom: removing a layer at zoom~14 would suppress its rendering at zoom~15 and beyond if the source's maximum zoom is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.
-\Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \texttt{maxzoom} tile: \stepcirc{1}~rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/\texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}), and \stepcirc{2}~clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
-Both operations consume the source's \texttt{maxzoom} tile as input; tightening that \texttt{maxzoom} removes the upstream tile the slicer rescales and clips, which is why the soundness rule above forbids any rewrite that does not preserve every layer's effective overzoom range.
+In particular, tightening a layer's \mlprop{maxzoom} is only sound when it accounts for overzoom: removing a layer at zoom~14 would suppress its rendering at zoom~15 and beyond if the source's maximum zoom is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.
+\Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \mlprop{maxzoom} tile: \stepcirc{1}~rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/ \texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}), and \stepcirc{2}~clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
+Both operations consume the source's \mlprop{maxzoom} tile as input; tightening that \mlprop{maxzoom} removes the upstream tile the slicer rescales and clips, which is why the soundness rule above forbids any rewrite that does not preserve every layer's effective overzoom range.
 
 \newpage
 \begin{lstlisting}[
@@ -191,7 +191,7 @@ function sliceVectorTileLayer(sourceLayer, maxZoomTileID, targetTileID) {
 \end{lstlisting}
 
 No symmetric \enquote{underzoom} behavior exists:
-If a source has no tile at a zoom lower than \texttt{minzoom}, the layer is  not rendered there.
+If a source has no tile at a zoom lower than \mlprop{minzoom}, the layer is  not rendered there.
 
 A \emph{vector tile} encodes map data in a compact binary format rather than as a pre-rendered image.
 Each tile is organized into \emph{source layers} (for example, roads, buildings, water), and each source layer contains a set of \emph{features}.
@@ -254,22 +254,22 @@ We focus on client-side declarative styles, specifically the MapLibre style spec
 The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre-style-spec/}, last accessed 2025-10-24} defines a map's appearance as a JSON document with the following key components:
 
 \begin{itemize}
-    \item \textbf{Sources} declare where tile data comes from (tile server URL, or inline GeoJSON) and at which zoom levels tiles are available (\texttt{minzoom}, \texttt{maxzoom}).
+    \item \textbf{Sources} declare where tile data comes from (tile server URL, or inline GeoJSON) and at which zoom levels tiles are available (\mlprop{minzoom}, \mlprop{maxzoom}).
 
     \item \textbf{Layers} are the central rendering unit.
-    Each layer references a source and a \emph{source-layer} within that source, specifies a \emph{type} (\texttt{fill}, \texttt{line}, \texttt{circle}, \texttt{symbol}, \texttt{fill-extrusion}, \texttt{raster}, \texttt{background}, or \texttt{hillshade}) and carries a set of paint and layout properties that control its appearance.
+    Each layer references a source and a \emph{source-layer} within that source, specifies a \emph{type} (\texttt{\mlval{fill}}, \texttt{\mlval{line}}, \texttt{\mlval{circle}}, \texttt{\mlval{symbol}}, \texttt{\mlval{fill-extrusion}}, \texttt{\mlval{raster}}, \texttt{\mlval{background}}, or \texttt{\mlval{hillshade}}) and carries a set of paint and layout properties that control its appearance.
     Layers are drawn in declaration order from bottom to top
     \begin{itemize}
 
     \item \textbf{Filters} are boolean expressions attached to layers that select which features from the source-layer are rendered.
-    A feature is drawn by a layer only if the layer's filter evaluates to \texttt{true} for that feature's properties and geometry type.
+    A feature is drawn by a layer only if the layer's filter evaluates to \mlval{true} for that feature's properties and geometry type.
 
     \item \textbf{Paint and layout properties} control the visual appearance and placement of rendered features.
     Paint properties (colors, opacities, widths) can be changed without triggering a re-layout; layout properties (text anchoring, icon rotation, symbol spacing) affect feature placement and require re-evaluation when modified.
 
-    \item \textbf{Metadata bounds} (\texttt{minzoom}, \texttt{maxzoom}) restrict the zoom range at which a layer is active, allowing the renderer to skip entire layers outside their visible range without evaluating their filters.
+    \item \textbf{Metadata bounds} (\mlprop{minzoom}, \mlprop{maxzoom}) restrict the zoom range at which a layer is active, allowing the renderer to skip entire layers outside their visible range without evaluating their filters.
     \Cref{lst:ishidden} shows the implementation: the method checks the layer's zoom bounds and evaluated visibility in a single guard, and is called at both tile-parse time (the worker skips bucket creation) and draw-call time (the painter skips rendering).
-    Tight \texttt{minzoom}/\texttt{maxzoom} bounds therefore eliminate work at two stages of the pipeline before any filter evaluation or geometry decoding occurs.
+    Tight \mlprop{minzoom}/ \mlprop{maxzoom} bounds therefore eliminate work at two stages of the pipeline before any filter evaluation or geometry decoding occurs.
 
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method},label=lst:ishidden]
 // src/style/style_layer.ts:328-332
@@ -280,7 +280,7 @@ isHidden(zoom: number = this.minzoom, roundMinZoom: boolean = false) {
 }
 \end{lstlisting}
 
-\Cref{lst:ishidden_usage} reproduces the two call-sites that establish those two stages: the worker calls \texttt{layer.isHidden(this.zoom, true)} and \texttt{continue}s before bucket creation, and the painter's \texttt{renderLayer} returns immediately on \texttt{layer.isHidden(this.transform.zoom)} before dispatching any \texttt{draw.fill}/\texttt{draw.line}/\texttt{draw.symbol} call.
+\Cref{lst:ishidden_usage} reproduces the two call-sites that establish those two stages: the worker calls \texttt{layer.isHidden(this.zoom, \mlval{true})} and \texttt{continue}s before bucket creation, and the painter's \texttt{renderLayer} returns immediately on \texttt{layer.isHidden(this.transform.zoom)} before dispatching any \texttt{draw.\mlval{fill}}/ \texttt{draw.\mlval{line}}/ \texttt{draw.\mlval{symbol}} call.
 
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS usages of \texttt{isHidden}},label=lst:ishidden_usage]
 // src/source/worker_tile.ts:111 - worker skips bucket creation
@@ -295,7 +295,7 @@ renderLayer(painter, tileManager, layer, coords, renderOptions) {
 \end{itemize}
 \end{itemize}
 
-Filters and properties can be specified as literal constants, as \emph{zoom-dependent} expressions (varying with the camera zoom level via \texttt{interpolate} or \texttt{step} ramps), as \emph{data-driven} expressions (varying per feature based on property values via \texttt{match}, \texttt{case}, or \texttt{get} operators), or as a combination of both.
+Filters and properties can be specified as literal constants, as \emph{zoom-dependent} expressions (varying with the camera zoom level via \mlop{interpolate} or \mlop{step} ramps), as \emph{data-driven} expressions (varying per feature based on property values via \mlop{match}, \mlop{case}, or \mlop{get} operators), or as a combination of both.
 The resulting expression trees can be deeply nested and may contain redundant or unreachable branches - characteristics that make them amenable to the same kinds of simplification and optimizations techniques used in compilers and database query planners.
 
 \Cref{lst:worker_pipeline} shows the worker's tile-parse pipeline as five named steps, marked inline as \stepcirc{a} to \stepcirc{e}.
@@ -303,7 +303,7 @@ The resulting expression trees can be deeply nested and may contain redundant or
 \noindent Every optimization we present in \cref{ch:methods} attaches to one of these steps:
 merging layers reduces work for \stepcirc{a};
 pruning features server-side makes \stepcirc{b} not handle them;
-tightening \texttt{minzoom}/\texttt{maxzoom} makes the
+tightening \mlprop{minzoom}/ \mlprop{maxzoom} makes the
 \stepcirc{c} guard true earlier;
 pre-folding zoom-dependent constants reduces the work in \stepcirc{d}; and
 filter-to-property propagation simplifies the per-feature work inside
@@ -319,10 +319,7 @@ filter-to-property propagation simplifies the per-feature work inside
 const layerFamilies = layerIndex.familiesBySource[this.source];
 for (const sourceLayerId in layerFamilies) {
     const sourceLayer = data.layers[sourceLayerId];
-
-    if (!sourceLayer) {
-        continue;
-    }
+	if (!sourceLayer) continue;
 
     ...
 
@@ -360,7 +357,7 @@ for (const sourceLayerId in layerFamilies) {
 \section{Compiler Optimisation Techniques}\label{sec:compiler_optimizations}
 
 The style expressions used by map renderers such as MapLibre are small programs in a special purpose \ac{DSL}:
-they contain conditionals (\texttt{case}, \texttt{match}), boolean operators (\texttt{all}, \texttt{any}), arithmetic, and data access (\texttt{get}, \texttt{has}), variables (global state, local state, feature state).
+they contain conditionals (\mlop{case}, \mlop{match}), boolean operators (\mlop{all}, \mlop{any}), arithmetic, and data access (\mlop{get}, \mlop{has}), variables (global state, local state, feature state).
 Optimising these expressions draws directly on techniques developed over decades in compiler construction~\cite{ahoCompilersPrinciplesTechniques2007}.
 In this section we introduce the foundational concepts we apply in \cref{ch:methods}.
 
@@ -383,7 +380,7 @@ A post-order visitor walks the expression tree and attempts to apply each rule a
 
 \emph{Constant folding} evaluates expressions whose operands are all compile-time constants, replacing the expression with its result~\cite{ahoCompilersPrinciplesTechniques2007}.
 For example, the expression $3 + 5$ is replaced by $8$.
-In a style context, a comparison such as \texttt{["==",~2,~3]} can be evaluated at optimizations time and replaced by \texttt{false}.
+In a style context, a comparison such as \texttt{[\mlop{"=="},~2,~3]} can be evaluated at optimizations time and replaced by \mlval{false}.
 \emph{Constant propagation} extends this idea by tracking the known values of variables through the program's control flow and substituting them at their use sites.
 If a variable is assigned a constant, all subsequent references to that variable can be replaced by the constant, potentially enabling further constant folding at the use sites.
 
@@ -447,8 +444,8 @@ Implemented algebraic rules include:
 \end{itemize}
 
 \noindent For style expressions, these rules simplify boolean filter expressions.
-A filter \texttt{["all", ["all", a, b], c]} is flattened to \texttt{["all", a, b, c]} by associativity.
-A filter \texttt{["all", true, x]} is simplified to~\texttt{x} by identity elimination.
+A filter \texttt{[\mlop{"all"}, [\mlop{"all"}, a, b], c]} is flattened to \texttt{[\mlop{"all"}, a, b, c]} by associativity.
+A filter \texttt{[\mlop{"all"}, \mlval{true}, x]} is simplified to~\texttt{x} by identity elimination.
 
 \subsection{Fixpoint Iteration}\label{sub:fixpoint}
 
@@ -474,7 +471,7 @@ Classical PGO instruments a program, collects execution frequencies and branch p
 Arnold et~al.~\cite{arnoldSurveyAdaptiveOptimization2005} survey how virtual machines extend \ac{PGO} to an \emph{adaptive} setting, where profiles are collected and optimizations applied continuously at runtime.
 
 Our style optimizer performs an analogous form of \ac{PGO}:
-we treat tile-level statistics (value cardinalities, per-property frequency distributions, geometry-type counts) as the ``profile data,'' and our stats-driven folding pass uses this profile to specialise the style for the observed data distribution - collapsing \texttt{match} arms whose values never occur in the tile census, tightening zoom bounds based on observed data ranges, and converting high-selectivity predicates into constants.
+we treat tile-level statistics (value cardinalities, per-property frequency distributions, geometry-type counts) as the ``profile data,'' and our stats-driven folding pass uses this profile to specialise the style for the observed data distribution - collapsing \mlop{match} arms whose values never occur in the tile census, tightening zoom bounds based on observed data ranges, and converting high-selectivity predicates into constants.
 The key difference from classical \ac{PGO} is that our profile is exact (the tile census covers every feature in the tileset at a sample rate of~1.0) rather than sampled, and our optimization target is a declarative style document rather than machine code.
 
 \section{Query Optimisation}\label{sec:query_optimizations}
@@ -489,8 +486,8 @@ A \emph{cost-based query optimizer} selects among semantically equivalent query 
 The pioneering System~R optimizer introduced this approach for SQL queries, estimating costs based on I/O operations and CPU time.
 
 The key insight is that the \emph{order} in which predicates are evaluated affects performance even when the final result is identical.
-In a conjunction $p_1 \land p_2 \land \cdots \land p_n$ evaluated with short-circuit semantics, placing the predicate most likely to evaluate to \texttt{false} first minimizes the expected number of evaluations, because once any predicate evaluates to \texttt{false}, the remaining predicates are skipped.
-For disjunction ($p_1 \lor p_2 \lor \cdots \lor p_n$), the opposite ordering is optimal: the predicate most likely to be \texttt{true} should come first.
+In a conjunction $p_1 \land p_2 \land \cdots \land p_n$ evaluated with short-circuit semantics, placing the predicate most likely to evaluate to \mlval{false} first minimizes the expected number of evaluations, because once any predicate evaluates to \mlval{false}, the remaining predicates are skipped.
+For disjunction ($p_1 \lor p_2 \lor \cdots \lor p_n$), the opposite ordering is optimal: the predicate most likely to be \mlval{true} should come first.
 
 \subsection{Selectivity Estimation}
 
@@ -589,7 +586,7 @@ String data in vector tiles includes feature names, road classes, land-use categ
 Two complementary compression strategies address different aspects of string redundancy.
 
 \textbf{Dictionary encoding} deduplicates string values by storing each unique string once in a dictionary and replacing occurrences with integer indices into the dictionary.
-This is effective when many features share the same string value (e.g., thousands of features with \texttt{class = "residential"}).
+This is effective when many features share the same string value (e.g., thousands of features with \texttt{class = \mlval{"residential"}}).
 The integer indices are themselves amenable to the integer encoding schemes described above.
 
 \textbf{\acf{FSST}}~\cite{bonczFSSTFastRandom2020} is a lightweight, block-oriented string compressor that learns a \emph{symbol table} of up to 255 frequent byte sequences from the input corpus and replaces occurrences with single-byte codes.
