@@ -1160,7 +1160,85 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
 
 \begin{figure}[htbp]
     \centering
-  
+    \resizebox{\textwidth}{!}{\begin{tikzpicture}[
+            arrow/.style={-Stealth, thick},
+            cmp/.style={font=\scriptsize, align=left},
+            stepbox/.style={draw, rounded corners=3pt, inner sep=5pt, font=\scriptsize},
+            steplabel/.style={font=\scriptsize\bfseries},
+            ]
+            % Top-left (Step 1): Column value table
+            \node[stepbox] (tbl) {%
+                \begin{tabular}{@{}l l@{}}
+                    \textbf{Column} & \textbf{Distinct values (sample)} \\
+                    \midrule
+                    \texttt{\mlval{name:de}}  & Straßburg, Freiburg, Mühlhausen, \ldots \\
+                    \texttt{\mlval{name:fr}}  & Strasbourg, Fribourg, Muhlhouse, \ldots \\
+                    \texttt{\mlval{class}}    & motorway, trunk, primary, \ldots \\
+                    \texttt{\mlval{subclass}} & motorway, trunk, primary, \ldots \\
+                    \texttt{\mlval{maxspeed}} & 30, 50, 80, \ldots
+                \end{tabular}%
+            };
+            \node[steplabel, above=1pt of tbl] {\circled{1} Column vocabularies};
+
+            % Top-right (Step 2): MinHash sketch generation
+            \node[stepbox, right=0.8cm of tbl, anchor=west] (hash) {%
+                \begin{tabular}{@{}l c c@{}}
+                    \textbf{Column} & \textbf{Exact sketch} & \textbf{Trigram sketch} \\
+                    \midrule
+                    \texttt{\mlval{name:de}}  & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                    \texttt{\mlval{name:fr}}  & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                    \texttt{\mlval{class}}    & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                    \texttt{\mlval{subclass}} & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                    \texttt{\mlval{maxspeed}} & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                \end{tabular}%
+            };
+            \node[steplabel, above=1pt of hash] {\circled{2} MinHash signatures (128 permutations)};
+            
+            % Bottom-right (Step 3): Pairwise Jaccard
+            \node[stepbox, anchor=north] (sim) at ($(hash.south)+(0,-0.8cm)$) {%
+            	\begin{tabular}{@{}l c c l@{}}
+            		\textbf{Column pair} &
+            		$\hat{J}_{\text{exact}}$ &
+            		$\hat{J}_{\text{tri}}$ &
+            		\textbf{Observation} \\
+            		\midrule
+            		\texttt{\mlval{name:de}} vs.\ \texttt{\mlval{name:fr}}
+            		& 0.14 & \textbf{0.35}
+            		& shared trigrams (\texttt{\mlval{Str}}, \ldots) \\
+            		
+            		\texttt{\mlval{class}} vs.\ \texttt{\mlval{subclass}}
+            		& 0.45 & \textbf{0.57}
+            		& 5 shared values \\
+            		
+            		\texttt{\mlval{name:de}} vs.\ \texttt{\mlval{class}}
+            		& 0.00 & \textbf{0.01}
+            		& effectively unrelated \\
+            		
+            		\texttt{\mlval{maxspeed}} vs.\ all others
+            		& 0.00 & 0.00
+            		& no overlap \\
+            	\end{tabular}%
+            };
+            \node[steplabel, below=1pt of sim] {\circled{3} Pairwise comparison ($\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| \,/\, 128$)};
+
+            % Bottom-left (Step 4): Union-Find result
+            \node[stepbox, cmp] at ($(tbl |- sim)$)  (res) {%
+                \textbf{Shared dictionary groups:}\\[3pt]
+                \fbox{\strut\texttt{\mlval{name:de}}, \texttt{\mlval{name:fr}}}\\[1pt]
+                \quad{\scriptsize trigrams detected cross-language overlap}\\[4pt]
+                \fbox{\strut\texttt{\mlval{class}}, \texttt{\mlval{subclass}}}\\[1pt]
+                \quad{\scriptsize exact values detected semantic overlap}\\[4pt]
+                \texttt{\mlval{maxspeed}} - singleton, individual dictionary\\[1pt]
+                \quad{\scriptsize no overlap with any string column}%
+            };
+            \node[steplabel, below=1pt of res] {\circled{4} Union-Find clustering};
+
+            % Arrows (clockwise)
+            \draw[arrow] (tbl) -- node[above, font=\scriptsize\itshape] {hash} (hash);
+            \draw[arrow] (hash) -- (sim);
+            \draw[arrow] (sim) -- node[above, font=\scriptsize\itshape] {$>\!\tau$?} (res);
+
+    \end{tikzpicture}}
     \caption{MinHash-based shared dictionary clustering (clockwise from top-left).
         \circled{1}~Each string column's distinct values form a set.
         \circled{2}~Two 128-permutation MinHash sketches are computed per column: one over exact string values, one over byte trigrams (3-byte sliding windows).
