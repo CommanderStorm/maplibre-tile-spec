@@ -308,9 +308,9 @@ Let $N$ denote the total number of features in the source layer, and $\mathrm{fr
     \begin{aligned}
         \mathrm{sel}(p = v)   &= \frac{\mathrm{freq}(v)}{N}  &
         \mathrm{sel}(p < n)   &= \frac{1}{N}\!\sum_{v < n}\! \mathrm{freq}(v)  \\[4pt]
-        \mathrm{sel}(\mathtt{geometry\text{-}type}\; t) &= \frac{\mathrm{count}(t)}{N} &
+        \mathrm{sel}(\mathtt{\mlop{geometry\text{-}type}}\; t) &= \frac{\mathrm{count}(t)}{N} &
         \mathrm{sel}(p \in V)  &= \min\!\Bigl(1,\;\sum_{v \in V}\! \mathrm{sel}(p = v)\Bigr) \\[4pt]
-        \mathrm{sel}(\mathtt{has}\; p) &= \frac{\mathrm{present}(p)}{N} &
+        \mathrm{sel}(\mathtt{\mlop{has}}\; p) &= \frac{\mathrm{present}(p)}{N} &
         \mathrm{sel}(p \neq v) &= 1 - \mathrm{sel}(p = v) \\[4pt]
     \end{aligned}
 \end{equation}
