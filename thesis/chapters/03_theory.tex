@@ -331,7 +331,6 @@ for (const sourceLayerId in layerFamilies) {
     for (let index = 0; index < sourceLayer.length; index++) {
         const feature = sourceLayer.feature(index);
         const id = featureIndex.getId(feature, sourceLayerId);
-
         features.push({feature, id, index, sourceLayerIndex});
     }
 
@@ -339,7 +338,6 @@ for (const sourceLayerId in layerFamilies) {
         const layer = family[0];
 
         ...
-
         // (*@\stepcirc{c}@*) Skip hidden layers
         if (layer.isHidden(this.zoom, true)) continue;
 
