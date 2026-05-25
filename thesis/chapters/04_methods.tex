@@ -1220,14 +1220,13 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             	\end{tabular}%
             };
             \node[steplabel, below=1pt of sim] {\circled{3} Pairwise comparison ($\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| \,/\, 128$)};
-            \node[steplabel, below=1pt of sim] {\circled{3} Pairwise comparison ($\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| \,/\, 128$)};
 
             % Bottom-left (Step 4): Union-Find result
             \node[stepbox, cmp] at ($(tbl |- sim)$)  (res) {%
                 \textbf{Shared dictionary groups:}\\[3pt]
                 \fbox{\strut\texttt{\mlval{name:de}}, \texttt{\mlval{name:fr}}}\\[1pt]
                 \quad{\scriptsize trigrams detected cross-language overlap}\\[4pt]
-                \fbox{\strut\texttt{\mlval{class}}, \texttt{\mlval{subclass}}\\[1pt]
+                \fbox{\strut\texttt{\mlval{class}}, \texttt{\mlval{subclass}}}\\[1pt]
                 \quad{\scriptsize exact values detected semantic overlap}\\[4pt]
                 \texttt{\mlval{maxspeed}} - singleton, individual dictionary\\[1pt]
                 \quad{\scriptsize no overlap with any string column}%
