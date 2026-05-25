@@ -733,7 +733,7 @@ Tighter source bounds allow the tile server (or client-side tile manager) to ski
             $\Rightarrow$ no guards needed};
 
         % Output (right)
-        \node[merged, fill=roleGen!5, right=1.4cm of p2, text width=6.0cm] (out) {%
+        \node[merged, right=1.4cm of p2, text width=6.0cm] (out) {%
             \textbf{Merged line layer}\\[3pt]
             \texttt{\mlprop{filter}:}\\
             \texttt{~~[\mlop{"match"},\,[\mlop{"get"},\,\mlval{"class"}],}\\
@@ -837,9 +837,9 @@ This cascade mirrors the materialized-view maintenance problem described in \cre
     \centering
     \begin{tikzpicture}[
         box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.65cm, font=\small, align=center},
-        style/.style={box, fill=roleStyle!20, minimum width=2.8cm},
-        data/.style={box, fill=roleData!25, minimum width=2.8cm},
-        both/.style={box, fill=roleBoth!20, minimum width=2.8cm},
+        style/.style={box, minimum width=2.8cm},
+        data/.style={box, minimum width=2.8cm},
+        both/.style={box, minimum width=2.8cm},
         arrow/.style={-Stealth, thick},
         lbl/.style={font=\scriptsize\itshape, text=darkgray, align=center},
         steps/.style={rectangle, draw, dashed, rounded corners=2pt, font=\small,
