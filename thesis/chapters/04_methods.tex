@@ -226,7 +226,7 @@ When two predicates constrain the same property to disjoint values - e.g.
 \noindent the enclosing \mlop{all} is rewritten to \mlval{false}, which the structural dead elimination pass will later exploit to remove the enclosing layer.
 This is the expression-level analogue of unsatisfiable-query detection in a database query planner.
 
-Range tightening detects overlapping range predicates on the same property and replaces them with the tighter bound, e.g.\ \texttt{[\mlop{"all"},~[\mlop{"<"},~x,~30],~[\mlop{"<"},~x,~20]]} becomes \texttt{[\mlop{"<"},~x,~20]}.
+Range tightening detects overlapping range predicates on the same property and replaces them with the tighter bound, e.g.\ \texttt{[\mlop{"all"},~[\mlop{"<"},~x,~\mlval{30}],~[\mlop{"<"},~x,~\mlval{20}]]} becomes \texttt{[\mlop{"<"},~x,~\mlval{20}]}.
 Predicate subsumption generalizes this to remove predicates that are logically implied by a sibling.
 Pure operator evaluation computes the result of any operator whose arguments are all literals, covering mathematical functions, string operations, and color constructors.
 
@@ -266,7 +266,7 @@ These rules receive tile statistics for the relevant source layer and fold expre
 
 \noindent A cardinality threshold of \texttt{200} governs the granularity of value tracking: when the number of distinct values exceeds this threshold, the statistics switch from full value counts to cardinality-only mode.
 This bounds the cost on high-cardinality properties (names, identifiers) while retaining full information for the low-cardinality properties (class, subclass, administrative level) that benefit most from data-driven folding.
-We motivated the choice of 200 with the OpenMapTiles schema: every categorical property that is used as a \mlop{match}/ \mlop{case} discriminator in the benchmark styles (\texttt{\mlval{class}}, \texttt{\mlval{subclass}}, \texttt{admin\_level}, \texttt{kind}, land-use codes) has fewer than 200 distinct values across the Germany tileset, whereas high-cardinality string columns (feature names, identifiers) exceed it by one or more orders of magnitude.
+We motivated the choice of 200 with the OpenMapTiles schema: every categorical property that is used as a \mlop{match}/ \mlop{case} discriminator in the benchmark styles (\texttt{\mlval{class}}, \texttt{\mlval{subclass}}, \texttt{\mlval{admin\_level}}, \texttt{\mlval{kind}}, land-use codes) has fewer than 200 distinct values across the Germany tileset, whereas high-cardinality string columns (feature names, identifiers) exceed it by one or more orders of magnitude.
 The threshold therefore separates the \enquote{folding-useful} properties from the \enquote{folding-useless} ones without tuning for any specific style.
 
 We gate folds whose effect is irreversible (those that change the set of rendered features) on a full-census sample rate, as discussed in \cref{sub:tile_statistics}; at lower sample rates the statistics are used only for reordering and selectivity estimation.
@@ -619,7 +619,7 @@ For symbol layers, \emph{either} text or icon opacity must be non-zero (the laye
 This refinement only tightens bounds; it never loosens them due to \cref{eq:visual_equivalence}.
 
 A subtle but load-bearing correctness concern is MapLibre's \emph{overzoom} behavior: when a client requests a tile at a zoom level beyond a source's \mlprop{maxzoom}, the renderer reuses the nearest available tile from a lower zoom and upscales it.
-A naive stats-driven tightening - \enquote{the last tile containing polygons appears at zoom~12, therefore set \mlprop{maxzoom}=12} - would change the rendered output if the layer is visible at zoom~13 or~14 via overzoom from zoom~12.
+A naive stats-driven tightening - \enquote{the last tile containing polygons appears at zoom~12, therefore set \mlprop{maxzoom}=\mlval{12}} - would change the rendered output if the layer is visible at zoom~13 or~14 via overzoom from zoom~12.
 Because the thesis requires  \cref{eq:visual_equivalence}, the metadata refinement pass enforces two asymmetric rules:
 \begin{enumerate}
     \item \textbf{\mlprop{minzoom} is symmetric.}
@@ -659,7 +659,7 @@ The merge pass has to preserve three invariants that collectively witness the vi
 (2)~the per-layer draw order (the painter's algorithm) must be preserved so that the top-most pixel at each screen position is unchanged; and
 (3)~any MapLibre runtime behavior that is quantified per layer - collision detection, \texttt{\mlop{feature-state}}, \texttt{\mlprop{*-translate}} and similar camera-only properties - must not change its per-layer scope.
 Invariant~(1) holds because the merged filter is the disjunction of the original filters ($\bigvee_i F_i$), the merged paint/layout expression is a \mlop{case}/ \mlop{match} on the same discriminator that selects the original per-layer value, and the optimizer refuses the merge whenever any differing property lacks \texttt{expression.feature} support (so there is always a syntactic vehicle for the per-feature branch).
-The synthesised sort key preserves invariant~(2): for layer types that expose a \texttt{\mlval{\{fill,line,circle\}-sort-key}} layout property, the pass emits a \mlop{case}/ \mlop{match} sort key that maps each original layer's features to an ascending integer reflecting the original declaration order, and the MapLibre renderer sorts features within the merged layer by this key before drawing.
+The synthesised sort key preserves invariant~(2): for layer types that expose a \texttt{\{\}\mlval{fill,line,circle}\}\mlval{-sort-key}} layout property, the pass emits a \mlop{case}/ \mlop{match} sort key that maps each original layer's features to an ascending integer reflecting the original declaration order, and the MapLibre renderer sorts features within the merged layer by this key before drawing.
 The merge pass refuses to proceed if any candidate layer already carries an explicit sort key, because combining a user-declared sort key with a synthesised one would over-determine the ordering.
 We accept \texttt{\mlval{fill-extrusion}} layers as merge candidates in principle, but the current implementation inherits the same sort-key restriction; in practice their relative ordering is dominated by the depth buffer rather than the painter's algorithm, so the renderer uses the \texttt{\mlprop{fill-extrusion-sort-key}} property to break ties at co-planar surfaces only.
 Invariant~(3) is guaranteed by the exclusion of symbol layers from the candidate set (collision detection), by the \texttt{expression.feature} gate (camera-only properties must be uniform and thus remain layer-scoped after the merge), and by refusing to merge layers with differing non-mergeable properties at all.
@@ -710,9 +710,9 @@ Tighter source bounds allow the tile server (or client-side tile manager) to ski
         check/.style={font=\scriptsize, text=black!90},
     ]
         % Input layers (left)
-        \node[layer, fill=roleSrc!5]   (l0) {line\\ \texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"motorway"}}\\\texttt{\mlprop{line-color}: \#e892a2}\\\texttt{\mlprop{line-width}: 3}};
-        \node[layer, fill=roleData!5, below=0.5cm of l0] (l1) {line\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"primary"}}\\\texttt{\mlprop{line-color}: \#fcd6a4}\\\texttt{\mlprop{line-width}: 2}};
-        \node[layer, fill=roleMir!5, below=0.5cm of l1] (l2) {line\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"secondary"}}\\\texttt{\mlprop{line-color}: \#f7fabf}\\\texttt{\mlprop{line-width}: 1.5}};
+        \node[layer, fill=roleSrc!5]   (l0) {line\\ \texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"motorway"}}\\\texttt{\mlprop{line-color}: \mlval{\#e892a2}}\\\texttt{\mlprop{line-width}: \mlval{3}}};
+        \node[layer, fill=roleData!5, below=0.5cm of l0] (l1) {line\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"primary"}}\\\texttt{\mlprop{line-color}: \mlval{\#fcd6a4}}\\\texttt{\mlprop{line-width}: \mlval{2}}};
+        \node[layer, fill=roleMir!5, below=0.5cm of l1] (l2) {line\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"secondary"}}\\\texttt{\mlprop{line-color}: \mlval{\#f7fabf}}\\\texttt{\mlprop{line-width}: \mlval{1.5}}};
 
         \node[above=0.15cm of l0, font=\small\bfseries] {Input: 3 adjacent line layers};
 
@@ -741,14 +741,14 @@ Tighter source bounds allow the tile server (or client-side tile manager) to ski
             \texttt{~~~\mlval{true},\,\mlval{false}]}\\[3pt]
             \texttt{\mlprop{line-color}:}\\
             \texttt{~~[\mlop{"match"},\,[\mlop{"get"},\,\mlval{"class"}],}\\
-            \texttt{~~~\mlval{"motorway"},\,"\#e892a2",}\\
-            \texttt{~~~\mlval{"primary"},\,"\#fcd6a4",\,"\#f7fabf"]}\\[3pt]
+            \texttt{~~~\mlval{"motorway"},\,\mlval{"\#e892a2"},}\\
+            \texttt{~~~\mlval{"primary"},\,\mlval{"\#fcd6a4"},\,\mlval{"\#f7fabf"}]}\\[3pt]
             \texttt{\mlprop{line-width}:}\\
             \texttt{~~[\mlop{"match"},\,[\mlop{"get"},\,\mlval{"class"}],}\\
-            \texttt{~~~\mlval{"motorway"},\,3,\,\mlval{"primary"},\,2,\,1.5]}\\[3pt]
+            \texttt{~~~\mlval{"motorway"},\,\mlval{3},\,\mlval{"primary"},\,\mlval{2},\,\mlval{1.5}]}\\[3pt]
             \texttt{\mlprop{line-sort-key}:}\\
             \texttt{~~[\mlop{"match"},\,[\mlop{"get"},\,\mlval{"class"}],}\\
-            \texttt{~~~\mlval{"motorway"},\,0,\,\mlval{"primary"},\,1,\,2]}
+            \texttt{~~~\mlval{"motorway"},\,\mlval{0},\,\mlval{"primary"},\,\mlval{1},\,\mlval{2}]}
         };
 
         \node[above=0.15cm of out, font=\small\bfseries] {Output: 1 merged layer};
