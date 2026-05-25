@@ -1185,11 +1185,11 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
                 \begin{tabular}{@{}l c c@{}}
                     \textbf{Column} & \textbf{Exact sketch} & \textbf{Trigram sketch} \\
                     \midrule
-                    \texttt{\mlval{name:de}  & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
-                    \texttt{\mlval{name:fr}  & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
-                    \texttt{\mlval{class}    & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
-                    \texttt{\mlval{subclass} & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
-                    \texttt{\mlval{maxspeed} & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                    \texttt{\mlval{name:de}}  & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                    \texttt{\mlval{name:fr}}  & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                    \texttt{\mlval{class}}    & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                    \texttt{\mlval{subclass}} & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
+                    \texttt{\mlval{maxspeed}} & $[h_1\!\ldots\!h_{128}]_{\text{val}}$ & $[h_1\!\ldots\!h_{128}]_{\text{3g}}$ \\
                 \end{tabular}%
             };
             \node[steplabel, above=1pt of hash] {\circled{2} MinHash signatures (128 permutations)};
@@ -1202,19 +1202,19 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             		$\hat{J}_{\text{tri}}$ &
             		\textbf{Observation} \\
             		\midrule
-            		\texttt{\mlval{name:de} vs.\ \texttt{\mlval{name:fr}
+            		\texttt{\mlval{name:de}} vs.\ \texttt{\mlval{name:fr}}
             		& 0.14 & \textbf{0.35}
-            		& shared trigrams (\texttt{\mlval{Str}, \ldots) \\
+            		& shared trigrams (\texttt{\mlval{Str}}, \ldots) \\
             		
-            		\texttt{\mlval{class} vs.\ \texttt{\mlval{subclass}
+            		\texttt{\mlval{class}} vs.\ \texttt{\mlval{subclass}}
             		& 0.45 & \textbf{0.57}
             		& 5 shared values \\
             		
-            		\texttt{\mlval{name:de} vs.\ \texttt{\mlval{class}
+            		\texttt{\mlval{name:de}} vs.\ \texttt{\mlval{class}}
             		& 0.00 & \textbf{0.01}
             		& effectively unrelated \\
             		
-            		\texttt{\mlval{maxspeed} vs.\ all others
+            		\texttt{\mlval{maxspeed}} vs.\ all others
             		& 0.00 & 0.00
             		& no overlap \\
             	\end{tabular}%
@@ -1225,9 +1225,9 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
             % Bottom-left (Step 4): Union-Find result
             \node[stepbox, cmp] at ($(tbl |- sim)$)  (res) {%
                 \textbf{Shared dictionary groups:}\\[3pt]
-                \fbox{\strut\texttt{\mlval{name:de}, \texttt{\mlval{name:fr}}\\[1pt]
+                \fbox{\strut\texttt{\mlval{name:de}}, \texttt{\mlval{name:fr}}}\\[1pt]
                 \quad{\scriptsize trigrams detected cross-language overlap}\\[4pt]
-                \fbox{\strut\texttt{\mlval{class}, \texttt{\mlval{subclass}}\\[1pt]
+                \fbox{\strut\texttt{\mlval{class}}, \texttt{\mlval{subclass}}\\[1pt]
                 \quad{\scriptsize exact values detected semantic overlap}\\[4pt]
                 \texttt{\mlval{maxspeed} - singleton, individual dictionary\\[1pt]
                 \quad{\scriptsize no overlap with any string column}%
