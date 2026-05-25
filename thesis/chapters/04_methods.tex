@@ -710,9 +710,9 @@ Tighter source bounds allow the tile server (or client-side tile manager) to ski
         check/.style={font=\scriptsize, text=black!90},
     ]
         % Input layers (left)
-        \node[layer, fill=roleSrc!5]   (l0) {line\\ \texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"motorway"}}\\\texttt{\mlprop{line-color}: \mlval{\#e892a2}}\\\texttt{\mlprop{line-width}: \mlval{3}}};
-        \node[layer, fill=roleData!5, below=0.5cm of l0] (l1) {line\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"primary"}}\\\texttt{\mlprop{line-color}: \mlval{\#fcd6a4}}\\\texttt{\mlprop{line-width}: \mlval{2}}};
-        \node[layer, fill=roleMir!5, below=0.5cm of l1] (l2) {line\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"secondary"}}\\\texttt{\mlprop{line-color}: \mlval{\#f7fabf}}\\\texttt{\mlprop{line-width}: \mlval{1.5}}};
+        \node[layer]   (l0) {line\\ \texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"motorway"}}\\\texttt{\mlprop{line-color}: \mlval{\#e892a2}}\\\texttt{\mlprop{line-width}: \mlval{3}}};
+        \node[layer, below=0.5cm of l0] (l1) {line\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"primary"}}\\\texttt{\mlprop{line-color}: \mlval{\#fcd6a4}}\\\texttt{\mlprop{line-width}: \mlval{2}}};
+        \node[layer, below=0.5cm of l1] (l2) {line\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"secondary"}}\\\texttt{\mlprop{line-color}: \mlval{\#f7fabf}}\\\texttt{\mlprop{line-width}: \mlval{1.5}}};
 
         \node[above=0.15cm of l0, font=\small\bfseries] {Input: 3 adjacent line layers};
 
@@ -837,9 +837,9 @@ This cascade mirrors the materialized-view maintenance problem described in \cre
     \centering
     \begin{tikzpicture}[
         box/.style={rectangle, draw, rounded corners=2pt, minimum height=0.65cm, font=\small, align=center},
-        style/.style={box, minimum width=2.8cm},
-        data/.style={box, minimum width=2.8cm},
-        both/.style={box, minimum width=2.8cm},
+        style/.style={box, fill=roleStyle!20, minimum width=2.8cm},
+        data/.style={box, fill=roleData!25, minimum width=2.8cm},
+        both/.style={box, fill=roleBoth!20, minimum width=2.8cm},
         arrow/.style={-Stealth, thick},
         lbl/.style={font=\scriptsize\itshape, text=darkgray, align=center},
         steps/.style={rectangle, draw, dashed, rounded corners=2pt, font=\small,
