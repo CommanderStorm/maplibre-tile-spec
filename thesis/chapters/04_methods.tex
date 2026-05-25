@@ -668,7 +668,7 @@ Invariant~(3) is guaranteed by the exclusion of symbol layers from the candidate
 The filter-to-property constant propagation pass extracts equality constraints from a layer's filter and substitutes them into the layer's paint and layout expressions.
 Its soundness depends on a MapLibre evaluation-order invariant: the filter is evaluated first, and paint/layout expressions are only evaluated for features that passed the filter.
 \Cref{lst:bucket_populate} shows this invariant in the \texttt{FillBucket.populate} method:\\
-\noindent the early \texttt{if (!this.layers[0].\_featureFilter.filter(\dots)) continue;} guard rejects a feature before any paint or layout expression is evaluated, so any equality constraint extracted from the filter is guaranteed to hold for every feature that reaches the subsequent \texttt{bucketFeatures.push} and can be safely substituted into the layer's paint/layout expressions.
+\noindent The early \texttt{if (!this.layers[0].\_featureFilter.filter(\dots)) continue;} guard rejects a feature before any paint or layout expression is evaluated, so any equality constraint extracted from the filter is guaranteed to hold for every feature that reaches the subsequent \texttt{bucketFeatures.push} and can be safely substituted into the layer's paint/layout expressions.
 This holds for the data-driven expression variants used across all MapLibre versions this thesis targets (\mlop{match}, \mlop{case}, \mlop{get}, etc.).
 
 The propagation is strictly \emph{intra-layer} (intra-procedural, in the compiler terminology of \cref{sec:compiler_optimizations}).
@@ -1193,23 +1193,33 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
                 \end{tabular}%
             };
             \node[steplabel, above=1pt of hash] {\circled{2} MinHash signatures (128 permutations)};
-
+            
             % Bottom-right (Step 3): Pairwise Jaccard
-            \node[stepbox, below=0.8cm of hash, cmp, text width=6.2cm, anchor=north] (sim) {%
-            	\texttt{name:de} vs.\ \texttt{name:fr}:\\
-            	\quad $\hat{J}_{\text{exact}}\!=\!0.14$\enspace
-            	$\hat{J}_{\text{tri}}\!=\!\mathbf{0.35}$\\[1pt]
-            	\quad{\scriptsize because shared trigrams (Str, \ldots)}\\[2pt]
-            	\texttt{class} vs.\ \texttt{subclass}:\\
-            	\quad $\hat{J}_{\text{exact}}\!=\!0.45$\enspace
-            	$\hat{J}_{\text{tri}}\!=\!\mathbf{0.57}$\\[1pt]
-            	\quad{\scriptsize 5 shared values (motorway, trunk, primary, \ldots)}\\[2pt]
-            	\texttt{name:de} vs.\ \texttt{class}:\\
-            	\quad $\hat{J}_{\text{exact}}\!=\!0.00$\enspace
-            	$\hat{J}_{\text{tri}}\!=\!0.01$\\[2pt]
-            	\texttt{maxspeed} vs.\ \emph{all others}:\\
-            	\quad $\hat{J}_{\text{exact}}\!=\!0.00$\enspace
-            	$\hat{J}_{\text{tri}}\!=\!0.00$
+            \node[stepbox, anchor=north] (sim) at ($(hash.south)+(0,-0.8cm)$) {%
+            	\begin{tabular}{@{}l c c l@{}}
+            		\textbf{Column pair} &
+            		$\hat{J}_{\text{exact}}$ &
+            		$\hat{J}_{\text{tri}}$ &
+            		\textbf{Observation} \\
+            		\midrule
+            		\texttt{name:de} vs.\ \texttt{name:fr}
+            		& 0.14 & \textbf{0.35}
+            		& shared trigrams (\texttt{Str}, \ldots) \\
+            		
+            		\texttt{class} vs.\ \texttt{subclass}
+            		& 0.45 & \textbf{0.57}
+            		& 5 shared values \\
+            		
+            		\texttt{name:de} vs.\ \texttt{class}
+            		& 0.00 & \textbf{0.01}
+            		& effectively unrelated \\
+            		
+            		\texttt{maxspeed} vs.\ all others
+            		& 0.00 & 0.00
+            		& no overlap \\
+            	\end{tabular}%
+            };
+            \node[steplabel, below=1pt of sim] {\circled{3} Pairwise comparison ($\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| \,/\, 128$)};
             };
             \node[steplabel, below=1pt of sim] {\circled{3} Pairwise comparison ($\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| \,/\, 128$)};
 
