@@ -159,7 +159,6 @@ In particular, tightening a layer's \mlprop{maxzoom} is only sound when it accou
 \Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \mlprop{maxzoom} tile: \stepcirc{1}~rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/ \texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}), and \stepcirc{2}~clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
 Both operations consume the source's \mlprop{maxzoom} tile as input; tightening that \mlprop{maxzoom} removes the upstream tile the slicer rescales and clips, which is why the soundness rule above forbids any rewrite that does not preserve every layer's effective overzoom range.
 
-\newpage
 \begin{lstlisting}[
   language=TypeScript,
   caption={Condensed MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts:87-125})},
@@ -379,7 +378,7 @@ A post-order visitor walks the expression tree and attempts to apply each rule a
 
 \emph{Constant folding} evaluates expressions whose operands are all compile-time constants, replacing the expression with its result~\cite{ahoCompilersPrinciplesTechniques2007}.
 For example, the expression $3 + 5$ is replaced by $8$.
-In a style context, a comparison such as \texttt{[\mlop{"=="},~2,~3]} can be evaluated at optimizations time and replaced by \mlval{false}.
+In a style context, a comparison such as \texttt{[\mlop{"=="},~\mlval{2},~\mlval{3}]} can be evaluated at optimizations time and replaced by \mlval{false}.
 \emph{Constant propagation} extends this idea by tracking the known values of variables through the program's control flow and substituting them at their use sites.
 If a variable is assigned a constant, all subsequent references to that variable can be replaced by the constant, potentially enabling further constant folding at the use sites.
 
