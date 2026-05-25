@@ -267,9 +267,10 @@ The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre
     \item \textbf{Paint and layout properties} control the visual appearance and placement of rendered features.
     Paint properties (colors, opacities, widths) can be changed without triggering a re-layout; layout properties (text anchoring, icon rotation, symbol spacing) affect feature placement and require re-evaluation when modified.
 
-    \item \textbf{Metadata bounds} (\mlprop{minzoom}, \mlprop{maxzoom}) restrict the zoom range at which a layer is active, allowing the renderer to skip entire layers outside their visible range without evaluating their filters.
-    \Cref{lst:ishidden} shows the implementation: the method checks the layer's zoom bounds and evaluated visibility in a single guard, and is called at both tile-parse time (the worker skips bucket creation) and draw-call time (the painter skips rendering).
-    Tight \mlprop{minzoom}/ \mlprop{maxzoom} bounds therefore eliminate work at two stages of the pipeline before any filter evaluation or geometry decoding occurs.
+    \item \textbf{Metadata bounds} (\mlprop{minzoom}, \mlprop{maxzoom}) restrict the zoom range in which a layer is active.
+    This allows the renderer to skip layers outside that range before filter evaluation or geometry decoding.
+    \Cref{lst:ishidden} shows the corresponding \texttt{isHidden} guard.
+    The worker invokes \texttt{layer.isHidden(this.zoom, \mlval{true})} to skip bucket creation during tile parsing, while the renderer returns early from \texttt{renderLayer} on \texttt{layer.isHidden(this.transform.zoom)} before dispatching draw calls.
 
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method},label=lst:ishidden]
 // src/style/style_layer.ts:328-332
