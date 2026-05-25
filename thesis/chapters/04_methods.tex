@@ -266,7 +266,7 @@ These rules receive tile statistics for the relevant source layer and fold expre
 
 \noindent A cardinality threshold of \texttt{200} governs the granularity of value tracking: when the number of distinct values exceeds this threshold, the statistics switch from full value counts to cardinality-only mode.
 This bounds the cost on high-cardinality properties (names, identifiers) while retaining full information for the low-cardinality properties (class, subclass, administrative level) that benefit most from data-driven folding.
-We motivated the choice of 200 with the OpenMapTiles schema: every categorical property that is used as a \mlop{match}/ \mlop{case} discriminator in the benchmark styles (\texttt{class}, \texttt{subclass}, \texttt{admin\_level}, \texttt{kind}, land-use codes) has fewer than 200 distinct values across the Germany tileset, whereas high-cardinality string columns (feature names, identifiers) exceed it by one or more orders of magnitude.
+We motivated the choice of 200 with the OpenMapTiles schema: every categorical property that is used as a \mlop{match}/ \mlop{case} discriminator in the benchmark styles (\texttt{\mlval{class}}, \texttt{\mlval{subclass}}, \texttt{admin\_level}, \texttt{kind}, land-use codes) has fewer than 200 distinct values across the Germany tileset, whereas high-cardinality string columns (feature names, identifiers) exceed it by one or more orders of magnitude.
 The threshold therefore separates the \enquote{folding-useful} properties from the \enquote{folding-useless} ones without tuning for any specific style.
 
 We gate folds whose effect is irreversible (those that change the set of rendered features) on a full-census sample rate, as discussed in \cref{sub:tile_statistics}; at lower sample rates the statistics are used only for reordering and selectivity estimation.
@@ -323,7 +323,7 @@ We estimate compound predicates under the standard independence assumption:
 \end{equation}
 
 \noindent The independence assumption is known to be imprecise for correlated predicates~\cite{selingerAccessPathSelection1979}, but as discussed in \cref{sec:query_optimizations} only a reordering heuristic consumes the selectivity signal here, not a cost-based plan chooser: what matters is the \emph{ordering} of predicates by selectivity, not their absolute values.
-Correlation between map-style predicates (e.g.\ \texttt{class} and \texttt{subclass} in OpenMapTiles) distorts the absolute selectivities but rarely inverts their relative ordering, so the cheap estimator suffices.
+Correlation between map-style predicates (e.g.\ \texttt{\mlval{class}} and \texttt{\mlval{subclass}} in OpenMapTiles) distorts the absolute selectivities but rarely inverts their relative ordering, so the cheap estimator suffices.
 Because the rendering benefit of predicate reordering depends on the proportion of evaluation cost attributable to predicate ordering - expected to be small for styles with short filters - we include this pass as an exploratory extension and do not separately benchmark its isolated impact.
 
 \paragraph{Termination and confluence of the fixpoint}
@@ -678,7 +678,7 @@ The propagation also intentionally ignores \texttt{[\mlop{"feature-state"}, \ldo
 \emph{Phase~2} (match-pattern detection) checks whether all filters within a candidate group match the pattern \texttt{[\mlop{"=="},~[\mlop{"get"},~P],~\mlop{literal}]} on the same property~$P$.
 If so, the merged filter is a compact \mlop{match} expression rather than a verbose \mlop{case} chain, and merged paint/layout properties also use \mlop{match} with the same discriminator.
 This pattern is common in practice: road styles frequently define separate layers for motorway, trunk, primary, secondary, and tertiary, differing only in width, color and layering, and for casing major roads there are usually two such layers per class.
-\Cref{fig:layer_merge_example} works through exactly this case: three adjacent \texttt{\mlval{line}} layers keyed on \texttt{class} collapse into a single layer whose filter, \mlprop{line-color}, \mlprop{line-width}, and synthesised \mlprop{line-sort-key} are all \mlop{match} expressions over the same discriminator, with Phase~1 (mergeability) and Phase~3 (identical zoom ranges) discharged trivially.
+\Cref{fig:layer_merge_example} works through exactly this case: three adjacent \texttt{\mlval{line}} layers keyed on \texttt{\mlval{class}} collapse into a single layer whose filter, \mlprop{line-color}, \mlprop{line-width}, and synthesised \mlprop{line-sort-key} are all \mlop{match} expressions over the same discriminator, with Phase~1 (mergeability) and Phase~3 (identical zoom ranges) discharged trivially.
 
 \emph{Phase~3} (zoom-tolerant merging) handles layers whose zoom ranges differ slightly.
 Rather than rejecting the merge, it wraps each sub-filter with zoom guards (\texttt{[\mlop{">="},\allowbreak~[\mlop{"zoom"}],\allowbreak~lo]}, \texttt{[\mlop{"<="},\allowbreak~[\mlop{"zoom"}],\allowbreak~hi]}) and uses the union of all zoom ranges as the merged layer's bounds.
@@ -1138,7 +1138,7 @@ A \emph{pruning variant} of the \ac{FSST} compressor removes symbols whose obser
 
 \paragraph{Shared dictionary grouping}\label{sub:cardinality}
 The \ac{MLT} format supports shared dictionaries where multiple string columns reference a common deduplicated corpus, amortising dictionary overhead across columns with overlapping vocabularies.
-The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \texttt{name:en}, \texttt{name:de}), which misses semantic overlaps (e.g., \texttt{class} and \texttt{subclass} in OpenMapTiles share many values).
+The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \texttt{name:en}, \texttt{\mlval{name:de}}), which misses semantic overlaps (e.g., \texttt{\mlval{class}} and \texttt{\mlval{subclass}} in OpenMapTiles share many values).
 
 \begin{sloppypar}
     Our Rust encoder replaces prefix matching with MinHash-based similarity clustering (\cref{sub:lsh})~\cite{broderResemblanceContainmentDocuments1998}.
@@ -1171,10 +1171,10 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \te
                 \begin{tabular}{@{}l l@{}}
                     \textbf{Column} & \textbf{Distinct values (sample)} \\
                     \midrule
-                    \texttt{name:de}  & Straßburg, Freiburg, Mühlhausen, \ldots \\
-                    \texttt{name:fr}  & Strasbourg, Fribourg, Muhlhouse, \ldots \\
-                    \texttt{class}    & motorway, trunk, primary, \ldots \\
-                    \texttt{subclass} & motorway, trunk, primary, \ldots \\
+                    \texttt{\mlval{name:de}}  & Straßburg, Freiburg, Mühlhausen, \ldots \\
+                    \texttt{\mlval{name:fr}}  & Strasbourg, Fribourg, Muhlhouse, \ldots \\
+                    \texttt{\mlval{class}}    & motorway, trunk, primary, \ldots \\
+                    \texttt{\mlval{subclass}} & motorway, trunk, primary, \ldots \\
                     \texttt{maxspeed} & 30, 50, 80, \ldots
                 \end{tabular}%
             };
