@@ -28,7 +28,7 @@ We characterize each rule by its pass assignment, scope (filter-only or both fil
 3 & Const.\ fold & both & pure & Fold negation: \texttt{[\mlop{"!"}, \mlval{true}]} $\to$ \mlval{false} \\
 4 & Const.\ fold & both & pure & Fold comparisons (\mlop{==}, \mlop{!=}, \texttt{<}, etc.) with two literal operands \\
 5 & Const.\ fold & both & MIR & Evaluate pure operators when all arguments are literals \\
-6 & Const.\ fold & both & pure & Algebraic identity: \texttt{x \^{} 0} $\to$ \texttt{1} \\
+6 & Const.\ fold & both & pure & Algebraic identity: \texttt{x \^{} \mlval{0}} $\to$ \mlval{1} \\
 7 & Const.\ fold & both & pure & Strip redundant \mlop{typeof} guards from migrated filters \\
 8 & Const.\ fold & both & pure & Resolve \mlop{case} arms with known boolean conditions \\
 9 & Const.\ fold & both & pure & Resolve \mlop{match} when input is a known literal \\
@@ -55,7 +55,7 @@ We characterize each rule by its pass assignment, scope (filter-only or both fil
 \midrule
 % Simplify Expressions
 28 & Simplify & both & pure & Factor common operands: \texttt{[\mlop{"any"},[\mlop{"all"},A,B],[\mlop{"all"},A,C]]} $\to$ \texttt{[\mlop{"all"},A,[\mlop{"any"},B,C]]} \\
-29 & Simplify & both & pure & Canonicalise \texttt{[\mlop{"exponential"},1]} $\to$ \texttt{[\mlop{"linear"}]} in interpolate curves \\
+29 & Simplify & both & pure & Canonicalise \texttt{[\mlop{"exponential"},\mlval{1}]} $\to$ \texttt{[\mlop{"linear"}]} in interpolate curves \\
 30 & Simplify & both & pure & Collapse \mlop{interpolate}/ \mlop{step} when all output values are structurally equal \\
 31 & Simplify & both & pure & Merge \mlop{match} arms with identical outputs; drop arms that equal the fallback \\
 32 & Simplify & both & pure & Strip \mlop{coalesce} wrapper from comparison when default fails anyway \\
