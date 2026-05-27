@@ -366,7 +366,7 @@ We drew both examples from the optimizer's test suite.
 	\begin{subfigure}[t]{\linewidth}
 		\centering
 		
-		\begin{minipage}[t]{0.42\linewidth}
+		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			Before
 			
@@ -379,26 +379,27 @@ We drew both examples from the optimizer's test suite.
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-["any",
-	["all",
-		["has","name"],
-		["==", ["get","class"], "road"]
-	],
-	["all",
-		["has","name"],
-		["==", ["get","class"], "rail"]
-	]
-]
+				["any",
+				["all",
+				["has","name"],
+				["==", ["get","class"], "road"]
+				],
+				["all",
+				["has","name"],
+				["==", ["get","class"], "rail"]
+				]
+				]
 			\end{lstlisting}
 		\end{minipage}
 		\hfill
-		\begin{minipage}[t]{0.08\linewidth}
+		\begin{minipage}[c]{0.08\linewidth}
 			\centering
-			\vspace{2.7cm}
+			\vfill
 			{\Huge$\Longrightarrow$}
+			\vfill
 		\end{minipage}
 		\hfill
-		\begin{minipage}[t]{0.42\linewidth}
+		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			After
 			
@@ -411,13 +412,13 @@ We drew both examples from the optimizer's test suite.
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-["all",
-	["has", "name"],
-	["in",
-		["get", "class"],
-		["literal", ["road", "rail"]]
-	]
-]
+				["all",
+				["has", "name"],
+				["in",
+				["get", "class"],
+				["literal", ["road", "rail"]]
+				]
+				]
 			\end{lstlisting}
 		\end{minipage}
 		
@@ -433,7 +434,7 @@ We drew both examples from the optimizer's test suite.
 	\begin{subfigure}[t]{\linewidth}
 		\centering
 		
-		\begin{minipage}[t]{0.42\linewidth}
+		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			Before
 			
@@ -446,24 +447,25 @@ We drew both examples from the optimizer's test suite.
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-filter: ["==", ["get", "class"], "road"]
-paint:
-	fill-color: ["match",
-		["get", "class"],
-		"road", "#333",
-		"rail", "#666",
-		"#999"
-	]
+				filter: ["==", ["get", "class"], "road"]
+				paint:
+				fill-color: ["match",
+				["get", "class"],
+				"road", "#333",
+				"rail", "#666",
+				"#999"
+				]
 			\end{lstlisting}
 		\end{minipage}
 		\hfill
-		\begin{minipage}[t]{0.08\linewidth}
+		\begin{minipage}[c]{0.08\linewidth}
 			\centering
-			\vspace{2.2cm}
+			\vfill
 			{\Huge$\Longrightarrow$}
+			\vfill
 		\end{minipage}
 		\hfill
-		\begin{minipage}[t]{0.42\linewidth}
+		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			After
 			
@@ -476,9 +478,9 @@ paint:
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-filter: ["==", ["get", "class"], "road"]
-paint:
-	fill-color: "#333"
+				filter: ["==", ["get", "class"], "road"]
+				paint:
+				fill-color: "#333"
 			\end{lstlisting}
 		\end{minipage}
 		
@@ -494,7 +496,7 @@ paint:
 	\begin{subfigure}[t]{\linewidth}
 		\centering
 		
-		\begin{minipage}[t]{0.42\linewidth}
+		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			Before
 			
@@ -507,20 +509,21 @@ paint:
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-["all",
-	["==", ["get", "class"], "road"],
-	["==", ["get", "class"], "road"]
-]
+				["all",
+				["==", ["get", "class"], "road"],
+				["==", ["get", "class"], "road"]
+				]
 			\end{lstlisting}
 		\end{minipage}
 		\hfill
-		\begin{minipage}[t]{0.08\linewidth}
+		\begin{minipage}[c]{0.08\linewidth}
 			\centering
-			\vspace{1.7cm}
+			\vfill
 			{\Huge$\Longrightarrow$}
+			\vfill
 		\end{minipage}
 		\hfill
-		\begin{minipage}[t]{0.42\linewidth}
+		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			After
 			
@@ -533,7 +536,7 @@ paint:
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-["==", ["get", "class"], "road"]
+				["==", ["get", "class"], "road"]
 			\end{lstlisting}
 		\end{minipage}
 		
@@ -549,7 +552,7 @@ paint:
 	\begin{subfigure}[t]{\linewidth}
 		\centering
 		
-		\begin{minipage}[t]{0.42\linewidth}
+		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			Before
 			
@@ -562,20 +565,21 @@ paint:
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-["all",
-	["!", ["==", ["get", "class"], "road"]],
-	["!", ["==", ["get", "class"], "rail"]]
-]
+				["all",
+				["!", ["==", ["get", "class"], "road"]],
+				["!", ["==", ["get", "class"], "rail"]]
+				]
 			\end{lstlisting}
 		\end{minipage}
 		\hfill
-		\begin{minipage}[t]{0.08\linewidth}
+		\begin{minipage}[c]{0.08\linewidth}
 			\centering
-			\vspace{2cm}
+			\vfill
 			{\Huge$\Longrightarrow$}
+			\vfill
 		\end{minipage}
 		\hfill
-		\begin{minipage}[t]{0.42\linewidth}
+		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			After
 			
@@ -588,10 +592,10 @@ paint:
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-["all",
-	["!=", ["get", "class"], "road"],
-	["!=", ["get", "class"], "rail"]
-]
+				["all",
+				["!=", ["get", "class"], "road"],
+				["!=", ["get", "class"], "rail"]
+				]
 			\end{lstlisting}
 		\end{minipage}
 		
