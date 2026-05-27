@@ -21,7 +21,7 @@ We characterize each rule by its pass assignment, scope (filter-only or both fil
 \# & Pass & Scope & Type & Description \\
 \midrule
 % Expression Kind
-1 & Expr.\ kind & both & MIR & Negate comparison: \texttt{[\mlop{"!"},[\mlval{"op"},a,b]]} $\to$ \texttt{[neg(op),a,b]} when negated operator exists \\
+1 & Expr.\ kind & both & MIR & Negate comparison: \texttt{[\mlop{"!"},[\mlop{op},a,b]]} $\to$ \texttt{[\mlop{neg(op)},a,b]} when negated operator exists \\
 \midrule
 % Constant Fold
 2 & Const.\ fold & both & pure & Boolean algebra: fold \mlop{any}/ \mlop{all} with literal operands; absorb \mlval{true} from \mlop{all}, \mlval{false} from \mlop{any} \\
@@ -585,7 +585,6 @@ Versatiles Colorful  & 309 &    \num{151692} &    \num{114549} & \num{-24.5} &  
 
 All measurements in \cref{ch:experiments} were collected on a single workstation; preprocessing (\ac{MVT} pruning, \ac{MLT} encoding) and browser-based rendering used the same host.
 The tables below document the hardware, operating system, language toolchains, key library versions, and the headless browser harness used for the rendering scenarios.
-Pinned-from-source values are read from the build manifests of the encoder, optimiser\footnote{\url{https://github.com/CommanderStorm/maplibre-optimiser}, last accessed 2026-05-27}, and analysis harness; installed runtime versions and host hardware were captured from the bench machine on 2026-05-27.
 
 \subsection{Hardware}\label{app:bench_hw}
 
