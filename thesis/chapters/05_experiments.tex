@@ -69,7 +69,7 @@ Fixpoint iteration amplifies the effect: a single successful simplfication can c
 \paragraph{Size reduction vs.\ rendering improvement}
 Passes that primarily reduce serialized style size - default stripping, color minification - show smaller rendering improvements but contribute meaningfully to transfer size under compression.
 This primarily benefits time to first render (discussed in \cref{sub:combined_marginal}).
-We note the distinction between raw, gzip, and Brotli reductions: some rewrites (e.g., \mlop{\texttt{any}}$\to$\mlop{\texttt{in}}) increase raw token count while decreasing compressed size, because the repetitive structure of \texttt{in} operand lists compresses well.
+We note the distinction between raw, gzip, and Brotli reductions: some rewrites (e.g., \mlop{\texttt{any}}$\to$\mlop{\texttt{in}}) increase raw token count while decreasing compressed size, because the repetitive structure of \mlop{\texttt{in}} operand lists compresses well.
 
 \paragraph{Selectivity reordering is empirically unmeasured}
 Selectivity reordering (step~16) is a theoretically motivated heuristic whose isolated rendering impact we did not measure in this evaluation.
@@ -78,7 +78,7 @@ We acknowledge the independence assumption underlying the selectivity estimates 
 
 \paragraph{Downstream interaction with the data pipeline}
 Beyond their direct rendering benefit, expression-level simplifications feed into the data-level pipeline evaluated in \cref{sec:exp_mlt}.
-Each folded filter predicate and each pruned \texttt{match} arm reduces the set of property names and categorical values that the tile pruning advisory (\cref{sub:tile_shaving}) must track; each filter reduced to \texttt{false} enables dead layer elimination in the structural phase, which removes that layer's entire property footprint from the advisory.
+Each folded filter predicate and each pruned \mlop{\texttt{match}} arm reduces the set of property names and categorical values that the tile pruning advisory (\cref{sub:tile_shaving}) must track; each filter reduced to \mlval{\texttt{false}} enables dead layer elimination in the structural phase, which removes that layer's entire property footprint from the advisory.
 Simpler filters are also more amenable to the advisory's static analysis, because canonical forms (e.g., a direct \texttt{[\mlop{"=="},~\ldots]} rather than a double-negated comparison) expose referenced property values more readily.
 The magnitude of this interaction is quantified in \cref{sec:exp_mlt}.
 
