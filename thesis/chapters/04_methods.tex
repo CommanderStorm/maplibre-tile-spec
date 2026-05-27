@@ -16,7 +16,7 @@ And let MapLibre's rendering function, which maps a style, a tile set, and a vie
 \end{equation}
 
 \noindent The optimizer solves the following problem:
-Given an input pair $(S, T)$ and a cost function $c: \mathcal{S} \times \mathcal{T} \to \mathbb{R}_{\geq 0}$, find $(S', T')$ minimizing $c(S', T')$ subject to the \emph{visual equivalence} constraint where $\equiv$ denotes pixel-identity under a deterministic rasteriser:
+Given an input pair $(S, T)$ and a cost function $c: \mathcal{S} \times \mathcal{T} \to \mathbb{R}_{[0,1]}$, find $(S', T')$ minimizing $c(S', T')$ subject to the \emph{visual equivalence} constraint where $\equiv$ denotes pixel-identity under a deterministic rasteriser:
 \begin{equation}\label{eq:visual_equivalence}
     \forall v \in \mathcal{V}:\; R(S, T, v) \equiv R(S', T', v),
 \end{equation}
