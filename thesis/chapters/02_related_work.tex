@@ -111,7 +111,7 @@ A simplification pass is therefore a natural complement to migration, not a repl
 More broadly, style documents in practice accumulate redundancy through several channels: iterative authoring that leaves superseded properties in place, copy-paste development across layers, automated migration that introduces mechanically correct but verbose expression forms, and multi-author editing where conventions drift over successive contributions.
 The result is that production styles routinely contain default-valued properties, unreachable filter branches, and duplicated paint blocks - creating a practical demand for automatic simplification that no existing tool meets.
 
-Stamen Design published \texttt{mapbox-gl-style-remove-defaults}\footnote{\url{https://github.com/stamen/mapbox-gl-style-remove-defaults}}, a tool that removes properties set to their specification default values from Mapbox GL style JSON.
+Stamen Design published \texttt{mapbox-gl-style-remove-defaults}\footnote{\url{https://github.com/stamen/mapbox-gl-style-remove-defaults}, last accessed 2026-5-27}, a tool that removes properties set to their specification default values from Mapbox GL style JSON.
 This corresponds to the default stripping pass we describe in \cref{ch:methods}, implemented as a standalone tool.
 This ecosystem tooling demonstrates that individual style optimizations are recognized as valuable by practitioners, but no existing tool encomposes multiple optimizations passes.
 
