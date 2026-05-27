@@ -821,7 +821,7 @@ This cascade mirrors the materialized-view maintenance problem described in \cre
 \begin{itemize}
     \item \textbf{Used properties with zoom ranges}: for each property name appearing in a \texttt{[\mlop{"get"},~\ldots]} or \texttt{[\mlop{"has"},~\ldots]} expression in any live style layer, the zoom range over which it is referenced.
     Properties not referenced at any zoom level are candidates for removal.
-    \item \textbf{Used geometry types with zoom ranges}: which of Point, LineString, and Polygon are needed, derived from the style layer types (e.g., \texttt{fill} $\to$ Polygon, \texttt{circle} $\to$ Point).
+    \item \textbf{Used geometry types with zoom ranges}: which of Point, LineString, and Polygon are needed, derived from the style layer types (e.g., \texttt{\mlval{fill}} $\to$ Polygon, \texttt{\mlval{circle}} $\to$ Point).
     The pass removes features with geometry types unused by any style layer at the current zoom level.
     \item \textbf{Unused zoom levels}: zoom levels at which no style layer targets the source-layer.
     Tiles at these zoom levels need not be encoded at all.
