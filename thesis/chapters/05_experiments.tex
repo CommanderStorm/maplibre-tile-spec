@@ -97,7 +97,7 @@ The magnitude of this interaction is quantified in \cref{sec:exp_mlt}.
 
 Several pairwise dependencies between structural passes shape what we measure in the cumulative ablation in \cref{sub:structural_results}.
 Expression passes must run first so that metadata refinement sees zoom predicates in their canonical form; dead elimination must precede layer merging because a dead layer between two otherwise-mergeable live layers blocks the merge.
-Similarly, metadata refinement must precede cleanup so the residual \texttt{true} filters and zero-opacity layers it produces can be removed.
+Similarly, metadata refinement must precede cleanup so the residual \mlval{\texttt{true}} filters and zero-opacity layers it produces can be removed.
 We give the full ordering rationale in \cref{sub:pipeline}; the practical consequence here is that the marginal contribution of each later pass in the ablation will reflect work that an earlier pass enabled, not just the pass itself.
 
 \subsection{Evaluation}\label{sub:structural_evaluation}
@@ -127,7 +127,7 @@ We report the effects on performance generalized in \cref{sub:cross_results} (ov
 \end{figure}
 
 The magnitude of structural improvement is style-dependent.
-Fiord's layer count drops from 48 to 46 (\qty{-4.2}{\percent}), with dead elimination removing one layer (step~9) and cleanup removing another (step~14) after metadata refinement lifts zoom predicates that leave a filter as \texttt{true} on an invisible layer.
+Fiord's layer count drops from 48 to 46 (\qty{-4.2}{\percent}), with dead elimination removing one layer (step~9) and cleanup removing another (step~14) after metadata refinement lifts zoom predicates that leave a filter as \mlval{\texttt{true}} on an invisible layer.
 Liberty's layer count drops from 111 to 107 (\qty{-3.6}{\percent}), concentrated entirely in the layer-merge step (step~15), which merges four pairs of adjacent layers with compatible filters.
 In terms of gzip transfer size, Fiord benefits substantially (\qty{-14.1}{\percent} from baseline to step~15), while Liberty sees a modest \qty{-4.9}{\percent}, with layer merging slightly \emph{increasing} gzip by \qty{36}{\byte} due to the larger merged filter expressions.
 AST complexity tells a similar per-style story: Fiord's expression nodes drop by \qty{36.8}{\percent} (\num{1610}$\to$\num{1018}), whereas Liberty's drop by \qty{10.5}{\percent} (\num{3537}$\to$\num{3167}).
