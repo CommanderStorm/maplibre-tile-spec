@@ -619,7 +619,7 @@ Kernel          & Linux \texttt{6.6.126-1-MANJARO} (SMP PREEMPT\_DYNAMIC, built 
 glibc           & GNU libc \texttt{2.43} \\
 GPU driver      & NVIDIA proprietary \texttt{590.48.01} \\
 Vulkan loader   & API \texttt{1.4.325}, conformance \texttt{1.4.3.0}, driver \texttt{NVIDIA 590.48.1.0} \\
-ANGLE backend   & Vulkan (selected via Chromium \texttt{--use-angle=vulkan}; see \cref{app:bench_browser}) \\
+ANGLE backend   & Vulkan (see \cref{app:bench_browser}) \\
 \bottomrule
 \end{tabular}
 \caption{Host operating system, kernel, and graphics driver stack. The ANGLE/Vulkan backend referenced in \cref{sec:threats} is configured at browser launch.}
@@ -670,7 +670,7 @@ The renderer-process limit is set to half the logical CPU count ($N_\mathrm{cpu}
 		\texttt{pixelmatch}          & \texttt{\textasciicircum7.1.0} \\
 		\texttt{pngjs}               & \texttt{\textasciicircum7.0.0} \\
 		Graphics backend             & ANGLE on Vulkan; see \cref{tab:bench_os} \\
-		Device pixel ratio           & \texttt{1.0} (matches \cref{sec:visual_correctness}) \\
+		Device pixel ratio           & \texttt{1.0} (\cref{sec:visual_correctness}) \\
 		Launch flags                 & \raggedright\arraybackslash
 		\texttt{--enable-gpu},\allowbreak\
 		\texttt{--enable-webgl},\allowbreak\
@@ -680,7 +680,7 @@ The renderer-process limit is set to half the logical CPU count ($N_\mathrm{cpu}
 		\texttt{--enable-features=Vulkan,UseSkiaRenderer},\allowbreak\
 		\texttt{--disable-frame-rate-limit},\allowbreak\
 		\texttt{--disable-gpu-vsync},\allowbreak\
-		\texttt{--renderer-process-limit=$N_\mathrm{cpu}/2$},\allowbreak\
+		\texttt{--renderer-process-limit=8,\allowbreak\
 		\texttt{--disable-background-networking},\allowbreak\
 		\texttt{--disable-background-timer-throttling},\allowbreak\
 		\texttt{--disable-backgrounding-occluded-windows} \\
