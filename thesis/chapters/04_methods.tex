@@ -363,48 +363,59 @@ We drew both examples from the optimizer's test suite.
 	\begin{subfigure}[t]{0.48\linewidth}
 		\centering
 
-		Before
-
-		\vspace{2mm}
-
-		\begin{lstlisting}[
-			style=maplibrestyle,
-			basicstyle=\ttfamily\scriptsize,
-			frame=single,
-			aboveskip=0pt,
-			belowskip=0pt
-			]
-["any",
-  ["all",
-    ["has","name"],
-    ["==", ["get","class"], "road"]
-  ],
-  ["all",
-    ["has","name"],
-    ["==", ["get","class"], "rail"]
-  ]
-]
-		\end{lstlisting}
-
-		\vspace{2mm}
-
-		After
-
-		\begin{lstlisting}[
-			style=maplibrestyle,
-			basicstyle=\ttfamily\scriptsize,
-			frame=single,
-			aboveskip=0pt,
-			belowskip=0pt
-			]
-["all",
-  ["has", "name"],
-  ["in",
-    ["get", "class"],
-    ["literal", ["road", "rail"]]
-  ]
-]
-		\end{lstlisting}
+		\begin{minipage}[t]{0.42\linewidth}
+			\centering
+			Before
+			
+			\vspace{2mm}
+			
+			\begin{lstlisting}[
+				style=maplibrestyle,
+				basicstyle=\ttfamily\scriptsize,
+				frame=single
+				]
+				["any",
+				["all",
+				["has","name"],
+				["==", ["get","class"], "road"]
+				],
+				["all",
+				["has","name"],
+				["==", ["get","class"], "rail"]
+				]
+				]
+			\end{lstlisting}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.08\linewidth}
+			\centering
+			\vspace{2.8cm}
+			{\Huge$\Longrightarrow$}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.42\linewidth}
+			\centering
+			After
+			
+			\vspace{2mm}
+			
+			\begin{lstlisting}[
+				style=maplibrestyle,
+				basicstyle=\ttfamily\scriptsize,
+				frame=single
+				]
+				["all",
+				["has", "name"],
+				["in",
+				["get", "class"],
+				["literal", ["road", "rail"]]
+				]
+				]
+			\end{lstlisting}
+		\end{minipage}
+		
+		\caption{Expression rewriting via distributive factoring and \mlop{any}$\to$\mlop{in} promotion.}
+		\end{figure}
 
 		\caption{Expression rewriting via distributive factoring and \mlop{any}$\to$\mlop{in} promotion.}
 		\label{fig:expr_a}
