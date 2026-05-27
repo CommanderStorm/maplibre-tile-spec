@@ -63,7 +63,7 @@ The gain of this simplification is non-representative and biases the results to 
 Only two of the style familys gain significant speedups, both of the times through what we think are typos in how the style is written.
 
 We expect this: reducing an expression tree to a literal eliminates all per-feature evaluation cost for that expression, whereas algebraic simplifications merely shorten the evaluation path.
-For some styles this does not hold and unary simplification is more effective due to expensive string index handling being collapsed into senatically identical, but faster variants.s
+For some styles this does not hold and unary simplification is more effective due to expensive string index handling being collapsed into senatically identical, but faster variants.
 Fixpoint iteration amplifies the effect: a single successful simplfication can cascade through nested expressions, collapsing entire subtrees in subsequent iterations.
 
 \paragraph{Size reduction vs.\ rendering improvement}
