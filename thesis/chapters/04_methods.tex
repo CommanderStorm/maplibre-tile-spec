@@ -659,9 +659,9 @@ The merge pass has to preserve three invariants that collectively witness the vi
 (2)~the per-layer draw order (the painter's algorithm) must be preserved so that the top-most pixel at each screen position is unchanged; and
 (3)~any MapLibre runtime behavior that is quantified per layer - collision detection, \texttt{\mlop{feature-state}}, \texttt{\mlprop{*-translate}} and similar camera-only properties - must not change its per-layer scope.
 Invariant~(1) holds because the merged filter is the disjunction of the original filters ($\bigvee_i F_i$), the merged paint/layout expression is a \mlop{case}/ \mlop{match} on the same discriminator that selects the original per-layer value, and the optimizer refuses the merge whenever any differing property lacks \texttt{expression.feature} support (so there is always a syntactic vehicle for the per-feature branch).
-The synthesised sort key preserves invariant~(2): for layer types that expose a \texttt{\{\}\mlprop{fill,line,circle}\}\mlprop{-sort-key}} layout property, the pass emits a \mlop{case}/ \mlop{match} sort key that maps each original layer's features to an ascending integer reflecting the original declaration order, and the MapLibre renderer sorts features within the merged layer by this key before drawing.
+The synthesised sort key preserves invariant~(2): for layer types that expose a \texttt{\{\mlprop{fill,line,circle}\}\mlprop{-sort-key}} layout property, the pass emits a \mlop{case}/ \mlop{match} sort key that maps each original layer's features to an ascending integer reflecting the original declaration order, and the MapLibre renderer sorts features within the merged layer by this key before drawing.
 The merge pass refuses to proceed if any candidate layer already carries an explicit sort key, because combining a user-declared sort key with a synthesised one would over-determine the ordering.
-We accept \texttt{\mlprop{fill-extrusion}} layers as merge candidates in principle, but the current implementation inherits the same sort-key restriction; in practice their relative ordering is dominated by the depth buffer rather than the painter's algorithm, so the renderer uses the \texttt{\mlprop{fill-extrusion-sort-key}} property to break ties at co-planar surfaces only.
+We accept \texttt{\mlprop{fill-extrusion}} layers as merge candidates in principle, but the current implementation inherits the same \texttt{\{\mlprop{fill,line,circle}\}\mlprop{-sort-key}} restriction; in practice their relative ordering is dominated by the depth buffer rather than the painter's algorithm, so the renderer uses the \texttt{\{\mlprop{fill,line,circle}\}\mlprop{-sort-key}} property to break ties at co-planar surfaces only.
 Invariant~(3) is guaranteed by the exclusion of symbol layers from the candidate set (collision detection), by the \texttt{expression.feature} gate (camera-only properties must be uniform and thus remain layer-scoped after the merge), and by refusing to merge layers with differing non-mergeable properties at all.
 
 \paragraph{Scope of filter-to-property propagation}
@@ -1396,7 +1396,7 @@ and \emph{bearingspin} rotates bearing at high pitch.
 See \cref{app:animation_patterns} for the keyframe diagrams.
 
 Each scenario is a specific (location, animation) pair.
-The full cross-product of 15 locations and 5 animations is 75 pairs, which is too expensive\footnote{Each cell requires 15 repeat runs for statistical validity across 17 ablation steps and 15 styles, as this would result in $75 \times 15 \times 17 \times 15 = \num{286875}$ full animations} to run for every ablation step.
+The full cross-product of 15 locations and 5 animations is 75 pairs, which is too expensive\footnote{Each cell requires 15 repeat runs for statistical validity across 19 ablation steps and 15 styles, as this would result in $75 \times 15 \times 19 \times 15 = \num{320625}$ full animations} to run for every ablation step.
 We chose the 18 selected scenarios by stratified sampling so that every location appears at least once and every animation appears at least three times, and so that all combinations of density class (high/low) and script class (Latin/non-Latin) are represented.
 Within each stratum we selected the specific (location, animation) pair that exercises the most layers in the densest style in the corpus, ensuring that the sample is biased \emph{against} the null hypothesis of \enquote{no effect} - i.e.\ towards scenarios where any rendering-cost differences are most likely to be visible.
 
@@ -1440,7 +1440,7 @@ Per run, the benchmark harness collects the following metrics:
 
 Our primary evaluation methodology is cumulative ablation: we add passes one at a time in a fixed order and re-run the full benchmark suite after each addition.
 This reveals both the marginal contribution of each pass and the interactions between passes.
-The ablation comprises 17~steps: a baseline (no optimizations) followed by 16~passes added incrementally in the order listed in \crefrange{tab:expression_passes}{tab:data_passes}.
+The ablation comprises 19~cumulative steps - a baseline (no optimizations) followed by passes added incrementally in the order listed in \crefrange{tab:expression_passes}{tab:data_passes} - plus one additional configuration that applies plain tile shaving on top of the unoptimized style, included to isolate the style$\leftrightarrow$shaving interaction in \cref{sub:mlt_results}.
 \cref{sub:combined_ablation,tab:marginal_contribution} present the step-by-step results.
 
 We execute each scenario/style combination for 15~runs.
@@ -1454,7 +1454,7 @@ The benchmark harness itself is a Puppeteer\footnote{\url{https://pptr.dev/}, la
 \begin{chaptersummary}
 The optimizer is a \textbf{three-level pipeline} (\cref{sub:pipeline}) operating on the $(S, T) \to (S', T')$ problem of \cref{sec:problem_statement}: eight expression-level passes run to a fixpoint, six structural passes act on a typed style document, and data-level passes re-encode shaved tiles into \ac{MLT} via per-stream strategy competition.
 The \textbf{pruning advisory} derived from the optimized style is what ties the levels together - a projection-pushdown plan over the tile data.
-We measure the pipeline with a \textbf{17-step cumulative ablation} across \textbf{15~styles, 18~stratified scenarios}, and 15~repeat runs per cell on the Germany OpenMapTiles tileset, plus a 13-style generalization corpus and a preprocessing-cost model that decomposes the offline cost into four additive stages.
+We measure the pipeline with a \textbf{19-step cumulative ablation} (plus one plain-tile-shaving comparison configuration) across \textbf{15~styles, 18~stratified scenarios}, and 15~repeat runs per cell on the Germany OpenMapTiles tileset, plus a 13-style generalization corpus and a preprocessing-cost model that decomposes the offline cost into four additive stages.
 
 The following chapter applies this methodology to evaluate each optimization category in isolation, tests generalization beyond the benchmarking corpus, and analyses the full pipeline's combined effect.
 \end{chaptersummary}
