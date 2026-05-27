@@ -655,6 +655,7 @@ This refinement only tightens bounds; it never loosens them due to \cref{eq:visu
 
 A subtle but load-bearing correctness concern is MapLibre's \emph{overzoom} behavior: when a client requests a tile at a zoom level beyond a source's \mlprop{maxzoom}, the renderer reuses the nearest available tile from a lower zoom and upscales it.
 A naive stats-driven tightening - \enquote{the last tile containing polygons appears at zoom~12, therefore set \mlprop{maxzoom}=\mlval{12}} - would change the rendered output if the layer is visible at zoom~13 or~14 via overzoom from zoom~12.
+
 Because our work requires  \cref{eq:visual_equivalence}, the metadata refinement pass enforces two asymmetric rules:
 \begin{enumerate}
     \item \textbf{\mlprop{minzoom} is symmetric.}
