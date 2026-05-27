@@ -28,7 +28,7 @@ A handful of styles from the pre-screening set do not appear fully in the number
 \emph{ICGC Fosc}, \emph{ICGC Gris} and \emph{Americana} rely on legacy style properties in \mlprop{\texttt{text-field}} handling that MapLibre silently migrates in a way that changes rendering in a sublte, but incorrect way.
 This means that due to missing checks, layer merging and all follow-on operations would result in incorrect results.
 
-\emph{OSM-Liberty} triggered an \ac{MLT} rendering fault at certain viewports during the cross-style run.
+\emph{OSM-Liberty} triggered an \ac{MLT} rendering fault at certain viewports during the cross-style run. These four viewports are thus excluded from the reported tile rewrite results.
 \end{tcolorbox}
 
 \section{Experiment 1: Expression-Level Optimisations}\label{sec:exp_expressions}
