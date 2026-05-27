@@ -42,16 +42,16 @@ Under gzip, the reductions are \qty{8.3}{\percent} and \qty{5.9}{\percent} respe
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/waterfall_loadMs.pdf}
-    \caption{Cumulative ablation waterfall for load time. Each bar shows the median change introduced by adding one expression pass on top of all previous passes, aggregated across all 18 scenarios and 15 benchmark styles. Default stripping (step~6) is the single largest contributor to raw style size (\qty{-5.5}{\percent}); the aggregate load-time improvement across all expression passes is modest (\qty{-1.8}{\percent}), with expression passes serving primarily as enablers for downstream structural and data-level passes.}
+    \caption{Cumulative ablation waterfall for load time. Each bar shows the median change introduced by adding one expression pass on top of all previous passes, aggregated across all 18 scenarios and 15 benchmark styles. We can see that in the extremes, unary simplifcation has the largest effect; the aggregate load-time improvement across all expression passes is modest (\qty{-5.8}{\percent}), with expression passes serving primarily as enablers for downstream structural and data-level passes.}
     \label{fig:waterfall_loadMs}
 \end{figure}
 
-%\begin{figure}[htbp]
-%    \centering
-%    \includegraphics[width=\linewidth]{figures/marginal_loadMs.pdf}
-%    \caption{Marginal contribution of each expression pass to load time reduction}
-%    \label{fig:marginal_loadMs}
-%\end{figure}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{figures/marginal_loadMs.pdf}
+    \caption{Marginal contribution of each expression pass to load time reduction shows the effect of each of the passes cleanly. }
+    \label{fig:marginal_loadMs}
+\end{figure}
 
 \subsection{Discussion}\label{sub:expr_discussion}
 
@@ -65,8 +65,7 @@ Fixpoint iteration amplifies the effect: a single successful fold can cascade th
 \paragraph{Size reduction vs.\ rendering improvement}
 Passes that primarily reduce serialized style size - default stripping, color minification - show smaller rendering improvements but contribute meaningfully to transfer size under compression.
 This primarily benefits time to first render (discussed in \cref{sub:combined_marginal}).
-We note the distinction between raw, gzip, and Brotli reductions:
-some rewrites (e.g., \mlop{any}$\to$\mlop{in}) increase raw token count while decreasing compressed size, because the repetitive structure of \mlop{in} operand lists compresses well.
+We note the distinction between raw, gzip, and Brotli reductions: some rewrites (e.g., \texttt{any}$\to$\texttt{in}) increase raw token count while decreasing compressed size, because the repetitive structure of \texttt{in} operand lists compresses well.
 
 \paragraph{Selectivity reordering is empirically unmeasured}
 Selectivity reordering (step~16) is a theoretically motivated heuristic whose isolated rendering impact we did not measure in this evaluation.
@@ -75,8 +74,8 @@ We acknowledge the independence assumption underlying the selectivity estimates 
 
 \paragraph{Downstream interaction with the data pipeline}
 Beyond their direct rendering benefit, expression-level simplifications feed into the data-level pipeline evaluated in \cref{sec:exp_mlt}.
-Each folded filter predicate and each pruned \mlop{match} arm reduces the set of property names and categorical values that the tile pruning advisory (\cref{sub:tile_shaving}) must track; each filter reduced to \mlval{false} enables dead layer elimination in the structural phase, which removes that layer's entire property footprint from the advisory.
-Simpler filters are also more amenable to the advisory's static analysis, because canonical forms (e.g., a direct \texttt{[\mlop{"=="},~\ldots]} rather than a double-negated comparison) expose referenced property values more readily.
+Each folded filter predicate and each pruned \texttt{match} arm reduces the set of property names and categorical values that the tile pruning advisory (\cref{sub:tile_shaving}) must track; each filter reduced to \texttt{false} enables dead layer elimination in the structural phase, which removes that layer's entire property footprint from the advisory.
+Simpler filters are also more amenable to the advisory's static analysis, because canonical forms (e.g., a direct \texttt{["==",~\ldots]} rather than a double-negated comparison) expose referenced property values more readily.
 The magnitude of this interaction is quantified in \cref{sec:exp_mlt}.
 
 
@@ -94,7 +93,7 @@ The magnitude of this interaction is quantified in \cref{sec:exp_mlt}.
 
 Several pairwise dependencies between structural passes shape what we measure in the cumulative ablation in \cref{sub:structural_results}.
 Expression passes must run first so that metadata refinement sees zoom predicates in their canonical form; dead elimination must precede layer merging because a dead layer between two otherwise-mergeable live layers blocks the merge.
-Similarly, metadata refinement must precede cleanup so the residual \mlval{true} filters and zero-opacity layers it produces can be removed.
+Similarly, metadata refinement must precede cleanup so the residual \texttt{true} filters and zero-opacity layers it produces can be removed.
 We give the full ordering rationale in \cref{sub:pipeline}; the practical consequence here is that the marginal contribution of each later pass in the ablation will reflect work that an earlier pass enabled, not just the pass itself.
 
 \subsection{Evaluation}\label{sub:structural_evaluation}
@@ -124,7 +123,7 @@ We report the effects on performance generalized in \cref{sub:cross_results} (ov
 \end{figure}
 
 The magnitude of structural improvement is style-dependent.
-Fiord's layer count drops from 48 to 46 (\qty{-4.2}{\percent}), with dead elimination removing one layer (step~9) and cleanup removing another (step~14) after metadata refinement lifts zoom predicates that leave a filter as \mlval{true} on an invisible layer.
+Fiord's layer count drops from 48 to 46 (\qty{-4.2}{\percent}), with dead elimination removing one layer (step~9) and cleanup removing another (step~14) after metadata refinement lifts zoom predicates that leave a filter as \texttt{true} on an invisible layer.
 Liberty's layer count drops from 111 to 107 (\qty{-3.6}{\percent}), concentrated entirely in the layer-merge step (step~15), which merges four pairs of adjacent layers with compatible filters.
 In terms of gzip transfer size, Fiord benefits substantially (\qty{-14.1}{\percent} from baseline to step~15), while Liberty sees a modest \qty{-4.9}{\percent}, with layer merging slightly \emph{increasing} gzip by \qty{36}{\byte} due to the larger merged filter expressions.
 AST complexity tells a similar per-style story: Fiord's expression nodes drop by \qty{36.8}{\percent} (\num{1610}$\to$\num{1018}), whereas Liberty's drop by \qty{10.5}{\percent} (\num{3537}$\to$\num{3167}).
@@ -138,19 +137,19 @@ The interaction between the two is synergistic: styles with many narrowly-filter
 
 \paragraph{Layer merging can trade raw size for runtime savings}
 Layer merging does not always reduce the raw serialized byte count.
-A merged layer replaces $k$ small filter expressions with a single \mlop{match}-keyed filter and $k$-armed \mlop{match} expressions for every differing paint property, which for small $k$ can produce a slightly larger textual representation than the sum of the originals.
+A merged layer replaces $k$ small filter expressions with a single \texttt{match}-keyed filter and $k$-armed \texttt{match} expressions for every differing paint property, which for small $k$ can produce a slightly larger textual representation than the sum of the originals.
 The per-style ablation tables in \cref{sec:app_per_style} show one such case (OSM Liberty: \num{27.6}$\to$\qty{28.3}{\kilo\byte} after layer merging), where the raw count creeps up while the layer count drops from 105 to 103.
 This was uncomfortable when we first saw it in the runs, since the intuition is that merging should shrink the style, but raw byte count turns out to be a proxy for parse time and transfer cost rather than for rendering cost, which is driven by layer count and per-frame draw calls.
 The merged layer is still cheaper to render even when its serialized form is bigger, and the gzip and Brotli columns of the same table show the compressed size essentially unchanged, so the raw increase disappears under realistic wire compression anyway.
 
 \paragraph{Metadata refinement has indirect effects}
 Metadata refinement does not directly reduce the number of layers or the complexity of expressions; instead, it enables the renderer to skip layers at zoom levels where they are invisible.
-The rendering improvement is therefore zoom-dependent: at overview zoom levels (where many layers are filtered out by tightened \mlprop{minzoom}), the improvement is large; at street-level zoom (where most layers are active), the improvement is smaller.
+The rendering improvement is therefore zoom-dependent: at overview zoom levels (where many layers are filtered out by tightened \texttt{minzoom}), the improvement is large; at street-level zoom (where most layers are active), the improvement is smaller.
 Paint-based refinement captures a class of optimizations that are invisible to filter analysis - a layer whose opacity interpolates from~0 at zoom~12 is indistinguishable from a fully visible layer when examining only the filter.
 
 \paragraph{Stats-driven passes amplify style-only passes}
 The marginal contribution of stats-driven dead elimination (step~10) over non-stats dead elimination (step~9) quantifies the value of tile statistics for style optimizations.
-Styles that use broad \mlprop{source-layer} references benefit most, as statistics reveal which geometry types and property values actually exist.
+Styles that use broad \texttt{source-layer} references benefit most, as statistics reveal which geometry types and property values actually exist.
 For styles that already have precise filters (e.g., hand-tuned Americana), the marginal gain is smaller.
 
 \paragraph{Symbol layer exclusion}
@@ -301,7 +300,7 @@ To separate the contribution of the multi-strategy competition (this work) from 
           the \ac{MLT}-Rust column reports the Rust encoder developed in this thesis}
         \label{tab:mvt_mlt_comparison}
     \end{subfigure}
-\caption{Encoder comparison for the Germany OpenMapTiles tileset (zoom~0-14, \num{256516} tiles). MLT-Rust (this work) achieves \qty{28.3}{\percent} smaller total size than the MLT-Java baseline under no wire compression; the Java encoder drifts above \ac{MVT} size at several zoom levels under Brotli/zstd, whereas the Rust encoder remains below \ac{MVT} throughout.}
+\caption[Encoder comparison: per-zoom breakdown and total tileset size]{Encoder comparison for the Germany OpenMapTiles tileset (zoom~0-14, \num{256516} tiles). MLT-Rust (this work) achieves \qty{28.3}{\percent} smaller total size than the MLT-Java baseline under no wire compression; the Java encoder drifts above \ac{MVT} size at several zoom levels under Brotli/zstd, whereas the Rust encoder remains below \ac{MVT} throughout.}
 \label{fig:encoder_comparison}
 \end{figure}
 
@@ -610,7 +609,7 @@ Subsequent passes produce smaller incremental reductions; we measure the total p
 {\step & \pass\ifnum\dagger=1\textsuperscript{$\dagger$}\fi &
  \fmtdelta{\deltaRaw} & \fmtdelta{\deltaGzip} & \fmtdelta{\deltaBrotli} &
  \fmtdelta{\deltaLoad} & \fmtdeltaint{\deltaLayers}}%
-\caption{Marginal contribution of each ablation step to style size (raw, gzip, Brotli), load time, and layer count. Values are percentage of baseline, medians across 14 styles and 18 scenarios. Data-level tile shaving dominates transfer-size and load-time metrics; style-level passes contribute primarily to parse-time and style-size reductions and serve as enablers for the data-level pipeline.}
+\caption{Marginal contribution of each ablation step to style size (raw, gzip, Brotli), load time, and layer count; values are percentage of baseline, medians across 14 styles and 18 scenarios. Data-level tile shaving dominates transfer-size and load-time metrics; style-level passes contribute primarily to parse-time and style-size reductions and serve as enablers for the data-level pipeline.}
 \label{tab:marginal_contribution}
 \end{table}
 
@@ -765,9 +764,9 @@ Tail metrics (p99 frame time, jank count) are particularly sensitive to sample s
 The full-pipeline ablation performs thousands of pairwise comparisons across metrics, styles, scenarios, and ablation steps; we apply no multiple-comparisons correction (Bonferroni, Benjamini-Hochberg), so individual per-cell \enquote{significant} differences should not be read as hypothesis tests, only as descriptive summaries.
 
 \begin{chaptersummary}
-Each pass family behaves differently in isolation: expression passes barely move load time on their own but enable the downstream passes; the structural family's gains come almost entirely from dead-layer elimination and layer merging; and on the data side, \textbf{tile shaving dominates} with a \textbf{$-$71.5\,\% median load reduction}, while the \ac{MLT} encoder's per-stream strategy competition - not the format itself - delivers a further \qty{28}{\percent} tile-volume cut over the Java reference (\qty{12}{\percent} over gzip-compressed \ac{MVT}).
-Composed end-to-end on Fiord and Liberty, the full pipeline \textbf{reduces load time by 71--75\,\% and improves \ac{FPS} by 162--213\,\%}, but the cross-family interaction is \textbf{additive rather than synergistic}.
-The static passes generalize: a \textbf{median 44.5\,\% raw style reduction across 13 unseen styles}, with none regressed.
+Each pass family behaves differently in isolation: expression passes barely move load time on their own but enable the downstream passes; the structural family's gains come almost entirely from dead-layer elimination and layer merging; and on the data side, \textbf{tile shaving dominates} with a \qty{-71.5}{\percent} \textbf{median load reduction}, while the \ac{MLT} encoder's per-stream strategy competition - not the format itself - delivers a further \qty{28}{\percent} tile-volume cut over the Java reference (\qty{12}{\percent} over gzip-compressed \ac{MVT}).
+Composed end-to-end on Fiord and Liberty, the full pipeline reduces load time by \qtyrange{71}{75}{\percent} and improves \ac{FPS} by \qtyrange{162}{213}{\percent}, but the cross-family interaction is \textbf{additive rather than synergistic}.
+The static passes generalize: a \textbf{median \qty{44.5}{\percent} raw style reduction across 13 unseen styles}, with none regressed.
 
 The following chapter consolidates these findings into architectural claims, answers the research questions of \cref{sec:research_goals}, and identifies the directions left open.
 \end{chaptersummary}
