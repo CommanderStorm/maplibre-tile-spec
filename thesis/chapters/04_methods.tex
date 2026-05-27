@@ -368,10 +368,6 @@ We drew both examples from the optimizer's test suite.
 		
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
-			Before
-			
-			\vspace{2mm}
-			
 			\begin{lstlisting}[
 				style=maplibrestyle,
 				basicstyle=\ttfamily\scriptsize,
@@ -379,16 +375,16 @@ We drew both examples from the optimizer's test suite.
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-				["any",
-				["all",
-				["has","name"],
-				["==", ["get","class"], "road"]
-				],
-				["all",
-				["has","name"],
-				["==", ["get","class"], "rail"]
-				]
-				]
+["any",
+	["all",
+		["has","name"],
+		["==", ["get","class"], "road"]
+	],
+	["all",
+		["has","name"],
+		["==", ["get","class"], "rail"]
+	]
+]
 			\end{lstlisting}
 		\end{minipage}
 		\hfill
@@ -401,10 +397,6 @@ We drew both examples from the optimizer's test suite.
 		\hfill
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
-			After
-			
-			\vspace{2mm}
-			
 			\begin{lstlisting}[
 				style=maplibrestyle,
 				basicstyle=\ttfamily\scriptsize,
@@ -412,13 +404,13 @@ We drew both examples from the optimizer's test suite.
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-				["all",
-				["has", "name"],
-				["in",
-				["get", "class"],
-				["literal", ["road", "rail"]]
-				]
-				]
+["all",
+	["has", "name"],
+	["in",
+		["get", "class"],
+		["literal", ["road", "rail"]]
+	]
+]
 			\end{lstlisting}
 		\end{minipage}
 		
@@ -436,10 +428,6 @@ We drew both examples from the optimizer's test suite.
 		
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
-			Before
-			
-			\vspace{2mm}
-			
 			\begin{lstlisting}[
 				style=maplibrestyle,
 				basicstyle=\ttfamily\scriptsize,
@@ -447,14 +435,14 @@ We drew both examples from the optimizer's test suite.
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-				filter: ["==", ["get", "class"], "road"]
-				paint:
-				fill-color: ["match",
-				["get", "class"],
-				"road", "#333",
-				"rail", "#666",
-				"#999"
-				]
+filter: ["==", ["get", "class"], "road"]
+paint:
+fill-color: ["match",
+	["get", "class"],
+		"road", "#333",
+		"rail", "#666",
+		"#999"
+	]
 			\end{lstlisting}
 		\end{minipage}
 		\hfill
@@ -467,10 +455,6 @@ We drew both examples from the optimizer's test suite.
 		\hfill
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
-			After
-			
-			\vspace{2mm}
-			
 			\begin{lstlisting}[
 				style=maplibrestyle,
 				basicstyle=\ttfamily\scriptsize,
@@ -478,9 +462,9 @@ We drew both examples from the optimizer's test suite.
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-				filter: ["==", ["get", "class"], "road"]
-				paint:
-				fill-color: "#333"
+filter: ["==", ["get", "class"], "road"]
+paint:
+	fill-color: "#333"
 			\end{lstlisting}
 		\end{minipage}
 		
@@ -498,10 +482,6 @@ We drew both examples from the optimizer's test suite.
 		
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
-			Before
-			
-			\vspace{2mm}
-			
 			\begin{lstlisting}[
 				style=maplibrestyle,
 				basicstyle=\ttfamily\scriptsize,
@@ -509,10 +489,10 @@ We drew both examples from the optimizer's test suite.
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-				["all",
-				["==", ["get", "class"], "road"],
-				["==", ["get", "class"], "road"]
-				]
+["all",
+	["==", ["get", "class"], "road"],
+	["==", ["get", "class"], "road"]
+]
 			\end{lstlisting}
 		\end{minipage}
 		\hfill
@@ -525,10 +505,6 @@ We drew both examples from the optimizer's test suite.
 		\hfill
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
-			After
-			
-			\vspace{2mm}
-			
 			\begin{lstlisting}[
 				style=maplibrestyle,
 				basicstyle=\ttfamily\scriptsize,
@@ -536,7 +512,7 @@ We drew both examples from the optimizer's test suite.
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-				["==", ["get", "class"], "road"]
+["==", ["get", "class"], "road"]
 			\end{lstlisting}
 		\end{minipage}
 		
@@ -554,10 +530,6 @@ We drew both examples from the optimizer's test suite.
 		
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
-			Before
-			
-			\vspace{2mm}
-			
 			\begin{lstlisting}[
 				style=maplibrestyle,
 				basicstyle=\ttfamily\scriptsize,
@@ -565,10 +537,10 @@ We drew both examples from the optimizer's test suite.
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-				["all",
-				["!", ["==", ["get", "class"], "road"]],
-				["!", ["==", ["get", "class"], "rail"]]
-				]
+["all",
+	["!", ["==", ["get", "class"], "road"]],
+	["!", ["==", ["get", "class"], "rail"]]
+]
 			\end{lstlisting}
 		\end{minipage}
 		\hfill
@@ -581,10 +553,6 @@ We drew both examples from the optimizer's test suite.
 		\hfill
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
-			After
-			
-			\vspace{2mm}
-			
 			\begin{lstlisting}[
 				style=maplibrestyle,
 				basicstyle=\ttfamily\scriptsize,
@@ -592,10 +560,10 @@ We drew both examples from the optimizer's test suite.
 				aboveskip=0pt,
 				belowskip=0pt
 				]
-				["all",
-				["!=", ["get", "class"], "road"],
-				["!=", ["get", "class"], "rail"]
-				]
+["all",
+	["!=", ["get", "class"], "road"],
+	["!=", ["get", "class"], "rail"]
+]
 			\end{lstlisting}
 		\end{minipage}
 		
