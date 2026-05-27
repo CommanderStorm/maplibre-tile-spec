@@ -21,8 +21,8 @@ In \cref{sec:exp_cross_style} we test generalization by applying the full pipeli
   after skip=14pt
 ]
 \textbf{Corpus exclusions}\par\vspace{2pt}
-A handful of styles from the pre-screening set do not appear in the numbers below.
-\emph{BasemapDE Colour} and \emph{BasemapDE Topo} were not benchmarked within the project's time budget.
+A handful of styles from the pre-screening set do not appear fully in the numbers below.
+\emph{BasemapDE Colour} and \emph{BasemapDE Topo} were not benchmarked within the project's time budget due to contracting delays in getting access to the underlying data.
 \emph{ICGC Fosc} and \emph{ICGC Gris} rely on legacy style properties that MapLibre silently migrates in a way that changes rendering, so a fair before/after comparison was not possible.
 \emph{Americana} triggered an \ac{MLT} rendering fault at certain viewports during the cross-style run.
 All reported aggregates and per-style tables refer to the post-exclusion corpus.
@@ -540,7 +540,7 @@ Compact basemaps authored by experienced cartographers, which already use effici
 \item No single pass dominates across styles - the multi-pass design is what generalizes.
 \end{keytakeaways}
 
-\noindent In this section we present the full pipeline ablation - all 17 cumulative steps from baseline through tile rewriting, as defined in \cref{sub:ablation} - and analyze the interactions between optimizations categories.
+\noindent In this section we present the full pipeline ablation - all 19 cumulative steps from baseline through tile rewriting (and the plain-tile-shaving comparison configuration), as defined in \cref{sub:ablation} - and analyze the interactions between optimizations categories.
 The combined view is essential because the three optimization categories (expression, structural, data, introduced in \cref{sub:expression_optimizations,sub:structural_optimizations,sub:data_optimizations}) can interact:
 style-level dead elimination narrows tile pruning advisories, and metadata refinement enables more aggressive zoom-stop pruning in the data pipeline, though the aggregate data shows these interactions are additive rather than synergistic.
 
