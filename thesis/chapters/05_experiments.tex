@@ -42,7 +42,7 @@ Under gzip, the reductions are \qty{8.3}{\percent} and \qty{5.9}{\percent} respe
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/waterfall_loadMs.pdf}
-    \caption{Cumulative ablation waterfall for load time. Each bar shows the median change introduced by adding one expression pass on top of all previous passes, aggregated across all 18 scenarios and 15 benchmark styles. We can see that in the extremes, unary simplifcation has the largest effect; the aggregate load-time improvement across all expression passes is modest (\qty{-5.8}{\percent}), with expression passes serving primarily as enablers for downstream structural and data-level passes.}
+    \caption{Cumulative ablation waterfall for load time. Each bar shows the median change introduced by adding one expression pass on top of all previous passes, aggregated across all 18 scenarios and 15 benchmark styles. We can see that in the extremes, unary simplifcation has the largest effect; the aggregate load-time improvement across all expression passes is modest (\qty{-14.02}{\percent}), with expression passes serving primarily as enablers for downstream structural and data-level passes. For caveats, please see \cref{sub:expr_discussion}}
     \label{fig:waterfall_loadMs}
 \end{figure}
 
@@ -57,10 +57,14 @@ Under gzip, the reductions are \qty{8.3}{\percent} and \qty{5.9}{\percent} respe
 
 We draw several observations from the expression-level ablation.
 
-\paragraph{Constant folding dominates}
-Among the seven expression passes, constant folding and stats-driven constant folding consistently produce the largest marginal improvements.
-We expect this: reducing an expression to a literal eliminates all per-feature evaluation cost for that expression, whereas algebraic simplifications merely shorten the evaluation path.
-Fixpoint iteration amplifies the effect: a single successful fold can cascade through nested expressions, collapsing entire subtrees in subsequent iterations.
+\paragraph{Unary simplification dominates}
+Some styles are implemented in a not optimal way and thus allow a very high unary simplification gain.
+The gain of this simplification is non-representative and biases the results to look better than they are overall.
+Only two of the style familys gain significant speedups, both of the times through what we think are typos in how the style is written.
+
+We expect this: reducing an expression tree to a literal eliminates all per-feature evaluation cost for that expression, whereas algebraic simplifications merely shorten the evaluation path.
+For some styles this does not hold and unary simplification is more effective due to expensive string index handling being collapsed into senatically identical, but faster variants.s
+Fixpoint iteration amplifies the effect: a single successful simplfication can cascade through nested expressions, collapsing entire subtrees in subsequent iterations.
 
 \paragraph{Size reduction vs.\ rendering improvement}
 Passes that primarily reduce serialized style size - default stripping, color minification - show smaller rendering improvements but contribute meaningfully to transfer size under compression.
