@@ -710,9 +710,9 @@ Tighter source bounds allow the tile server (or client-side tile manager) to ski
         check/.style={font=\scriptsize, text=black!90},
     ]
         % Input layers (left)
-        \node[layer]   (l0) {line\\ \texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"motorway"}}\\\texttt{\mlprop{line-color}: \mlval{\#e892a2}}\\\texttt{\mlprop{line-width}: \mlval{3}}};
-        \node[layer, below=0.5cm of l0] (l1) {line\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"primary"}}\\\texttt{\mlprop{line-color}: \mlval{\#fcd6a4}}\\\texttt{\mlprop{line-width}: \mlval{2}}};
-        \node[layer, below=0.5cm of l1] (l2) {line\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"secondary"}}\\\texttt{\mlprop{line-color}: \mlval{\#f7fabf}}\\\texttt{\mlprop{line-width}: \mlval{1.5}}};
+        \node[layer]   (l0) {\mlval{line}\\ \texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"motorway"}}\\\texttt{\mlprop{line-color}: \mlval{\#e892a2}}\\\texttt{\mlprop{line-width}: \mlval{3}}};
+        \node[layer, below=0.5cm of l0] (l1) {\mlval{line}\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"primary"}}\\\texttt{\mlprop{line-color}: \mlval{\#fcd6a4}}\\\texttt{\mlprop{line-width}: \mlval{2}}};
+        \node[layer, below=0.5cm of l1] (l2) {\mlval{line}\\\texttt{\mlprop{filter}: [\mlop{"get"}, \mlval{"class"}] == \mlval{"secondary"}}\\\texttt{\mlprop{line-color}: \mlval{\#f7fabf}}\\\texttt{\mlprop{line-width}: \mlval{1.5}}};
 
         \node[above=0.15cm of l0, font=\small\bfseries] {Input: 3 adjacent line layers};
 
@@ -734,7 +734,7 @@ Tighter source bounds allow the tile server (or client-side tile manager) to ski
 
         % Output (right)
         \node[merged, right=1.4cm of p2, text width=6.0cm] (out) {%
-            \textbf{Merged line layer}\\[3pt]
+            \textbf{Merged \mlval{line} layer}\\[3pt]
             \texttt{\mlprop{filter}:}\\
             \texttt{~~[\mlop{"match"},\,[\mlop{"get"},\,\mlval{"class"}],}\\
             \texttt{~~~[\mlval{"motorway"},\mlval{"primary"},\mlval{"secondary"}],}\\
