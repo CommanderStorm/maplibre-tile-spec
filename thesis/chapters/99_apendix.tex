@@ -650,6 +650,48 @@ Python                 & \texttt{requires-python >= 3.11}         & \texttt{3.13
 \label{tab:bench_toolchains}
 \end{table}
 
+
+
+\subsection{Browser and Headless Render Harness}\label{app:bench_browser}
+
+The rendering scenarios (\cref{sub:scenarios}) drive a headless Chromium instance via Puppeteer; the visual-correctness check (\cref{sec:visual_correctness}) uses MapLibre~GL~JS's Node-side software rasteriser with \texttt{pixelmatch}.
+The bench harness disables VSync and the browser's frame-rate cap so that frame-time deltas remain visible above the \qty{16.67}{\milli\second} ceiling implied by a 60\,Hz display; this is the reason chapter~5 reports rates well above 2000\,FPS for low-cost styles (\cref{sec:threats}).
+The renderer-process limit is set to half the logical CPU count ($N_\mathrm{cpu}/2 = 8$ for this host) to reduce scheduler contention between the browser, the static-tile server, and the measurement harness running on the same machine.
+
+\begin{table}[htbp]
+	\centering
+	\begin{tabular}{@{}l p{0.65\textwidth}@{}}
+		\toprule
+		\textbf{Component} & \textbf{Value} \\
+		\midrule
+		Browser engine               & Google Chrome \texttt{137.0.7151.68} (headless) \\
+		Puppeteer                    & \texttt{\textasciicircum24.0.0} \\
+		MapLibre~GL~JS (bench)         & \texttt{\textasciicircum6.0.0-9} \\
+		MapLibre~GL~JS (visual check)  & \texttt{\textasciicircum5.19.0} \\
+		\texttt{pixelmatch}          & \texttt{\textasciicircum7.1.0} \\
+		\texttt{pngjs}               & \texttt{\textasciicircum7.0.0} \\
+		Graphics backend             & ANGLE on Vulkan (\texttt{--use-angle=vulkan}); see \cref{tab:bench_os} \\
+		Device pixel ratio           & \texttt{1.0} (matches \cref{sec:visual_correctness}) \\
+		Launch flags                 & \raggedright\arraybackslash
+		\texttt{--enable-gpu},\allowbreak\
+		\texttt{--enable-webgl},\allowbreak\
+		\texttt{--ignore-gpu-blocklist},\allowbreak\
+		\texttt{--enable-unsafe-swiftshader},\allowbreak\
+		\texttt{--use-angle=vulkan},\allowbreak\
+		\texttt{--enable-features=Vulkan,UseSkiaRenderer},\allowbreak\
+		\texttt{--disable-frame-rate-limit},\allowbreak\
+		\texttt{--disable-gpu-vsync},\allowbreak\
+		\texttt{--renderer-process-limit=$N_\mathrm{cpu}/2$},\allowbreak\
+		\texttt{--disable-background-networking},\allowbreak\
+		\texttt{--disable-background-timer-throttling},\allowbreak\
+		\texttt{--disable-backgrounding-occluded-windows} \\
+		\bottomrule
+	\end{tabular}
+	\caption{Headless browser harness driving the rendering scenarios. The bench harness produces the timings reported in \cref{ch:experiments}; the separate visual-check harness is used offline for \texttt{pixelmatch}-based correctness validation.}
+	\label{tab:bench_browser}
+\end{table}
+
+
 \subsection{Key Library Versions}\label{app:bench_libs}
 
 \Cref{tab:bench_libs} lists the most load-bearing dependencies of each codebase exercised in the experiments.
@@ -693,45 +735,4 @@ Analysis harness (Python)              & \texttt{pandas}                  & \tex
 \end{tabular}
 \caption{Pinned versions of the most load-bearing dependencies, grouped by codebase. Constraints use the manifest's native syntax.}
 \label{tab:bench_libs}
-\end{table}
-
-\clearpage
-
-\subsection{Browser and Headless Render Harness}\label{app:bench_browser}
-
-The rendering scenarios (\cref{sub:scenarios}) drive a headless Chromium instance via Puppeteer; the visual-correctness check (\cref{sec:visual_correctness}) uses MapLibre~GL~JS's Node-side software rasteriser with \texttt{pixelmatch}.
-The bench harness disables VSync and the browser's frame-rate cap so that frame-time deltas remain visible above the \qty{16.67}{\milli\second} ceiling implied by a 60\,Hz display; this is the reason chapter~5 reports rates well above 2000\,FPS for low-cost styles (\cref{sec:threats}).
-The renderer-process limit is set to half the logical CPU count ($N_\mathrm{cpu}/2 = 8$ for this host) to reduce scheduler contention between the browser, the static-tile server, and the measurement harness running on the same machine.
-
-\begin{table}[htbp]
-\centering
-\begin{tabular}{@{}l p{0.65\textwidth}@{}}
-\toprule
-\textbf{Component} & \textbf{Value} \\
-\midrule
-Browser engine               & Google Chrome \texttt{137.0.7151.68} (headless) \\
-Puppeteer                    & \texttt{\textasciicircum24.0.0} \\
-MapLibre~GL~JS (bench)         & \texttt{\textasciicircum6.0.0-9} \\
-MapLibre~GL~JS (visual check)  & \texttt{\textasciicircum5.19.0} \\
-\texttt{pixelmatch}          & \texttt{\textasciicircum7.1.0} \\
-\texttt{pngjs}               & \texttt{\textasciicircum7.0.0} \\
-Graphics backend             & ANGLE on Vulkan (\texttt{--use-angle=vulkan}); see \cref{tab:bench_os} \\
-Device pixel ratio           & \texttt{1.0} (matches \cref{sec:visual_correctness}) \\
-Launch flags                 & \raggedright\arraybackslash
-                                \texttt{--enable-gpu},\allowbreak\
-                                \texttt{--enable-webgl},\allowbreak\
-                                \texttt{--ignore-gpu-blocklist},\allowbreak\
-                                \texttt{--enable-unsafe-swiftshader},\allowbreak\
-                                \texttt{--use-angle=vulkan},\allowbreak\
-                                \texttt{--enable-features=Vulkan,UseSkiaRenderer},\allowbreak\
-                                \texttt{--disable-frame-rate-limit},\allowbreak\
-                                \texttt{--disable-gpu-vsync},\allowbreak\
-                                \texttt{--renderer-process-limit=$N_\mathrm{cpu}/2$},\allowbreak\
-                                \texttt{--disable-background-networking},\allowbreak\
-                                \texttt{--disable-background-timer-throttling},\allowbreak\
-                                \texttt{--disable-backgrounding-occluded-windows} \\
-\bottomrule
-\end{tabular}
-\caption{Headless browser harness driving the rendering scenarios. The bench harness produces the timings reported in \cref{ch:experiments}; the separate visual-check harness is used offline for \texttt{pixelmatch}-based correctness validation.}
-\label{tab:bench_browser}
 \end{table}
