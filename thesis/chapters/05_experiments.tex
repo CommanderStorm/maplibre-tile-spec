@@ -141,7 +141,7 @@ The interaction between the two is synergistic: styles with many narrowly-filter
 
 \paragraph{Layer merging can trade raw size for runtime savings}
 Layer merging does not always reduce the raw serialized byte count.
-A merged layer replaces $k$ small filter expressions with a single \texttt{match}-keyed filter and $k$-armed \texttt{match} expressions for every differing paint property, which for small $k$ can produce a slightly larger textual representation than the sum of the originals.
+A merged layer replaces $k$ small filter expressions with a single \mlop{\texttt{match}}-keyed filter and $k$-armed \mlop{\texttt{match}} expressions for every differing paint property, which for small $k$ can produce a slightly larger textual representation than the sum of the originals.
 The per-style ablation tables in \cref{sec:app_per_style} show one such case (OSM Liberty: \num{27.6}$\to$\qty{28.3}{\kilo\byte} after layer merging), where the raw count creeps up while the layer count drops from 105 to 103.
 This was uncomfortable when we first saw it in the runs, since the intuition is that merging should shrink the style, but raw byte count turns out to be a proxy for parse time and transfer cost rather than for rendering cost, which is driven by layer count and per-frame draw calls.
 The merged layer is still cheaper to render even when its serialized form is bigger, and the gzip and Brotli columns of the same table show the compressed size essentially unchanged, so the raw increase disappears under realistic wire compression anyway.
@@ -536,14 +536,14 @@ The metric is doing what it should - flagging fragile frames - but it is reading
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\linewidth]{figures/heatmap_loadMs.pdf}
+	\includegraphics[height=\pageheight]{figures/heatmap_loadMs.pdf}
 	\caption{Heatmap of load time across scenarios (rows) and ablation steps (columns); darker cells indicate greater improvement relative to baseline. Urban, tile-dense scenarios (New York, Tokyo, Paris) show the largest absolute improvements; structural passes produce concentrated gains where dead elimination or layer merging applies.}
 	\label{fig:heatmap_loadMs}
 \end{figure}
 
 \begin{figure}[tbph]
 	\centering
-	\includegraphics[width=\linewidth]{figures/heatmap_jankCount}
+	\includegraphics[height=\pageheight]{figures/heatmap_jankCount}
 	\caption{
 		Heatmap of how jank frames, i.e. frames times that are much slower than the sorrounding frame times, happen.
 		Due to the increased FPS, smaller variations like \ac{GC}-pauses make this metric go up as FPS is higher.
