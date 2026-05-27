@@ -893,7 +893,7 @@ First, it reduces the per-feature storage cost from a variable-length string (wi
 Second, the frequency ordering means that common values receive small indices, which compress well under \ac{VarInt} and delta encoding.
 
 The optimizer rewrites the corresponding style expressions to reference the integer indices rather than the original string values.
-For example, the optimizer rewrites a filter \texttt{[\mlop{"=="},~[\mlop{"get"},~\mlval{"class"}],~\mlval{"primary"}]} to \texttt{[\mlop{"=="},~[\mlop{"get"},~\mlval{"class"}],~\mlval{0}]} if \texttt{\mlval{"primary"}} is the most frequent value.
+For example, the optimizer rewrites a filter \texttt{[\mlop{"=="},~[\mlop{"get"},~\mlval{"class"}], \mlval{"primary"}]} to \texttt{[\mlop{"=="},~[\mlop{"get"},~\mlval{"class"}],~\mlval{0}]} if \texttt{\mlval{"primary"}} is the most frequent value.
 This rewriting ensures that the optimized style remains consistent with the transformed tile data.
 Because interned tiles encode property values as style-specific integer indices rather than original strings, they are only compatible with the paired optimized style; other consumers (debugging tools, alternative renderers) would see opaque integers.
 We therefore treat interning as an optional pipeline stage that can be disabled for multi-consumer deployments where tiles must remain self-describing.
