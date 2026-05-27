@@ -360,58 +360,247 @@ We drew both examples from the optimizer's test suite.
 \begin{figure}[ht]
 	\centering
 	
-	\begin{minipage}[t]{0.42\linewidth}
+	% =========================================================
+	% A
+	% =========================================================
+	\begin{subfigure}[t]{\linewidth}
 		\centering
-		Before
 		
-		\vspace{2mm}
+		\begin{minipage}[t]{0.42\linewidth}
+			\centering
+			Before
+			
+			\vspace{2mm}
+			
+			\begin{lstlisting}[
+				style=maplibrestyle,
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+["any",
+	["all",
+		["has","name"],
+		["==", ["get","class"], "road"]
+	],
+	["all",
+		["has","name"],
+		["==", ["get","class"], "rail"]
+	]
+]
+			\end{lstlisting}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.08\linewidth}
+			\centering
+			\vspace{2.7cm}
+			{\Huge$\Longrightarrow$}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.42\linewidth}
+			\centering
+			After
+			
+			\vspace{2mm}
+			
+			\begin{lstlisting}[
+				style=maplibrestyle,
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+["all",
+	["has", "name"],
+	["in",
+		["get", "class"],
+		["literal", ["road", "rail"]]
+	]
+]
+			\end{lstlisting}
+		\end{minipage}
 		
-		\begin{lstlisting}[
-			style=maplibrestyle,
-			basicstyle=\ttfamily\scriptsize,
-			frame=single
-			]
-			["any",
-			["all",
-			["has","name"],
-			["==", ["get","class"], "road"]
-			],
-			["all",
-			["has","name"],
-			["==", ["get","class"], "rail"]
-			]
-			]
-		\end{lstlisting}
-	\end{minipage}
-	\hfill
-	\begin{minipage}[t]{0.08\linewidth}
-		\centering
-		\vspace{2.8cm}
-		{\Huge$\Longrightarrow$}
-	\end{minipage}
-	\hfill
-	\begin{minipage}[t]{0.42\linewidth}
-		\centering
-		After
-		
-		\vspace{2mm}
-		
-		\begin{lstlisting}[
-			style=maplibrestyle,
-			basicstyle=\ttfamily\scriptsize,
-			frame=single
-			]
-			["all",
-			["has", "name"],
-			["in",
-			["get", "class"],
-			["literal", ["road", "rail"]]
-			]
-			]
-		\end{lstlisting}
-	\end{minipage}
+		\caption{Expression rewriting via distributive factoring and \mlop{any}$\to$\mlop{in} promotion.}
+		\label{fig:expr_a}
+	\end{subfigure}
 	
-	\caption{Expression rewriting via distributive factoring and \mlop{any}$\to$\mlop{in} promotion.}
+	\vspace{4mm}
+	
+	% =========================================================
+	% B
+	% =========================================================
+	\begin{subfigure}[t]{\linewidth}
+		\centering
+		
+		\begin{minipage}[t]{0.42\linewidth}
+			\centering
+			Before
+			
+			\vspace{2mm}
+			
+			\begin{lstlisting}[
+				style=maplibrestyle,
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+filter: ["==", ["get", "class"], "road"]
+paint:
+	fill-color: ["match",
+		["get", "class"],
+		"road", "#333",
+		"rail", "#666",
+		"#999"
+	]
+			\end{lstlisting}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.08\linewidth}
+			\centering
+			\vspace{2.2cm}
+			{\Huge$\Longrightarrow$}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.42\linewidth}
+			\centering
+			After
+			
+			\vspace{2mm}
+			
+			\begin{lstlisting}[
+				style=maplibrestyle,
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+filter: ["==", ["get", "class"], "road"]
+paint:
+	fill-color: "#333"
+			\end{lstlisting}
+		\end{minipage}
+		
+		\caption{Constant propagation simplifies rendering expressions.}
+		\label{fig:expr_b}
+	\end{subfigure}
+	
+	\vspace{4mm}
+	
+	% =========================================================
+	% C
+	% =========================================================
+	\begin{subfigure}[t]{\linewidth}
+		\centering
+		
+		\begin{minipage}[t]{0.42\linewidth}
+			\centering
+			Before
+			
+			\vspace{2mm}
+			
+			\begin{lstlisting}[
+				style=maplibrestyle,
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+["all",
+	["==", ["get", "class"], "road"],
+	["==", ["get", "class"], "road"]
+]
+			\end{lstlisting}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.08\linewidth}
+			\centering
+			\vspace{1.7cm}
+			{\Huge$\Longrightarrow$}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.42\linewidth}
+			\centering
+			After
+			
+			\vspace{2mm}
+			
+			\begin{lstlisting}[
+				style=maplibrestyle,
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+["==", ["get", "class"], "road"]
+			\end{lstlisting}
+		\end{minipage}
+		
+		\caption{Duplicate predicate elimination via subsumption.}
+		\label{fig:expr_c}
+	\end{subfigure}
+	
+	\vspace{4mm}
+	
+	% =========================================================
+	% D
+	% =========================================================
+	\begin{subfigure}[t]{\linewidth}
+		\centering
+		
+		\begin{minipage}[t]{0.42\linewidth}
+			\centering
+			Before
+			
+			\vspace{2mm}
+			
+			\begin{lstlisting}[
+				style=maplibrestyle,
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+["all",
+	["!", ["==", ["get", "class"], "road"]],
+	["!", ["==", ["get", "class"], "rail"]]
+]
+			\end{lstlisting}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.08\linewidth}
+			\centering
+			\vspace{2cm}
+			{\Huge$\Longrightarrow$}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.42\linewidth}
+			\centering
+			After
+			
+			\vspace{2mm}
+			
+			\begin{lstlisting}[
+				style=maplibrestyle,
+				basicstyle=\ttfamily\scriptsize,
+				frame=single,
+				aboveskip=0pt,
+				belowskip=0pt
+				]
+["all",
+	["!=", ["get", "class"], "road"],
+	["!=", ["get", "class"], "rail"]
+]
+			\end{lstlisting}
+		\end{minipage}
+		
+		\caption{Negation pushdown and operator normalization.}
+		\label{fig:expr_d}
+	\end{subfigure}
+	
+	\caption{Examples of expression-level transformations applied to representative style inputs. Each panel shows a before/after JSON example pair demonstrating how these optimisations interact.}
+	\label{fig:expr_before_after}
 \end{figure}
 
 \clearpage
