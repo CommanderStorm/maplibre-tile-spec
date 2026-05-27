@@ -1,16 +1,14 @@
 style,grp,baseGzip,optGzip,reduction,deltaLoad,deltaFps,isBold,midruleBefore
-bright,style_only,4230,4086,3.4,12.1,-0.1,0,0
-positron,style_only,2731,2520,7.7,4.3,-2.4,0,0
-dark-matter,style_only,2592,2471,4.7,-2.6,3.5,0,0
-osm-bright,style_only,4594,4395,4.3,9.3,-2.2,0,0
-klokan-basic,style_only,2375,2216,6.7,-2.3,-4.4,0,0
-toner,style_only,2395,2183,8.9,-8.7,3.6,0,0
-osm-liberty,style_only,3653,3493,4.4,5.9,-3.8,0,0
-stadia-outdoors,style_only,4543,4097,9.8,9.8,7.1,0,0
-ICGC fosc,style_only,10298,5482,46.8,0.3,8.4,0,0
-ICGC gris,style_only,14352,12041,16.1,-1.5,6.5,0,0
-BasemapDE topo,style_only,26429,23290,11.9,-5.8,5.6,0,0
-BasemapDE colour,style_only,25563,22433,12.2,-5.7,12.5,0,0
-fiord,full_pipeline,2550,2118,16.9,-71.0,161.9,0,1
-liberty,full_pipeline,3878,3600,7.2,-74.9,213.0,0,0
-Mean,mean,7870,6744,11.5,-9.3,29.2,1,1
+bright,style_only,4230,3979,5.9,-71.3,159.3,0,0
+positron,style_only,2731,2455,10.1,-70.5,160.3,0,0
+dark-matter,style_only,2653,2092,21.1,-68.6,141.7,0,0
+osm-bright,style_only,4747,3896,17.9,-73.7,160.3,0,0
+klokan-basic,style_only,2443,2080,14.9,-63.1,124.1,0,0
+toner,style_only,2434,1939,20.3,-64.5,99.6,0,0
+osm-liberty,style_only,3665,3241,11.6,-72.0,200.3,0,0
+stadia-outdoors,style_only,4443,3817,14.1,-72.0,153.4,0,0
+ICGC fosc,style_only,10298,10299,-0.0,-63.4,44.7,0,0
+ICGC gris,style_only,14352,14351,0.0,0.3,8.9,0,0
+fiord,full_pipeline,2550,2118,16.9,-67.5,148.1,0,1
+liberty,full_pipeline,3878,3600,7.2,-71.3,149.9,0,0
+Mean,mean,4868,4488,11.7,-63.1,129.2,1,1

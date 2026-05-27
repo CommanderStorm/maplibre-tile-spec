@@ -556,29 +556,197 @@ We ran the optimizer with all static passes enabled (no tile statistics).
 
 \begin{table}[htbp]
 \centering
-\begin{tblr}{
-  colspec = {l r r r r r},
-  rows = {font=\small},
-  row{1} = {font=\small\bfseries},
-}
+\small
+\begin{tabular}{l r r r r r}
 \toprule
-Style & Layers & Baseline (B) & Optimised (B) & $\Delta$ Raw (\%) & $\Delta$ Brotli (\%) \\
+\textbf{Style} & \textbf{Layers} & \textbf{Baseline (B)} & \textbf{Optimised (B)} & \textbf{$\Delta$ Raw (\%)} & \textbf{$\Delta$ Brotli (\%)} \\
 \midrule
-Empty Style          &   0 &        197 &        153 & \num{-22.3} & \num{-12.0} \\
-Americana            & 353 & \num{1155702} &    \num{504865} & \num{-56.3} &  \num{-2.5} \\
+Empty Style          &   0 &           197 &           153 & \num{-22.3} & \num{-12.0} \\
+Americana            & 353 & \num{1103650} &    \num{450242} & \num{-59.2} &  \num{-2.2} \\
 AWS Hybrid           & 125 &    \num{122022} &    \num{109088} & \num{-10.6} &  \num{-3.6} \\
 AWS Standard         & 160 &    \num{143294} &    \num{128055} & \num{-10.6} &  \num{-3.1} \\
-Dark Matter          &  47 &     \num{29642} &     \num{16455} & \num{-44.5} & \num{-27.2} \\
-LocationIQ Streets   & 119 &    \num{127889} &     \num{36788} & \num{-71.2} & \num{-27.5} \\
-MapTiler Basic       &  48 &     \num{23277} &     \num{11918} & \num{-48.8} & \num{-28.7} \\
-Toner                &  37 &     \num{31608} &     \num{11401} & \num{-63.9} & \num{-29.8} \\
-OSM Bright           & 128 &     \num{74188} &     \num{40431} & \num{-45.5} & \num{-29.5} \\
-OSM Liberty          & 105 &     \num{48300} &     \num{28328} & \num{-41.3} & \num{-22.8} \\
-Positron             &  50 &     \num{32736} &     \num{17794} & \num{-45.6} & \num{-29.9} \\
-Stadia Outdoors      & 110 &     \num{43208} &     \num{35372} & \num{-18.1} & \num{-20.7} \\
-Versatiles Colorful  & 309 &    \num{151692} &     \num{94009} & \num{-38.0} & \num{-18.1} \\
+Dark Matter          &  47 &     \num{29642} &     \num{18894} & \num{-36.3} &  \num{-9.8} \\
+LocationIQ Streets   & 119 &    \num{127889} &     \num{41253} & \num{-67.7} & \num{-17.0} \\
+MapTiler Basic       &  48 &     \num{23277} &     \num{15966} & \num{-31.4} &  \num{-2.1} \\
+Toner                &  37 &     \num{31608} &     \num{13435} & \num{-57.5} & \num{-13.9} \\
+OSM Bright           & 128 &     \num{74188} &     \num{49762} & \num{-32.9} & \num{-11.9} \\
+OSM Liberty          & 105 &     \num{48300} &     \num{33675} & \num{-30.3} & \num{-11.7} \\
+Positron             &  50 &     \num{32736} &     \num{20232} & \num{-38.2} & \num{-11.5} \\
+Stadia Outdoors      & 110 &     \num{43208} &     \num{41837} &  \num{-3.2} &  \num{-3.1} \\
+Versatiles Colorful  & 309 &    \num{151692} &    \num{114549} & \num{-24.5} &  \num{-0.7} \\
 \bottomrule
-\end{tblr}
+\end{tabular}
 \caption{Complete Maputnik generalization corpus with per-style size metrics.  Two catalog entries were unavailable at the time of measurement and are excluded; all remaining styles were optimized with static passes only (no tile statistics).}
 \label{tab:maputnik_full}
+\end{table}
+
+\clearpage
+\section{Benchmark Environment}\label{app:bench_env}
+
+All measurements in \cref{ch:experiments} were collected on a single workstation; preprocessing (\ac{MVT} pruning, \ac{MLT} encoding) and browser-based rendering used the same host.
+The tables below document the hardware, operating system, language toolchains, key library versions, and the headless browser harness used for the rendering scenarios.
+Pinned-from-source values are read from the build manifests of the encoder, optimiser\footnote{\url{https://github.com/CommanderStorm/maplibre-optimiser}, last accessed 2026-05-27}, and analysis harness; installed runtime versions and host hardware were captured from the bench machine on 2026-05-27.
+
+\subsection{Hardware}\label{app:bench_hw}
+
+\begin{table}[htbp]
+\centering
+% Right-hand column uses p{} so long descriptive cells wrap cleanly.
+\begin{tabular}{@{}l p{0.72\textwidth}@{}}
+\toprule
+\textbf{Component} & \textbf{Value} \\
+\midrule
+CPU           & AMD Ryzen~7 3700X (Zen~2, 8 cores / 16 threads, base 3.6\,GHz / boost 4.4\,GHz) \\
+RAM           & \qty{46}{\gibi\byte} usable (3$\times$\qty{16}{\gibi\byte} DDR4-3200 UDIMM, 1.2\,V; configured at 1600\,MT/s, 2 of 4 channels populated; mainboard supports up to \qty{128}{\gibi\byte}) \\
+GPU           & NVIDIA GeForce GTX 1660 SUPER (Turing TU116, 6\,GB GDDR6, discrete) \\
+Storage       & Corsair Force MP600 1\,TB NVMe M.2 SSD (PCIe Gen~4 x4, 931.5\,GiB usable) \\
+Form factor   & Desktop workstation (single host for both preprocessing and rendering) \\
+\bottomrule
+\end{tabular}
+\caption{Workstation hardware. The CPU/RAM/storage class is also reproduced in \cref{tab:preprocessing_cost} for the preprocessing wall-clock measurements.}
+\label{tab:bench_hardware}
+\end{table}
+
+\subsection{Operating System and Graphics Stack}\label{app:bench_os}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{@{}l p{0.72\textwidth}@{}}
+\toprule
+\textbf{Component} & \textbf{Value} \\
+\midrule
+Distribution    & Manjaro Linux (rolling, x86\_64) \\
+Kernel          & Linux \texttt{6.6.126-1-MANJARO} (SMP PREEMPT\_DYNAMIC, built 2026-02-16) \\
+glibc           & GNU libc \texttt{2.43} \\
+GPU driver      & NVIDIA proprietary \texttt{590.48.01} \\
+Vulkan loader   & API \texttt{1.4.325}, conformance \texttt{1.4.3.0}, driver \texttt{NVIDIA 590.48.1.0} \\
+ANGLE backend   & Vulkan (selected via Chromium \texttt{--use-angle=vulkan}; see \cref{app:bench_browser}) \\
+\bottomrule
+\end{tabular}
+\caption{Host operating system, kernel, and graphics driver stack. The ANGLE/Vulkan backend referenced in \cref{sec:threats} is configured at browser launch.}
+\label{tab:bench_os}
+\end{table}
+
+\subsection{Language Toolchains}\label{app:bench_toolchains}
+
+\begin{table}[htbp]
+\centering
+% Pinned-in-source values are derived from the Cargo workspace manifests
+% (rust/Cargo.toml, maplibre-optimiser/Cargo.toml), the Gradle libs catalogue
+% and per-module build.gradle files, and the Python harness pyproject.toml.
+\begin{tabular}{@{}l l l@{}}
+\toprule
+\textbf{Toolchain} & \textbf{Pinned in source} & \textbf{Installed on bench host} \\
+\midrule
+Rust (\texttt{rustc})  & MSRV \texttt{1.92}, edition \texttt{2024} & \texttt{1.94.1} (2026-03-25) \\
+Cargo                  & ships with the matched \texttt{rustc}    & \texttt{1.94.1} (2026-03-24) \\
+JDK                    & Gradle toolchain language version \texttt{21} & Eclipse Temurin \texttt{22.0.2+9} \\
+Gradle                 & \texttt{9.3.1} (wrapper)                 & uses pinned wrapper \\
+Node.js                & no engine pin                            & \texttt{v25.8.1} \\
+npm                    & ships with Node.js                       & \texttt{11.12.1} \\
+Python                 & \texttt{requires-python >= 3.11}         & \texttt{3.13.2} \\
+\bottomrule
+\end{tabular}
+\caption{Language toolchains used to build and run the encoder, optimiser, harness, and analysis scripts.}
+\label{tab:bench_toolchains}
+\end{table}
+
+\subsection{Key Library Versions}\label{app:bench_libs}
+
+\Cref{tab:bench_libs} lists the most load-bearing dependencies of each codebase exercised in the experiments.
+The \ac{MLT}-Rust crate \texttt{mlt-core} appears in two versions: the local workspace pins \texttt{0.7.0} (used to encode the tile corpora in \cref{sec:exp_mlt}) and the optimiser depends on the published \texttt{0.9} (used only for advisory generation in \cref{sub:tile_shaving}); this version skew is deliberate and reflects the published-vs-local split between the two repositories.
+
+\begin{table}[htbp]
+\centering \small
+\begin{tabular}{@{}l l l@{}}
+\toprule
+\textbf{Codebase / role} & \textbf{Library} & \textbf{Version} \\
+\midrule
+\acs{MLT}-Rust workspace               & \texttt{mlt-core} (local)        & \texttt{0.7.0} \\
+                                       & \texttt{mvt-reader}              & \texttt{2.3.0} \\
+                                       & \texttt{mbtiles}                 & \texttt{0.15} \\
+                                       & \texttt{martin-tile-utils}       & \texttt{0.6} \\
+                                       & \texttt{fastpfor}                & \texttt{0.9} \\
+                                       & \texttt{fsst-rs}                 & git \texttt{@pruning} \\
+                                       & \texttt{brotli}                  & \texttt{8} \\
+                                       & \texttt{zstd}                    & \texttt{0.13} \\
+                                       & \texttt{flate2}                  & \texttt{1} \\
+                                       & \texttt{criterion}               & \texttt{0.8} \\
+\midrule
+Optimiser workspace                    & \texttt{mlt-core} (published)    & \texttt{0.9} \\
+                                       & \texttt{maplibre\_native}        & \texttt{0.4.1} \\
+                                       & \texttt{prost} / \texttt{prost-build} & \texttt{0.13} \\
+                                       & \texttt{rusqlite} (bundled SQLite) & \texttt{0.34} \\
+                                       & \texttt{geojson}                 & \texttt{0.24.2} \\
+                                       & \texttt{image}                   & \texttt{0.25.9} \\
+                                       & \texttt{criterion}               & \texttt{0.8} \\
+\midrule
+\ac{MLT}-Java                          & \texttt{protobuf-java}           & \texttt{4.34.0} \\
+                                       & \texttt{JavaFastPFOR}            & \texttt{0.3.10} \\
+                                       & \texttt{jts-core}                & \texttt{1.20.0} \\
+                                       & \texttt{mapbox-vector-tile-java} & \texttt{25.1.0} \\
+                                       & \texttt{earcut4j}                & \texttt{3.0.0} \\
+                                       & \texttt{guava}                   & \texttt{33.5.0-jre} \\
+                                       & \texttt{hppc}                    & \texttt{0.10.0} \\
+                                       & \texttt{gson}                    & \texttt{2.13.2} \\
+                                       & \texttt{lombok}                  & \texttt{1.18.38} \\
+                                       & \texttt{jmh-core}                & \texttt{1.37} \\
+                                       & \texttt{junit-jupiter}           & \texttt{6.0.3} \\
+\midrule
+\ac{MLT}-TypeScript                    & \texttt{@maplibre/maplibre-gl-style-spec} & \texttt{\textasciicircum24.7.0} \\
+                                       & \texttt{pbf}                     & \texttt{\textasciicircum4.0.1} \\
+                                       & \texttt{earcut}                  & \texttt{\textasciicircum3.0.2} \\
+                                       & \texttt{@mapbox/point-geometry}  & \texttt{\textasciicircum1.1.0} \\
+                                       & \texttt{typescript}              & \texttt{\textasciicircum5.9.3} \\
+                                       & \texttt{vitest}                  & \texttt{\textasciicircum4.0.1} \\
+\midrule
+Analysis harness (Python)              & \texttt{numpy}                   & \texttt{>= 1.26} \\
+                                       & \texttt{pandas}                  & \texttt{>= 2.2} \\
+                                       & \texttt{plotly}                  & \texttt{>= 6.1} \\
+                                       & \texttt{kaleido}                 & \texttt{>= 0.4} \\
+                                       & \texttt{brotli}                  & \texttt{>= 1.1} \\
+                                       & \texttt{zstandard}               & \texttt{>= 0.23} \\
+\bottomrule
+\end{tabular}
+\caption{Pinned versions of the most load-bearing dependencies, grouped by codebase. Constraints use the manifest's native syntax (\texttt{\textasciicircum} for npm caret ranges, bare numbers for Cargo semver, \texttt{>=} for Python PEP\,440 minimum bounds).}
+\label{tab:bench_libs}
+\end{table}
+
+\subsection{Browser and Headless Render Harness}\label{app:bench_browser}
+
+The rendering scenarios (\cref{sub:scenarios}) drive a headless Chromium instance via Puppeteer; the visual-correctness check (\cref{sec:visual_correctness}) uses MapLibre~GL~JS's Node-side software rasteriser with \texttt{pixelmatch}.
+The bench harness disables VSync and the browser's frame-rate cap so that frame-time deltas remain visible above the \qty{16.67}{\milli\second} ceiling implied by a 60\,Hz display; this is the reason chapter~5 reports rates well above 2000\,FPS for low-cost styles (\cref{sec:threats}).
+The renderer-process limit is set to half the logical CPU count ($N_\mathrm{cpu}/2 = 8$ for this host) to reduce scheduler contention between the browser, the static-tile server, and the measurement harness running on the same machine.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{@{}l p{0.65\textwidth}@{}}
+\toprule
+\textbf{Component} & \textbf{Value} \\
+\midrule
+Browser engine               & Google Chrome \texttt{137.0.7151.68} (headless) \\
+Puppeteer                    & \texttt{\textasciicircum24.0.0} \\
+MapLibre~GL~JS (bench)         & \texttt{\textasciicircum6.0.0-9} \\
+MapLibre~GL~JS (visual check)  & \texttt{\textasciicircum5.19.0} \\
+\texttt{pixelmatch}          & \texttt{\textasciicircum7.1.0} \\
+\texttt{pngjs}               & \texttt{\textasciicircum7.0.0} \\
+Graphics backend             & ANGLE on Vulkan (\texttt{--use-angle=vulkan}); see \cref{tab:bench_os} \\
+Device pixel ratio           & \texttt{1.0} (matches \cref{sec:visual_correctness}) \\
+Launch flags                 & \raggedright\arraybackslash
+                                \texttt{--enable-gpu},\allowbreak\
+                                \texttt{--enable-webgl},\allowbreak\
+                                \texttt{--ignore-gpu-blocklist},\allowbreak\
+                                \texttt{--enable-unsafe-swiftshader},\allowbreak\
+                                \texttt{--use-angle=vulkan},\allowbreak\
+                                \texttt{--enable-features=Vulkan,UseSkiaRenderer},\allowbreak\
+                                \texttt{--disable-frame-rate-limit},\allowbreak\
+                                \texttt{--disable-gpu-vsync},\allowbreak\
+                                \texttt{--renderer-process-limit=$N_\mathrm{cpu}/2$},\allowbreak\
+                                \texttt{--disable-background-networking},\allowbreak\
+                                \texttt{--disable-background-timer-throttling},\allowbreak\
+                                \texttt{--disable-backgrounding-occluded-windows} \\
+\bottomrule
+\end{tabular}
+\caption{Headless browser harness driving the rendering scenarios. The bench harness produces the timings reported in \cref{ch:experiments}; the separate visual-check harness is used offline for \texttt{pixelmatch}-based correctness validation.}
+\label{tab:bench_browser}
 \end{table}

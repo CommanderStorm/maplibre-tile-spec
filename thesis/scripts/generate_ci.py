@@ -58,6 +58,14 @@ PASS_LABELS: dict[str, str] = {
 
 FULL_PIPELINE_STYLES = {"fiord", "liberty"}
 
+# Variants used for the §5.3.3 per-scenario style/shaving synergy decomposition.
+SYNERGY_VARIANTS = {
+    "baseline": "step-00-baseline",
+    "style_only": "step-16-selectivity_reorder",
+    "shaving_only": "step-17-tile_shave_only",
+    "combined": "step-18-tile_shave",
+}
+
 # Key claims to check for statistical significance in diagnostics.
 KEY_CLAIMS = [
     {
@@ -248,6 +256,67 @@ def collect_values(
     return np.array([r[metric] for r in recs], dtype=np.float64)
 
 
+def compute_synergy(
+    records: list[dict],
+    styles: set[str],
+    metric: str = "loadMs",
+) -> list[dict]:
+    """Per-(style, scenario) style/shaving synergy at the median level.
+
+    For each (style, scenario) pair with complete data across the four
+    SYNERGY_VARIANTS, compute the percent reduction of style-only,
+    shaving-only, and combined configurations against the baseline, then
+    the interaction term ``combined_red - (style_only_red + shaving_only_red)``.
+    A positive interaction term indicates super-additive synergy.
+    """
+    by_scenario: dict[tuple[str, str], dict[str, list[float]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    target_variants = set(SYNERGY_VARIANTS.values())
+    for r in records:
+        style = r.get("style")
+        scenario = r.get("scenario")
+        variant = r.get("variant")
+        val = r.get(metric)
+        if (
+            style in styles
+            and scenario
+            and variant in target_variants
+            and val is not None
+            and not r.get("deduped", False)
+        ):
+            by_scenario[(style, scenario)][variant].append(float(val))
+
+    results: list[dict] = []
+    for (style, scenario), buckets in sorted(by_scenario.items()):
+        if not all(v in buckets and buckets[v] for v in target_variants):
+            continue
+        b = median(buckets[SYNERGY_VARIANTS["baseline"]])
+        so = median(buckets[SYNERGY_VARIANTS["style_only"]])
+        sho = median(buckets[SYNERGY_VARIANTS["shaving_only"]])
+        c = median(buckets[SYNERGY_VARIANTS["combined"]])
+        if b <= 0:
+            continue
+        so_red = (b - so) / b
+        sho_red = (b - sho) / b
+        c_red = (b - c) / b
+        interaction = c_red - (so_red + sho_red)
+        results.append({
+            "style": style,
+            "scenario": scenario,
+            "baseline_median": b,
+            "style_only_median": so,
+            "shaving_only_median": sho,
+            "combined_median": c,
+            "style_only_red_pct": so_red * 100,
+            "shaving_only_red_pct": sho_red * 100,
+            "combined_red_pct": c_red * 100,
+            "interaction_pct": interaction * 100,
+            "super_additive": interaction > 0,
+        })
+    return results
+
+
 def main() -> int:
     print("Loading JSONL data...")
     records = load_jsonl(INPUT_DIR)
@@ -322,7 +391,7 @@ def main() -> int:
                     f"{q1:.4f}",
                     f"{q3:.4f}",
                     len(vals),
-                    f"{wilcoxon_p:.6f}" if wilcoxon_p is not None else "",
+                    f"{wilcoxon_p:.6g}" if wilcoxon_p is not None else "",
                 ])
 
                 # Store for claim diagnostics.
@@ -428,6 +497,52 @@ def main() -> int:
         print(f"    Baseline: {b['median']:.1f} ms (95% CI: [{b['ci_lo']:.1f}, {b['ci_hi']:.1f}])")
         print(f"    Final:    {v['median']:.1f} ms (95% CI: [{v['ci_lo']:.1f}, {v['ci_hi']:.1f}])")
         print(f"    Reduction: {reduction_pct:.1f}% (approx CI: [{red_lo:.1f}%, {red_hi:.1f}%])")
+
+    # §5.3.3 per-scenario style/shaving synergy decomposition (loadMs).
+
+    print("\n" + "=" * 72)
+    print("PER-SCENARIO STYLE/SHAVING SYNERGY (loadMs)")
+    print("=" * 72)
+
+    synergy_rows = compute_synergy(filtered, FULL_PIPELINE_STYLES, metric="loadMs")
+    synergy_path = OUTPUT_DIR / "synergy_per_scenario.csv"
+    with synergy_path.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow([
+            "style", "scenario",
+            "baseline_median_ms", "style_only_median_ms",
+            "shaving_only_median_ms", "combined_median_ms",
+            "style_only_red_pct", "shaving_only_red_pct",
+            "combined_red_pct", "interaction_pct",
+            "super_additive",
+        ])
+        for row in synergy_rows:
+            w.writerow([
+                row["style"], row["scenario"],
+                f"{row['baseline_median']:.3f}",
+                f"{row['style_only_median']:.3f}",
+                f"{row['shaving_only_median']:.3f}",
+                f"{row['combined_median']:.3f}",
+                f"{row['style_only_red_pct']:.3f}",
+                f"{row['shaving_only_red_pct']:.3f}",
+                f"{row['combined_red_pct']:.3f}",
+                f"{row['interaction_pct']:.3f}",
+                "true" if row["super_additive"] else "false",
+            ])
+
+    total = len(synergy_rows)
+    super_count = sum(1 for r in synergy_rows if r["super_additive"])
+    print(f"\nComplete pairs: {total}")
+    print(f"Super-additive (interaction > 0): {super_count}")
+    print(f"Additive or sub-additive: {total - super_count}")
+    if total:
+        interactions = sorted(r["interaction_pct"] for r in synergy_rows)
+        med_int = float(np.median(interactions))
+        print(
+            f"Interaction term — min: {interactions[0]:+.2f}%, "
+            f"median: {med_int:+.2f}%, max: {interactions[-1]:+.2f}%"
+        )
+    print(f"\nPer-scenario synergy CSV written to {synergy_path}")
 
     print()
     return 0
