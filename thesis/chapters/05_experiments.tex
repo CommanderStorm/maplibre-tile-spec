@@ -451,7 +451,8 @@ We execute no rendering benchmarks, as the diverse styles reference incompatible
 \cref{fig:cross_style_reduction} shows per-style percentage reductions (raw, gzip, Brotli) across the 13 Maputnik styles, sorted by raw reduction; the key question here is whether the distribution clusters tightly around the deep corpus median or fans out with substantial per-style variance.
 \cref{fig:cross_style_complexity_scatter} then plots each style's initial complexity against its achievable reduction, testing the hypothesis that verbose institutional styles (the right-hand side of the scatter) have disproportionately more optimizations headroom than already-compact minimal basemaps on the left.
 
-The distribution fans out considerably: raw reductions range from \qty{10.6}{\percent} (AWS Hybrid, AWS Standard) to \qty{71.2}{\percent} (LocationIQ Streets), with a median of \qty{44.5}{\percent} and a standard deviation of \qty{19.4}{\percent}.
+The distribution fans out considerably:
+raw reductions range from \qty{10.6}{\percent} (AWS Hybrid, AWS Standard) to \qty{71.2}{\percent} (LocationIQ Streets).
 Under gzip compression the range narrows to \qtyrange{4.6}{32.3}{\percent} (median \qty{25.4}{\percent}), confirming that some of the raw-byte savings overlap with what gzip already captures.
 The top reducers - LocationIQ Streets (\qty{71.2}{\percent} raw), MapTiler Toner (\qty{63.9}{\percent}), and Americana (\qty{56.3}{\percent}) - are styles with either verbose filter logic (LocationIQ, Americana) or highly repetitive property structures (Toner).
 At the low end, the two AWS styles share a codebase of hand-tuned expressions with few redundancies, leaving little for the optimizer to remove.
