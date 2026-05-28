@@ -122,7 +122,7 @@ In the following sections we examine each resource in detail, focusing on the pe
 \subsection{Fonts}
 
 Fonts can be client rendered from a font file.
-This requires shipping a text shaping engine to the client, as neither native nor web targets have for example Harfbuzz\footnote{\url{https://github.com/harfbuzz/harfbuzz}, last accessed 2026-05-26} as a feature.
+This requires shipping a text shaping engine to the client, as neither native nor web targets have for example Harfbuzz\footnote{\url{https://github.com/harfbuzz/harfbuzz}, last accessed 2026-05-26} exposed as a feature.
 This also means that for some fonts up to \qty{131}{\mega\byte}\cite{FontThatIncludes} of font data needs to be transferred.
 
 For interactive use cases, this is prohibitive as the time to download this would be longer than acceptable.
