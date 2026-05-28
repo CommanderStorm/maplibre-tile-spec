@@ -655,8 +655,7 @@ Python                 & \texttt{3.13.2} \\
 \subsection{Browser and Headless Render Harness}\label{app:bench_browser}
 
 The rendering scenarios (\cref{sub:scenarios}) drive a headless Chromium instance via Puppeteer; the visual-correctness check (\cref{sec:visual_correctness}) uses MapLibre~GL~JS's Node-side software rasteriser with \texttt{pixelmatch}.
-The bench harness disables VSync and the browser's frame-rate cap so that frame-time deltas remain visible above the \qty{16.67}{\milli\second} ceiling implied by a 60\,Hz display; this is the reason chapter~5 reports rates well above 2000\,FPS for low-cost styles (\cref{sec:threats}).
-The renderer-process limit is set to half the logical CPU count ($N_\mathrm{cpu}/2 = 8$ for this host) to reduce scheduler contention between the browser, the static-tile server, and the measurement harness running on the same machine.
+\Cref{tab:bench_browser} shows the used versions.
 
 \begin{table}[htbp]
 	\centering
@@ -677,7 +676,7 @@ The renderer-process limit is set to half the logical CPU count ($N_\mathrm{cpu}
 	\label{tab:bench_browser}
 \end{table}
 
-The Launch flags were \texttt{--enable-gpu},\allowbreak\texttt{--ignore-gpu-blocklist},\allowbreak\
+The chrome launch flags were \texttt{--enable-gpu},\allowbreak\texttt{--ignore-gpu-blocklist},\allowbreak\
 \texttt{--enable-unsafe-swiftshader},\allowbreak\texttt{--use-angle=vulkan},\allowbreak\
 \texttt{--enable-features=Vulkan,UseSkiaRenderer},\allowbreak\
 \texttt{--disable-frame-rate-limit},\allowbreak\
@@ -693,7 +692,6 @@ The Launch flags were \texttt{--enable-gpu},\allowbreak\texttt{--ignore-gpu-bloc
 \subsection{Key Library Versions}\label{app:bench_libs}
 
 \Cref{tab:bench_libs} lists the most load-bearing dependencies of each codebase exercised in the experiments.
-The \ac{MLT}-Rust crate \texttt{mlt-core} appears in two versions: the local workspace pins \texttt{0.7.0} (used to encode the tile corpora in \cref{sec:exp_mlt}) and the optimiser depends on the published \texttt{0.9} (used only for advisory generation in \cref{sub:tile_shaving}); this version skew is deliberate and reflects the published-vs-local split between the two repositories.
 
 \begin{table}[htbp]
 \centering \small
