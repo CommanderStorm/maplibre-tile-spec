@@ -622,7 +622,7 @@ Vulkan loader   & API \texttt{1.4.325}, conformance \texttt{1.4.3.0}, driver \te
 ANGLE backend   & Vulkan (see \cref{app:bench_browser}) \\
 \bottomrule
 \end{tabular}
-\caption{Host operating system, kernel, and graphics driver stack. The ANGLE/Vulkan backend referenced in \cref{sec:threats} is configured at browser launch.}
+\caption{Host operating system, kernel, and graphics driver stack.}
 \label{tab:bench_os}
 \end{table}
 
@@ -638,12 +638,12 @@ ANGLE backend   & Vulkan (see \cref{app:bench_browser}) \\
 \textbf{Toolchain} & \textbf{Pinned in source} & \textbf{Installed on bench host} \\
 \midrule
 Rust (\texttt{rustc})  & MSRV \texttt{1.92}, edition \texttt{2024} & \texttt{1.94.1} (2026-03-25) \\
-Cargo                  & ships with the matched \texttt{rustc}    & \texttt{1.94.1} (2026-03-24) \\
+Cargo                  & Ships with the matched \texttt{rustc}    & \texttt{1.94.1} (2026-03-24) \\
 JDK                    & Gradle toolchain language version \texttt{21} & Eclipse Temurin \texttt{22.0.2+9} \\
 Gradle                 & \texttt{9.3.1} (wrapper)                 & uses pinned wrapper \\
-Node.js                & no engine pin                            & \texttt{v25.8.1} \\
-npm                    & ships with Node.js                       & \texttt{11.12.1} \\
-Python                 & \texttt{requires-python >= 3.11}         & \texttt{3.13.2} \\
+Node.js                & No engine pin                            & \texttt{v25.8.1} \\
+npm                    & Ships with Node.js                       & \texttt{11.12.1} \\
+Python                 & \texttt{Requires-python >= 3.11}         & \texttt{3.13.2} \\
 \bottomrule
 \end{tabular}
 \caption{Language toolchains used to build and run the encoder, optimiser, harness, and analysis scripts.}
@@ -669,7 +669,7 @@ The renderer-process limit is set to half the logical CPU count ($N_\mathrm{cpu}
 		MapLibre~GL~JS               & \texttt{\textasciicircum6.0.0-9} \\
 		\texttt{pixelmatch}          & \texttt{\textasciicircum7.1.0} \\
 		\texttt{pngjs}               & \texttt{\textasciicircum7.0.0} \\
-		Graphics backend             & ANGLE on Vulkan; see \cref{tab:bench_os} \\
+		Graphics backend             & ANGLE on Vulkan \\
 		Device pixel ratio           & \texttt{1.0} (\cref{sec:visual_correctness}) \\
 		Launch flags                 & \raggedright\arraybackslash
 		\texttt{--enable-gpu},\allowbreak\
