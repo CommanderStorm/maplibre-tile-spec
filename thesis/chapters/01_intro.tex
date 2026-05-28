@@ -50,7 +50,7 @@ We make the following main contributions:
 	\item An \textbf{automatic encoding strategy selection} for the \ac{MLT} columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies
 	The approach adapts to the altered data characteristics introduced by style-driven shaving, including changes in value distributions and column cardinalities.
 
-    \item An \textbf{empirical evaluation} across 15 styles, 18 scenarios, and 17~cumulative ablation steps (fixed pass ordering; we discuss interaction effects in \cref{sec:threats}), which we validated end-to-end on two styles with tile data, demonstrating measurable improvements in tile volume, load time, and rendering stability.
+    \item An \textbf{empirical evaluation} across 15 styles, 18 scenarios, and 19~cumulative ablation steps plus one plain-tile-shaving comparison (fixed pass ordering; we discuss interaction effects in \cref{sec:threats}), which we validated end-to-end on ten deep-corpus styles with tile data, demonstrating measurable improvements in tile volume, load time, and rendering stability.
 \end{enumerate}
 
 \section{Outline}\label{sec:outline}
