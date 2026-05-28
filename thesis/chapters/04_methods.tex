@@ -35,7 +35,7 @@ Similarly, the metadata-refinement pass must reason about overzoom (\cref{sec:ti
 
 The second constraint is \emph{strict idempotency}:
 \begin{equation}\label{eq:idempotency}
-    \quad \forall (S, T) \in \mathcal{S} \times \mathcal{T}: \mathcal{O}(\mathcal{O}(S, T)) = \mathcal{O}(S, T)
+    \quad \forall (s, t) \in \mathcal{S} \times \mathcal{T}: \mathcal{O}(\mathcal{O}(s, t)) = \mathcal{O}(s, t)
 \end{equation}
 Feeding $\mathcal{O}$'s output back as input yields the same pair, ruling out unbounded chained improvement by construction.
 The expression-pass fixpoint of \cref{sub:fixpoint} enforces idempotency on the style half; the deterministic, statistics-driven encoding choices of \cref{sub:data_optimizations} enforce it on the tile half.
