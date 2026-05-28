@@ -294,7 +294,7 @@ Both formats benefit from shaving across all compression schemes, confirming tha
 \end{figure}
 
 \paragraph{Isolating the contribution of the Rust encoder's strategy selection}
-To separate the contribution of the multi-strategy competition (this work) from that of the \ac{MLT} format as proposed by Tremmel and Zink~\cite{tremmelMapLibreTileNext2025}, we report in \cref{fig:encoder_comparison} both a per-zoom breakdown and the total encoded size of the Germany OpenMapTiles tileset (zoom~0-14, \num{256588} tiles) under three encoders - \ac{MVT} (the row-oriented protobuf baseline), \ac{MLT}-Java (the reference columnar encoder from Tremmel and Zink, used as the \ac{MLT} baseline), and \ac{MLT}-Rust (this thesis' encoder with sort-strategy competition, per-stream profiling, and shared-dictionary clustering) - and across four wire compressions (none, gzip-9, Brotli-11, zstd-22).
+To separate the contribution of the multi-strategy competition (this work) from that of the \ac{MLT} format as proposed by Tremmel and Zink~\cite{tremmelMapLibreTileNext2025b}, we report in \cref{fig:encoder_comparison} both a per-zoom breakdown and the total encoded size of the Germany OpenMapTiles tileset (zoom~0-14, \num{256588} tiles) under three encoders - \ac{MVT} (the row-oriented protobuf baseline), \ac{MLT}-Java (the reference columnar encoder from Tremmel and Zink, used as the \ac{MLT} baseline), and \ac{MLT}-Rust (this thesis' encoder with sort-strategy competition, per-stream profiling, and shared-dictionary clustering) - and across four wire compressions (none, gzip-9, Brotli-11, zstd-22).
 
 \begin{figure}[htbp]
 \centering
@@ -322,7 +322,7 @@ To separate the contribution of the multi-strategy competition (this work) from 
         \bottomrule
         \end{tblr}
         \caption{Total tileset size for the three encoders under four wire compressions.
-          The \ac{MLT}-Java column reports the baseline from~\cite{tremmelMapLibreTileNext2025}, updated with encoding improvements backported from the Rust encoder development (correct delta-zigzag sequencing, \ac{RLE} viability checks, \ac{FSST} thresholds);
+          The \ac{MLT}-Java column reports the baseline from~\cite{tremmelMapLibreTileNext2025b}, updated with encoding improvements backported from the Rust encoder development (correct delta-zigzag sequencing, \ac{RLE} viability checks, \ac{FSST} thresholds);
           the \ac{MLT}-Rust column reports the Rust encoder developed in this thesis}
         \label{tab:mvt_mlt_comparison}
     \end{subfigure}

@@ -219,7 +219,7 @@ The following formats are used for encoding and transferring data to the client:
 \end{itemize}
 
 
-    \item \begin{sloppypar}\textbf{\acf{MLT}} is a columnar vector tile format proposed by Tremmel et~al.~\cite{tremmelMapLibreTileNext2025}.
+    \item \begin{sloppypar}\textbf{\acf{MLT}} is a columnar vector tile format proposed by Tremmel et~al.~\cite{tremmelMapLibreTileNext2025b}.
     Instead of the row-major key-value-pair layout of \ac{MVT}, \ac{MLT} stores each property as an independent column with type-specific encoding.
     This columnar layout enables per-column compression strategies - for example, dictionary encoding for low-cardinality string columns, delta encoding for monotonically increasing integers, or run-length encoding for repeated values - and eliminates the per-feature tag overhead of the protobuf encoding.
     Tremmel et~al.\ report 2-6$\times$ tile size reductions over \ac{MVT} depending on data characteristics.\end{sloppypar}
