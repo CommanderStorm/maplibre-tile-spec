@@ -737,6 +737,7 @@ The propagation also intentionally ignores \texttt{[\mlop{"feature-state"}, \ldo
 \emph{Phase}~\stepcirc{2} (match-pattern detection) checks whether all filters within a candidate group match the pattern \texttt{[\mlop{"=="},~[\mlop{"get"},~P],~\mlop{literal}]} on the same property~$P$.
 If so, the merged filter is a compact \mlop{match} expression rather than a verbose \mlop{case} chain, and merged paint/layout properties also use \mlop{match} with the same discriminator.
 This pattern is common in practice: road styles frequently define separate layers for motorway, trunk, primary, secondary, and tertiary, differing only in width, color and layering, and for casing major roads there are usually two such layers per class.
+
 \Cref{fig:layer_merge_example} works through exactly this case: three adjacent \texttt{\mlval{line}} layers keyed on \texttt{\mlval{class}} collapse into a single layer whose filter, \mlprop{line-color}, \mlprop{line-width}, and synthesised \mlprop{line-sort-key} are all \mlop{match} expressions over the same discriminator, with Phase~\stepcirc{1} (mergeability) and Phase~\stepcirc{3} (identical zoom ranges) discharged trivially.
 
 \emph{Phase}~\stepcirc{3} (zoom-tolerant merging) handles layers whose zoom ranges differ slightly.
