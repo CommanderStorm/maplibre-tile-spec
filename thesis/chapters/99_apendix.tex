@@ -54,7 +54,7 @@ We characterize each rule by its pass assignment, scope (filter-only or both fil
 27 & Fold (stats) & both & stats & Prune unreachable \mlop{interpolate}/ \mlop{step} stops outside observed data range \\
 \midrule
 % Simplify Expressions
-28 & Simplify & both & pure & Factor common operands: \texttt{[\mlop{"any"},[\mlop{"all"},A,B],[\mlop{"all"},A,C]]} $\to$ \texttt{[\mlop{"all"},A,[\mlop{"any"},B,C]]} \\
+28 & Simplify & both & pure & Factor common operands:\newline \texttt{[\mlop{"any"},[\mlop{"all"},A,B],[\mlop{"all"},A,C]]} $\to$ \texttt{[\mlop{"all"},A,[\mlop{"any"},B,C]]} \\
 29 & Simplify & both & pure & Canonicalise \texttt{[\mlop{"exponential"},\mlval{1}]} $\to$ \texttt{[\mlop{"linear"}]} in interpolate curves \\
 30 & Simplify & both & pure & Collapse \mlop{interpolate}/ \mlop{step} when all output values are structurally equal \\
 31 & Simplify & both & pure & Merge \mlop{match} arms with identical outputs; drop arms that equal the fallback \\
