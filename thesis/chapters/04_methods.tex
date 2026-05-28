@@ -9,9 +9,9 @@ The chapter opens with a formal statement of the optimization problem and its vi
 
 With the foundations of \cref{ch:theoretical_background} in place, we state the optimization problem formally.
 
-Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~\ac{JSON} documents.
-Let $\mathcal{T}$ be the set of tile sets, each a finite family of tiles indexed by source and $(x, y, z)$.
-Let $\mathcal{V}$ be the set of \emph{viewing states}: tuples $(\text{lat}_\text{center}, \text{lat}_\text{center}, z, \text{roll}, \text{pitch}, \text{bearing}, \text{viewport size})$, the six degrees of freedom plus the viewport.
+Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~\ac{JSON} documents.\newline
+Let $\mathcal{T}$ be the set of tile sets, each a finite family of tiles indexed by source and $(x, y, z)$.\newline
+Let $\mathcal{V}$ be the set of \emph{viewing states}: tuples $(\text{lat}_\text{center}, \text{lat}_\text{center}, z, \text{roll}, \text{pitch}, \text{bearing}, \text{viewport size})$, the six degrees of freedom plus the viewport.\newline
 Let $\mathcal{I}$ be the set of rasterised images, and
 \begin{equation}\label{eq:render_function}
     R : \mathcal{S} \times \mathcal{T} \times \mathcal{V} \to \mathcal{I}
