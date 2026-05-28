@@ -12,11 +12,10 @@ With the foundations of \cref{ch:theoretical_background} in place, we state the 
 Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~\ac{JSON} documents.\newline
 Let $\mathcal{T}$ be the set of tile sets, each a finite family of tiles indexed by source and $(x, y, z)$.\newline
 Let $\mathcal{V}$ be the set of \emph{viewing states}: tuples $(\text{lat}_\text{center}, \text{lat}_\text{center}, z, \text{roll}, \text{pitch}, \text{bearing}, \text{viewport size})$, the six degrees of freedom plus the viewport.\newline
-Let $\mathcal{I}$ be the set of rasterised images, and
+Let $\mathcal{I}$ be the set of rasterised images, and let MapLibre's deterministic rendering function be
 \begin{equation}\label{eq:render_function}
     R : \mathcal{S} \times \mathcal{T} \times \mathcal{V} \to \mathcal{I}
 \end{equation}
-\noindent be MapLibre's deterministic rendering function.
 
 The optimizer is a function $\mathcal{O}: \mathcal{S} \times \mathcal{T} \to \mathcal{S} \times \mathcal{T}$ with $(S', T') = \mathcal{O}(S, T)$.
 Given a cost vector $c$ over the deployment-relevant metrics of \cref{sec:benchmarking}, $\mathcal{O}$ seeks to reduce the components of $c(S', T')$ under two formal constraints.
@@ -28,20 +27,19 @@ Writing $\equiv$ for pixel-identity,
     \forall v \in \mathcal{V}:\; R(S, T, v) \equiv R(S', T', v).
 \end{equation}
 In practice we sample $v$ on a discrete grid of zooms and viewports, and check $\equiv$ by direct image comparison rather than by formal proof.
-
-The second constraint is \emph{strict idempotency}:
-\begin{equation}\label{eq:idempotency}
-    \mathcal{O}(\mathcal{O}(S, T)) = \mathcal{O}(S, T) \quad \text{for all } (S, T) \in \mathcal{S} \times \mathcal{T}.
-\end{equation}
-Feeding $\mathcal{O}$'s output back as input yields the same pair, ruling out unbounded chained improvement by construction.
-The expression-pass fixpoint of \cref{sub:fixpoint} enforces idempotency on the style half; the deterministic, statistics-driven encoding choices of \cref{sub:data_optimizations} enforce it on the tile half.
-Both halves are exercised by the round-trip proptest and libFuzzer harness of \cref{par:encoder_validation}.
-
 \Cref{eq:visual_equivalence} doubles as the \emph{soundness criterion} for every pass in this chapter.
 Any rewrite whose correctness depends on a MapLibre runtime invariant must either preserve the invariant or reject the rewrite when the invariant cannot be established.
 
 For example, the stats-driven folding pass cannot soundly remove a \mlop{match} arm without a full census of the tile data, because the arm may be reached by features the statistics have not observed; the pass is consequently gated on a sample rate of~1.0.
 Similarly, the metadata-refinement pass must reason about overzoom (\cref{sec:tiles}) when tightening \mlprop{maxzoom}, because an overzoomed tile counts as a viewing state in \cref{eq:visual_equivalence}.
+
+The second constraint is \emph{strict idempotency}:
+\begin{equation}\label{eq:idempotency}
+    \quad \forall (S, T) \in \mathcal{S} \times \mathcal{T}: \mathcal{O}(\mathcal{O}(S, T)) = \mathcal{O}(S, T)
+\end{equation}
+Feeding $\mathcal{O}$'s output back as input yields the same pair, ruling out unbounded chained improvement by construction.
+The expression-pass fixpoint of \cref{sub:fixpoint} enforces idempotency on the style half; the deterministic, statistics-driven encoding choices of \cref{sub:data_optimizations} enforce it on the tile half.
+Both halves are exercised by the round-trip proptest and libFuzzer harness of \cref{par:encoder_validation}.
 
 \section{Scope}\label{sec:scope}
 
