@@ -732,7 +732,7 @@ This holds for the data-driven expression variants used across all MapLibre vers
 
 The propagation is strictly \emph{intra-layer} (intra-procedural, in the compiler terminology of \cref{sec:compiler_optimizations}).
 Constraints from one layer never flow into another, even if two layers share a source-layer, because the filter of one layer has no bearing on features rendered by a sibling layer.
-The propagation also intentionally ignores \texttt{[\mlop{"feature-state"}, \ldots]} references, because the feature state is updated from the client at render time and cannot be statically constrained by the filter.
+The propagation also intentionally ignores (Phase~\stepcirc{1}) \texttt{[\mlop{"feature-state"}, \ldots]} references, because the feature state is updated from the client at render time and cannot be statically constrained by the filter.
 
 \emph{Phase}~\stepcirc{2} (match-pattern detection) checks whether all filters within a candidate group match the pattern \texttt{[\mlop{"=="},~[\mlop{"get"},~P],~\mlop{literal}]} on the same property~$P$.
 If so, the merged filter is a compact \mlop{match} expression rather than a verbose \mlop{case} chain, and merged paint/layout properties also use \mlop{match} with the same discriminator.
