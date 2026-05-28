@@ -684,7 +684,7 @@ Cleanup runs after metadata refinement because refinement may render filters tri
 \paragraph{Layer merging}
 Layer merging identifies adjacent layers of the same type with identical paint and layout properties (modulo filter differences) and merges them into a single layer.
 The motivation is that fewer layers means fewer rendering passes: the renderer processes layers sequentially, and each layer incurs setup cost (binding textures, configuring blend state, submitting draw calls).
-\Cref{lst:painter_loop} shows the two render-pass loops the painter runs over \texttt{layerIds}: the opaque pass walks them top-to-bottom (\texttt{currentLayer} from \texttt{layerIds.\mlop{length} - 1} down to \texttt{0}), the translucent pass walks them bottom-to-top, and each iteration of either loop dispatches one \texttt{this.renderLayer(...)} call.
+\Cref{lst:painter_loop} shows the two render-pass loops the painter runs over \texttt{layerIds}: the opaque pass walks them top-to-bottom (\texttt{currentLayer} from \texttt{layerIds.length - 1} down to \texttt{0}), the translucent pass walks them bottom-to-top, and each iteration of either loop dispatches one \texttt{this.renderLayer(...)} call.
 Each layer eliminated by the merge therefore shortens \texttt{layerIds} by one entry and removes exactly one \texttt{renderLayer} dispatch from each pass.
 
 The merging algorithm proceeds in three phases, illustrated in \Cref{fig:layer_merge_example}.
@@ -868,7 +868,7 @@ This cascade mirrors the materialized-view maintenance problem described in \cre
     \item \textbf{Unused zoom levels}: zoom levels at which no style layer targets the source-layer.
     Tiles at these zoom levels need not be encoded at all.
     \item \textbf{Unused property values}: specific values of categorical properties that are never matched by any style filter.
-    For example, if no style layer allows for a line with a \texttt{\mlval{class=ferry}} property, the pass can remove features with that value.
+    For example, if no style layer allows for a line with a \texttt{class=ferry} property, the pass can remove features with that value.
     \item \textbf{Feature ID requirement}: whether any style layer uses \texttt{[\mlop{"id"}]} or \texttt{[\mlop{"feature-state"},~\ldots]}.
     When IDs are unused, the pass strips the entire ID column.
 \end{itemize}
@@ -1180,7 +1180,7 @@ A \emph{pruning variant} of the \ac{FSST} compressor removes symbols whose obser
 
 \paragraph{Shared dictionary grouping}\label{sub:cardinality}
 The \ac{MLT} format supports shared dictionaries where multiple string columns reference a common deduplicated corpus, amortising dictionary overhead across columns with overlapping vocabularies.
-The prior Java encoder groups columns by naming prefix (e.g., \texttt{name}, \texttt{name:en}, \texttt{\mlval{name:de}}), which misses semantic overlaps (e.g., \texttt{\mlval{class}} and \texttt{\mlval{subclass}} in OpenMapTiles share many values).
+The prior Java encoder groups columns by naming prefix (e.g., \texttt{\mlval{name}}, \texttt{\mlval{name:en}}, \texttt{\mlval{name:de}}), which misses semantic overlaps (e.g., \texttt{\mlval{class}} and \texttt{\mlval{subclass}} in OpenMapTiles share many values).
 
 \begin{sloppypar}
     Our Rust encoder replaces prefix matching with MinHash-based similarity clustering (\cref{sub:lsh})~\cite{broderResemblanceContainmentDocuments1998}.
