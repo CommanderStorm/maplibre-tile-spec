@@ -270,9 +270,9 @@ The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre
     This allows the renderer to skip layers outside that range before filter evaluation or geometry decoding.
     \Cref{lst:ishidden} shows the corresponding \texttt{isHidden} guard.
     The worker invokes \texttt{layer.isHidden(this.zoom, true)} to skip bucket creation during tile parsing, while the renderer returns early from \texttt{renderLayer} on \texttt{layer.isHidden(this.transform.zoom)} before dispatching draw calls.
-    \hspace*{2em}
-    \begin{minipage}{\dimexpr\linewidth-2em\relax}
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method},label=lst:ishidden,xleftmargin=2em]
+    
+    \begin{minipage}{\dimexpr\linewidth\relax}
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method},label=lst:ishidden]
 // src/style/style_layer.ts:328-332
 isHidden(zoom: number = this.minzoom, roundMinZoom: boolean = false) {
     if (this.minzoom && zoom < (roundMinZoom ? Math.floor(this.minzoom) : this.minzoom)) return true;
@@ -282,7 +282,9 @@ isHidden(zoom: number = this.minzoom, roundMinZoom: boolean = false) {
 \end{lstlisting}
 \end{minipage}
 
-\Cref{lst:ishidden_usage} reproduces the two call-sites that establish those two stages: the worker calls \texttt{layer.isHidden(this.zoom, true)} and \texttt{continue}s before bucket creation, and the painter's \texttt{renderLayer} returns immediately on \texttt{layer.isHidden(this.transform.zoom)} before dispatching any \texttt{draw.fill}/ \texttt{draw.line}/ \texttt{draw.symbol} call.%
+\Cref{lst:ishidden_usage} reproduces the two call-sites that establish those two stages: the worker calls \texttt{layer.isHidden(this.zoom, true)} and \texttt{continue}s before bucket creation, and the painter's \texttt{renderLayer} returns immediately on \texttt{layer.isHidden(this.transform.zoom)} before dispatching any \texttt{draw.fill}/ \texttt{draw.line}/ \texttt{draw.symbol} call.
+
+\begin{minipage}{\dimexpr\linewidth\relax}
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS usages of \texttt{isHidden}},label=lst:ishidden_usage,xleftmargin=2em]
 // src/source/worker_tile.ts:111 - worker skips bucket creation
 if (layer.isHidden(this.zoom, true)) continue;
@@ -293,6 +295,7 @@ renderLayer(painter, tileManager, layer, coords, renderOptions) {
     // ...dispatches to draw.fill, draw.line, draw.symbol, etc.
 }
 \end{lstlisting}
+\end{minipage}
 \end{itemize}
 \end{itemize}
 
