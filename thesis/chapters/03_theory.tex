@@ -19,20 +19,20 @@ A user interacts with an input device (mouse, touch, keyboard) to control the ma
 The map view is rendered using one of the following approaches:
 
 \begin{itemize}
-\item \begin{sloppypar}\textbf{SVG} is a vector graphics format that can be used to render maps as shown by the ID Editor\footnote{\url{https://github.com/openstreetmap/iD}, last accessed 2026-03-16} or Leaflet\footnote{\url{https://leafletjs.com/}, last accessed 2026-03-16}.
-Using SVGs means one is limited to a 2D rendering approach due to not having a camera.\end{sloppypar}
+\item \begin{sloppypar}\textbf{\ac{SVG}} is a vector graphics format that can be used to render maps as shown by the ID Editor\footnote{\url{https://github.com/openstreetmap/iD}, last accessed 2026-03-16} or Leaflet\footnote{\url{https://leafletjs.com/}, last accessed 2026-03-16}.
+Using \acp{SVG} means one is limited to a 2D rendering approach due to not having a camera.\end{sloppypar}
 
-\item \textbf{Canvas 2D} is the HTML5 \texttt{<canvas>} immediate-mode drawing API.
-OpenLayers\footnote{\url{https://openlayers.org/}, last accessed 2026-04-21} uses Canvas~2D as its primary renderer, rasterising vector features on the CPU rather than submitting them to the GPU.
-This avoids the complexity of GPU pipeline management and shader compilation, but rendering throughput is CPU-bound and does not benefit from hardware-accelerated geometry processing.
-Like SVG, Canvas~2D is limited to 2D views without pitch or rotation.
+\item \textbf{Canvas 2D} is the HTML5 \texttt{<canvas>} immediate-mode drawing \ac{API}.
+OpenLayers\footnote{\url{https://openlayers.org/}, last accessed 2026-04-21} uses Canvas~2D as its primary renderer, rasterising vector features on the \ac{CPU} rather than submitting them to the \ac{GPU}.
+This avoids the complexity of \ac{GPU} pipeline management and shader compilation, but rendering throughput is \ac{CPU}-bound and does not benefit from hardware-accelerated geometry processing.
+Like \ac{SVG}, Canvas~2D is limited to 2D views without pitch or rotation.
 
-\item \begin{sloppypar}\textbf{Low-level 3D Graphics APIs} like WebGL\footnote{\url{https://get.webgl.org/}, last accessed 2026-03-16}, WebGPU~\cite{WebGPU}, OpenGL\footnote{\url{https://registry.khronos.org/OpenGL-Refpages/gl4/}, last accessed 2026-03-16}, Metal\footnote{\url{https://developer.apple.com/metal/}, last accessed 2026-03-16}, Vulkan\footnote{\url{https://www.vulkan.org/}, last accessed 2026-03-16}, DirectX\footnote{\url{https://microsoft.github.io/DirectX-Specs/}, last accessed 2026-03-16}, etc.\ for rendering 3D graphics as shown by mapbox\footnote{\url{https://www.mapbox.com/}, last accessed 2026-03-16}, maplibre\footnote{\url{https://maplibre.org/}, last accessed 2026-03-16}, deck.gl\footnote{\url{https://deck.gl/}, last accessed 2026-03-16}, here\footnote{\url{https://www.here.com}, last accessed 2026-03-16} and many more.
+\item \begin{sloppypar}\textbf{Low-level 3D Graphics \acp{API}} like \ac{WebGL}\footnote{\url{https://get.webgl.org/}, last accessed 2026-03-16}, \ac{WebGPU}~\cite{WebGPU}, OpenGL\footnote{\url{https://registry.khronos.org/OpenGL-Refpages/gl4/}, last accessed 2026-03-16}, Metal\footnote{\url{https://developer.apple.com/metal/}, last accessed 2026-03-16}, Vulkan\footnote{\url{https://www.vulkan.org/}, last accessed 2026-03-16}, DirectX\footnote{\url{https://microsoft.github.io/DirectX-Specs/}, last accessed 2026-03-16}, etc.\ for rendering 3D graphics as shown by mapbox\footnote{\url{https://www.mapbox.com/}, last accessed 2026-03-16}, maplibre\footnote{\url{https://maplibre.org/}, last accessed 2026-03-16}, deck.gl\footnote{\url{https://deck.gl/}, last accessed 2026-03-16}, here\footnote{\url{https://www.here.com}, last accessed 2026-03-16} and many more.
 This allows a more complex 3D-based rendering with pitch, yaw, and roll.
-Due to having better hardware access, these APIs can render more complex scenes with better performance.\end{sloppypar}
+Due to having better hardware access, these \acp{API} can render more complex scenes with better performance.\end{sloppypar}
 \end{itemize}
 
-Due to the more advanced features and mostly better performance, we focus exclusively on renderers based on open-source 3D graphics APIs.
+Due to the more advanced features and mostly better performance, we focus exclusively on renderers based on open-source 3D graphics \acp{API}.
 While these renderers are powerful, they require data to be preprocessed and optimized specifically for rendering.
 As a result, they cannot directly render high-level primitives such as shapes (polygons, lines, points), text, or images.
 Instead, they operate on lower-level graphics primitives such as textures, triangles, and quads.
@@ -101,7 +101,7 @@ Tiles, by contrast, can be stored and accessed using three major approaches:
 \item
     \textbf{Client-driven}:
     Store encoded tiles as a single file in a blob store using a format that includes an internal tile index (for example, PMTiles or VersaTiles).
-    Clients retrieve tiles using multiple HTTP requests with appropriate Range headers to locate the required data.
+    Clients retrieve tiles using multiple \ac{HTTP} requests with appropriate Range headers to locate the required data.
 \item
     \textbf{Semi-static}:
     Store encoded tiles in a database file on disk (for example, SQLite) and use a tile server to extract and serve tiles to clients.
@@ -139,9 +139,9 @@ Common open-source renderers like MapLibre or source-available renderers like Ma
 
 Sprites in computer graphics are a fairly solved problem.
 To avoid having to request hundreds to thousands of small files or to have to render SVGs on a client, this work is shifted to the server and the server delivers sprite sheets.
-This allows efficient GPU Sprite instancing.
+This allows efficient \ac{GPU} Sprite instancing.
 
-Common open-source renderers like maplibre or source available renderers like mapbox do this by shipping plain PNG or \acs{SDF}-PNG~\cite{greenImprovedAlphatestedMagnification2007} sprite sheets together with a lookup table recording where on the sprite sheet each sprite is located, whether it is a \ac{SDF}, and whether there are regions that can be stretched to account for placing text inside the sprite.
+Common open-source renderers like maplibre or source available renderers like mapbox do this by shipping plain \ac{PNG} or \acs{SDF}-\acs{PNG}~\cite{greenImprovedAlphatestedMagnification2007} sprite sheets together with a lookup table recording where on the sprite sheet each sprite is located, whether it is a \ac{SDF}, and whether there are regions that can be stretched to account for placing text inside the sprite.
 
 \subsection{Tiles}\label{sec:tiles}
 
@@ -161,7 +161,7 @@ Both operations consume the source's \mlprop{maxzoom} tile as input; tightening 
 
 \begin{lstlisting}[
   language=TypeScript,
-  caption={Condensed MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts:87-125})},
+  caption={Condensed MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts})},
   label=lst:overzoom,
   escapeinside={(*@}{@*)},
 ]
@@ -199,14 +199,14 @@ A feature consists of geometry (point, linestring, or polygon encoded as integer
 The following formats are used for encoding and transferring data to the client:
 
 \begin{itemize}
-    \item \textbf{Raster tiles} deliver pre-rendered images (PNG, JPEG, WebP, Avif, JPEGXL) rather than vector geometry.
+    \item \textbf{Raster tiles} deliver pre-rendered images (\ac{PNG}, JPEG, WebP, Avif, JPEGXL) rather than vector geometry.
     They require no client-side rendering logic but cannot be restyled, rotated at arbitrary angles (beyond the affine transform imposed by globe mode), or queried interactively, as the visual representation is fixed at generation time.
 
     \item \textbf{Analysis-focused formats} such as FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11}, GeoParquet\footnote{\url{https://geoparquet.org/}, last accessed 2026-05-11}, and GeoArrow are optimized for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
     They support random access and columnar scans but do not follow the tiled spatial access pattern required by interactive map renderers, so we do not consider them further.
     GeoParquet in particular supports row-group-level predicate pushdown and column pruning - operations analogous to the tile shaving and selective column access we apply to \ac{MLT} - but operates on large per-file datasets rather than on the small, spatially-partitioned tiles that interactive renderers fetch individually; the per-tile overhead of Parquet's row-group and column-chunk metadata would dominate at typical tile sizes (\qtyrange{10}{100}{\kilo\byte}).
 
-    \item \textbf{GeoJSON}~\cite{butlerGeoJSONFormat2016} is a JSON-based geospatial interchange format.
+    \item \textbf{\ac{GeoJSON}}~\cite{butlerGeoJSONFormat2016} is a \ac{JSON}-based geospatial interchange format.
     Its human-readable structure makes it useful for debugging and small overlays, but its verbosity - text-encoded coordinates and repeated property keys per feature - makes it impractical for the continuous tile streaming required by interactive map renderers.
 
     \item \textbf{\acf{MVT}}\footnote{\url{https://github.com/mapbox/vector-tile-spec/tree/master/2.1}, last accessed 2026-04-21} is the dominant vector tile format, adopted as a \emph{de~facto} standard across open-source map renderers including MapLibre.
@@ -250,10 +250,10 @@ Three architectural approaches to map styling have been established:
 
 We focus on client-side declarative styles, specifically the MapLibre style specification, as it is the most widely adopted approach in open-source map rendering and - its declarative nature makes it amenable to static analysis and automatic optimizations.
 
-The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre-style-spec/}, last accessed 2025-10-24} defines a map's appearance as a JSON document with the following key components:
+The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre-style-spec/}, last accessed 2025-10-24} defines a map's appearance as a \ac{JSON} document with the following key components:
 
 \begin{itemize}
-    \item \textbf{Sources} declare where tile data comes from (tile server URL, or inline GeoJSON) and at which zoom levels tiles are available (\mlprop{minzoom}, \mlprop{maxzoom}).
+    \item \textbf{Sources} declare where tile data comes from (tile server URL, or inline \ac{GeoJSON}) and at which zoom levels tiles are available (\mlprop{minzoom}, \mlprop{maxzoom}).
 
     \item \textbf{Layers} are the central rendering unit.
     Each layer references a source and a \emph{source-layer} within that source, specifies a \emph{type} (\texttt{\mlval{fill}}, \texttt{\mlval{line}}, \texttt{\mlval{circle}}, \texttt{\mlval{symbol}}, \texttt{\mlval{fill-extrusion}}, \texttt{\mlval{raster}}, \texttt{\mlval{background}}, or \texttt{\mlval{hillshade}}) and carries a set of paint and layout properties that control its appearance.
@@ -469,7 +469,7 @@ A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcomb
 \subsection{Profile-Guided Optimisation}\label{sub:pgo}
 
 \emph{\ac{PGO}} uses runtime execution profiles to specialise a program for its observed workload~\cite{changUsingProfileInformation1991}.
-Classical PGO instruments a program, collects execution frequencies and branch probabilities from representative inputs, and feeds this profile back into the compiler to guide inlining, code layout, and branch prediction hints.
+Classical \ac{PGO} instruments a program, collects execution frequencies and branch probabilities from representative inputs, and feeds this profile back into the compiler to guide inlining, code layout, and branch prediction hints.
 Arnold et~al.~\cite{arnoldSurveyAdaptiveOptimization2005} survey how virtual machines extend \ac{PGO} to an \emph{adaptive} setting, where profiles are collected and optimizations applied continuously at runtime.
 
 Our style optimizer performs an analogous form of \ac{PGO}:
@@ -485,7 +485,7 @@ Techniques from relational query optimizations therefore apply directly.
 \subsection{Cost-Based Query Optimisation}
 
 A \emph{cost-based query optimizer} selects among semantically equivalent query execution plans by estimating the cost of each plan and choosing the cheapest~\cite{selingerAccessPathSelection1979}.
-The pioneering System~R optimizer introduced this approach for SQL queries, estimating costs based on I/O operations and CPU time.
+The pioneering System~R optimizer introduced this approach for SQL queries, estimating costs based on I/O operations and \ac{CPU} time.
 
 The key insight is that the \emph{order} in which predicates are evaluated affects performance even when the final result is identical.
 In a conjunction $p_1 \land p_2 \land \cdots \land p_n$ evaluated with short-circuit semantics, placing the predicate most likely to evaluate to \mlval{false} first minimizes the expected number of evaluations, because once any predicate evaluates to \mlval{false}, the remaining predicates are skipped.
@@ -644,18 +644,18 @@ Benchmarking refers to the systematic measurement of system performance using co
 The purpose of benchmarking is to evaluate system behavior, compare alternative implementations, and quantify the effects of optimizations.
 
 According to Jain~\cite{jainArtComputerSystems1991}, a good evaluation must start with selecting relevant metrics.
-Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that na\"ive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent JVM/engine invocations - a principle that informs the bootstrap CI methodology we use.
+Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that na\"ive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent \ac{JVM}/engine invocations - a principle that informs the bootstrap CI methodology we use.
 The bootstrap itself - a resampling method for constructing confidence intervals without distributional assumptions - was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1998} and is the specific statistical technique we apply throughout our evaluation (\cref{ch:experiments}).
 Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} codified twelve common pitfalls in reporting performance results; our evaluation in \cref{ch:experiments} follows their guidelines by reporting per-metric confidence intervals and separating throughput from latency measurements.
 In the context of web maps, the candidate metrics span a range from deployment-critical on battery-constrained targets to directly user-visible on the desktop:
 
 \begin{itemize}
-    \item \textbf{Resource utilisation}, such as CPU load, GPU utilisation, and memory consumption to have pointers where further optimizations is possible.
+    \item \textbf{Resource utilisation}, such as \ac{CPU} load, \ac{GPU} utilisation, and memory consumption to have pointers where further optimizations is possible.
     \item \textbf{Latency and responsiveness}, measuring the time between initiating an operation (for example zooming) and the first visible result.
     \item \textbf{Throughput}, typically measured in \acp{FPS} or frame time, describing how many frames can be rendered per second.
     \item \textbf{Frame stability}, which captures variations in frame time and identifies dropped frames or rendering stutters.
     \item \textbf{Network utilisation}, including transferred bytes, tile request rates, and bandwidth consumption.
-    \item \textbf{Power consumption} in Watts, which is relevant for mobile devices and battery-powered systems.  We do not measure power consumption - we use no RAPL counters, battery deltas, or external power meters, as our benchmark host is a desktop workstation rather than a battery-constrained mobile device.  We list power here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets. Cellular radio energy is proportional to data volume, and GPU active time scales with draw-call count.
+    \item \textbf{Power consumption} in Watts, which is relevant for mobile devices and battery-powered systems.  We do not measure power consumption - we use no \ac{RAPL} counters, battery deltas, or external power meters, as our benchmark host is a desktop workstation rather than a battery-constrained mobile device.  We list power here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets. Cellular radio energy is proportional to data volume, and \ac{GPU} active time scales with draw-call count.
 \end{itemize}
 
 These can be benchmarked at different workload levels~\cite{jainArtComputerSystems1991}:
@@ -667,10 +667,10 @@ These can be benchmarked at different workload levels~\cite{jainArtComputerSyste
 \end{itemize}
 
 \noindent We primarily use macro-benchmarks: we load a full style, fetch and decode tiles, and exercise the renderer with a scripted camera animation.
-Our benchmark harness controls for network variability (via a caching proxy) and GPU variability (via hardware-accelerated rendering with ANGLE/Vulkan) to achieve reproducible results at the macro level.
+Our benchmark harness controls for network variability (via a caching proxy) and \ac{GPU} variability (via hardware-accelerated rendering with ANGLE/Vulkan) to achieve reproducible results at the macro level.
 
 \begin{chaptersummary}
-Three theoretical traditions map onto the three levels of the pipeline: \textbf{compiler optimization} (peephole rewriting, constant folding, fixpoint iteration) drives the expression-level passes that simplify each style's JSON expressions without schema knowledge; \textbf{query optimization} (projection pushdown, selectivity estimation) shapes the structural passes and the pruning advisory that bridges style and data; and the \textbf{encoding techniques} surveyed last - columnar storage, integer coding, \ac{FSST}, and space-filling curves - feed the data-level passes that re-encode shaved tiles with automatic strategy selection.
+Three theoretical traditions map onto the three levels of the pipeline: \textbf{compiler optimization} (peephole rewriting, constant folding, fixpoint iteration) drives the expression-level passes that simplify each style's \ac{JSON} expressions without schema knowledge; \textbf{query optimization} (projection pushdown, selectivity estimation) shapes the structural passes and the pruning advisory that bridges style and data; and the \textbf{encoding techniques} surveyed last - columnar storage, integer coding, \ac{FSST}, and space-filling curves - feed the data-level passes that re-encode shaved tiles with automatic strategy selection.
 We adopt the benchmarking literature's statistical methodology (bootstrap confidence intervals, warm-up handling, metric separation) rather than extending it.
 
 The following chapter formalises the joint optimization problem and turns these foundations into concrete passes and an evaluation methodology.

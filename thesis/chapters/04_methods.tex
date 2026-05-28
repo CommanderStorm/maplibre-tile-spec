@@ -1,14 +1,14 @@
 \chapter{Methods}\label{ch:methods}
 
 The preceding chapters established that no existing tool jointly optimizes map styles and tile data, and introduced the compiler, database, and encoding techniques whose analogues make such joint optimization possible.
-In this chapter we apply those foundations to the design and implementation of our concrete optimizer - a standalone Rust tool that consumes a MapLibre style~JSON document and, optionally, tile-level statistics, and produces a visually equivalent style together with optimized tile data.
+In this chapter we apply those foundations to the design and implementation of our concrete optimizer - a standalone Rust tool that consumes a MapLibre style~\ac{JSON} document and, optionally, tile-level statistics, and produces a visually equivalent style together with optimized tile data.
 
 The chapter opens with a formal statement of the optimization problem and its visual-equivalence constraint (\cref{sec:problem_statement}), then delimits the work in \cref{sec:scope} - naming MapLibre GL~JS as the target system and listing the concerns deliberately out of scope - and proceeds level by level through the three-level pipeline (\cref{sec:approach}) and the individual passes that implement it.
 
 \section{Formalised Problem Statement}\label{sec:problem_statement}
 
 With the foundations established in \cref{ch:theoretical_background}, we can state the optimization problem addressed by this thesis formally.
-Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~JSON documents, and $\mathcal{T}$ be the set of tile sets (a tile set is a finite family of tiles indexed by source, $x$, $y$, $z$).
+Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~\ac{JSON} documents, and $\mathcal{T}$ be the set of tile sets (a tile set is a finite family of tiles indexed by source, $x$, $y$, $z$).
 Let $\mathcal{V}$ be the set of \emph{viewing states} a renderer can be in - roughly the six degrees of freedom and the viewport, so a $(x, y, z, \text{roll}, \text{pitch}, \text{bearing}, \text{viewport size})$ tuple.
 And let MapLibre's rendering function, which maps a style, a tile set, and a viewing state to a rasterised image in $\mathcal{I}$ be defined as
 \begin{equation}\label{eq:render_function}
@@ -37,7 +37,7 @@ We target MapLibre GL~JS as the system under test.
 As discussed in \cref{sec:styles}, performance research on interactive vector maps is concentrated on Mapbox and MapLibre styles; the Mapbox codebase is proprietary and may not be evaluated without explicit consent, leaving MapLibre as the only viable open research target.
 Within MapLibre, the web renderer \texttt{maplibre-gl-js} is the reference implementation that first tracks new specification features and exposes the richest instrumentation hooks for Puppeteer-driven benchmarking, which is what makes it our benchmark target rather than the Native or mobile renderers that share the same styling engine.
 
-In scope are the three pass families that make up the optimizer pipeline (\cref{sub:pipeline}): expression-level rewrites on style~JSON (constant folding, algebraic simplification, statistics-driven folding, selectivity reordering), structural rewrites over a typed style model (dead-layer elimination, metadata refinement, layer merging), and data-level rewrites on the served tile payload (style-driven tile shaving and \ac{MLT} encoding-strategy selection).
+In scope are the three pass families that make up the optimizer pipeline (\cref{sub:pipeline}): expression-level rewrites on style~\ac{JSON} (constant folding, algebraic simplification, statistics-driven folding, selectivity reordering), structural rewrites over a typed style model (dead-layer elimination, metadata refinement, layer merging), and data-level rewrites on the served tile payload (style-driven tile shaving and \ac{MLT} encoding-strategy selection).
 Style and data passes are co-designed so that data rewrites are advised by the optimized style, and every pass is bound by the visual-equivalence constraint of \cref{eq:visual_equivalence} as its soundness criterion.
 
 The following concerns are deliberately out of scope:
@@ -48,7 +48,7 @@ The following concerns are deliberately out of scope:
     \item \emph{Symbol-layer merging.} MapLibre evaluates symbol placement per layer through a tile-wide\newline
     \noindent\texttt{CollisionIndex}, so merging symbol layers would alter label suppression order; the detailed argument is given alongside the structural passes (\cref{sub:structural_optimizations}).
     \item \emph{Proprietary style corpora.} Mapbox Streets, Esri vector basemaps, and similar commercial styles are excluded by their terms of service.
-    \item \emph{Tile schemas other than \ac{OMT}.} Non-OMT vector tile sources are excluded from the deep-corpus evaluation, and the stats-driven thresholds used by the pipeline are tuned on Germany~OMT only (\cref{sec:gathering_sample}).
+    \item \emph{Tile schemas other than \ac{OMT}.} Non-\ac{OMT} vector tile sources are excluded from the deep-corpus evaluation, and the stats-driven thresholds used by the pipeline are tuned on Germany~\ac{OMT} only (\cref{sec:gathering_sample}).
     \item \emph{Online and incremental serving.} The optimizer is an offline, one-shot rebuild over a (style, tile~set) pair; no integration with a live tile server is assumed, and the optimized artefacts can be served by any standards-compliant tile infrastructure.
     \item \emph{The reference Java encoder.} The legacy self-contained Java \ac{MLT} encoder of~\cite{tremmelMapLibreTileNext2025b} is retained as a baseline for the encoding experiments of \cref{ch:experiments}; it is not a target of optimization in this thesis.
 \end{itemize}
@@ -67,7 +67,7 @@ Around it are three supporting components, each detailed in its own section: a c
 The three pass levels at the centre are:
 
 \begin{enumerate}
-    \item \textbf{Expression passes} (\cref{sub:expression_optimizations}) operate directly on the JSON representation of style expressions, applying peephole rewrites, constant folding, and algebraic simplifications (\cref{sec:compiler_optimizations}) without deserializing the style into typed structures.
+    \item \textbf{Expression passes} (\cref{sub:expression_optimizations}) operate directly on the \ac{JSON} representation of style expressions, applying peephole rewrites, constant folding, and algebraic simplifications (\cref{sec:compiler_optimizations}) without deserializing the style into typed structures.
     They run to a fixpoint with a hard cap of eight iterations.
     In practice every style in the benchmarking and Maputnik\footnote{\url{https://maputnik.github.io/}, last accessed 2026-05-23} corpora converges within two to three iterations, well below the cap, because human-authored styles tend to reuse a small repertoire of patterns.
     The formal termination measure and confluence (\cref{sub:fixpoint}) discussion are given alongside the pass descriptions.
@@ -141,9 +141,9 @@ Expression passes run first so that structural passes operate on already-simplif
 
 \subsection{Code Generation from v8.json}\label{sub:codegen}
 
-We design structural passes to operate on Rust types \emph{generated} from the upstream MapLibre GL~JS style specification rather than raw JSON.
+We design structural passes to operate on Rust types \emph{generated} from the upstream MapLibre GL~JS style specification rather than raw \ac{JSON}.
 This shifts spec drift from a manual synchronisation burden to a regenerator invocation, and gives every pass typed access to defaults, value types, and expression capabilities.
-Hand-written Rust types are not a viable alternative: MapLibre publishes the specification in its own JSON-based \ac{DSL}, and a hand-maintained shadow would require manual synchronisation with every specification change and risk silent divergence.
+Hand-written Rust types are not a viable alternative: MapLibre publishes the specification in its own \ac{JSON}-based \ac{DSL}, and a hand-maintained shadow would require manual synchronisation with every specification change and risk silent divergence.
 
 The generation pipeline (top row of \cref{fig:system_architecture}) proceeds in three stages: it \emph{decodes} the published \texttt{v8.json} into an internal representation; it \emph{normalizes} the result into a stable intermediate representation - the \texttt{MIR} - that resolves cross-cutting concerns (in particular, it collapses paint and layout properties that the spec defines across multiple sections into per-layer field definitions carrying type, default, and expression-capability metadata); finally, a code emitter \emph{generates} Rust sources with round-trip serialization support.
 
@@ -170,7 +170,7 @@ For data-level passes, the pruning advisory removes only data that no live style
 
 \subsection{Expression-Level Optimisations}\label{sub:expression_optimizations}
 
-Expression passes operate directly on the JSON representation, applying rewrites that reduce expression complexity and eliminate redundant computation.
+Expression passes operate directly on the \ac{JSON} representation, applying rewrites that reduce expression complexity and eliminate redundant computation.
 \cref{tab:expression_passes} summarizes the implemented passes.
 
 \begin{table}[htbp]
@@ -334,7 +334,7 @@ Correlation between map-style predicates (e.g.\ \texttt{\mlval{class}} and \text
 Because the rendering benefit of predicate reordering depends on the proportion of evaluation cost attributable to predicate ordering - expected to be small for styles with short filters - we include this pass as an exploratory extension and do not separately benchmark its isolated impact.
 
 \paragraph{Termination and confluence of the fixpoint}
-The expression-level phase applies the entire rewrite rule set until the style JSON stops changing.
+The expression-level phase applies the entire rewrite rule set until the style \ac{JSON} stops changing.
 In the \ac{TRS} framing of \cref{sub:fixpoint}, this is the standard normal-form criterion.
 We impose a hard cap of \texttt{8} iterations; this is the \emph{formal} termination guarantee - the fixpoint loop executes at most 8 passes regardless of rule behavior.
 
@@ -578,7 +578,7 @@ paint:
 		\label{fig:expr_d}
 	\end{subfigure}
 	
-	\caption{Examples of expression-level transformations applied to representative style inputs. Each panel shows a before/after JSON example pair demonstrating how these optimisations interact.}
+	\caption{Examples of expression-level transformations applied to representative style inputs. Each panel shows a before/after \ac{JSON} example pair demonstrating how these optimisations interact.}
 	\label{fig:expr_before_after}
 \end{figure}
 
@@ -1316,7 +1316,7 @@ The same data profiler that drives the inner competition discovers structural pa
 Warm-start caching makes multi-trial encoding affordable - the encoder computes \ac{FSST} compressors, Morton metadata, and vertex-strategy decisions once and reuses them across sort trials.
 Furtermore, scratch buffers grow on first use and are recycled.
 
-The alternatives mechanism is an RAII stack of \texttt{AltSession} guards: each candidate writes into a sub-range of the encoder's buffers, and the guard's \texttt{Drop} impl retains only the bytes of the smallest candidate and rolls the cursor back for the others, so nesting lets the inner per-stream competition resolve before the enclosing sort-strategy trial commits.
+The alternatives mechanism is an \ac{RAII} stack of \texttt{AltSession} guards: each candidate writes into a sub-range of the encoder's buffers, and the guard's \texttt{Drop} impl retains only the bytes of the smallest candidate and rolls the cursor back for the others, so nesting lets the inner per-stream competition resolve before the enclosing sort-strategy trial commits.
 In the pathological case, this could result in as many \texttt{memcpy} calls as \texttt{AltSession::with}, but in practice they are ordered by decending choice-likelyhood.
 
 \paragraph{Encoder correctness validation}
@@ -1383,7 +1383,7 @@ The full preprocessing cost of a tileset $T$ served by a style $S$ decomposes in
 \begin{equation}\label{eq:cost_model}
     C_\text{total}(S, T) \;=\; C_\text{style}(S) \;+\; C_\text{stats}(T) \;+\; C_\text{adv}(S) \;+\; C_\text{enc}(S, T),
 \end{equation}
-where $C_\text{style}$ is the cost of running all expression and structural passes to fixpoint on a single style JSON (\cref{sub:expression_optimizations,sub:structural_optimizations}), $C_\text{stats}$ is the one-off cost of scanning $T$ to produce the per-layer statistical profile consumed by stats-driven folding and selectivity reordering (\cref{sub:tile_statistics}), $C_\text{adv}$ is the cost of computing the tile pruning advisory from the optimized style (\cref{sub:tile_shaving}), and $C_\text{enc}$ is the cost of the sort-strategy and per-stream encoding competition that actually writes the optimized \ac{MLT} tiles (\cref{sub:encoding_strategies}).
+where $C_\text{style}$ is the cost of running all expression and structural passes to fixpoint on a single style \ac{JSON} (\cref{sub:expression_optimizations,sub:structural_optimizations}), $C_\text{stats}$ is the one-off cost of scanning $T$ to produce the per-layer statistical profile consumed by stats-driven folding and selectivity reordering (\cref{sub:tile_statistics}), $C_\text{adv}$ is the cost of computing the tile pruning advisory from the optimized style (\cref{sub:tile_shaving}), and $C_\text{enc}$ is the cost of the sort-strategy and per-stream encoding competition that actually writes the optimized \ac{MLT} tiles (\cref{sub:encoding_strategies}).
 $C_\text{style}$ scales with the style size alone and is independent of $|T|$; $C_\text{stats}$ and $C_\text{enc}$ scale with the number of tiles; $C_\text{adv}$ scales with the product of layer count and the number of distinct categorical values tracked below the cardinality threshold.
 All four terms are paid \emph{once} per (style, tileset) build and are amortised across every tile request, every rendering session, and every re-run of the rendering benchmark.
 
@@ -1456,7 +1456,7 @@ Our evaluation considers several dimensions, which together instantiate the cost
     \item \textbf{Data savings}: reduction in style size (raw, gzip, and Brotli) and tile transfer volume.
     \item \textbf{Rendering performance}: client-side metrics including load time, frames per second, frame time percentiles (p50, p95, p99), jank count, style parse time, time to first tile, and time to first frame.
     \item \textbf{Optimisation cost}: preprocessing time introduced by each pass, measured as wall-clock time on the optimizer's host machine; this is an offline cost amortised over all subsequent tile deliveries.
-    \item \textbf{Efficiency}: \emph{qualitative} discussion of the energy implications of reduced data transfer and fewer rendering operations.  We perform no direct power or energy measurement (RAPL, battery delta), because the benchmark harness runs on a desktop workstation rather than a thermaly and battery-constrained mobile device; any quantitative energy claim would require a different hardware platform and we defer it to future work.
+    \item \textbf{Efficiency}: \emph{qualitative} discussion of the energy implications of reduced data transfer and fewer rendering operations.  We perform no direct power or energy measurement (\ac{RAPL}, battery delta), because the benchmark harness runs on a desktop workstation rather than a thermaly and battery-constrained mobile device; any quantitative energy claim would require a different hardware platform and we defer it to future work.
 \end{itemize}
 
 \subsection{Metrics}\label{sub:metrics}
@@ -1467,14 +1467,14 @@ Per run, the benchmark harness collects the following metrics:
     \item \textbf{Load time} (\texttt{loadMs}): wall-clock time from requesting the map to completion of the initial render, including style parsing, tile fetching, tile decoding, and first paint.
     Within the rendering benchmark, decoding latency is embedded in \texttt{loadMs} rather than isolated, because the browser-based harness cannot separate decoder wall-clock time from the surrounding fetch and first-paint work without renderer-internal instrumentation.
     We instead measure isolated decoding throughput via Criterion\footnote{\url{https://github.com/bheisler/criterion.rs}, last accessed 2026-05-23} micro-benchmarks on the Rust decoder (\cref{tab:decode_throughput}).
-    \item \textbf{Style parse time} (\texttt{styleParseMs}): time spent parsing and compiling the style JSON into the renderer's internal representation.
+    \item \textbf{Style parse time} (\texttt{styleParseMs}): time spent parsing and compiling the style \ac{JSON} into the renderer's internal representation.
     \item \textbf{Time to first tile} (\texttt{firstTileMs}): time from map initialisation until the first tile is decoded and ready for rendering.
     \item \textbf{Time to first frame} (\texttt{firstFrameMs}): time until the first frame is composited and presented.
     \item \textbf{Frames per second} (\texttt{fps}): average rendering throughput during the animation phase.
     \item \textbf{Frame time percentiles} (\texttt{p50}, \texttt{p95}, \texttt{p99FrameMs}): distribution of per-frame render times, capturing both typical and worst-case latency.
     \item \textbf{Jank count} (\texttt{jankCount}): number of frames exceeding \qty{16.67}{\milli\second} (the 60\,\ac{FPS} budget), indicating visible stuttering.
     \item \textbf{Heap memory} (\texttt{heapUsedMB}): JavaScript heap usage during the benchmark, capturing the memory cost of style structures and tile data.
-    \item \textbf{Idle time} (\texttt{idleMs}): time the renderer spends idle (waiting for tiles or GPU sync), indicating headroom.
+    \item \textbf{Idle time} (\texttt{idleMs}): time the renderer spends idle (waiting for tiles or \ac{GPU} sync), indicating headroom.
 \end{itemize}
 
 \noindent Additionally, we compute static metrics for each optimized style without running the renderer: \textbf{style size} as raw byte count, gzip-compressed size, and Brotli-compressed size; and \textbf{complexity metrics} comprising total \ac{AST} node count, maximum expression depth, layer count, filter count, and expression operator histogram.
@@ -1488,8 +1488,8 @@ The ablation comprises 19~cumulative steps - a baseline (no optimizations) follo
 
 We execute each scenario/style combination for 15~runs.
 We report the median and standard deviation of each metric; we prefer the median over the mean because rendering performance distributions are right-skewed (occasional long frames inflate the mean).
-To reduce measurement noise, the benchmark harness pins rendering to real GPU hardware via ANGLE\footnote{\url{https://github.com/google/angle}, last accessed 2026-05-23}/Vulkan\footnote{\url{https://www.vulkan.org/}, last accessed 2026-05-23} rather than the software rasteriser used for pixel-exact render tests.
-This ensures that we measure GPU-bound workloads (fragment shading, texture sampling, blend operations) realistically.
+To reduce measurement noise, the benchmark harness pins rendering to real \ac{GPU} hardware via ANGLE\footnote{\url{https://github.com/google/angle}, last accessed 2026-05-23}/Vulkan\footnote{\url{https://www.vulkan.org/}, last accessed 2026-05-23} rather than the software rasteriser used for pixel-exact render tests.
+This ensures that we measure \ac{GPU}-bound workloads (fragment shading, texture sampling, blend operations) realistically.
 
 We serve all tile requests from a local caching proxy as described in \cref{sub:tile_data}.
 The benchmark harness itself is a Puppeteer\footnote{\url{https://pptr.dev/}, last accessed 2026-05-23}-driven headless browser that programmatically loads the MapLibre GL~JS renderer, applies a camera animation scenario, and collects performance counters via the \texttt{Performance} \ac{API}\footnote{\url{https://developer.mozilla.org/en-US/docs/Web/API/Performance_API}, last accessed 2026-05-23} and custom instrumentation hooks in the renderer.

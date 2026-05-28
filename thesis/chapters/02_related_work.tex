@@ -10,7 +10,7 @@ Benchmarking methodology, finally, is the area where the prior art is mature; we
 We work through these areas in the same order:
 \cref{sec:rw_tile_data} for tile pruning and schema design,
 \cref{sec:rw_tile_encoding} for encoding and columnar compression,
-\cref{sec:rw_style_optimizations} for style-level work and its CSS-minification cousins,
+\cref{sec:rw_style_optimizations} for style-level work and its \ac{CSS}-minification cousins,
 and \cref{sec:rw_benchmarking} for rendering benchmarking.
 
 \section{Tile Data Optimisation}\label{sec:rw_tile_data}
@@ -24,7 +24,7 @@ It also only shaves on a zoom-property-unaware row-column approach.
 
 Mapbox also offers \emph{style-optimized vector tiles} as a proprietary server-side feature~\cite{StyleoptimizedVectorTiles}.
 When a tile request includes style metadata, the server analyses the style's sources, filters, and zoom ranges, then strips all data not visible for that style.
-This is the closest commercial precedent for style-data co-optimizations, but it is opaque, closed-source, and API-only - it cannot be extended, audited, or deployed independently.
+This is the closest commercial precedent for style-data co-optimizations, but it is opaque, closed-source, and \ac{API}-only - it cannot be extended, audited, or deployed independently.
 The exact set of optimizations is not disclosed and given that MapBox does not have a open research stance (their terms of service explicitly forbid this), reverse-engineering would likely be illegal\footnote{\url{https://media.ccc.de/v/36c3-11089-reflections_on_the_new_reverse_engineering_law}}.
 
 Vilardaga built \texttt{vt-optimizer}\footnote{\url{https://github.com/ibesora/vt-optimizer}, last accessed 2025-10-20}, which drops invisible or unused layers and fields in both the style and data.
@@ -32,7 +32,7 @@ The tool also provides an inspection mode that checks conformance to Mapbox's re
 However, the optimizations are limited to visibility-based pruning.
 It does not perform expression-level rewrites, cross-layer merging, or data-driven constant folding.
 
-Tippecanoe\footnote{\url{https://github.com/felt/tippecanoe}, last accessed 2026-04-21} is the standard open-source tool for building vector tilesets from large GeoJSON or FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11} collections.
+Tippecanoe\footnote{\url{https://github.com/felt/tippecanoe}, last accessed 2026-04-21} is the standard open-source tool for building vector tilesets from large \ac{GeoJSON} or FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11} collections.
 It implements several data-level optimizations heuristics: feature dropping based on density budgets (\texttt{--drop-densest-as-needed}), polygon coalescing at low zoom levels, Visvalingam line simplification~\cite{visvalingamLineGeneralisationRepeated1993}, and attribute exclusion.
 The line simplification algorithms used throughout the geospatial toolchain - Douglas-Peucker~\cite{douglasALGORITHMSREDUCTIONNUMBER1973} for its computational simplicity and Visvalingam-Whyatt~\cite{visvalingamLineGeneralisationRepeated1993} for its area-based perceptual fidelity - are instances of \emph{cartographic generalization}: the principled reduction of map detail to match the target scale.
 Tile data at different zoom levels is, in effect, a discrete multi-scale generalization hierarchy, though this thesis does not contribute new generalization algorithms.
@@ -63,11 +63,11 @@ This framing does not appear in prior map-rendering work - neither \texttt{vtsha
 \section{Tile Encoding and Format Innovation}\label{sec:rw_tile_encoding}
 
 The dominant wire format for vector tiles is \ac{MVT}\footnote{\url{https://github.com/mapbox/vector-tile-spec/tree/master/2.1}, last accessed 2026-04-21}, which uses Protocol Buffers\footnote{\url{https://protobuf.dev/}, last accessed 2026-04-21} to encode features in a row-oriented layout.
-\ac{MVT} has since been adopted as a conformance class in the OGC API-Tiles standard~\cite{OGCAPITiles}, making it the baseline format for any standards-compliant tile delivery.
+\ac{MVT} has since been adopted as a conformance class in the \ac{OGC} API-Tiles standard~\cite{OGCAPITiles}, making it the baseline format for any standards-compliant tile delivery.
 Its row orientation means that accessing a single property column requires scanning the entire feature table, and its protobuf encoding does not exploit the statistical properties of individual columns.
 
 Tremmel et al.~\cite{tremmelMapLibreTileNext2025b} introduced the MapLibre Tile (MLT) format, a columnar alternative that achieves up to $3\times$ tile size reduction on encoded tilesets and up to $6\times$ on certain large tiles relative to \ac{MVT}.
-\ac{MLT} uses column-oriented storage with lightweight compression - delta encoding, run-length encoding, dictionary encoding, and \ac{FSST}~\cite{bonczFSSTFastRandom2020} - and is designed for GPU-accelerated processing.
+\ac{MLT} uses column-oriented storage with lightweight compression - delta encoding, run-length encoding, dictionary encoding, and \ac{FSST}~\cite{bonczFSSTFastRandom2020} - and is designed for \ac{GPU}-accelerated processing.
 At the archive layer, Tremmel~\cite{tremmelCOMTILESCASESTUDY2023} proposed COMTiles, a cloud-optimized tile archive format that complements the per-tile encoding of \ac{MLT} by addressing the container and delivery layer for planet-scale tilesets.
 However, their work does not consider styles: the encoding strategy is chosen without knowledge of which properties the renderer will actually access, leaving potential for further size reduction through style-aware pruning before encoding.
 Removing properties and features changes column cardinalities and value distributions - for instance, pruning rare road classes can convert a high-cardinality string column into one amenable to dictionary or run-length encoding - so the optimal encoding strategy for the shaved tile differs from the original.
@@ -79,7 +79,7 @@ Kuschewski et al.~\cite{kuschewskiBtrBlocksEfficientColumnar2023} demonstrated w
 The general finding that no single encoding is universally optimal - and that data-driven strategy selection is necessary - motivates the multi-strategy encoding competition we develop in this thesis.
 
 The problem of automatic encoding selection in columnar databases has a substantial lineage.
-Abadi et~al.~\cite{abadiIntegratingCompressionExecution2006} introduced decision rules for choosing among RLE, dictionary, and bit-packing based on column properties (cardinality, sort order, run lengths) in the C-Store system.
+Abadi et~al.~\cite{abadiIntegratingCompressionExecution2006} introduced decision rules for choosing among \ac{RLE}, dictionary, and bit-packing based on column properties (cardinality, sort order, run lengths) in the C-Store system.
 Damme et~al.~\cite{dammeComprehensiveExperimentalSurvey2019} evaluated dozens of lightweight integer encodings and developed a cost-based selection strategy. Boissier~\cite{ganBaguaScalingDistributed2021} formulated encoding selection as a budget-constrained optimization problem.
 And Zeng et~al.~\cite{zengEmpiricalEvaluationColumnar2023} empirically evaluated Parquet and ORC internals, confirming that dictionary encoding should be a default candidate and that decompression speed matters more than compression ratio for integer encodings.
 
@@ -111,14 +111,14 @@ A simplification pass is therefore a natural complement to migration, not a repl
 More broadly, style documents in practice accumulate redundancy through several channels: iterative authoring that leaves superseded properties in place, copy-paste development across layers, automated migration that introduces mechanically correct but verbose expression forms, and multi-author editing where conventions drift over successive contributions.
 The result is that production styles routinely contain default-valued properties, unreachable filter branches, and duplicated paint blocks - creating a practical demand for automatic simplification that no existing tool meets.
 
-Stamen Design published \texttt{mapbox-gl-style-remove-defaults}\footnote{\url{https://github.com/stamen/mapbox-gl-style-remove-defaults}, last accessed 2026-5-27}, a tool that removes properties set to their specification default values from Mapbox GL style JSON.
+Stamen Design published \texttt{mapbox-gl-style-remove-defaults}\footnote{\url{https://github.com/stamen/mapbox-gl-style-remove-defaults}, last accessed 2026-5-27}, a tool that removes properties set to their specification default values from Mapbox GL style \ac{JSON}.
 This corresponds to the default stripping pass we describe in \cref{ch:methods}, implemented as a standalone tool.
 This ecosystem tooling demonstrates that individual style optimizations are recognized as valuable by practitioners, but no existing tool encomposes multiple optimizations passes.
 
 The closest academic analogue lies outside the map domain entirely.
-Hague et al.~\cite{hagueCSSMinificationConstraint2019} attack CSS rule merging as a Max-SAT problem over a node-weighted bipartite graph of rules and properties, with ordering constraints from the cascade.
-Their SatCSS tool beats six production CSS minifiers on real benchmarks.
-We are not the first to see the parallel - merging declarative style rules subject to ordering constraints is the same problem whether the order comes from the CSS cascade or the painter's algorithm - but the formalisation does not appear to have crossed into the map-rendering literature.
+Hague et al.~\cite{hagueCSSMinificationConstraint2019} attack \ac{CSS} rule merging as a Max-SAT problem over a node-weighted bipartite graph of rules and properties, with ordering constraints from the cascade.
+Their SatCSS tool beats six production \ac{CSS} minifiers on real benchmarks.
+We are not the first to see the parallel - merging declarative style rules subject to ordering constraints is the same problem whether the order comes from the \ac{CSS} cascade or the painter's algorithm - but the formalisation does not appear to have crossed into the map-rendering literature.
 Our layer-merging pass (\cref{ch:methods}) takes a much simpler heuristic route than SatCSS does, since the per-tileset build budget rules out reaching for a SAT solver.
 
 More broadly, rule-based optimization is a well-studied problem in both databases and compilers.
@@ -133,11 +133,11 @@ Since the peephole rules are individually simple and the styles converge within 
 
 Several studies have benchmarked vector map rendering performance.
 
-Netek et al.~\cite{netekPerformanceTestingVector2020} compared vector and raster tile performance across eight scenarios, measuring loading time, data transfer size, and HTTP request count.
+Netek et al.~\cite{netekPerformanceTestingVector2020} compared vector and raster tile performance across eight scenarios, measuring loading time, data transfer size, and \ac{HTTP} request count.
 They find that vector tiles offer better loading times, though raster tiles may be preferable on very slow connections.
 
-Balla and Gede~\cite{ballaVectorDataRendering2025} benchmarked GeoJSON rendering performance across Leaflet, OpenLayers, MapLibre GL~JS, and Mapbox GL~JS with varying feature counts.
-Below 10\,000 features, SVG-based renderers (Leaflet, OpenLayers) are faster; above 50\,000 features, WebGL-based renderers (Mapbox GL~JS, MapLibre GL~JS) dominate due to GPU acceleration.
+Balla and Gede~\cite{ballaVectorDataRendering2025} benchmarked \ac{GeoJSON} rendering performance across Leaflet, OpenLayers, MapLibre GL~JS, and Mapbox GL~JS with varying feature counts.
+Below 10\,000 features, \ac{SVG}-based renderers (Leaflet, OpenLayers) are faster; above 50\,000 features, \ac{WebGL}-based renderers (Mapbox GL~JS, MapLibre GL~JS) dominate due to \ac{GPU} acceleration.
 
 \begin{sloppypar}
 Rechsteiner~\cite{rechsteinerPerformancevergleichOpenSourceVectorTilesServerloesungenZur2024} compared open-source vector tile server implementations.
@@ -154,14 +154,14 @@ We complement them by introducing a cumulative ablation methodology that isolate
 Each strand of this literature solves part of the problem in isolation.
 The data-side tools - \texttt{vtshaver}, \texttt{vt-optimizer}, Tippecanoe - prune tile content but never read or rewrite the style document that drives the renderer.
 Mapbox's closed-source \enquote{style-optimized tiles} service is the only precedent that genuinely couples style and data, and its terms of service explicitly preclude the independent evaluation needed to confirm what it actually does.
-The style-side work is sparser still: Stamen's default-stripping utility and a handful of validators cover individual optimizations, but no published tool composes multiple passes, and the closest academic analogue (CSS minification) lives in a different domain altogether.
+The style-side work is sparser still: Stamen's default-stripping utility and a handful of validators cover individual optimizations, but no published tool composes multiple passes, and the closest academic analogue (\ac{CSS} minification) lives in a different domain altogether.
 Tremmel and Zink's \ac{MLT} format advances the encoding layer but picks strategies without consulting the style.
 The benchmarking literature is in better shape; we adopt its statistical methodology rather than extending it.
 
 \begin{chaptersummary}
 No prior work composes style and data optimizations into a single open pipeline: the data-side tools ignore the style, the only commercial precedent is closed-source, and the encoding format's strategy selection is style-blind.
 Our contribution is the joint $(S, T) \to (S', T')$ optimization formalised in \cref{sec:problem_statement}, together with a cumulative ablation methodology that measures whether the composition is additive or synergistic.
-\cref{ch:experiments} quantifies the payoff - \textbf{load times down by \qtyrange{63}{74}{\percent} (median \qty{71}{\percent}) and tile volume by \qty{28}{\percent}} on the styles we benchmarked end-to-end - and the OGC API-Tiles standard~\cite{OGCAPITiles} keeps these gains deployable without vendor lock-in.
+\cref{ch:experiments} quantifies the payoff - \textbf{load times down by \qtyrange{63}{74}{\percent} (median \qty{71}{\percent}) and tile volume by \qty{28}{\percent}} on the styles we benchmarked end-to-end - and the \ac{OGC} API-Tiles standard~\cite{OGCAPITiles} keeps these gains deployable without vendor lock-in.
 
 The next chapter introduces the foundations these techniques draw on: the rendering architecture, the compiler analogues behind the expression passes, the query-optimization concepts behind filter rewriting and selectivity, and the columnar encoding strategies for the data-level passes.
 \end{chaptersummary}

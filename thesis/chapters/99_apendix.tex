@@ -458,7 +458,7 @@ for (const {feature, id, index, sourceLayerIndex} of features) {
 				}
 			\end{tikzpicture}%
 		}
-		\caption{\textbf{Bearingspin.} Exercises $\theta$ and high-$\phi$-based GPU re-rendering cost without any non-LOD tile loading.}
+		\caption{\textbf{Bearingspin.} Exercises $\theta$ and high-$\phi$-based \ac{GPU} re-rendering cost without any non-LOD tile loading.}
 		\label{fig:app_anim_bearingspin}
 	\end{subfigure}
 	\hfill
@@ -495,7 +495,7 @@ for (const {feature, id, index, sourceLayerIndex} of features) {
 \section{Per-Style Ablation Results}\label{sec:app_per_style}
 
 In this section, we provide the full per-style, per-ablation-step results for each of the benchmark styles.
-For each style, the table reports style size (raw bytes, gzip at level~9, Brotli at maximum quality), median load time across scenarios, median FPS, and layer count at each cumulative ablation step.
+For each style, the table reports style size (raw bytes, gzip at level~9, Brotli at maximum quality), median load time across scenarios, median \ac{FPS}, and layer count at each cumulative ablation step.
 Performance metrics are medians across all scenario--animation combinations.
 Steps 16--19 (selectivity reorder, tile shaving, tile rewrite) require tile statistics and are only available for fiord and liberty, which we benchmarked with an \texttt{.mbtiles} source.
 We exclude Americana from the per-style tables due to incomplete benchmark data (only 3 of 20 ablation steps completed).
@@ -551,7 +551,7 @@ shaving + \ac{MLT} encoding) relative to the \ac{MVT} baseline}
 \section{Maputnik Generalisation Corpus}\label{app_maputnik}
 
 In \cref{tab:maputnik_full}, we list the 13 styles from the Maputnik editor catalog we used in the cross-style generalization study (\cref{sec:exp_cross_style}), together with per-style metrics.
-Two catalog entries were unavailable at the time of measurement (HTTP~403).
+Two catalog entries were unavailable at the time of measurement (\ac{HTTP}~403).
 We ran the optimizer with all static passes enabled (no tile statistics).
 
 \begin{table}[htbp]
@@ -617,7 +617,7 @@ Distribution    & Manjaro Linux (rolling, x86\_64) \\
 Kernel          & Linux \texttt{6.6.126-1-MANJARO} (SMP PREEMPT\_DYNAMIC, built 2026-02-16) \\
 glibc           & GNU libc \texttt{2.43} \\
 GPU driver      & NVIDIA proprietary \texttt{590.48.01} \\
-Vulkan loader   & API \texttt{1.4.325}, conformance \texttt{1.4.3.0}, driver \texttt{NVIDIA 590.48.1.0} \\
+Vulkan loader   & \ac{API} \texttt{1.4.325}, conformance \texttt{1.4.3.0}, driver \texttt{NVIDIA 590.48.1.0} \\
 ANGLE backend   & Vulkan (see \cref{app:bench_browser}) \\
 \bottomrule
 \end{tabular}

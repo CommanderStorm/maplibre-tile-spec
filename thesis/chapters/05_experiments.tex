@@ -38,7 +38,7 @@ This means that due to missing checks, layer merging and all follow-on operation
 \item Within the family, constant folding dominates
 \end{keytakeaways}
 
-\noindent In this experiment we evaluate the eight expression-level passes of \cref{sub:expression_optimizations} - the rewrites that act locally on each style's JSON expressions and run to a fixpoint.
+\noindent In this experiment we evaluate the eight expression-level passes of \cref{sub:expression_optimizations} - the rewrites that act locally on each style's \ac{JSON} expressions and run to a fixpoint.
 
 \subsection{Evaluation}\label{sub:expr_evaluation}
 
@@ -260,20 +260,20 @@ The headline numbers in this paragraph are medians of the Fiord and Liberty raw-
 The pooled median load time drops from \qty{424}{\milli\second} (baseline) to \qty{406}{\milli\second} with style-only (\qty{-4.1}{\percent}), but reduces to \qty{121}{\milli\second} with shaving-only (\qty{-71.5}{\percent}) and \qty{113}{\milli\second} with style+shaving (\qty{-73.3}{\percent}).
 The \ac{MLT} re-encoding step (config~5) adds a small load-time regression relative to config~4 (\qty{119}{\milli\second} vs.\ \qty{113}{\milli\second}, \qty{+5}{\percent}) while achieving better compression (gzip \qty{-11.0}{\percent} vs.\ baseline across both styles).
 \ac{FPS} follows the same pattern: shaving-only lifts the pooled median from 807 to \num{2289} (\qty{+184}{\percent}), with style+shaving reaching \num{2331} (\qty{+189}{\percent}).
-At these frame rates ($>{1000}$~FPS) the renderer is largely GPU-idle; we therefore read the metric as available performance headroom on constrained devices rather than a directly observable rendering cost saving on the benchmark host.
+At these frame rates ($>{1000}$~\ac{FPS}) the renderer is largely \ac{GPU}-idle; we therefore read the metric as available performance headroom on constrained devices rather than a directly observable rendering cost saving on the benchmark host.
 The \ac{MLT} variant is slightly below at \num{2232} \ac{FPS} (\qty{+176}{\percent} on the pool; the corresponding per-style \ac{FPS} gains are \qty{+148.1}{\percent} for Fiord and \qty{+149.9}{\percent} for Liberty, which sit inside the \qtyrange{100}{200}{\percent} per-style range reported across the ten deep-corpus styles at the end of the chapter), consistent with the additional decoding cost of the columnar format offsetting the smaller transfer size during sustained rendering.
-The native Rust micro-benchmarks show \numrange{4.6}{8.3}$\times$ higher decode throughput for \ac{MLT} over \ac{MVT}+gzip (\cref{tab:decode_throughput}), but this advantage does not fully transfer to the browser, where the \ac{MLT} decoder we build would need to run as a WASM module.
-We attribute the dominant bottleneck to the WASM-to-JavaScript boundary, since each decoded column must be transferred from WASM linear memory into JavaScript-visible typed arrays, incurring per-column copying and GC pressure that does not exist in a pure-native pipeline.
-Secondary overheads include the restriction to 128-bit WASM SIMD (whereas native \ac{FastPFOR} exploits AVX2/512) and baseline JIT compilation latency.
-Jangda et~al.~\cite{jangdaNotFastAnalyzing2019} measured a 45-55\% slowdown for WASM relative to native on SPEC CPU benchmarks; although the computational gap has narrowed since 2019, the data-transfer boundary cost remains largely unchanged because the WASM-JS interface still lacks zero-copy sharing of structured columnar buffers.
+The native Rust micro-benchmarks show \numrange{4.6}{8.3}$\times$ higher decode throughput for \ac{MLT} over \ac{MVT}+gzip (\cref{tab:decode_throughput}), but this advantage does not fully transfer to the browser, where the \ac{MLT} decoder we build would need to run as a \ac{WASM} module.
+We attribute the dominant bottleneck to the \ac{WASM}-to-JavaScript boundary, since each decoded column must be transferred from \ac{WASM} linear memory into JavaScript-visible typed arrays, incurring per-column copying and \ac{GC} pressure that does not exist in a pure-native pipeline.
+Secondary overheads include the restriction to 128-bit \ac{WASM} \ac{SIMD} (whereas native \ac{FastPFOR} exploits AVX2/512) and baseline JIT compilation latency.
+Jangda et~al.~\cite{jangdaNotFastAnalyzing2019} measured a 45-55\% slowdown for \ac{WASM} relative to native on SPEC \ac{CPU} benchmarks; although the computational gap has narrowed since 2019, the data-transfer boundary cost remains largely unchanged because the \ac{WASM}-JS interface still lacks zero-copy sharing of structured columnar buffers.
 As a result, the columnar decoder's advantage materialises primarily on larger, feature-dense tiles where the per-column setup and transfer cost is amortised; on smaller tiles the per-column dispatch overhead narrows the gap to approximate parity with \ac{MVT}'s single-path protobuf parser.
-We are currently working to shift more decoding and data consumption into WASM to reduce boundary-crossing overhead.
+We are currently working to shift more decoding and data consumption into \ac{WASM} to reduce boundary-crossing overhead.
 Bootstrap \qty{95}{\percent} confidence intervals confirm that the full-pipeline load-time improvements are tight: Fiord's final load time is \qty{120.5}{\milli\second} (CI: [\num{119.3}, \num{121.5}]), Liberty's is \qty{133.7}{\milli\second} (CI: [\num{132.9}, \num{134.2}]), both with $p < 10^{-45}$ (Wilcoxon, $n = 270$ for Fiord across 18 scenarios and $n = 254$ for Liberty across 17 scenarios at the full-pipeline pool) against their respective baselines.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\linewidth]{figures/rendering_metrics_mlt.pdf}
-    \caption{Rendering metrics (load time, FPS) across configurations~1-5, enabling direct comparison with Experiments~1-2 in the combined analysis. The figure shows the significant drop in both load time and increase in FPS for tile shaving, as well as the fact that style-only optimization is ineffective. We also confirm the \ac{MLT} implementation to sligtly decrease performance because the current implementation still internally converts to \ac{MVT}}
+    \caption{Rendering metrics (load time, \ac{FPS}) across configurations~1-5, enabling direct comparison with Experiments~1-2 in the combined analysis. The figure shows the significant drop in both load time and increase in \ac{FPS} for tile shaving, as well as the fact that style-only optimization is ineffective. We also confirm the \ac{MLT} implementation to sligtly decrease performance because the current implementation still internally converts to \ac{MVT}}
     \label{fig:rendering_metrics_mlt}
 \end{figure}
 
@@ -331,7 +331,7 @@ To separate the contribution of the multi-strategy competition (this work) from 
           the \ac{MLT}-Rust column reports the Rust encoder developed in this thesis}
         \label{tab:mvt_mlt_comparison}
     \end{subfigure}
-\caption[Encoder comparison: per-zoom breakdown and total tileset size]{Encoder comparison for the Germany OpenMapTiles tileset (zoom~0-14, \num{256588} tiles). MLT-Rust (this work) achieves \qty{28.3}{\percent} smaller total size than the MLT-Java baseline under no wire compression; the Java encoder drifts above \ac{MVT} size at several zoom levels under Brotli/zstd, whereas the Rust encoder remains below \ac{MVT} throughout.}
+\caption[Encoder comparison: per-zoom breakdown and total tileset size]{Encoder comparison for the Germany OpenMapTiles tileset (zoom~0-14, \num{256588} tiles). \ac{MLT}-Rust (this work) achieves \qty{28.3}{\percent} smaller total size than the \ac{MLT}-Java baseline under no wire compression; the Java encoder drifts above \ac{MVT} size at several zoom levels under Brotli/zstd, whereas the Rust encoder remains below \ac{MVT} throughout.}
 \label{fig:encoder_comparison}
 \end{figure}
 
@@ -353,7 +353,7 @@ It reflects the combined effect of sort-strategy competition, per-stream profili
 This result is complementary to, but separate from, the style-data bridge: style-driven tile shaving reduces tile content before encoding, while the encoder improvements reduce the encoded size of whatever content remains.
 The two contributions stack (shaved tiles encoded with the Rust encoder are smaller than shaved tiles encoded with the Java baseline), but they address orthogonal sources of redundancy.
 
-\paragraph{Why not just apply zstd to MVT?}
+\paragraph{Why not just apply zstd to \acs{MVT}?}
 A natural objection is that general-purpose compressors such as zstd-22 or Brotli-11 should be sufficient: if compression is the goal, simply applying the strongest available compressor to the existing \ac{MVT} wire format would avoid the complexity of a columnar encoder entirely.
 \Cref{tab:mvt_mlt_comparison} answers this directly.
 \ac{MVT} under zstd-22 yields \qty{3.16}{\giga\byte} for the Germany tileset, whereas \ac{MLT}-Rust under the same compressor yields \qty{2.75}{\giga\byte} - a \qty{12.9}{\percent} reduction.
@@ -565,7 +565,7 @@ Load-time improvements are unevenly distributed across scenarios: urban, tile-de
 Expression passes (steps~1-7) produce a diffuse, moderate improvement across most scenarios, whereas the improvement from structural passes (steps~8-15) is concentrated in the few styles and scenarios where dead elimination or layer merging applies.
 
 A side effect we did not expect on first reading was that the frame-time consistency metric in \cref{fig:heatmapjankcount} \emph{got worse} as the pipeline got faster - the jank count goes up across the ablation.
-The explanation, once we plotted it next to FPS, is that we are now running well above 2000\,FPS, where smaller variations such as \ac{GC}-pauses register as proportionally large frame-time outliers; on real consumer hardware capped well below that rate the same pauses would not cross the jank threshold.
+The explanation, once we plotted it next to \ac{FPS}, is that we are now running well above 2000\,\ac{FPS}, where smaller variations such as \ac{GC}-pauses register as proportionally large frame-time outliers; on real consumer hardware capped well below that rate the same pauses would not cross the jank threshold.
 The metric is doing what it should - flagging fragile frames - but it is reading a regime the renderer was never expected to enter, which is worth keeping in mind when interpreting the heatmap.
 
 \begin{figure}[htbp]
@@ -580,8 +580,8 @@ The metric is doing what it should - flagging fragile frames - but it is reading
 	\includegraphics[height=0.9\textheight]{figures/heatmap_jankCount}
 	\caption{
 		Heatmap of how jank frames, i.e. frames times that are much slower than the sorrounding frame times, happen.
-		Due to the increased FPS, smaller variations like \ac{GC}-pauses make this metric go up as FPS is higher.
-		This does not nessarily have an effect to the user, since real devices render below the 2000FPS marker that we run at, but nevertheless something to keep in mind.}
+		Due to the increased \ac{FPS}, smaller variations like \ac{GC}-pauses make this metric go up as \ac{FPS} is higher.
+		This does not nessarily have an effect to the user, since real devices render below the 2000\,\ac{FPS} marker that we run at, but nevertheless something to keep in mind.}
 	\label{fig:heatmapjankcount}
 \end{figure}
 
@@ -624,7 +624,7 @@ The dominant heap reduction arrives with the data-level passes: tile shaving (st
 {\ifnum\isBold=1\textbf{\style}\else\style\fi &
  \num{\baseGzip} & \num{\optGzip} & \reduction &
  \fmtdelta{\deltaLoad} & \fmtdelta{\deltaFps}}%
-\caption{Per-style summary: baseline and optimized style size (gzip), size reduction, and change in load time and FPS (medians across scenarios). Styles below the rule include tile-level optimizations (steps~1-19); those above include style-level optimizations only (steps~1-15). Tile shaving produces the most visible drops in load time and FPS improvements.}
+\caption{Per-style summary: baseline and optimized style size (gzip), size reduction, and change in load time and \ac{FPS} (medians across scenarios). Styles below the rule include tile-level optimizations (steps~1-19); those above include style-level optimizations only (steps~1-15). Tile shaving produces the most visible drops in load time and \ac{FPS} improvements.}
 \label{tab:per_style_summary}
 \end{table}
 
@@ -657,12 +657,12 @@ The dominant heap reduction arrives with the data-level passes: tile shaving (st
 Not all passes contribute equally, and the marginal contribution of each pass depends on the metric under consideration.
 
 \paragraph{Rendering time metrics}
-After tile shaving, we observe that expression-level constant folding and structural dead elimination tend to produce the largest marginal improvements in frame time and FPS, as they reduce the number of expressions the renderer must evaluate per feature per frame and the number of layers it must process, respectively.
+After tile shaving, we observe that expression-level constant folding and structural dead elimination tend to produce the largest marginal improvements in frame time and \ac{FPS}, as they reduce the number of expressions the renderer must evaluate per feature per frame and the number of layers it must process, respectively.
 Layer merging produces a large marginal improvement in draw-call-heavy styles (many road layers, many boundary layers) but a smaller improvement in simple styles.
 
 \paragraph{Transfer size metrics}
 Passes that primarily reduce serialized style size - default stripping, metadata stripping, color minification - show smaller rendering improvements but contribute meaningfully to transfer size, particularly under compression (gzip, Brotli).
-A smaller style reduces the time to first render because the JSON must be fetched, decompressed, and parsed before the renderer can initialise.
+A smaller style reduces the time to first render because the \ac{JSON} must be fetched, decompressed, and parsed before the renderer can initialise.
 Data-level tile shaving dominates the transfer-size metric, as tiles are fetched continuously during map interaction whereas the style is loaded only once.
 
 \paragraph{Load time metrics}
@@ -679,13 +679,13 @@ Preprocessing cost is therefore amortised over all subsequent tile deliveries an
 In this section we measure each of the four additive cost terms $C_\text{style}$, $C_\text{stats}$, $C_\text{adv}$, and $C_\text{enc}$ from the preprocessing cost model (\cref{eq:cost_model}, \cref{sub:preprocessing_cost_model}) on a real tileset, and confirm that the cost-control mechanisms formalised there keep the multi-strategy overhead well below the na\"ive worst case.
 
 \paragraph{Measured stage costs}
-\Cref{tab:preprocessing_cost} reports wall-clock time for each stage of the preprocessing pipeline on the Germany OpenMapTiles tileset (\num{256156} tiles after pruning, zoom 0-14), which we measured on an AMD Ryzen~7 3700X (8 cores / 16 threads), \qty{46}{\gibi\byte} RAM, NVMe SSD; median of three runs.
+\Cref{tab:preprocessing_cost} reports wall-clock time for each stage of the preprocessing pipeline on the Germany OpenMapTiles tileset (\num{256156} tiles after pruning, zoom 0-14), which we measured on an AMD Ryzen~7 3700X (8 cores / 16 threads), \qty{46}{\gibi\byte} \ac{RAM}, NVMe SSD; median of three runs.
 \emph{Style optimization} ($C_\text{style}$) and \emph{advisory computation} ($C_\text{adv}$) are negligible: Liberty's 111-layer style completes all passes in \qty{7.5}{\milli\second} and the advisory in \qty{1.1}{\milli\second}.
 \emph{Tile-statistics collection} ($C_\text{stats}$) takes \qty{57.4}{\second} for a single-threaded scan of all \num{256588} source tiles.
 \emph{Tile pruning and \ac{MVT} re-encoding} ($C_\text{enc}$, MVT) takes \qty{15.6}{\second} using Rayon\footnote{\url{https://github.com/rayon-rs/rayon}, last accessed 2026-05-23} parallelism.
 \emph{\ac{MLT} encoding with sort-strategy competition} ($C_\text{enc}$, \ac{MLT} auto) is the dominant term: \qty{5}{\minute}\,\qty{42}{\second} single-threaded, or \qty{47}{\second} with 16 threads.
 Without the competition ($C_\text{enc}$, \ac{MLT} none), single-threaded encoding takes \qty{2}{\minute}\,\qty{55}{\second}.
-We therefore measure the overhead ratio of the full competition at $342 / 175 = 1.95\times$ in CPU time - substantially lower than the analytical 3-5$\times$ estimate, because the cost-control mechanisms formalised in \cref{sub:preprocessing_cost_model} eliminate most redundant work.
+We therefore measure the overhead ratio of the full competition at $342 / 175 = 1.95\times$ in \ac{CPU} time - substantially lower than the analytical 3-5$\times$ estimate, because the cost-control mechanisms formalised in \cref{sub:preprocessing_cost_model} eliminate most redundant work.
 
 \begin{table}[htbp]
 \centering\small
@@ -702,7 +702,7 @@ $C_\text{enc}$ (\ac{MLT} auto, 16T) & \ac{MLT} encoding, full competition, 16 th
 \midrule
 Overhead factor & auto\,/\,none (single-threaded CPU time) & $1.95\times$ \\
 \end{tabular}
-\caption{Preprocessing wall-clock time per pipeline stage on the Germany OpenMapTiles tileset (zoom 0-14, \num{256156} tiles after pruning) when run on \cref{tab:bench_hardware}. Median of 3~runs. Style optimization ($C_\text{style}$, \qty{7.5}{\milli\second}) and advisory computation ($C_\text{adv}$, \qty{1.1}{\milli\second}) are negligible; MLT encoding with full sort-strategy competition dominates at \qty{342}{\second} single-threaded (\qty{46.7}{\second} with 16 threads), with an overhead factor of $1.95\times$ vs.\ a fixed-plan encoder.}
+\caption{Preprocessing wall-clock time per pipeline stage on the Germany OpenMapTiles tileset (zoom 0-14, \num{256156} tiles after pruning) when run on \cref{tab:bench_hardware}. Median of 3~runs. Style optimization ($C_\text{style}$, \qty{7.5}{\milli\second}) and advisory computation ($C_\text{adv}$, \qty{1.1}{\milli\second}) are negligible; \ac{MLT} encoding with full sort-strategy competition dominates at \qty{342}{\second} single-threaded (\qty{46.7}{\second} with 16 threads), with an overhead factor of $1.95\times$ vs.\ a fixed-plan encoder.}
 \label{tab:preprocessing_cost}
 \end{table}
 
@@ -728,16 +728,16 @@ Composed end-to-end across the ten deep-corpus styles, the full pipeline cuts pe
 The following paragraphs decompose which cost channel each family acts on, separate the load-time levers from the frame-rate levers, and close with the measurement-noise caveats that bound these headline numbers.
 
 \paragraph{Three plausible improvement channels}
-The full pipeline ablation points to three plausible channels by which the optimizer improves rendering performance, which we infer from proxy metrics (AST node count, layer count, tile size) rather than direct per-mechanism instrumentation.
-The expression passes (\cref{sub:expression_optimizations}) plausibly reduce per-feature evaluation cost - fewer AST nodes mean fewer interpreter steps per feature per frame.
-Dead elimination and layer merging (\cref{sub:structural_optimizations}) operate one level up, cutting draw calls, GPU state changes, and per-layer filter evaluations.
+The full pipeline ablation points to three plausible channels by which the optimizer improves rendering performance, which we infer from proxy metrics (\ac{AST} node count, layer count, tile size) rather than direct per-mechanism instrumentation.
+The expression passes (\cref{sub:expression_optimizations}) plausibly reduce per-feature evaluation cost - fewer \ac{AST} nodes mean fewer interpreter steps per feature per frame.
+Dead elimination and layer merging (\cref{sub:structural_optimizations}) operate one level up, cutting draw calls, \ac{GPU} state changes, and per-layer filter evaluations.
 Tile shaving and re-encoding (\cref{sub:data_optimizations}) sit on a different axis entirely: they reduce transfer and decode cost so that load time and time-to-first-tile drop, with a secondary effect on average frame time via lower \ac{GC}-spend.
 No renderer instrumentation separates these channels directly; the decomposition is inferred from the proxy metrics and the time breakdown (\cref{fig:time_breakdown}).
 What makes them additive in the aggregate (as already shown quantitatively in \cref{sub:mlt_results}) is that they target non-overlapping costs: simplification cannot shrink tiles, shaving cannot prune expressions.
 
 \paragraph{Load time vs.\ frame rate}
 Expression and structural passes improve both load time and frame rate, because a simpler style is both faster to parse and faster to render.
-Data-level passes primarily improve load time (smaller tiles arrive faster) and have a smaller effect on sustained frame rate, since once tiles are decoded and resident in the GPU the per-frame cost is dominated by expression evaluation and draw-call overhead rather than data size.
+Data-level passes primarily improve load time (smaller tiles arrive faster) and have a smaller effect on sustained frame rate, since once tiles are decoded and resident in the \ac{GPU} the per-frame cost is dominated by expression evaluation and draw-call overhead rather than data size.
 The exception is tile shaving at overview zoom levels, where removing entire source-layers reduces the number of features the renderer must process per frame.
 
 \paragraph{What varies, and why}
@@ -750,8 +750,8 @@ styles with many narrowly-filtered layers (e.g.\ detailed road styles) benefit m
 No single pass dominates across all styles, which is the empirical justification for the multi-pass design.
 
 \paragraph{Measurement noise}
-The 15-run median smooths out most measurement noise, but tail metrics (p99 frame time, jank count) carry higher variance than central-tendency metrics; GPU thermals, browser garbage collection, and OS scheduling all contribute.
-We partly self-inflict this: using real GPU hardware (ANGLE/Vulkan) rather than a software rasteriser captures realistic rendering costs - GPU buffer management, shader compilation - at the expense of slightly higher noise compared to deterministic software rendering.
+The 15-run median smooths out most measurement noise, but tail metrics (p99 frame time, jank count) carry higher variance than central-tendency metrics; \ac{GPU} thermals, browser garbage collection, and OS scheduling all contribute.
+We partly self-inflict this: using real \ac{GPU} hardware (ANGLE/Vulkan) rather than a software rasteriser captures realistic rendering costs - \ac{GPU} buffer management, shader compilation - at the expense of slightly higher noise compared to deterministic software rendering.
 
 
 \section{Visual Correctness Validation}\label{sec:visual_correctness}
@@ -764,9 +764,9 @@ Across every comparison, the fraction of differing pixels stayed below pixelmatc
 In this section we discuss potential threats to the validity of the experimental findings.
 
 \paragraph{Internal validity}
-We conducted all rendering benchmarks on a single hardware configuration (GPU model, CPU, memory) running a specific browser version with ANGLE/Vulkan as the graphics backend; the full host, driver, toolchain, and dependency dump is in \cref{app:bench_env}.
+We conducted all rendering benchmarks on a single hardware configuration (\ac{GPU} model, \ac{CPU}, memory) running a specific browser version with ANGLE/Vulkan as the graphics backend; the full host, driver, toolchain, and dependency dump is in \cref{app:bench_env}.
 Performance characteristics may differ on other hardware or with different graphics backends (e.g., native OpenGL, DirectX, Metal).
-We chose the 15-run median to reduce measurement noise, but rare performance events (e.g., GPU thermal throttling, garbage collection pauses) may not be fully captured.
+We chose the 15-run median to reduce measurement noise, but rare performance events (e.g., \ac{GPU} thermal throttling, garbage collection pauses) may not be fully captured.
 The caching proxy eliminates network variability but also prevents observation of real-world caching effects and \ac{CDN} behavior.
 
 \paragraph{External validity}

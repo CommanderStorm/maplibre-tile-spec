@@ -1,8 +1,8 @@
 \chapter{Introduction}\label{ch:introduction}
 
-A single rendered frame in an interactive vector map has to fit a tile fetch, an evaluation of style expressions over every visible feature, and a GPU submit inside the same frame budget, and on a slow connection or a battery-bound device any of the three can become the bottleneck.
+A single rendered frame in an interactive vector map has to fit a tile fetch, an evaluation of style expressions over every visible feature, and a \ac{GPU} submit inside the same frame budget, and on a slow connection or a battery-bound device any of the three can become the bottleneck.
 MapLibre GL~JS\footnote{We target MapLibre GL~JS, the open-source fork of Mapbox GL~JS, because its source code permits the static analysis and runtime instrumentation that a style optimizer requires.
-The proprietary Mapbox codebase does not allow independent research evaluation.} and Mapbox GL~JS deliver these maps by streaming tiled geometry to the browser and letting a client-side style document drive a WebGL- or WebGPU-based rendering pipeline.
+The proprietary Mapbox codebase does not allow independent research evaluation.} and Mapbox GL~JS deliver these maps by streaming tiled geometry to the browser and letting a client-side style document drive a \ac{WebGL}- or \ac{WebGPU}-based rendering pipeline.
 This architecture is what makes panning, zooming, and rotation smooth when it works, and what makes them stutter when it does not.
 
 As map deployments scale - from personal projects to platforms serving millions of daily users - the cost of suboptimal performance compounds.
@@ -37,7 +37,7 @@ We make the following main contributions:
 \begin{enumerate}
     \item A \textbf{three-level optimization pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering), structural passes (dead layer elimination, metadata refinement, layer merging), and data-level transformations (tile shaving, encoding strategy selection), modeled on peephole optimizers and query planners from the compiler and database literature.
     We decompose the pipeline along three distinct input representations:
-    Expression passes operate on raw JSON arrays with no schema knowledge, enabling fast, composable peephole rules.
+    Expression passes operate on raw \ac{JSON} arrays with no schema knowledge, enabling fast, composable peephole rules.
     Structural passes require a typed model of the full style document to reason across layers and sources.
     And data passes operate on tile content rather than the style, requiring a different input representation entirely.
 
@@ -57,7 +57,7 @@ We make the following main contributions:
 
 \cref{ch:related_work} shows that prior work attacks each level in isolation - tile-data pruners are style-blind, columnar formats ignore which properties the style actually reads, and style-level optimizers are limited to default-stripping analogues - and \cref{ch:theoretical_background} assembles the compiler, query-optimization, and columnar-encoding foundations the pipeline reuses.
 
-\cref{ch:methods} states the joint problem formally in \cref{sec:problem_statement} - producing $(S', T')$ from $(S, T)$ under the pixel-equivalence constraint of \cref{eq:visual_equivalence} - and details the three-level pipeline that solves it: expression rewrites over raw JSON, structural passes over a typed style model, and data-level passes that emit a style-driven pruning advisory and re-encode in \ac{MLT} with automatic strategy selection.
+\cref{ch:methods} states the joint problem formally in \cref{sec:problem_statement} - producing $(S', T')$ from $(S, T)$ under the pixel-equivalence constraint of \cref{eq:visual_equivalence} - and details the three-level pipeline that solves it: expression rewrites over raw \ac{JSON}, structural passes over a typed style model, and data-level passes that emit a style-driven pruning advisory and re-encode in \ac{MLT} with automatic strategy selection.
 
 \cref{ch:experiments} measures the isolated and combined effects through a cumulative ablation across 15~styles and 18~scenarios; the full pipeline achieves load-time reductions of \qtyrange{63}{74}{\percent} (median \qty{71}{\percent}), \ac{FPS} gains of \qtyrange{100}{200}{\percent}, and a \qty{28}{\percent} tile-volume reduction over the reference \ac{MVT} baseline, but the composition turns out to be \emph{additive rather than synergistic} at the aggregate level.
 \cref{ch:conclusion} revisits R1-R3 in \cref{sec:rq_revisited}, names tile shaving and columnar re-encoding as the primary levers, and points to selective-column decoding, learned encoding selection, and online deployment as the natural next steps.
