@@ -7,29 +7,41 @@ The chapter opens with a formal statement of the optimization problem and its vi
 
 \section{Formalised Problem Statement}\label{sec:problem_statement}
 
-With the foundations established in \cref{ch:theoretical_background}, we can state the optimization problem addressed by this thesis formally.
-Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~\ac{JSON} documents, and $\mathcal{T}$ be the set of tile sets (a tile set is a finite family of tiles indexed by source, $x$, $y$, $z$).
-Let $\mathcal{V}$ be the set of \emph{viewing states} a renderer can be in - roughly the six degrees of freedom and the viewport, so a $(x, y, z, \text{roll}, \text{pitch}, \text{bearing}, \text{viewport size})$ tuple.
-And let MapLibre's rendering function, which maps a style, a tile set, and a viewing state to a rasterised image in $\mathcal{I}$ be defined as
+With the foundations of \cref{ch:theoretical_background} in place, we state the optimization problem formally.
+
+Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~\ac{JSON} documents.
+Let $\mathcal{T}$ be the set of tile sets, each a finite family of tiles indexed by source and $(x, y, z)$.
+Let $\mathcal{V}$ be the set of \emph{viewing states}: tuples $(\text{lat}_\text{center}, \text{lat}_\text{center}, z, \text{roll}, \text{pitch}, \text{bearing}, \text{viewport size})$, the six degrees of freedom plus the viewport.
+Let $\mathcal{I}$ be the set of rasterised images, and
 \begin{equation}\label{eq:render_function}
     R : \mathcal{S} \times \mathcal{T} \times \mathcal{V} \to \mathcal{I}
 \end{equation}
+\noindent be MapLibre's deterministic rendering function.
 
-\noindent The optimizer solves the following problem:
-Given an input pair $(S, T)$ and a cost function $c: \mathcal{S} \times \mathcal{T} \to \mathbb{R}_{[0,1]}$, find $(S', T')$ minimizing $c(S', T')$ subject to the \emph{visual equivalence} constraint where $\equiv$ denotes pixel-identity under a deterministic rasteriser:
+The optimizer is a function $\mathcal{O}: \mathcal{S} \times \mathcal{T} \to \mathcal{S} \times \mathcal{T}$ with $(S', T') = \mathcal{O}(S, T)$.
+Given a cost vector $c$ over the deployment-relevant metrics of \cref{sec:benchmarking}, $\mathcal{O}$ seeks to reduce the components of $c(S', T')$ under two formal constraints.
+We do not aggregate the components into a scalar; we report each separately in the per-pass ablations.
+
+The first constraint is \emph{visual equivalence}.
+Writing $\equiv$ for pixel-identity,
 \begin{equation}\label{eq:visual_equivalence}
-    \forall v \in \mathcal{V}:\; R(S, T, v) \equiv R(S', T', v),
+    \forall v \in \mathcal{V}:\; R(S, T, v) \equiv R(S', T', v).
 \end{equation}
+In practice we sample $v$ on a discrete grid of zooms and viewports, and check $\equiv$ by direct image comparison rather than by formal proof.
 
-In practice, we quantify $v$ only over the discrete grid of zooms and viewports, and verify pixel-identity by direct image comparison rather than by formal proof.
-The cost function $c$ encodes the deployment-relevant metrics discussed in \cref{sec:benchmarking}; we do not attempt to collapse them into a scalar, instead reporting the effect of each pass on each metric separately.
+The second constraint is \emph{strict idempotency}:
+\begin{equation}\label{eq:idempotency}
+    \mathcal{O}(\mathcal{O}(S, T)) = \mathcal{O}(S, T) \quad \text{for all } (S, T) \in \mathcal{S} \times \mathcal{T}.
+\end{equation}
+Feeding $\mathcal{O}$'s output back as input yields the same pair, ruling out unbounded chained improvement by construction.
+The expression-pass fixpoint of \cref{sub:fixpoint} enforces idempotency on the style half; the deterministic, statistics-driven encoding choices of \cref{sub:data_optimizations} enforce it on the tile half.
+Both halves are exercised by the round-trip proptest and libFuzzer harness of \cref{par:encoder_validation}.
 
-The constraint~(\cref{eq:visual_equivalence}) is the \emph{soundness criterion} for every pass in this chapter:
+\Cref{eq:visual_equivalence} doubles as the \emph{soundness criterion} for every pass in this chapter.
 Any rewrite whose correctness depends on a MapLibre runtime invariant must either preserve the invariant or reject the rewrite when the invariant cannot be established.
 
-For example, the stats-driven folding pass cannot soundly remove a \mlop{match} arm without a full census of the tile data, because the arm may be reached by features the statistics have not observed;
-the pass is consequently gated on a sample rate of~1.0.
-Similarly, the metadata-refinement pass must reason about overzoom (\cref{sec:tiles}) when tightening \mlprop{maxzoom}, because an overzoomed tile counts as a viewing state in~(\ref{eq:visual_equivalence}).
+For example, the stats-driven folding pass cannot soundly remove a \mlop{match} arm without a full census of the tile data, because the arm may be reached by features the statistics have not observed; the pass is consequently gated on a sample rate of~1.0.
+Similarly, the metadata-refinement pass must reason about overzoom (\cref{sec:tiles}) when tightening \mlprop{maxzoom}, because an overzoomed tile counts as a viewing state in \cref{eq:visual_equivalence}.
 
 \section{Scope}\label{sec:scope}
 
@@ -59,7 +71,7 @@ To evaluate the effectiveness of the optimizations strategies developed in this 
 We first established a reliable performance baseline and then ran cumulative ablation experiments that isolate the contribution of each optimizations pass.
 Under the soundness contract of \cref{sec:scope}, the passes from~\cref{sub:pipeline} together seek to minimize $c(S', T')$ across the metrics defined in \cref{sec:benchmarking}.
 
-\subsection{Three-Level Optimisation Pipeline}\label{sub:pipeline}
+\subsection{Three-Level Optimization Pipeline}\label{sub:pipeline}
 
 \Cref{fig:system_architecture} sketches the optimizer system as a whole.
 At the centre sits the \emph{Optimiser}, a pipeline of passes at three levels of abstraction.
@@ -158,7 +170,7 @@ The cross-language surface is generated by \emph{Diplomat}\footnote{\url{https:/
 The Java wrapper exposes the generated bindings through the Panama \ac{FFM} \ac{API} (JEP~454)\footnote{\url{https://openjdk.org/jeps/454}, last accessed 2026-05-23} rather than conventional \ac{JNI} glue, eliminating hand-written C stubs and giving the \ac{JVM} direct, zero-copy access to off-heap buffers.
 This is the boundary shape a columnar encoder requires: each tile is handed over as a batch of parallel \texttt{MemorySegment}s rather than one call per feature, amortising the per-boundary cost over thousands of features in one encoder invocation.
 
-\section{Building Optimisations}\label{sec:building_optimizations}
+\section{Building Optimizations}\label{sec:building_optimizations}
 
 The implemented passes target three areas of the rendering pipeline: style expressions, structural properties, and tile data.
 We classify each pass by \emph{where} it operates and its \emph{data requirements} (none, sampling, or full scan); many are analogues of well-known compiler and query-processing techniques.
@@ -168,7 +180,7 @@ For expression-level passes, the termination measure $\mu(S)$ (\cref{eq:terminat
 For structural passes, we argue soundness per-pass in the paragraphs below - dead elimination preserves equivalence because it only removes layers that produce no visible output; metadata refinement preserves equivalence because it only tightens bounds that the renderer would enforce anyway (with the overzoom asymmetry detailed below); layer merging preserves equivalence via the three invariants of \cref{sub:structural_optimizations}.
 For data-level passes, the pruning advisory removes only data that no live style layer references, so the rendering function $R$ receives the same effective input.
 
-\subsection{Expression-Level Optimisations}\label{sub:expression_optimizations}
+\subsection{Expression-Level Optimizations}\label{sub:expression_optimizations}
 
 Expression passes operate directly on the \ac{JSON} representation, applying rewrites that reduce expression complexity and eliminate redundant computation.
 \cref{tab:expression_passes} summarizes the implemented passes.
@@ -583,7 +595,7 @@ paint:
 \end{figure}
 
 \clearpage
-\subsection{Structural Optimisations}\label{sub:structural_optimizations}
+\subsection{Structural Optimizations}\label{sub:structural_optimizations}
 
 Structural passes operate on typed Rust representations of the full style document, enabling cross-layer and cross-source reasoning.
 \cref{tab:structural_passes} summarizes the implemented passes.
@@ -810,7 +822,7 @@ Tighter source bounds allow the tile server (or client-side tile manager) to ski
     \label{fig:layer_merge_example}
 \end{figure}
 
-\subsection{Data-Level Optimisations}\label{sub:data_optimizations}
+\subsection{Data-Level Optimizations}\label{sub:data_optimizations}
 
 Data-level optimizations transform the tile data itself, reducing transfer size and decoding cost without altering the rendered output (constraint to \cref{eq:visual_equivalence}).
 The encoding techniques used are surveyed in \cref{sec:data_encoding}.
@@ -1319,7 +1331,7 @@ Furtermore, scratch buffers grow on first use and are recycled.
 The alternatives mechanism is an \ac{RAII} stack of \texttt{AltSession} guards: each candidate writes into a sub-range of the encoder's buffers, and the guard's \texttt{Drop} impl retains only the bytes of the smallest candidate and rolls the cursor back for the others, so nesting lets the inner per-stream competition resolve before the enclosing sort-strategy trial commits.
 In the pathological case, this could result in as many \texttt{memcpy} calls as \texttt{AltSession::with}, but in practice they are ordered by decending choice-likelyhood.
 
-\paragraph{Encoder correctness validation}
+\paragraph{Encoder correctness validation}\label{par:encoder_validation}
 \begin{sloppypar}
     Because \ac{FastPFOR} explicitly disclaims input validation and the encoder performs narrowing, run-encoding, and dictionary rebuilds that each have independent failure modes, we validate the encoder with a multi-layer test harness:
     (i)~an in-tree proptest suite covering every \texttt{IntEncoder} variant, with round-trip assertions across the full representable range of the selected physical type;
@@ -1328,7 +1340,7 @@ In the pathological case, this could result in as many \texttt{memcpy} calls as 
     (iv)~the pixel-exact visual validation described in \cref{sec:visual_correctness}, which exercises the full decode path against a known-good baseline.
 \end{sloppypar}
 
-\subsection{Metadata Optimisations}\label{sub:metadata_optimizations}
+\subsection{Metadata Optimizations}\label{sub:metadata_optimizations}
 
 Metadata optimizations provide the client with more accurate information, enabling it to skip unnecessary work during rendering.
 \cref{tab:metadata_passes} summarizes the techniques we implemented.
@@ -1455,7 +1467,7 @@ Our evaluation considers several dimensions, which together instantiate the cost
 \begin{itemize}
     \item \textbf{Data savings}: reduction in style size (raw, gzip, and Brotli) and tile transfer volume.
     \item \textbf{Rendering performance}: client-side metrics including load time, frames per second, frame time percentiles (p50, p95, p99), jank count, style parse time, time to first tile, and time to first frame.
-    \item \textbf{Optimisation cost}: preprocessing time introduced by each pass, measured as wall-clock time on the optimizer's host machine; this is an offline cost amortised over all subsequent tile deliveries.
+    \item \textbf{Optimization cost}: preprocessing time introduced by each pass, measured as wall-clock time on the optimizer's host machine; this is an offline cost amortised over all subsequent tile deliveries.
     \item \textbf{Efficiency}: \emph{qualitative} discussion of the energy implications of reduced data transfer and fewer rendering operations.  We perform no direct power or energy measurement (\ac{RAPL}, battery delta), because the benchmark harness runs on a desktop workstation rather than a thermaly and battery-constrained mobile device; any quantitative energy claim would require a different hardware platform and we defer it to future work.
 \end{itemize}
 
