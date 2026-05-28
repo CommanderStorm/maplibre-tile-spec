@@ -77,7 +77,8 @@ Under gzip, the reductions are \qty{8.3}{\percent} and \qty{5.9}{\percent} respe
 
 \subsection{Discussion}\label{sub:expr_discussion}
 
-We draw several observations from the expression-level ablation.
+Expression passes shave only \qty{1.8}{\percent} from median load time, but raw style size drops by up to \qty{20.3}{\percent} on Fiord, with most of the size win concentrated in a single pass (default stripping).
+We use the rest of this section to explain why one outlier pass dominates the per-style picture and why the size-reduction story diverges from the rendering-time one.
 
 \paragraph{Unary simplification dominates}
 Some styles are implemented in a not optimal way and thus allow a very high unary simplification gain.
@@ -155,6 +156,9 @@ In terms of gzip transfer size, Fiord benefits substantially (\qty{-14.1}{\perce
 Expression-tree complexity tells a similar per-style story: Fiord's total expression-tree node count drops by \qty{36.8}{\percent} (\num{1610}$\to$\num{1018}), whereas Liberty's drops by \qty{10.5}{\percent} (\num{3537}$\to$\num{3167}).
 
 \subsection{Discussion}\label{sub:structural_discussion}
+
+Two of the six structural passes - dead-layer elimination and layer merging - produce nearly all of the gain, cutting Fiord's gzip transfer by \qty{14.1}{\percent} and Liberty's by \qty{4.9}{\percent}.
+The following paragraphs unpack why those two dominate and how the remaining passes contribute indirectly or feed into the data-level pipeline downstream.
 
 \paragraph{Dead elimination and layer merging dominate}
 Among the structural passes, dead elimination and layer merging produce the largest improvements in both rendering performance and style complexity.
@@ -252,11 +256,12 @@ Per-scenario load-time synergy (combined reduction exceeding the sum of style-on
 
 \paragraph{Rendering metrics across configurations}
 \cref{fig:rendering_metrics_mlt} reveals that the dominant rendering improvement comes from tile shaving, not from style optimizations.
-The median load time drops from \qty{424}{\milli\second} (baseline) to \qty{406}{\milli\second} with style-only (\qty{-4.1}{\percent}), but reduces to \qty{121}{\milli\second} with shaving-only (\qty{-71.5}{\percent}) and \qty{113}{\milli\second} with style+shaving (\qty{-73.3}{\percent}).
+The headline numbers in this paragraph are medians of the Fiord and Liberty raw-run pool (the two end-to-end styles in the \ac{MLT} configuration), so they aggregate raw measurements rather than per-style medians; the per-style equivalents across all ten deep-corpus styles are tabulated in \cref{tab:per_style_summary} and summarised at the end of the chapter.
+The pooled median load time drops from \qty{424}{\milli\second} (baseline) to \qty{406}{\milli\second} with style-only (\qty{-4.1}{\percent}), but reduces to \qty{121}{\milli\second} with shaving-only (\qty{-71.5}{\percent}) and \qty{113}{\milli\second} with style+shaving (\qty{-73.3}{\percent}).
 The \ac{MLT} re-encoding step (config~5) adds a small load-time regression relative to config~4 (\qty{119}{\milli\second} vs.\ \qty{113}{\milli\second}, \qty{+5}{\percent}) while achieving better compression (gzip \qty{-11.0}{\percent} vs.\ baseline across both styles).
-\ac{FPS} follows the same pattern: shaving-only lifts the median from 807 to \num{2289} (\qty{+184}{\percent}), with style+shaving reaching \num{2331} (\qty{+189}{\percent}).
+\ac{FPS} follows the same pattern: shaving-only lifts the pooled median from 807 to \num{2289} (\qty{+184}{\percent}), with style+shaving reaching \num{2331} (\qty{+189}{\percent}).
 At these frame rates ($>{1000}$~FPS) the renderer is largely GPU-idle; we therefore read the metric as available performance headroom on constrained devices rather than a directly observable rendering cost saving on the benchmark host.
-The \ac{MLT} variant is slightly below at \num{2232} \ac{FPS}, consistent with the additional decoding cost of the columnar format offsetting the smaller transfer size during sustained rendering.
+The \ac{MLT} variant is slightly below at \num{2232} \ac{FPS} (\qty{+176}{\percent} on the pool; the corresponding per-style \ac{FPS} gains are \qty{+148.1}{\percent} for Fiord and \qty{+149.9}{\percent} for Liberty, which sit inside the \qtyrange{100}{200}{\percent} per-style range reported across the ten deep-corpus styles at the end of the chapter), consistent with the additional decoding cost of the columnar format offsetting the smaller transfer size during sustained rendering.
 The native Rust micro-benchmarks show \numrange{4.6}{8.3}$\times$ higher decode throughput for \ac{MLT} over \ac{MVT}+gzip (\cref{tab:decode_throughput}), but this advantage does not fully transfer to the browser, where the \ac{MLT} decoder we build would need to run as a WASM module.
 We attribute the dominant bottleneck to the WASM-to-JavaScript boundary, since each decoded column must be transferred from WASM linear memory into JavaScript-visible typed arrays, incurring per-column copying and GC pressure that does not exist in a pure-native pipeline.
 Secondary overheads include the restriction to 128-bit WASM SIMD (whereas native \ac{FastPFOR} exploits AVX2/512) and baseline JIT compilation latency.
@@ -391,6 +396,9 @@ These micro-benchmark results complement the browser-based \texttt{loadMs} metri
 
 \subsection{Discussion}\label{sub:mlt_discussion}
 
+Tile shaving alone cuts pooled median load time by \qty{71.5}{\percent} and lifts \ac{FPS} by \qty{184}{\percent}, while style-only passes contribute \qty{-4.1}{\percent} on load; the two channels compose additively, not synergistically.
+We discuss why the channels stay additive, the cache-fragmentation trade-off that style-dependent tiles create on shared \acsp{CDN}, and the geometry-simplification axis we leave out of scope.
+
 \paragraph{Tile shaving dominates; style passes assist additively}
 The headline finding of this experiment is that tile shaving is the dominant contributor to load-time and transfer-size improvements, while style-level passes provide a modest, additive assist.
 Dead layer elimination (Experiment~2) removes style layers whose filters are unsatisfiable.
@@ -513,6 +521,9 @@ Layer count reduction (\%)      &    0.0 &    0.8 &   4.8 &  7.0 & 27.0 \\
 \end{table}
 
 \subsection{Discussion}\label{sub:cross_discussion}
+
+The static passes deliver a median raw reduction of \qty{31.4}{\percent} (range \qtyrange{3.2}{67.7}{\percent}) across the 13 unseen Maputnik styles, with no style regressing and only a weak link between initial complexity and achievable reduction ($r = 0.35$, $p = 0.24$).
+We discuss which pass families generalize universally, why we read these numbers as a lower bound on the full potential, and what the low-reduction edge cases look like in practice.
 
 \paragraph{Universality of expression passes}
 Expression-level passes (constant folding, boolean simplification, default stripping) produce non-zero reductions for virtually every style in the corpus, regardless of its complexity or tile schema.
@@ -713,6 +724,9 @@ Where the same step appears across two complexity axes, we describe the connecti
 
 \subsection{Discussion}\label{sub:combined_discussion}
 
+Composed end-to-end across the ten deep-corpus styles, the full pipeline cuts per-style median load time by \qty{71}{\percent} and lifts \ac{FPS} by \qty{152}{\percent}; the three optimization channels (expression, structural, data) compose additively, not synergistically.
+The following paragraphs decompose which cost channel each family acts on, separate the load-time levers from the frame-rate levers, and close with the measurement-noise caveats that bound these headline numbers.
+
 \paragraph{Three plausible improvement channels}
 The full pipeline ablation points to three plausible channels by which the optimizer improves rendering performance, which we infer from proxy metrics (AST node count, layer count, tile size) rather than direct per-mechanism instrumentation.
 The expression passes (\cref{sub:expression_optimizations}) plausibly reduce per-feature evaluation cost - fewer AST nodes mean fewer interpreter steps per feature per frame.
@@ -794,7 +808,7 @@ The full-pipeline ablation performs thousands of pairwise comparisons across met
 
 \begin{chaptersummary}
 Each pass family behaves differently in isolation: expression passes barely move load time on their own but enable the downstream passes; the structural family's gains come almost entirely from dead-layer elimination and layer merging; and on the data side, \textbf{tile shaving dominates} with a \qty{-71.5}{\percent} \textbf{median load reduction}, while the \ac{MLT} encoder's per-stream strategy competition - not the format itself - delivers a further \qty{28}{\percent} tile-volume cut over the Java reference (\qty{12}{\percent} over gzip-compressed \ac{MVT}).
-Composed end-to-end across the ten deep-corpus styles benchmarked with tile data, the full pipeline reduces load time by \qtyrange{63}{74}{\percent} (median \qty{71}{\percent}) and improves \ac{FPS} by \qtyrange{100}{200}{\percent} (median \qty{152}{\percent}), but the cross-family interaction is \textbf{additive rather than synergistic}.
+Composed end-to-end across the ten deep-corpus styles benchmarked with tile data, the full pipeline reduces load time by \qtyrange{63}{74}{\percent} (per-style median \qty{71}{\percent}) and improves \ac{FPS} by \qtyrange{100}{200}{\percent} (per-style median \qty{152}{\percent}), but the cross-family interaction is \textbf{additive rather than synergistic}; the pooled Fiord+Liberty aggregate used in the \ac{MLT} discussion (\qty{+176}{\percent}) is a different aggregation of the same data restricted to the two end-to-end styles, not a conflicting headline.
 The static passes generalize: a \textbf{median \qty{31.4}{\percent} raw style reduction across 13 unseen styles}, with none regressed.
 
 The following chapter consolidates these findings into architectural claims, answers the research questions of \cref{sec:research_goals}, and identifies the directions left open.

@@ -66,7 +66,7 @@ The dominant wire format for vector tiles is \ac{MVT}\footnote{\url{https://gith
 \ac{MVT} has since been adopted as a conformance class in the OGC API-Tiles standard~\cite{OGCAPITiles}, making it the baseline format for any standards-compliant tile delivery.
 Its row orientation means that accessing a single property column requires scanning the entire feature table, and its protobuf encoding does not exploit the statistical properties of individual columns.
 
-Tremmel et al.~\cite{tremmelMapLibreTileNext2025b} introduced the MapLibre Tile (MLT) format, a columnar alternative that achieves \qtyrange{2}{6}{\times} tile size reduction over MVT.
+Tremmel et al.~\cite{tremmelMapLibreTileNext2025b} introduced the MapLibre Tile (MLT) format, a columnar alternative that achieves up to $3\times$ tile size reduction on encoded tilesets and up to $6\times$ on certain large tiles relative to \ac{MVT}.
 \ac{MLT} uses column-oriented storage with lightweight compression - delta encoding, run-length encoding, dictionary encoding, and \ac{FSST}~\cite{bonczFSSTFastRandom2020} - and is designed for GPU-accelerated processing.
 At the archive layer, Tremmel~\cite{tremmelCOMTILESCASESTUDY2023} proposed COMTiles, a cloud-optimized tile archive format that complements the per-tile encoding of \ac{MLT} by addressing the container and delivery layer for planet-scale tilesets.
 However, their work does not consider styles: the encoding strategy is chosen without knowledge of which properties the renderer will actually access, leaving potential for further size reduction through style-aware pruning before encoding.
@@ -161,7 +161,7 @@ The benchmarking literature is in better shape; we adopt its statistical methodo
 \begin{chaptersummary}
 No prior work composes style and data optimizations into a single open pipeline: the data-side tools ignore the style, the only commercial precedent is closed-source, and the encoding format's strategy selection is style-blind.
 Our contribution is the joint $(S, T) \to (S', T')$ optimization formalised in \cref{sec:problem_statement}, together with a cumulative ablation methodology that measures whether the composition is additive or synergistic.
-\cref{ch:experiments} quantifies the payoff - \textbf{load times down by up to 75\,\% and tile volume by 28\,\%} on the styles we benchmarked end-to-end - and the OGC API-Tiles standard~\cite{OGCAPITiles} keeps these gains deployable without vendor lock-in.
+\cref{ch:experiments} quantifies the payoff - \textbf{load times down by \qtyrange{63}{74}{\percent} (median \qty{71}{\percent}) and tile volume by \qty{28}{\percent}} on the styles we benchmarked end-to-end - and the OGC API-Tiles standard~\cite{OGCAPITiles} keeps these gains deployable without vendor lock-in.
 
 The next chapter introduces the foundations these techniques draw on: the rendering architecture, the compiler analogues behind the expression passes, the query-optimization concepts behind filter rewriting and selectivity, and the columnar encoding strategies for the data-level passes.
 \end{chaptersummary}
