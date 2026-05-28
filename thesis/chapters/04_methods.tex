@@ -18,8 +18,12 @@ Let $\mathcal{I}$ be the set of rasterised images, and let MapLibre's determinis
 \end{equation}
 
 The optimizer is a function $\mathcal{O}: \mathcal{S} \times \mathcal{T} \to \mathcal{S} \times \mathcal{T}$ with $(S', T') = \mathcal{O}(S, T)$.
-Given a cost vector $c$ over the deployment-relevant metrics of \cref{sec:benchmarking}, $\mathcal{O}$ seeks to reduce the components of $c(S', T')$ under two formal constraints.
-We do not aggregate the components into a scalar; we report each separately in the per-pass ablations.
+$\mathcal{O}$ pays a one-off preprocessing cost $C_\text{total}(S, T)$, analytically decomposed and bounded in \cref{sub:preprocessing_cost_model}, in order to improve the deployment metrics of \cref{sub:metrics} (load time, heap memory, FPS, with finer-grained diagnostics) for every subsequent rendering session served from $(S', T')$.
+The deployment cost is intentionally not formalised as a single closed-form function: it depends on hardware, camera scenario, and tile cache state, and is therefore measured empirically rather than declared analytically.
+$\mathcal{O}$ is correspondingly not posed as a single-objective minimisation.
+Several passes (e.g.\ selectivity reordering, \cref{sub:expression_optimizations}) deliberately trade a small regression in load time for a larger improvement in FPS, and the encoder competition (\cref{sub:encoding_strategies}) locally minimises encoded byte size as a contributing quantity to load time without committing to any weighting between the deployment axes.
+We characterise each pass empirically against the metric battery of \cref{sub:metrics} in the ablation of \cref{ch:experiments}, and the resulting per-axis breakdown is what lets an operator compose the pass set that suits their deployment priorities.
+$\mathcal{O}$ must satisfy two formal constraints.
 
 The first constraint is \emph{visual equivalence}.
 Writing $\equiv$ for pixel-identity,
@@ -30,7 +34,8 @@ In practice we sample $v$ on a discrete grid of zooms and viewports, and check $
 \Cref{eq:visual_equivalence} doubles as the \emph{soundness criterion} for every pass in this chapter.
 Any rewrite whose correctness depends on a MapLibre runtime invariant must either preserve the invariant or reject the rewrite when the invariant cannot be established.
 
-For example, the stats-driven folding pass cannot soundly remove a \mlop{match} arm without a full census of the tile data, because the arm may be reached by features the statistics have not observed; the pass is consequently gated on a sample rate of~1.0.
+For example, the stats-driven folding pass cannot soundly remove a \mlop{match} arm without a full census of the tile data, because the arm may be reached by features the statistics have not observed.
+The pass is consequently gated on a sample rate of~1.0.
 Similarly, the metadata-refinement pass must reason about overzoom (\cref{sec:tiles}) when tightening \mlprop{maxzoom}, because an overzoomed tile counts as a viewing state in \cref{eq:visual_equivalence}.
 
 The second constraint is \emph{strict idempotency}:
@@ -38,7 +43,8 @@ The second constraint is \emph{strict idempotency}:
     \quad \forall (s, t) \in \mathcal{S} \times \mathcal{T}: \mathcal{O}(\mathcal{O}(s, t)) = \mathcal{O}(s, t)
 \end{equation}
 Feeding $\mathcal{O}$'s output back as input yields the same pair, ruling out unbounded chained improvement by construction.
-The expression-pass fixpoint of \cref{sub:fixpoint} enforces idempotency on the style half; the deterministic, statistics-driven encoding choices of \cref{sub:data_optimizations} enforce it on the tile half.
+The expression-pass fixpoint of \cref{sub:fixpoint} enforces idempotency on the style half.
+The deterministic, statistics-driven encoding choices of \cref{sub:data_optimizations} enforce it on the tile half.
 Both halves are exercised by the round-trip proptest and libFuzzer harness of \cref{par:encoder_validation}.
 
 \section{Scope}\label{sec:scope}
@@ -67,7 +73,7 @@ The following concerns are deliberately out of scope:
 
 To evaluate the effectiveness of the optimizations strategies developed in this work, we adopted a benchmarking-driven approach.
 We first established a reliable performance baseline and then ran cumulative ablation experiments that isolate the contribution of each optimizations pass.
-Under the soundness contract of \cref{sec:scope}, the passes from~\cref{sub:pipeline} together seek to minimize $c(S', T')$ across the metrics defined in \cref{sec:benchmarking}.
+Under the soundness contract of \cref{sec:scope}, the passes from~\cref{sub:pipeline} together aim to improve the deployment metrics of \cref{sub:metrics} -- with the load-time / FPS trade-off discussed in \cref{sec:problem_statement} -- in exchange for the preprocessing cost $C_\text{total}$ of \cref{sub:preprocessing_cost_model}.
 
 \subsection{Three-Level Optimization Pipeline}\label{sub:pipeline}
 
@@ -731,7 +737,7 @@ The propagation also intentionally ignores \texttt{[\mlop{"feature-state"}, \ldo
 \emph{Phase}~\stepcirc{2} (match-pattern detection) checks whether all filters within a candidate group match the pattern \texttt{[\mlop{"=="},~[\mlop{"get"},~P],~\mlop{literal}]} on the same property~$P$.
 If so, the merged filter is a compact \mlop{match} expression rather than a verbose \mlop{case} chain, and merged paint/layout properties also use \mlop{match} with the same discriminator.
 This pattern is common in practice: road styles frequently define separate layers for motorway, trunk, primary, secondary, and tertiary, differing only in width, color and layering, and for casing major roads there are usually two such layers per class.
-\Cref{fig:layer_merge_example} works through exactly this case: three adjacent \texttt{\mlval{line}} layers keyed on \texttt{\mlval{class}} collapse into a single layer whose filter, \mlprop{line-color}, \mlprop{line-width}, and synthesised \mlprop{line-sort-key} are all \mlop{match} expressions over the same discriminator, with Phase~1 (mergeability) and Phase~3 (identical zoom ranges) discharged trivially.
+\Cref{fig:layer_merge_example} works through exactly this case: three adjacent \texttt{\mlval{line}} layers keyed on \texttt{\mlval{class}} collapse into a single layer whose filter, \mlprop{line-color}, \mlprop{line-width}, and synthesised \mlprop{line-sort-key} are all \mlop{match} expressions over the same discriminator, with Phase~\stepcirc{1} (mergeability) and Phase~\stepcirc{3} (identical zoom ranges) discharged trivially.
 
 \emph{Phase}~\stepcirc{3} (zoom-tolerant merging) handles layers whose zoom ranges differ slightly.
 Rather than rejecting the merge, it wraps each sub-filter with zoom guards (\texttt{[\mlop{">="},\allowbreak~[\mlop{"zoom"}],\allowbreak~lo]}, \texttt{[\mlop{"<="},\allowbreak~[\mlop{"zoom"}],\allowbreak~hi]}) and uses the union of all zoom ranges as the merged layer's bounds.
@@ -866,7 +872,7 @@ The bridge between style-level and data-level optimizations is the \emph{tile pr
 We compute the advisory from the \emph{optimized} style (after all expression and structural passes) together with tile statistics.
 \noindent
 This ordering is important: style-level dead layer elimination, metadata refinement, and layer merging reduce the set of live style layers, which in turn reduces the set of referenced properties and geometry types in the advisory.
-The preceding style optimizations thus feed into data-level savings, jointly reducing $c(S', T')$ in the sense of \cref{sec:problem_statement}, though the aggregate interaction is additive rather than synergistic (\cref{sub:mlt_results}).
+The preceding style optimizations thus feed into data-level savings, jointly improving the load-time component of the deployment metrics (\cref{sub:metrics}), though the aggregate interaction is additive rather than synergistic (\cref{sub:mlt_results}).
 This cascade mirrors the materialized-view maintenance problem described in \cref{sub:materialized_views}: the rendering style acts as the view definition, the tile set as the base relation, and the shaved tile as the materialized view.
 
 \noindent The advisory captures the following per source-layer:
@@ -971,7 +977,7 @@ rather than committing to a single encoding plan, the encoder uses the data dist
 This competition operates at two nested levels.
 An \emph{outer loop} that trials multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
 We deliberately make the inner competition criterion \emph{single-objective} (smallest encoded size).
-We do not resolve multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - inside the encoder; we report them separately per metric in the ablation evaluation (\cref{ch:experiments}), consistent with \cref{sec:problem_statement}'s decision not to collapse the cost function $c$ into a scalar, so each pass's contribution can be assessed against the deployment-relevant axis.
+We do not resolve multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - inside the encoder; we report them separately per metric in the ablation evaluation (\cref{ch:experiments}), consistent with \cref{sec:problem_statement}: the deployment metrics of \cref{sub:metrics} are characterised per-axis rather than aggregated into a single objective, and the encoder's local size minimisation is a contributing quantity to the load-time axis rather than a global cost function.
 
 A no-copy alternatives mechanism lets each candidate write into the encoder's buffers and rolls losing candidates back by resetting cursor positions, so the inner and outer competitions nest without redundant allocation.
 \Cref{fig:arch_enc} summarizes the encoder and decoder data-flow in \texttt{mlt-core}.
@@ -1460,7 +1466,7 @@ we do not claim it is unbiased across all real-world usage patterns, but we clai
 
 Since many of the investigated optimizations techniques have not previously been studied in the context of map rendering pipelines, we must evaluate their effectiveness empirically.
 We carry out this empirical evaluation in \cref{ch:experiments}; the rest of this section defines the methodology that chapter applies.
-Our evaluation considers several dimensions, which together instantiate the cost function $c$ of \cref{sec:problem_statement} as a per-metric vector rather than a single scalar:
+Our evaluation reports the deployment metrics framed in \cref{sec:problem_statement} along several axes -- data savings (which feed the load-time axis), rendering performance, optimization cost (the $C_\text{total}$ breakdown of \cref{sub:preprocessing_cost_model}), and qualitative efficiency:
 
 \begin{itemize}
     \item \textbf{Data savings}: reduction in style size (raw, gzip, and Brotli) and tile transfer volume.
