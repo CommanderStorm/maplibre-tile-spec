@@ -671,24 +671,24 @@ The renderer-process limit is set to half the logical CPU count ($N_\mathrm{cpu}
 		\texttt{pngjs}               & \texttt{\textasciicircum7.0.0} \\
 		Graphics backend             & ANGLE on Vulkan \\
 		Device pixel ratio           & \texttt{1.0} (\cref{sec:visual_correctness}) \\
-		Launch flags                 & \raggedright\arraybackslash
-		\texttt{--enable-gpu},\allowbreak\
-		\texttt{--ignore-gpu-blocklist},\allowbreak\
-		\texttt{--enable-unsafe-swiftshader},\allowbreak\
-		\texttt{--use-angle=vulkan},\allowbreak\
-		\texttt{--enable-features=Vulkan,UseSkiaRenderer},\allowbreak\
-		\texttt{--disable-frame-rate-limit},\allowbreak\
-		\texttt{--enable-webgl},\allowbreak\
-		\texttt{--disable-gpu-vsync},\allowbreak\
-		\texttt{--renderer-process-limit=8},\allowbreak\
-		\texttt{--disable-background-networking},\allowbreak\
-		\texttt{--disable-background-timer-throttling},\allowbreak\
-		\texttt{--disable-backgrounding-occluded-windows} \\
 		\bottomrule
 	\end{tabular}
 	\caption{Headless browser harness driving the rendering scenarios. The bench harness produces the timings reported in \cref{ch:experiments}; the separate visual-check harness is used offline for \texttt{pixelmatch}-based correctness validation.}
 	\label{tab:bench_browser}
 \end{table}
+
+The Launch flags were \texttt{--enable-gpu},\allowbreak\
+\texttt{--ignore-gpu-blocklist},\allowbreak\
+\texttt{--enable-unsafe-swiftshader},\allowbreak\
+\texttt{--use-angle=vulkan},\allowbreak\
+\texttt{--enable-features=Vulkan,UseSkiaRenderer},\allowbreak\
+\texttt{--disable-frame-rate-limit},\allowbreak\
+\texttt{--enable-webgl},\allowbreak\
+\texttt{--disable-gpu-vsync},\allowbreak\
+\texttt{--renderer-process-limit=8},\allowbreak\
+\texttt{--disable-background-networking},\allowbreak\
+\texttt{--disable-background-timer-throttling},\allowbreak\
+\texttt{--disable-backgrounding-occluded-windows} \\
 
 \clearpage
 
