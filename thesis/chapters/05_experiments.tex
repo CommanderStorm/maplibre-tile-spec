@@ -461,7 +461,7 @@ We therefore quantify the size reductions achievable \emph{without} touching geo
 
 \noindent In the preceding experiments we evaluated optimizations effectiveness on the curated benchmarking corpus of 15 styles described in \cref{sub:deep_corpus}.
 To assess whether the observed gains generalize, we apply the optimizer to the 13~styles of the Maputnik generalization corpus introduced in \cref{sub:generalization_corpus}.
-We use three tiers of breadth because end-to-end rendering benchmarks require tile data and browser automation infrastructure that does not scale to all styles: we benchmark two styles end-to-end with tile data, fifteen at the style-and-shaving level, and evaluate thirteen additional styles with static analysis only.
+We use three tiers of breadth because end-to-end rendering benchmarks require tile data and browser automation infrastructure that does not scale to all styles: we benchmark ten deep-corpus styles end-to-end with tile data, eleven \ac{OMT}-compatible styles at the tile-shaving size level, and evaluate thirteen additional styles with static analysis only.
 
 \subsection{Methodology}\label{sub:cross_methodology}
 
@@ -691,7 +691,7 @@ $C_\text{enc}$ (\ac{MLT} auto, 16T) & \ac{MLT} encoding, full competition, 16 th
 \midrule
 Overhead factor & auto\,/\,none (single-threaded CPU time) & $1.95\times$ \\
 \end{tabular}
-\caption{Preprocessing wall-clock time per pipeline stage on the Germany OpenMapTiles tileset (zoom 0-14, \num{256156} tiles after pruning). AMD Ryzen~7 3700X, \qty{46}{\gibi\byte} RAM, NVMe SSD. Median of 3~runs. Style optimization ($C_\text{style}$, \qty{7.5}{\milli\second}) and advisory computation ($C_\text{adv}$, \qty{1.1}{\milli\second}) are negligible; MLT encoding with full sort-strategy competition dominates at \qty{342}{\second} single-threaded (\qty{46.7}{\second} with 16 threads), with an overhead factor of $1.95\times$ vs.\ a fixed-plan encoder.}
+\caption{Preprocessing wall-clock time per pipeline stage on the Germany OpenMapTiles tileset (zoom 0-14, \num{256156} tiles after pruning) when run on \cref{tab:bench_hardware}. Median of 3~runs. Style optimization ($C_\text{style}$, \qty{7.5}{\milli\second}) and advisory computation ($C_\text{adv}$, \qty{1.1}{\milli\second}) are negligible; MLT encoding with full sort-strategy competition dominates at \qty{342}{\second} single-threaded (\qty{46.7}{\second} with 16 threads), with an overhead factor of $1.95\times$ vs.\ a fixed-plan encoder.}
 \label{tab:preprocessing_cost}
 \end{table}
 
@@ -762,8 +762,9 @@ The tile data uses only OpenMapTiles and BasemapDE schemas. Other schemas with d
 The 15 benchmark styles, while diverse, may not represent all style authoring patterns encountered in production deployments.
 
 \paragraph{End-to-end data-level coverage}
-We benchmark the full rendering pipeline - style optimizations through tile shaving to \ac{MLT} re-encoding - end-to-end on only 2 of the 15 styles (fiord and liberty) to reduce cost.
-However, we verified the tile-shaving step alone (advisory generation and \ac{MVT} pruning, without rendering) across all 11 \ac{OMT}-compatible styles on the same Germany tileset (\cref{fig:tile_shave_per_style}), confirming that the shaving effectiveness generalizes across styles with reductions from \qty{19.8}{\percent} to \qty{46.3}{\percent}.
+We benchmark the full rendering pipeline - style optimizations through tile shaving to \ac{MLT} re-encoding - end-to-end on 10 of the 15 deep-corpus styles (bright, dark-matter, fiord, klokan-basic, liberty, osm-bright, osm-liberty, positron, stadia-outdoors, toner).
+ICGC Fosc and ICGC Gris were excluded because the legacy \mlprop{\texttt{text-field}} handling described in \cref{sub:deep_corpus} renders incorrectly under MapLibre's silent migration; the BasemapDE pair was excluded because its tile source is not \ac{OMT}-compatible and we could not provision matching shaved tiles.
+For the remaining \ac{OMT}-compatible deep-corpus styles we verified the tile-shaving step alone (advisory generation and \ac{MVT} pruning, without rendering) on the same Germany tileset (\cref{fig:tile_shave_per_style}), confirming that shaving effectiveness generalizes across styles with reductions of \qtyrange{19.8}{46.3}{\percent}.
 The remaining limitation is that tile statistics at a sample rate of~1.0 require access to the underlying tile data, which is available only for \ac{OSM}-based tilesets accessed via a local \texttt{.mbtiles} file.
 The style-only results (Experiments~1-2) cover all 15 styles and are not affected by this limitation.
 
@@ -793,7 +794,7 @@ The full-pipeline ablation performs thousands of pairwise comparisons across met
 
 \begin{chaptersummary}
 Each pass family behaves differently in isolation: expression passes barely move load time on their own but enable the downstream passes; the structural family's gains come almost entirely from dead-layer elimination and layer merging; and on the data side, \textbf{tile shaving dominates} with a \qty{-71.5}{\percent} \textbf{median load reduction}, while the \ac{MLT} encoder's per-stream strategy competition - not the format itself - delivers a further \qty{28}{\percent} tile-volume cut over the Java reference (\qty{12}{\percent} over gzip-compressed \ac{MVT}).
-Composed end-to-end on Fiord and Liberty, the full pipeline reduces load time by \qtyrange{67}{71}{\percent} and improves \ac{FPS} by \qtyrange{148}{150}{\percent}, but the cross-family interaction is \textbf{additive rather than synergistic}.
+Composed end-to-end across the ten deep-corpus styles benchmarked with tile data, the full pipeline reduces load time by \qtyrange{63}{74}{\percent} (median \qty{71}{\percent}) and improves \ac{FPS} by \qtyrange{100}{200}{\percent} (median \qty{152}{\percent}), but the cross-family interaction is \textbf{additive rather than synergistic}.
 The static passes generalize: a \textbf{median \qty{31.4}{\percent} raw style reduction across 13 unseen styles}, with none regressed.
 
 The following chapter consolidates these findings into architectural claims, answers the research questions of \cref{sec:research_goals}, and identifies the directions left open.
