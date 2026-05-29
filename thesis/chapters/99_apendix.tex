@@ -139,15 +139,18 @@ while (this._currentPlacementIndex >= 0) {
 \end{lstlisting}
 
 The \texttt{FillBucket.populate} method below witnesses the filter-first evaluation order on which the filter-to-property constant-propagation pass in \cref{sub:structural_optimizations} depends.
-The early \texttt{if (!this.layers[0].\_featureFilter.filter(\dots)) continue} guard rejects a feature before any paint or layout expression is evaluated.
-This means that any equality constraint extracted from a layer's filter is guaranteed to hold for every feature that reaches the \texttt{bucketFeatures.push} below.
+\stepcirc{1} rejects a feature before any paint or layout expression is evaluated, so any equality constraint extracted from a layer's filter is guaranteed to hold for every feature that reaches \stepcirc{2}.
 
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS bucket populate method showing filter-first evaluation (\texttt{src/data/bucket/fill\_bucket.ts})},label=lst:bucket_populate]
+\begin{lstlisting}[
+	language=TypeScript,
+	escapeinside={(*@}{@*)},
+	caption={MapLibre GL-JS bucket populate method showing filter-first evaluation (\texttt{src/data/bucket/fill\_bucket.ts})},
+	label=lst:bucket_populate]
 for (const {feature, id, index, sourceLayerIndex} of features) {
     const needGeometry = this.layers[0]._featureFilter.needGeometry;
     const evaluationFeature = toEvaluationFeature(feature, needGeometry);
 
-    if (!this.layers[0]._featureFilter.filter(
+    (*@\stepcirc{1}@*) if (!this.layers[0]._featureFilter.filter(
         new EvaluationParameters(this.zoom), evaluationFeature, canonical
     )) continue;  // feature rejected: no paint evaluation occurs
 
@@ -159,7 +162,7 @@ for (const {feature, id, index, sourceLayerIndex} of features) {
                                : loadGeometry(feature),
         patterns: {}, sortKey
     };
-    bucketFeatures.push(bucketFeature);
+    (*@\stepcirc{2}@*) bucketFeatures.push(bucketFeature);
 }
 \end{lstlisting}
 \clearpage
@@ -306,7 +309,7 @@ for (const {feature, id, index, sourceLayerIndex} of features) {
 				}
 			\end{tikzpicture}%
 		}
-		\caption{\textbf{Spiral.} Camera orbits its target while pointing at it; isolates render cost from tile-load cost via a stable tile set.}
+		\caption{\textbf{Spiral.} Camera orbits its target while pointing at it. This isolates render cost from tile-load cost via a stable tile set.}
 		\label{fig:app_anim_spiral}
 	\end{subfigure}
 	\hfill
@@ -496,7 +499,7 @@ for (const {feature, id, index, sourceLayerIndex} of features) {
 
 In this section, we provide the full per-style, per-ablation-step results for each of the benchmark styles.
 For each style, the table reports style size (raw bytes, gzip at level~9, Brotli at maximum quality), median load time across scenarios, median \ac{FPS}, and layer count at each cumulative ablation step.
-Performance metrics are medians across all scenario--animation combinations.
+Performance metrics are medians across all combinations of scenarios and animations.
 Steps 16--19 (selectivity reorder, tile shaving, tile rewrite) require tile statistics and are only available for fiord and liberty, which we benchmarked with an \texttt{.mbtiles} source.
 We exclude Americana from the per-style tables due to incomplete benchmark data (only 3 of 20 ablation steps completed).
 
@@ -519,7 +522,8 @@ We exclude Americana from the per-style tables due to incomplete benchmark data 
 \section{Per-Zoom Tile Size Breakdown}\label{app_tile_sizes}
 
 In \cref{tab:tile_sizes_per_zoom}, we report the per-zoom-level tile size (gzip) for the Germany OpenMapTiles tileset across four encoding configurations: the \ac{MVT} baseline, the Tremmel \& Zink \ac{MLT}-Java encoder, the \ac{MLT}-Rust encoder (without shaving), and the full pipeline (style optimizations + tile shaving + \ac{MLT}-Rust encoding).
-For the shaved configuration, we use the advisory generated from the fiord style; other styles would produce slightly different shaving results depending on their property and layer references.
+For the shaved configuration, we use the advisory generated from the fiord style.
+Other styles would produce slightly different shaving results depending on their property and layer references.
 
 \begin{table}[htbp]
 \centering \small
@@ -576,14 +580,14 @@ Stadia Outdoors      & 110 &     \num{43208} &     \num{41837} &  \num{-3.2} &  
 Versatiles Colorful  & 309 &    \num{151692} &    \num{114549} & \num{-24.5} &  \num{-0.7} \\
 \bottomrule
 \end{tabular}
-\caption{Complete Maputnik generalization corpus with per-style size metrics.  Two catalog entries were unavailable at the time of measurement and are excluded; all remaining styles were optimized with static passes only (no tile statistics).}
+\caption{Complete Maputnik generalization corpus with per-style size metrics. Two catalog entries were unavailable at the time of measurement and are excluded. All remaining styles were optimized with static passes only (no tile statistics).}
 \label{tab:maputnik_full}
 \end{table}
 
 \clearpage
 \section{Benchmark Environment}\label{app:bench_env}
 
-All measurements in \cref{ch:experiments} were collected on a single workstation; preprocessing (\ac{MVT} pruning, \ac{MLT} encoding) and browser-based rendering used the same host.
+All measurements in \cref{ch:experiments} were collected on a single workstation. Preprocessing (\ac{MVT} pruning, \ac{MLT} encoding) and browser-based rendering used the same host.
 The tables below document the hardware, operating system, language toolchains, key library versions, and the headless browser harness used for the rendering scenarios.
 
 \subsection{Hardware}\label{app:bench_hw}
@@ -653,7 +657,8 @@ Python                 & \texttt{3.13.2} \\
 
 \subsection{Browser and Headless Render Harness}\label{app:bench_browser}
 
-The rendering scenarios (\cref{sub:scenarios}) drive a headless Chromium instance via Puppeteer; the visual-correctness check (\cref{sec:visual_correctness}) uses MapLibre~GL~JS's Node-side software rasteriser with \texttt{pixelmatch}.
+The rendering scenarios (\cref{sub:scenarios}) drive a headless Chromium instance via Puppeteer.
+The visual-correctness check (\cref{sec:visual_correctness}) uses MapLibre~GL~JS's Node-side software rasteriser with \texttt{pixelmatch}.
 Used chrome launch flags are \texttt{--enable-gpu},\allowbreak\texttt{--ignore-gpu-blocklist},\allowbreak\
 \texttt{--enable-unsafe-swiftshader},\allowbreak\texttt{--use-angle=vulkan},\allowbreak\
 \texttt{--enable-features=Vulkan,UseSkiaRenderer},\allowbreak\
@@ -722,3 +727,15 @@ Optimiser                    & \texttt{mlt-core}                & \texttt{0.9} \
 \caption{Pinned versions of the most load-bearing dependencies, grouped by codebase.}
 \label{tab:bench_libs}
 \end{table}
+
+\clearpage
+\section{Shared-Dictionary Threshold Sweep}\label{app:minhash_sweep}
+
+\Cref{fig:minhash_sweep} accompanies the discussion of MinHash-based shared-dictionary grouping in \cref{sub:cardinality}. The chosen threshold of 0.075 captures the majority of the achievable size reduction and the marginal improvement from finer thresholds is modest.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\linewidth]{figures/minhash_sweep.pdf}
+    \caption{Total encoded mbtiles size of the Germany OpenMapTiles tileset under different MinHash similarity modes and Jaccard thresholds.  Lower is better.  The hybrid mode (teal) produces the smallest output at every threshold. All modes increase monotonically with threshold as fewer column pairs qualify for shared-dictionary grouping. The y-axis is zoomed to the data range to make the differences visible: the full range spans approximately \qty{6}{\mega\byte} out of \qty{3.14}{\giga\byte} total}
+    \label{fig:minhash_sweep}
+\end{figure}
