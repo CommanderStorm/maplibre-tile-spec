@@ -69,7 +69,7 @@ The following concerns are deliberately out of scope:
     \item[\emph{The reference Java encoder}] The legacy self-contained Java \ac{MLT} encoder of~\cite{tremmelMapLibreTileNext2025b} is retained as a baseline for the encoding experiments of \cref{ch:experiments}. It is not a target of optimization in this thesis.
 \end{description}
 
-\section{Approach and basic building blocks}\label{sec:approach}
+\section{Approach and Basic Building Blocks}\label{sec:approach}
 
 To evaluate the effectiveness of the optimizations strategies developed in this work, we adopted a benchmarking-driven approach.
 We first established a reliable performance baseline and then ran cumulative ablation experiments that isolate the contribution of each optimizations pass.
@@ -223,7 +223,7 @@ Stats-driven rules run as separate tree folds after the peephole pass, because t
 We modeled this architecture on peephole optimizers in production compilers.
 Individual rules are simple and local, but their composition through fixpoint iteration (\cref{sub:fixpoint}) achieves global simplifications.
 
-\paragraph{Constant folding}
+\paragraph{Constant Folding}
 The constant folding pass implements 17~rewrite rules that collectively perform the role of constant propagation and dead code elimination in a compiler (\cref{sec:compiler_optimizations}).
 Boolean algebra rules evaluate \mlop{all}/ \mlop{any} nodes with known operands: a vacuous \texttt{[\mlop{"all"}]} rewrites to \mlval{true} (vacuous truth), a vacuous \texttt{[\mlop{"any"}]} to \mlval{false} (vacuous disjunction), and boolean absorption removes known-true operands from \mlop{all} and known-false operands from \mlop{any}.
 Absorption is sound because MapLibre filter operators are pure (the filter language exposes no feature-state mutation), so dropping an operand cannot discard an observable side effect.
@@ -253,7 +253,7 @@ Range tightening detects overlapping range predicates on the same property and r
 Predicate subsumption generalizes this to remove predicates that are logically implied by a sibling.
 Pure operator evaluation computes the result of any operator whose arguments are all literals, covering mathematical functions, string operations, and color constructors.
 
-\paragraph{Stats-driven constant folding}
+\paragraph{Stats-Driven Constant Folding}
 When tile statistics are available, the optimizer extends constant folding with nine rules that exploit knowledge of the actual data.
 These rules receive tile statistics for the relevant source layer and fold expressions that are statically indeterminate but data-determinate:
 
@@ -294,7 +294,7 @@ The threshold therefore separates the \enquote{folding-useful} properties from t
 
 We gate folds whose effect is irreversible (those that change the set of rendered features) on a full-census sample rate, as discussed in \cref{sub:tile_statistics}. At lower sample rates the statistics are used only for reordering and selectivity estimation.
 
-\paragraph{Expression simplification}
+\paragraph{Expression Simplification}
 Applying the algebraic identities from \cref{sec:compiler_optimizations}, De~Morgan's laws push negations inward to expose further folding:
 %
 \begin{quote}
@@ -460,12 +460,12 @@ We drew both examples from the optimizer's test suite.
 				]
 filter: ["==", ["get", "class"], "road"]
 paint:
-fill-color: ["match",
-	["get", "class"],
-		"road", "#333",
-		"rail", "#666",
-		"#999"
-	]
+	fill-color: ["match",
+		["get", "class"],
+			"road", "#333",
+			"rail", "#666",
+			"#999"
+		]
 			\end{lstlisting}
 		\end{minipage}
 		\hfill
