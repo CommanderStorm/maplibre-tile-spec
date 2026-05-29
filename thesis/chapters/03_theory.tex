@@ -209,7 +209,7 @@ The following formats are used for encoding and transferring data to the client:
     \item[\textbf{\acf{MVT}}]\footnote{\url{https://github.com/mapbox/vector-tile-spec/tree/master/2.1}, last accessed 2026-04-21} is the dominant vector tile format, adopted as a \emph{de~facto} standard across open-source map renderers including MapLibre.
     It uses the \ac{PBF}\footnote{\url{https://protobuf.dev/}, last accessed 2026-04-21} as its wire format and stores features in a \emph{row-oriented} layout:
 \begin{itemize}
-    \item each feature carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
+    \item Each feature carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
     \item Geometry is encoded as a sequence of \texttt{MoveTo}, \texttt{LineTo}, and \texttt{ClosePath} commands with delta-encoded integer coordinates relative to the tile extent (typically \texttt{4096} units per tile edge).
     This is also known as "turtle style graphics"\footnote{\url{https://docs.python.org/3/library/turtle.html}, last accessed 2026-5-27} as an analogy to the \texttt{turtle} python module.
     \item The row-oriented layout means that accessing a single property column requires parsing past all other properties of the same feature, and that compression operates on the interleaved byte stream rather than on homogeneous data columns.
