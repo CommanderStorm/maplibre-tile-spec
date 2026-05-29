@@ -1486,17 +1486,17 @@ Our evaluation reports the deployment metrics framed in \cref{sec:problem_statem
 Per run, the benchmark harness collects the following metrics:
 
 \begin{description}
-    \item[\textbf{Load time} (\texttt{loadMs})] wall-clock time from requesting the map to completion of the initial render, including style parsing, tile fetching, tile decoding, and first paint.
+    \item[\textbf{Load time}] wall-clock time from requesting the map to completion of the initial render, including style parsing, tile fetching, tile decoding, and first paint.
     Within the rendering benchmark, decoding latency is embedded in \texttt{loadMs} rather than isolated, because the browser-based harness cannot separate decoder wall-clock time from the surrounding fetch and first-paint work without renderer-internal instrumentation.
     We instead measure isolated decoding throughput via Criterion\footnote{\url{https://github.com/bheisler/criterion.rs}, last accessed 2026-05-23} micro-benchmarks on the Rust decoder (\cref{tab:decode_throughput}).
-    \item[\textbf{Style parse time} (\texttt{styleParseMs})] time spent parsing and compiling the style \ac{JSON} into the renderer's internal representation.
+    \item[\textbf{Style parse time}] time spent parsing and compiling the style \ac{JSON} into the renderer's internal representation.
     \item[\textbf{Time to first tile} (\texttt{firstTileMs})] time from map initialisation until the first tile is decoded and ready for rendering.
-    \item[\textbf{Time to first frame} (\texttt{firstFrameMs})] time until the first frame is composited and presented.
+    \item[\textbf{Time to first frame}] time until the first frame is composited and presented.
     \item[\textbf{Frames per second} (\texttt{fps})] average rendering throughput during the animation phase.
-    \item[\textbf{Frame time percentiles} (\texttt{p50}, \texttt{p95}, \texttt{p99FrameMs})] distribution of per-frame render times, capturing both typical and worst-case latency.
-    \item[\textbf{Jank count} (\texttt{jankCount})] number of frames exceeding \qty{16.67}{\milli\second} (the 60\,\ac{FPS} budget), indicating visible stuttering.
-    \item[\textbf{Heap memory} (\texttt{heapUsedMB})] JavaScript heap usage during the benchmark, capturing the memory cost of style structures and tile data.
-    \item[\textbf{Idle time} (\texttt{idleMs})] time the renderer spends idle (waiting for tiles or \ac{GPU} sync), indicating headroom.
+    \item[\textbf{Frame time percentiles} (\texttt{p50}, \texttt{p95})] distribution of per-frame render times, capturing both typical and worst-case latency.
+    \item[\textbf{Jank count}] number of frames exceeding \qty{16.67}{\milli\second} (the 60\,\ac{FPS} budget), indicating visible stuttering.
+    \item[\textbf{Heap memory}] JavaScript heap usage during the benchmark, capturing the memory cost of style structures and tile data.
+    \item[\textbf{Idle time}] time the renderer spends idle (waiting for tiles or \ac{GPU} sync), indicating headroom.
 \end{description}
 
 \noindent Additionally, we compute static metrics for each optimized style without running the renderer: \textbf{style size} as raw byte count, gzip-compressed size, and Brotli-compressed size; and \textbf{complexity metrics} comprising total \ac{AST} node count, maximum expression depth, layer count, filter count, and expression operator histogram.
