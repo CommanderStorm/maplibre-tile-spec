@@ -58,16 +58,16 @@ Style and data passes are co-designed so that data rewrites are advised by the o
 
 The following concerns are deliberately out of scope:
 
-\begin{itemize}
-    \item \emph{Energy measurement.} Energy effects are discussed only qualitatively. We report no \ac{RAPL} or battery deltas because the benchmark host is a desktop workstation rather than a mobile device (\cref{sub:metrics}).
-    \item \emph{Lossy geometry transformations.} Coordinate-precision reduction, Visvalingam--Whyatt, Douglas--Peucker, and polygon coalescing would violate the pixel-identity contract of \cref{eq:visual_equivalence} and are deferred to future work. We therefore quantify the size reductions achievable \emph{without} touching geometry, understating the headroom that composition with an upstream simplifier could reach.
-    \item \emph{Symbol-layer merging.} MapLibre evaluates symbol placement per layer through a tile-wide\newline
+\begin{description}
+    \item[\emph{Energy measurement}] Energy effects are discussed only qualitatively. We report no \ac{RAPL} or battery deltas because the benchmark host is a desktop workstation rather than a mobile device (\cref{sub:metrics}).
+    \item[\emph{Lossy geometry transformations}] Coordinate-precision reduction, Visvalingam--Whyatt, Douglas--Peucker, and polygon coalescing would violate the pixel-identity contract of \cref{eq:visual_equivalence} and are deferred to future work. We therefore quantify the size reductions achievable \emph{without} touching geometry, understating the headroom that composition with an upstream simplifier could reach.
+    \item[\emph{Symbol-layer merging}] MapLibre evaluates symbol placement per layer through a tile-wide\newline
     \noindent\texttt{CollisionIndex}, so merging symbol layers would alter label suppression order. The detailed argument is given alongside the structural passes (\cref{sub:structural_optimizations}).
-    \item \emph{Proprietary style corpora.} Mapbox Streets, Esri vector basemaps, and similar commercial styles are excluded by their terms of service.
-    \item \emph{Tile schemas other than \ac{OMT}.} Non-\ac{OMT} vector tile sources are excluded from the deep-corpus evaluation, and the stats-driven thresholds used by the pipeline are tuned on Germany~\ac{OMT} only (\cref{sec:gathering_sample}).
-    \item \emph{Online and incremental serving.} The optimizer is an offline, one-shot rebuild over a (style, tile~set) pair. No integration with a live tile server is assumed, and the optimized artefacts can be served by any standards-compliant tile infrastructure.
-    \item \emph{The reference Java encoder.} The legacy self-contained Java \ac{MLT} encoder of~\cite{tremmelMapLibreTileNext2025b} is retained as a baseline for the encoding experiments of \cref{ch:experiments}. It is not a target of optimization in this thesis.
-\end{itemize}
+    \item[\emph{Proprietary style corpora}] Mapbox Streets, Esri vector basemaps, and similar commercial styles are excluded by their terms of service.
+    \item[\emph{Tile schemas other than \ac{OMT}}] Non-\ac{OMT} vector tile sources are excluded from the deep-corpus evaluation, and the stats-driven thresholds used by the pipeline are tuned on Germany~\ac{OMT} only (\cref{sec:gathering_sample}).
+    \item[\emph{Online and incremental serving}] The optimizer is an offline, one-shot rebuild over a (style, tile~set) pair. No integration with a live tile server is assumed, and the optimized artefacts can be served by any standards-compliant tile infrastructure.
+    \item[\emph{The reference Java encoder}] The legacy self-contained Java \ac{MLT} encoder of~\cite{tremmelMapLibreTileNext2025b} is retained as a baseline for the encoding experiments of \cref{ch:experiments}. It is not a target of optimization in this thesis.
+\end{description}
 
 \section{Approach and basic building blocks}\label{sec:approach}
 
@@ -257,11 +257,11 @@ Pure operator evaluation computes the result of any operator whose arguments are
 When tile statistics are available, the optimizer extends constant folding with nine rules that exploit knowledge of the actual data.
 These rules receive tile statistics for the relevant source layer and fold expressions that are statically indeterminate but data-determinate:
 
-\begin{itemize}
-    \item \textbf{Property presence folding}: if a property is present in every feature, \texttt{[\mlop{"has"},~\mlval{"p"}]} folds to \mlval{true}; if present in no feature, to \mlval{false}.
-    \item \textbf{Single-value folding}: if a property has cardinality~1 and is present in all features, \texttt{[\mlop{"get"},~\mlval{"p"}]} folds to the single known value.
-    \item \textbf{Geometry-type folding}: if a source layer contains only one geometry type, comparisons against \mlop{geometry-type} fold to a boolean.
-    \item \textbf{Range folding}: numeric comparisons against a property with known data range $[\mathrm{min},\, \mathrm{max}]$ are folded when the predicate is trivially satisfied or violated.
+\begin{description}
+    \item[\textbf{Property presence folding}] if a property is present in every feature, \texttt{[\mlop{"has"},~\mlval{"p"}]} folds to \mlval{true}; if present in no feature, to \mlval{false}.
+    \item[\textbf{Single-value folding}] if a property has cardinality~1 and is present in all features, \texttt{[\mlop{"get"},~\mlval{"p"}]} folds to the single known value.
+    \item[\textbf{Geometry-type folding}] if a source layer contains only one geometry type, comparisons against \mlop{geometry-type} fold to a boolean.
+    \item[\textbf{Range folding}] numeric comparisons against a property with known data range $[\mathrm{min},\, \mathrm{max}]$ are folded when the predicate is trivially satisfied or violated.
     We apply the following folding rules:
     \begin{equation}\label{eq:range_folding}
     \begin{aligned}
@@ -280,12 +280,12 @@ These rules receive tile statistics for the relevant source layer and fold expre
     The $\to \mathtt{true}$ cases additionally require that the property is present in all features (otherwise the comparison is undefined for absent features).
     We apply the equality and disequality rules only to integer-typed columns, because floating-point equality is not a reliable oracle: a stats min/max pair derived from observed doubles may legitimately exclude a literal by a trailing-bit margin, but the filter is still defined (and, for correctness, treated as non-foldable).
     We apply strict-inequality folds on floating-point columns at the reported min/max values exactly. Stats collection uses the observed extrema rather than synthetic bounds, so the boundary comparison coincides with a value that actually occurs, which is the only case where the fold is unconditionally sound.
-    \item \textbf{Match/in arm pruning}: the pass removes arms referencing values absent from the tile statistics. If all arms are pruned, the expression collapses to its fallback.
-    \item \textbf{Match arm reordering}: the pass reorders arms by descending frequency so the renderer evaluates the most common case first.
-    \item \textbf{Data-ramp pruning}: for \mlop{step} and \mlop{interpolate} expressions driven by a numeric property with known data range $[\mathrm{min},\, \mathrm{max}]$, the pass prunes stops outside the observed range.
+    \item[\textbf{Match/in arm pruning}] the pass removes arms referencing values absent from the tile statistics. If all arms are pruned, the expression collapses to its fallback.
+    \item[\textbf{Match arm reordering}] the pass reorders arms by descending frequency so the renderer evaluates the most common case first.
+    \item[\textbf{Data-ramp pruning}] for \mlop{step} and \mlop{interpolate} expressions driven by a numeric property with known data range $[\mathrm{min},\, \mathrm{max}]$, the pass prunes stops outside the observed range.
     In a \mlop{step} expression, it removes stops with thresholds above $\mathrm{max}$. When the property is present in all features, it absorbs stops below $\mathrm{min}$ into the default.
     In an \mlop{interpolate} expression, it prunes stops outside the $[\mathrm{min},\, \mathrm{max}]$ interval symmetrically.
-\end{itemize}
+\end{description}
 
 \noindent A cardinality threshold of \texttt{200} governs the granularity of value tracking: when the number of distinct values exceeds this threshold, the statistics switch from full value counts to cardinality-only mode.
 This bounds the cost on high-cardinality properties (names, identifiers) while retaining full information for the low-cardinality properties (class, subclass, administrative level) that benefit most from data-driven folding.
@@ -880,18 +880,18 @@ This cascade mirrors the materialized-view maintenance problem described in \cre
 
 \noindent The advisory captures the following per source-layer:
 
-\begin{itemize}
-    \item \textbf{Used properties with zoom ranges}: for each property name appearing in a \texttt{[\mlop{"get"},~\ldots]} or \texttt{[\mlop{"has"},~\ldots]} expression in any live style layer, the zoom range over which it is referenced.
+\begin{description}
+    \item[\textbf{Used properties with zoom ranges}] for each property name appearing in a \texttt{[\mlop{"get"},~\ldots]} or \texttt{[\mlop{"has"},~\ldots]} expression in any live style layer, the zoom range over which it is referenced.
     Properties not referenced at any zoom level are candidates for removal.
-    \item \textbf{Used geometry types with zoom ranges}: which of Point, LineString, and Polygon are needed, derived from the style layer types (e.g., \texttt{\mlval{fill}} $\to$ Polygon, \texttt{\mlval{circle}} $\to$ Point).
+    \item[\textbf{Used geometry types with zoom ranges}] which of Point, LineString, and Polygon are needed, derived from the style layer types (e.g., \texttt{\mlval{fill}} $\to$ Polygon, \texttt{\mlval{circle}} $\to$ Point).
     The pass removes features with geometry types unused by any style layer at the current zoom level.
-    \item \textbf{Unused zoom levels}: zoom levels at which no style layer targets the source-layer.
+    \item[\textbf{Unused zoom levels}] zoom levels at which no style layer targets the source-layer.
     Tiles at these zoom levels need not be encoded at all.
-    \item \textbf{Unused property values}: specific values of categorical properties that are never matched by any style filter.
+    \item[\textbf{Unused property values}] specific values of categorical properties that are never matched by any style filter.
     For example, if no style layer allows for a line with a \texttt{class=ferry} property, the pass can remove features with that value.
-    \item \textbf{Feature ID requirement}: whether any style layer uses \texttt{[\mlop{"id"}]} or \texttt{[\mlop{"feature-state"},~\ldots]}.
+    \item[\textbf{Feature ID requirement}] whether any style layer uses \texttt{[\mlop{"id"}]} or \texttt{[\mlop{"feature-state"},~\ldots]}.
     When IDs are unused, the pass strips the entire ID column.
-\end{itemize}
+\end{description}
 
 \noindent The pipeline applies the pruning advisory to each \ac{MVT} tile before encoding (\cref{fig:tile_shaving_pipeline}).
 
@@ -1075,12 +1075,12 @@ Because this balance shifts across layers, zoom levels, and tilesets, no single 
 The encoder therefore trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count; \cref{fig:sort_competition} diagrams the resulting trial-and-retain loop, including the bounding-box pruning that skips spatial trials for large, widely-spread layers.
 The implemented strategies and their rationale are:
 
-\begin{enumerate}
-    \item \textbf{Unsorted}: the encoder preserves the original feature order.
-    \item \textbf{Spatial (Morton/Z-order)}: the encoder sorts features by the Z-order curve index of their first vertex, computed via bit-interleaving.  Fast to compute and provides reasonable spatial locality (\cref{sub:space_filling_curves}).
-    \item \textbf{Spatial (Hilbert)}: the encoder sorts features by the Hilbert curve index of their first vertex.  Slower to compute than Morton but achieves superior spatial locality, as the Hilbert curve avoids the long jumps inherent in the Z-order curve's recursive structure~\cite{moonAnalysisClusteringProperties2001}.
-    \item \textbf{ID}: the encoder sorts features by feature ID in ascending order.
-\end{enumerate}
+\begin{description}
+    \item[\textbf{Unsorted}] the encoder preserves the original feature order.
+    \item[\textbf{Spatial (Morton/Z-order)}] the encoder sorts features by the Z-order curve index of their first vertex, computed via bit-interleaving.  Fast to compute and provides reasonable spatial locality (\cref{sub:space_filling_curves}).
+    \item[\textbf{Spatial (Hilbert)}] the encoder sorts features by the Hilbert curve index of their first vertex.  Slower to compute than Morton but achieves superior spatial locality, as the Hilbert curve avoids the long jumps inherent in the Z-order curve's recursive structure~\cite{moonAnalysisClusteringProperties2001}.
+    \item[\textbf{ID}] the encoder sorts features by feature ID in ascending order.
+\end{description}
 
 For each candidate strategy, the encoder constructs a fresh \texttt{Encoder} instance, encodes the reordered layer, and measures the total output size (header + metadata + data).
 The encoder retains the strategy producing the smallest output and discards all others.
@@ -1169,12 +1169,12 @@ Instead, a \emph{data profiler} samples a contiguous block taken from the middle
 We chose the contiguous mid-stream window over a random sample because permutation destroys \ac{RLE} run lengths and delta-bit-width statistics, and because the middle of a spatially or ID-sorted stream is a representative point away from the boundary artefacts at the ends.
 The profiler computes four metrics in a single pass:
 
-\begin{itemize}
-    \item \emph{Average run length} ($\bar{S} = |s| / n_{\text{runs}}$): the mean number of consecutive identical values.
-    \item \emph{Delta average run length} ($\bar{S}_\Delta = (|s|-1) / n_{\Delta\text{-runs}}$): the mean run length in the zigzag-encoded delta stream.
-    \item \emph{Sortedness}: whether the sample is monotonically ascending or descending.
-    \item \emph{Bit-width sums}: the total bit widths of both raw values and zigzag-encoded deltas, used to estimate whether delta encoding reduces the representation cost.
-\end{itemize}
+\begin{description}
+    \item[\emph{Average run length} ($\bar{S} = |s| / n_{\text{runs}}$)] the mean number of consecutive identical values.
+    \item[\emph{Delta average run length} ($\bar{S}_\Delta = (|s|-1) / n_{\Delta\text{-runs}}$)] the mean run length in the zigzag-encoded delta stream.
+    \item[\emph{Sortedness}] whether the sample is monotonically ascending or descending.
+    \item[\emph{Bit-width sums}] the total bit widths of both raw values and zigzag-encoded deltas, used to estimate whether delta encoding reduces the representation cost.
+\end{description}
 
 Based on these statistics $\bar{S}$, the profiler prunes candidates before any full encoding is attempted:
 it excludes \ac{RLE} when $\bar{S}_\text{rle} < 2.0$;
@@ -1186,16 +1186,16 @@ The encoder fully encodes the remaining candidates (typically two to four) and c
 \paragraph{String encoding}
 String columns compete across four strategies, reflecting the two orthogonal dimensions of string compression: deduplication and byte-level compression.
 
-\begin{enumerate}
-    \item \textbf{Plain}: raw bytes with length prefixes.
+\begin{description}
+    \item[\textbf{Plain}] raw bytes with length prefixes.
     The length stream is itself subject to the integer encoding competition.
-    \item \textbf{Dictionary}: a deduplicated corpus with per-string offset indices.
+    \item[\textbf{Dictionary}] a deduplicated corpus with per-string offset indices.
     Effective when many features share the same string value (e.g., road names that repeat across tiles).
-    \item \textbf{\ac{FSST}} (\cref{sub:string_compression})~\cite{bonczFSSTFastRandom2020}:
+    \item[\textbf{\ac{FSST}} (\cref{sub:string_compression})]~\cite{bonczFSSTFastRandom2020}
     A lightweight, random-access string compressor that learns a symbol table of up to~255 frequent byte sequences and replaces occurrences with single-byte codes.
     The encoder stores the symbol table once per column. The compressed corpus remains directly scannable without decompression.
-    \item \textbf{\ac{FSST} + Dictionary}: \ac{FSST} applied to a deduplicated dictionary, combining both deduplication and byte-level compression.
-\end{enumerate}
+    \item[\textbf{\ac{FSST} + Dictionary}] \ac{FSST} applied to a deduplicated dictionary, combining both deduplication and byte-level compression.
+\end{description}
 
 A viability probe ensures that the encoder only attempts \ac{FSST} when the symbol-table overhead (up to \qty{2040}{\byte}) is likely to be recouped: it excludes columns below \num{2048}~raw bytes and evaluates a trial compression on a sample of up to \num{256} strings before committing.
 The encoder caches trained \ac{FSST} compressors by column name in a \texttt{HashMap} and reuses them across all sort-strategy trials, avoiding redundant training.
@@ -1380,19 +1380,19 @@ A statistics collection phase provides this knowledge by scanning the tile set a
 
 For each source layer, the phase collects the following statistics:
 
-\begin{itemize}
-    \item \textbf{Feature count}: total number of features across all tiles\footnote{Contrairy to na"ive reasoning, eatures appearing in multiple tiles at different zoom levels are counted multipe times, as the optimizer reasons per-tile, not per-geographic-entity. This creates bias, but bias that is representative to the usecase of rendering maps, where tiled features are used instead of geographic features.}.
-    \item \textbf{Features by zoom}: a per-zoom-level feature count, used by metadata refinement to determine the first and last zoom level at which data exists.
-    \item \textbf{Geometry types}: counts of Point, LineString, and Polygon features, used by dead elimination to detect geometry-type mismatches.
-    \item \textbf{Feature ID presence}: whether any feature carries a non-zero feature ID, used by the advisory to decide whether to strip the ID column.
-    \item \textbf{Per-property statistics}: for each property name, the statistics depend on the wire type:
-    \begin{itemize}
-        \item \emph{Boolean}: present count and true count.
-        \item \emph{Integer/unsigned integer}: present count, minimum, maximum, cardinality, and (if cardinality $\leq 200$) a full value-frequency map.
-        \item \emph{Double}: present count, minimum, maximum, cardinality (no value-frequency map, since floating-point equality is unreliable for folding).
-        \item \emph{String}: present count, cardinality, and (if cardinality $\leq 200$) a value-frequency map sorted by descending frequency.
-    \end{itemize}
-\end{itemize}
+\begin{description}
+    \item[\textbf{Feature count}] total number of features across all tiles\footnote{Contrairy to na"ive reasoning, eatures appearing in multiple tiles at different zoom levels are counted multipe times, as the optimizer reasons per-tile, not per-geographic-entity. This creates bias, but bias that is representative to the usecase of rendering maps, where tiled features are used instead of geographic features.}.
+    \item[\textbf{Features by zoom}] a per-zoom-level feature count, used by metadata refinement to determine the first and last zoom level at which data exists.
+    \item[\textbf{Geometry types}] counts of Point, LineString, and Polygon features, used by dead elimination to detect geometry-type mismatches.
+    \item[\textbf{Feature ID presence}] whether any feature carries a non-zero feature ID, used by the advisory to decide whether to strip the ID column.
+    \item[\textbf{Per-property statistics}] for each property name, the statistics depend on the wire type:
+    \begin{description}
+        \item[\emph{Boolean}] present count and true count.
+        \item[\emph{Integer/unsigned integer}] present count, minimum, maximum, cardinality, and (if cardinality $\leq 200$) a full value-frequency map.
+        \item[\emph{Double}] present count, minimum, maximum, cardinality (no value-frequency map, since floating-point equality is unreliable for folding).
+        \item[\emph{String}] present count, cardinality, and (if cardinality $\leq 200$) a value-frequency map sorted by descending frequency.
+    \end{description}
+\end{description}
 
 We allow collecting statistics at a configurable \emph{sample rate}.
 A sample rate of~1.0 (full census) is required for irreversible decisions such as dead layer elimination or property interning. Lower sample rates are sufficient for selectivity estimation and reordering.
@@ -1474,30 +1474,30 @@ Since many of the investigated optimizations techniques have not previously been
 We carry out this empirical evaluation in \cref{ch:experiments}. The rest of this section defines the methodology that chapter applies.
 Our evaluation reports the deployment metrics framed in \cref{sec:problem_statement} along several axes -- data savings (which feed the load-time axis), rendering performance, optimization cost (the $C_\text{total}$ breakdown of \cref{sub:preprocessing_cost_model}), and qualitative efficiency:
 
-\begin{itemize}
-    \item \textbf{Data savings}: reduction in style size (raw, gzip, and Brotli) and tile transfer volume.
-    \item \textbf{Rendering performance}: client-side metrics including load time, frames per second, frame time percentiles (p50, p95, p99), jank count, style parse time, time to first tile, and time to first frame.
-    \item \textbf{Optimization cost}: preprocessing time introduced by each pass, measured as wall-clock time on the optimizer's host machine. This is an offline cost amortised over all subsequent tile deliveries.
-    \item \textbf{Efficiency}: \emph{qualitative} discussion of the energy implications of reduced data transfer and fewer rendering operations.  We perform no direct power or energy measurement (\ac{RAPL}, battery delta), because the benchmark harness runs on a desktop workstation rather than a thermaly and battery-constrained mobile device. Any quantitative energy claim would require a different hardware platform and we defer it to future work.
-\end{itemize}
+\begin{description}
+    \item[\textbf{Data savings}] reduction in style size (raw, gzip, and Brotli) and tile transfer volume.
+    \item[\textbf{Rendering performance}] client-side metrics including load time, frames per second, frame time percentiles (p50, p95, p99), jank count, style parse time, time to first tile, and time to first frame.
+    \item[\textbf{Optimization cost}] preprocessing time introduced by each pass, measured as wall-clock time on the optimizer's host machine. This is an offline cost amortised over all subsequent tile deliveries.
+    \item[\textbf{Efficiency}] \emph{qualitative} discussion of the energy implications of reduced data transfer and fewer rendering operations.  We perform no direct power or energy measurement (\ac{RAPL}, battery delta), because the benchmark harness runs on a desktop workstation rather than a thermaly and battery-constrained mobile device. Any quantitative energy claim would require a different hardware platform and we defer it to future work.
+\end{description}
 
 \subsection{Metrics}\label{sub:metrics}
 
 Per run, the benchmark harness collects the following metrics:
 
-\begin{itemize}
-    \item \textbf{Load time} (\texttt{loadMs}): wall-clock time from requesting the map to completion of the initial render, including style parsing, tile fetching, tile decoding, and first paint.
+\begin{description}
+    \item[\textbf{Load time} (\texttt{loadMs})] wall-clock time from requesting the map to completion of the initial render, including style parsing, tile fetching, tile decoding, and first paint.
     Within the rendering benchmark, decoding latency is embedded in \texttt{loadMs} rather than isolated, because the browser-based harness cannot separate decoder wall-clock time from the surrounding fetch and first-paint work without renderer-internal instrumentation.
     We instead measure isolated decoding throughput via Criterion\footnote{\url{https://github.com/bheisler/criterion.rs}, last accessed 2026-05-23} micro-benchmarks on the Rust decoder (\cref{tab:decode_throughput}).
-    \item \textbf{Style parse time} (\texttt{styleParseMs}): time spent parsing and compiling the style \ac{JSON} into the renderer's internal representation.
-    \item \textbf{Time to first tile} (\texttt{firstTileMs}): time from map initialisation until the first tile is decoded and ready for rendering.
-    \item \textbf{Time to first frame} (\texttt{firstFrameMs}): time until the first frame is composited and presented.
-    \item \textbf{Frames per second} (\texttt{fps}): average rendering throughput during the animation phase.
-    \item \textbf{Frame time percentiles} (\texttt{p50}, \texttt{p95}, \texttt{p99FrameMs}): distribution of per-frame render times, capturing both typical and worst-case latency.
-    \item \textbf{Jank count} (\texttt{jankCount}): number of frames exceeding \qty{16.67}{\milli\second} (the 60\,\ac{FPS} budget), indicating visible stuttering.
-    \item \textbf{Heap memory} (\texttt{heapUsedMB}): JavaScript heap usage during the benchmark, capturing the memory cost of style structures and tile data.
-    \item \textbf{Idle time} (\texttt{idleMs}): time the renderer spends idle (waiting for tiles or \ac{GPU} sync), indicating headroom.
-\end{itemize}
+    \item[\textbf{Style parse time} (\texttt{styleParseMs})] time spent parsing and compiling the style \ac{JSON} into the renderer's internal representation.
+    \item[\textbf{Time to first tile} (\texttt{firstTileMs})] time from map initialisation until the first tile is decoded and ready for rendering.
+    \item[\textbf{Time to first frame} (\texttt{firstFrameMs})] time until the first frame is composited and presented.
+    \item[\textbf{Frames per second} (\texttt{fps})] average rendering throughput during the animation phase.
+    \item[\textbf{Frame time percentiles} (\texttt{p50}, \texttt{p95}, \texttt{p99FrameMs})] distribution of per-frame render times, capturing both typical and worst-case latency.
+    \item[\textbf{Jank count} (\texttt{jankCount})] number of frames exceeding \qty{16.67}{\milli\second} (the 60\,\ac{FPS} budget), indicating visible stuttering.
+    \item[\textbf{Heap memory} (\texttt{heapUsedMB})] JavaScript heap usage during the benchmark, capturing the memory cost of style structures and tile data.
+    \item[\textbf{Idle time} (\texttt{idleMs})] time the renderer spends idle (waiting for tiles or \ac{GPU} sync), indicating headroom.
+\end{description}
 
 \noindent Additionally, we compute static metrics for each optimized style without running the renderer: \textbf{style size} as raw byte count, gzip-compressed size, and Brotli-compressed size; and \textbf{complexity metrics} comprising total \ac{AST} node count, maximum expression depth, layer count, filter count, and expression operator histogram.
 
