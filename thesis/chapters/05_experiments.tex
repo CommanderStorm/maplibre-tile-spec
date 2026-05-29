@@ -49,7 +49,7 @@ We report the effects on performance generalized beyond the benchmarking corpus 
 
 \subsection{Results}\label{sub:expr_results}
 
-\cref{fig:waterfall_loadMs} shows the cumulative effect of adding each expression pass in ablation order on median load time, aggregated across the full scenario corpus; lower bars mean a shorter end-to-end load.
+\cref{fig:waterfall_loadMs} shows the cumulative effect of adding each expression pass in ablation order on median load time, aggregated across the full scenario corpus. Lower bars mean a shorter end-to-end load.
 %\cref{fig:marginal_loadMs} then isolates the \emph{marginal} contribution of each pass, stripping out the cumulative accumulation so that individual passes can be compared on a level footing.
 Read together, the two views separate \enquote{which passes are pulling their weight} from \enquote{how much does the stack as a whole improve over the baseline}.
 
@@ -67,7 +67,7 @@ This is the mechanism behind the parse-time leg of the time breakdown shown late
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/waterfall_loadMs.pdf}
-    \caption{Cumulative ablation waterfall for load time. Each bar shows the median change introduced by adding one expression pass on top of all previous passes, aggregated across all 18 scenarios and 15 benchmark styles. We can see that in the extremes, unary simplifcation has the largest effect; the aggregate load-time improvement across all expression passes is modest (\qty{-1.8}{\percent}), with expression passes serving primarily as enablers for downstream structural and data-level passes. For caveats, please see \cref{sub:expr_discussion}}
+    \caption{Cumulative ablation waterfall for load time. Each bar shows the median change introduced by adding one expression pass on top of all previous passes, aggregated across all 18 scenarios and 15 benchmark styles. We can see that in the extremes, unary simplifcation has the largest effect. The aggregate load-time improvement across all expression passes is modest (\qty{-1.8}{\percent}), with expression passes serving primarily as enablers for downstream structural and data-level passes. For caveats, please see \cref{sub:expr_discussion}}
     \label{fig:waterfall_loadMs}
 \end{figure}
 
@@ -81,7 +81,7 @@ This is the mechanism behind the parse-time leg of the time breakdown shown late
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/marginal_styleParseMs.pdf}
-    \caption{Marginal contribution of each expression pass to \texttt{styleParseMs}. The size-reducing passes (default stripping in particular) shorten the parse step monotonically, even where their end-to-end load-time effect is within noise; this is the proximate mechanism behind the style-parse leg of the time breakdown in \cref{fig:time_breakdown}.}
+    \caption{Marginal contribution of each expression pass to \texttt{styleParseMs}. The size-reducing passes (default stripping in particular) shorten the parse step monotonically, even where their end-to-end load-time effect is within noise. This is the proximate mechanism behind the style-parse leg of the time breakdown in \cref{fig:time_breakdown}.}
     \label{fig:marginal_styleParseMs}
 \end{figure}
 
@@ -111,7 +111,7 @@ We acknowledge the independence assumption underlying the selectivity estimates 
 
 \paragraph{Downstream interaction with the data pipeline}
 Beyond their direct rendering benefit, expression-level simplifications feed into the data-level pipeline evaluated in \cref{sec:exp_mlt}.
-Each folded filter predicate and each pruned \mlop{\texttt{match}} arm reduces the set of property names and categorical values that the tile pruning advisory (\cref{sub:tile_shaving}) must track; each filter reduced to \mlval{\texttt{false}} enables dead layer elimination in the structural phase, which removes that layer's entire property footprint from the advisory.
+Each folded filter predicate and each pruned \mlop{\texttt{match}} arm reduces the set of property names and categorical values that the tile pruning advisory (\cref{sub:tile_shaving}) must track. Each filter reduced to \mlval{\texttt{false}} enables dead layer elimination in the structural phase, which removes that layer's entire property footprint from the advisory.
 Simpler filters are also more amenable to the advisory's static analysis, because canonical forms (e.g., a direct \texttt{[\mlop{"=="},~\ldots]} rather than a double-negated comparison) expose referenced property values more readily.
 The magnitude of this interaction is quantified in \cref{sec:exp_mlt}.
 
@@ -129,9 +129,9 @@ The magnitude of this interaction is quantified in \cref{sec:exp_mlt}.
 \subsection{Pass Interactions}\label{sub:structural_interactions}
 
 Several pairwise dependencies between structural passes shape what we measure in the cumulative ablation in \cref{sub:structural_results}.
-Expression passes must run first so that metadata refinement sees zoom predicates in their canonical form; dead elimination must precede layer merging because a dead layer between two otherwise-mergeable live layers blocks the merge.
+Expression passes must run first so that metadata refinement sees zoom predicates in their canonical form. Dead elimination must precede layer merging because a dead layer between two otherwise-mergeable live layers blocks the merge.
 Similarly, metadata refinement must precede cleanup so the residual \mlval{\texttt{true}} filters and zero-opacity layers it produces can be removed.
-We give the full ordering rationale in \cref{sub:pipeline}; the practical consequence here is that the marginal contribution of each later pass in the ablation will reflect work that an earlier pass enabled, not just the pass itself.
+We give the full ordering rationale in \cref{sub:pipeline}. The practical consequence here is that the marginal contribution of each later pass in the ablation will reflect work that an earlier pass enabled, not just the pass itself.
 
 \subsection{Evaluation}\label{sub:structural_evaluation}
 
@@ -156,14 +156,14 @@ We report the effects on performance generalized in \cref{sub:cross_results} (ov
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{figures/complexity_total_expression_nodes.pdf}
-	\caption{Total expression-tree node count across cumulative ablation steps. Expression passes (steps~1-7) produce the largest reductions, with Fiord dropping by \qty{36.8}{\percent} (\num{1610}$\to$\num{1018}) and Liberty by \qty{10.5}{\percent} (\num{3537}$\to$\num{3167}); structural passes contribute additional, smaller reductions by removing or merging layers that own subtrees.}
+	\caption{Total expression-tree node count across cumulative ablation steps. Expression passes (steps~1-7) produce the largest reductions, with Fiord dropping by \qty{36.8}{\percent} (\num{1610}$\to$\num{1018}) and Liberty by \qty{10.5}{\percent} (\num{3537}$\to$\num{3167}). Structural passes contribute additional, smaller reductions by removing or merging layers that own subtrees.}
 	\label{fig:complexity_total_expression_nodes}
 \end{figure}
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{figures/complexity_filter_count.pdf}
-	\caption{Filter count across cumulative ablation steps. Metadata refinement (consuming zoom predicates) and dead elimination drive most of the filter-count reduction; cleanup removes the residual \mlval{\texttt{true}} filters that refinement leaves behind.}
+	\caption{Filter count across cumulative ablation steps. Metadata refinement (consuming zoom predicates) and dead elimination drive most of the filter-count reduction. Cleanup removes the residual \mlval{\texttt{true}} filters that refinement leaves behind.}
 	\label{fig:complexity_filter_count}
 \end{figure}
 
@@ -187,7 +187,7 @@ The following paragraphs unpack why those two dominate and how the remaining pas
 
 \paragraph{Dead elimination and layer merging dominate}
 Among the structural passes, dead elimination and layer merging produce the largest improvements in both rendering performance and style complexity.
-Dead elimination directly reduces the number of layers the renderer must process per frame; layer merging reduces draw calls by combining multiple rendering passes into one.
+Dead elimination directly reduces the number of layers the renderer must process per frame. Layer merging reduces draw calls by combining multiple rendering passes into one.
 The interaction between the two is synergistic: styles with many narrowly-filtered layers (e.g., road styles that define separate layers for each road class) benefit most, as dead elimination first removes layers for road classes absent from the data, and layer merging then combines the remaining layers into a single multi-class layer.
 
 \paragraph{Layer merging can trade raw size for runtime savings}
@@ -198,8 +198,8 @@ This was uncomfortable when we first saw it in the runs, since the intuition is 
 The merged layer is still cheaper to render even when its serialized form is bigger, and the gzip and Brotli columns of the same table show the compressed size essentially unchanged, so the raw increase disappears under realistic wire compression anyway.
 
 \paragraph{Metadata refinement has indirect effects}
-Metadata refinement does not directly reduce the number of layers or the complexity of expressions; instead, it enables the renderer to skip layers at zoom levels where they are invisible.
-The rendering improvement is therefore zoom-dependent: at overview zoom levels (where many layers are filtered out by tightened \texttt{minzoom}), the improvement is large; at street-level zoom (where most layers are active), the improvement is smaller.
+Metadata refinement does not directly reduce the number of layers or the complexity of expressions. Instead, it enables the renderer to skip layers at zoom levels where they are invisible.
+The rendering improvement is therefore zoom-dependent. At overview zoom levels (where many layers are filtered out by tightened \texttt{minzoom}) the improvement is large, and at street-level zoom (where most layers are active) the improvement is smaller.
 Paint-based refinement captures a class of optimizations that are invisible to filter analysis - a layer whose opacity interpolates from~0 at zoom~12 is indistinguishable from a fully visible layer when examining only the filter.
 
 \paragraph{Stats-driven passes amplify style-only passes}
@@ -217,17 +217,17 @@ Dead layer elimination has a second-order effect beyond reducing per-frame draw 
 each eliminated layer removes its property references from the tile pruning advisory computed in the data-level pipeline (\cref{sub:tile_shaving}).
 If a removed layer was the sole consumer of a property column, that column is stripped from every tile at encoding time.
 Similarly, metadata refinement's tightened zoom bounds cause the advisory to mark additional zoom levels as unused for a given source-layer, potentially eliminating entire tiles.
-We characterize this interaction fully in \cref{sub:mlt_discussion} and quantify it in \cref{sub:mlt_results}; the aggregate data shows that the composition is additive rather than synergistic, but the advisory-narrowing effect is a necessary precondition for style-dependent tile shaving.
+We characterize this interaction fully in \cref{sub:mlt_discussion} and quantify it in \cref{sub:mlt_results}. The aggregate data shows that the composition is additive rather than synergistic, but the advisory-narrowing effect is a necessary precondition for style-dependent tile shaving.
 
 
 \section{Experiment 3: Data-Level Optimizations}\label{sec:exp_mlt}
 \begin{keytakeaways}
-\item Tile shaving dominates: \qty{-71.5}{\percent} median load; style passes contribute additively, not synergistically.
+\item Tile shaving dominates with a \qty{-71.5}{\percent} median load reduction, and style passes contribute additively, not synergistically.
 \item The \ac{MLT} format alone is not the win - \ac{MLT}-Java drifts above $1.0\times$ \ac{MVT} under gzip/Brotli;\newline
     the gain comes from the encoder's strategy competition and shared dictionary selection in our new encoder.
 \end{keytakeaways}
 
-\noindent In \cref{sec:exp_structural,sec:exp_expressions} we optimized the \emph{program} the renderer executes; in this experiment we ask whether we can optimize the \emph{data} it consumes using the same style information, and to what extent the two levels interact - the joint-optimization question at the heart of Research Goal~R1 and formalised in \cref{sec:problem_statement}.
+\noindent In \cref{sec:exp_structural,sec:exp_expressions} we optimized the \emph{program} the renderer executes. In this experiment we ask whether we can optimize the \emph{data} it consumes using the same style information, and to what extent the two levels interact - the joint-optimization question at the heart of Research Goal~R1 and formalised in \cref{sec:problem_statement}.
 The data-level pipeline we apply here (\cref{sub:data_optimizations}) takes the optimized style and uses it to drive the tile pruning advisory and the encoding strategy competition.
 
 \textit{We carried out this experiment in collaboration with Rivian Automotive, Inc to optimize performance, correctness and software architecture of the encoder-decoder pair. We fully implemented the encoder and optimization routine ourselves. Due to the collaboration, we do not discuss encoder performance, even though it is a bit better (taking a minute vs five hours to transcode germany) than the previous encoder/decoder pairs.}
@@ -238,7 +238,7 @@ Beyond the thesis-wide formal optimization problem of \cref{sec:problem_statemen
 
 \begin{enumerate}
     \item \textbf{Tiles carry data the style never uses - and how much depends on the style.}
-    A general-purpose tile schema (e.g., OpenMapTiles) exposes hundreds of properties and multiple geometry types; any specific style references only a fraction.
+    A general-purpose tile schema (e.g., OpenMapTiles) exposes hundreds of properties and multiple geometry types. Any specific style references only a fraction.
     The unused remainder is style-dependent, so the savings achievable by tile shaving (\cref{sub:tile_shaving}) co-vary with the upstream style optimizations:
     more dead layers and simpler filters expose more removable columns and feature values.
 
@@ -276,22 +276,22 @@ For Fiord, the style-only reduction is \qty{14.5}{\percent} and shaving-only con
 For Liberty, shaving-only also contributes negligibly (Liberty's broad layer structure already references most tile properties), and the combined reduction (\qty{4.8}{\percent}) matches the style-only reduction (\qty{4.8}{\percent}), indicating effectively additive behavior with no measurable interaction.
 
 The aggregate across both styles shows no super-additive interaction at the median level.
-This was the central empirical question of the thesis and the one we expected to answer in the affirmative going in; the result that the levels compose additively, not synergistically, is what the data actually returned.
+This was the central empirical question of the thesis and the one we expected to answer in the affirmative going in. The result that the levels compose additively, not synergistically, is what the data actually returned.
 Per-scenario load-time synergy (combined reduction exceeding the sum of style-only and shaving-only reductions) is present in 17 of the 36 style-scenario pairs, but it is too sparse to lift the aggregate above the additive expectation.
 
 \paragraph{Rendering metrics across configurations}
 \cref{fig:rendering_metrics_mlt} reveals that the dominant rendering improvement comes from tile shaving, not from style optimizations.
-The headline numbers in this paragraph are medians of the Fiord and Liberty raw-run pool (the two end-to-end styles in the \ac{MLT} configuration), so they aggregate raw measurements rather than per-style medians; the per-style equivalents across all ten deep-corpus styles are tabulated in \cref{tab:per_style_summary} and summarised at the end of the chapter.
+The headline numbers in this paragraph are medians of the Fiord and Liberty raw-run pool (the two end-to-end styles in the \ac{MLT} configuration), so they aggregate raw measurements rather than per-style medians. The per-style equivalents across all ten deep-corpus styles are tabulated in \cref{tab:per_style_summary} and summarised at the end of the chapter.
 The pooled median load time drops from \qty{424}{\milli\second} (baseline) to \qty{406}{\milli\second} with style-only (\qty{-4.1}{\percent}), but reduces to \qty{121}{\milli\second} with shaving-only (\qty{-71.5}{\percent}) and \qty{113}{\milli\second} with style+shaving (\qty{-73.3}{\percent}).
 The \ac{MLT} re-encoding step (config~5) adds a small load-time regression relative to config~4 (\qty{119}{\milli\second} vs.\ \qty{113}{\milli\second}, \qty{+5}{\percent}) while achieving better compression (gzip \qty{-11.0}{\percent} vs.\ baseline across both styles).
 \ac{FPS} follows the same pattern: shaving-only lifts the pooled median from 807 to \num{2289} (\qty{+184}{\percent}), with style+shaving reaching \num{2331} (\qty{+189}{\percent}).
-At these frame rates ($>{1000}$~\ac{FPS}) the renderer is largely \ac{GPU}-idle; we therefore read the metric as available performance headroom on constrained devices rather than a directly observable rendering cost saving on the benchmark host.
-The \ac{MLT} variant is slightly below at \num{2232} \ac{FPS} (\qty{+176}{\percent} on the pool; the corresponding per-style \ac{FPS} gains are \qty{+148.1}{\percent} for Fiord and \qty{+149.9}{\percent} for Liberty, which sit inside the \qtyrange{100}{200}{\percent} per-style range reported across the ten deep-corpus styles at the end of the chapter), consistent with the additional decoding cost of the columnar format offsetting the smaller transfer size during sustained rendering.
+At these frame rates ($>{1000}$~\ac{FPS}) the renderer is largely \ac{GPU}-idle. We therefore read the metric as available performance headroom on constrained devices rather than a directly observable rendering cost saving on the benchmark host.
+The \ac{MLT} variant is slightly below at \num{2232} \ac{FPS} (\qty{+176}{\percent} on the pool, with corresponding per-style \ac{FPS} gains of \qty{+148.1}{\percent} for Fiord and \qty{+149.9}{\percent} for Liberty, which sit inside the \qtyrange{100}{200}{\percent} per-style range reported across the ten deep-corpus styles at the end of the chapter), consistent with the additional decoding cost of the columnar format offsetting the smaller transfer size during sustained rendering.
 The native Rust micro-benchmarks show \numrange{4.6}{8.3}$\times$ higher decode throughput for \ac{MLT} over \ac{MVT}+gzip (\cref{tab:decode_throughput}), but this advantage does not fully transfer to the browser, where the \ac{MLT} decoder we build would need to run as a \ac{WASM} module.
 We attribute the dominant bottleneck to the \ac{WASM}-to-JavaScript boundary, since each decoded column must be transferred from \ac{WASM} linear memory into JavaScript-visible typed arrays, incurring per-column copying and \ac{GC} pressure that does not exist in a pure-native pipeline.
 Secondary overheads include the restriction to 128-bit \ac{WASM} \ac{SIMD} (whereas native \ac{FastPFOR} exploits AVX2/512) and baseline JIT compilation latency.
-Jangda et~al.~\cite{jangdaNotFastAnalyzing2019} measured a 45-55\% slowdown for \ac{WASM} relative to native on SPEC \ac{CPU} benchmarks; although the computational gap has narrowed since 2019, the data-transfer boundary cost remains largely unchanged because the \ac{WASM}-JS interface still lacks zero-copy sharing of structured columnar buffers.
-As a result, the columnar decoder's advantage materialises primarily on larger, feature-dense tiles where the per-column setup and transfer cost is amortised; on smaller tiles the per-column dispatch overhead narrows the gap to approximate parity with \ac{MVT}'s single-path protobuf parser.
+Jangda et~al.~\cite{jangdaNotFastAnalyzing2019} measured a 45-55\% slowdown for \ac{WASM} relative to native on SPEC \ac{CPU} benchmarks. Although the computational gap has narrowed since 2019, the data-transfer boundary cost remains largely unchanged because the \ac{WASM}-JS interface still lacks zero-copy sharing of structured columnar buffers.
+As a result, the columnar decoder's advantage materialises primarily on larger, feature-dense tiles where the per-column setup and transfer cost is amortised. On smaller tiles the per-column dispatch overhead narrows the gap to approximate parity with \ac{MVT}'s single-path protobuf parser.
 We are currently working to shift more decoding and data consumption into \ac{WASM} to reduce boundary-crossing overhead.
 Bootstrap \qty{95}{\percent} confidence intervals confirm that the full-pipeline load-time improvements are tight: Fiord's final load time is \qty{120.5}{\milli\second} (CI: [\num{119.3}, \num{121.5}]), Liberty's is \qty{133.7}{\milli\second} (CI: [\num{132.9}, \num{134.2}]), both with $p < 10^{-45}$ (Wilcoxon, $n = 270$ for Fiord across 18 scenarios and $n = 254$ for Liberty across 17 scenarios at the full-pipeline pool) against their respective baselines.
 
@@ -307,7 +307,7 @@ Bootstrap \qty{95}{\percent} confidence intervals confirm that the full-pipeline
 
 Once shaving has fixed what data survives, the encoding stage determines whether those savings reach the wire.
 \cref{fig:shaving_effectiveness_per_zoom} plots total tile size per zoom level for both \ac{MVT} and \ac{MLT}-Rust, with and without shaving via the Liberty advisory.
-The gap between each format and its shaved counterpart quantifies the data removed by the pruning advisory; the gap between \ac{MVT}-shaved and \ac{MLT}-Rust-shaved quantifies the additional contribution of columnar encoding on the already-pruned data.
+The gap between each format and its shaved counterpart quantifies the data removed by the pruning advisory. The gap between \ac{MVT}-shaved and \ac{MLT}-Rust-shaved quantifies the additional contribution of columnar encoding on the already-pruned data.
 Both formats benefit from shaving across all compression schemes, confirming that the advisory operates on the data itself rather than relying on format-specific redundancy.
 \cref{fig:encoder_comparison} reframes the same evidence as a ratio against the \ac{MVT} baseline, adding the Tremmel \& Zink \ac{MLT}-Java encoder for comparison: the \ac{MLT}-Rust curves remain at roughly $0.6$-$0.8\times$ \ac{MVT} throughout the zoom range, whereas the \ac{MLT}-Java curves drift above $1.0\times$ at several zoom levels under brotli/zstd, underscoring that the gains attributed to the \ac{MLT} format in this thesis come almost entirely from the encoder-side strategy competition and not from the columnar format alone.
 
@@ -317,7 +317,7 @@ Both formats benefit from shaving across all compression schemes, confirming tha
     \caption{Total tile size per zoom level for unshaved and shaved variants of
       both \ac{MVT} and \ac{MLT}-Rust, using the Liberty advisory.  The gap
       between each format and its shaved counterpart quantifies the data removed
-      by the pruning advisory; the gap between \ac{MVT}-shaved and
+      by the pruning advisory. The gap between \ac{MVT}-shaved and
       \ac{MLT}-Rust-shaved quantifies the additional contribution of columnar
       encoding}
     \label{fig:shaving_effectiveness_per_zoom}
@@ -356,7 +356,7 @@ To separate the contribution of the multi-strategy competition (this work) from 
           the \ac{MLT}-Rust column reports the Rust encoder developed in this thesis}
         \label{tab:mvt_mlt_comparison}
     \end{subfigure}
-\caption[Encoder comparison: per-zoom breakdown and total tileset size]{Encoder comparison for the Germany OpenMapTiles tileset (zoom~0-14, \num{256588} tiles). \ac{MLT}-Rust (this work) achieves \qty{28.3}{\percent} smaller total size than the \ac{MLT}-Java baseline under no wire compression; the Java encoder drifts above \ac{MVT} size at several zoom levels under Brotli/zstd, whereas the Rust encoder remains below \ac{MVT} throughout.}
+\caption[Encoder comparison: per-zoom breakdown and total tileset size]{Encoder comparison for the Germany OpenMapTiles tileset (zoom~0-14, \num{256588} tiles). \ac{MLT}-Rust (this work) achieves \qty{28.3}{\percent} smaller total size than the \ac{MLT}-Java baseline under no wire compression. The Java encoder drifts above \ac{MVT} size at several zoom levels under Brotli/zstd, whereas the Rust encoder remains below \ac{MVT} throughout.}
 \label{fig:encoder_comparison}
 \end{figure}
 
@@ -374,7 +374,7 @@ This directly answers the question we posed at the start of \cref{sec:exp_mlt}: 
 
 \paragraph{Scope of the encoder contribution}
 We measured the \qty{28}{\percent} reduction reported in \cref{tab:mvt_mlt_comparison} on the \emph{unshaved} Germany tileset, so it is an encoder-only improvement, independent of the style-driven optimizations.
-It reflects the combined effect of sort-strategy competition, per-stream profiling, and shared-dictionary clustering; these three mechanisms are tightly coupled (sort order affects column distributions, which affect profiling decisions), so a per-mechanism decomposition is not feasible without re-engineering the encoder.
+It reflects the combined effect of sort-strategy competition, per-stream profiling, and shared-dictionary clustering. These three mechanisms are tightly coupled (sort order affects column distributions, which affect profiling decisions), so a per-mechanism decomposition is not feasible without re-engineering the encoder.
 This result is complementary to, but separate from, the style-data bridge: style-driven tile shaving reduces tile content before encoding, while the encoder improvements reduce the encoded size of whatever content remains.
 The two contributions stack (shaved tiles encoded with the Rust encoder are smaller than shaved tiles encoded with the Java baseline), but they address orthogonal sources of redundancy.
 
@@ -389,7 +389,7 @@ This finding is consistent with the columnar-database literature, where per-colu
 
 \paragraph{Decoder cost}
 A legitimate concern for any multi-encoding scheme is that the client must pay the decoder cost, which can erode the transfer savings on mobile or battery-constrained targets.
-We engineered the decoder to amortise its per-column dispatch over per-feature work (\cref{sub:encoding_strategies}); empirically, our benchmarks on the full Germany tileset show end-to-end rendering metrics comparable to or better than \ac{MVT} at matched workloads, and we see no negative effect in the sustained frame-time metrics of \cref{sub:combined_marginal}.
+We engineered the decoder to amortise its per-column dispatch over per-feature work (\cref{sub:encoding_strategies}). Empirically, our benchmarks on the full Germany tileset show end-to-end rendering metrics comparable to or better than \ac{MVT} at matched workloads, and we see no negative effect in the sustained frame-time metrics of \cref{sub:combined_marginal}.
 
 
 \paragraph{Decoding throughput}
@@ -421,10 +421,10 @@ These micro-benchmark results complement the browser-based \texttt{loadMs} metri
 
 \subsection{Discussion}\label{sub:mlt_discussion}
 
-Tile shaving alone cuts pooled median load time by \qty{71.5}{\percent} and lifts \ac{FPS} by \qty{184}{\percent}, while style-only passes contribute \qty{-4.1}{\percent} on load; the two channels compose additively, not synergistically.
+Tile shaving alone cuts pooled median load time by \qty{71.5}{\percent} and lifts \ac{FPS} by \qty{184}{\percent}, while style-only passes contribute \qty{-4.1}{\percent} on load. The two channels compose additively, not synergistically.
 We discuss why the channels stay additive, the cache-fragmentation trade-off that style-dependent tiles create on shared \acsp{CDN}, and the geometry-simplification axis we leave out of scope.
 
-\paragraph{Tile shaving dominates; style passes assist additively}
+\paragraph{Tile shaving dominates while style passes assist additively}
 The headline finding of this experiment is that tile shaving is the dominant contributor to load-time and transfer-size improvements, while style-level passes provide a modest, additive assist.
 Dead layer elimination (Experiment~2) removes style layers whose filters are unsatisfiable.
 Each removed layer reduces the set of referenced properties in the pruning advisory, which in turn can eliminate columns from the encoded tile.
@@ -451,7 +451,7 @@ We see this observation as highlighting a fundamental trade-off: there is no sin
 \paragraph{Cache fragmentation trade-off}
 A direct operational consequence of style-dependent tiles is that shared \ac{CDN} caching is partially defeated: two styles that served identical tiles under \ac{MVT} now fetch distinct shaved variants, and a \ac{CDN} must either key its cache on (tile, style) pairs or accept that a hit on one style is a miss on another.
 The break-even point depends on the ratio of per-style rendering cost savings to the amplified origin fetch rate.
-For deployments where a single style dominates traffic, style-driven shaving is strictly beneficial; for multi-tenant tile servers hosting dozens of styles, operators should apply shaving per style and cache the resulting tile variants independently (the approach of Mapbox's closed-source \enquote{style-optimized vector tiles} service~\cite{StyleoptimizedVectorTiles}).
+For deployments where a single style dominates traffic, style-driven shaving is strictly beneficial. For multi-tenant tile servers hosting dozens of styles, operators should apply shaving per style and cache the resulting tile variants independently (the approach of Mapbox's closed-source \enquote{style-optimized vector tiles} service~\cite{StyleoptimizedVectorTiles}).
 A hybrid strategy - serving raw \ac{MVT} for uncommon styles and shaved \ac{MLT} for a small set of \enquote{canonical} styles - captures most of the per-tile savings while bounding cache-key explosion.
 
 We frame the decision with a per-style break-even model.
@@ -459,7 +459,7 @@ Because \ac{MVT} and \ac{MLT} cannot coexist within a single style's vector-tile
 The choice is usually binary per style (given most styles only have one vector tile source), and the operational question is which styles belong in which group.
 
 Let $r$ denote the per-tile rendering-time saving from shaving (load-time reduction divided by the number of fetched tiles), $C_f$ the origin fetch cost per cache miss, $\lambda_i$ the aggregate request rate to style $i$, $N$ the number of distinct tiles, and $\mathcal{M}$ the subset of styles served as \ac{MVT} with pooled rate $\Lambda_\mathcal{M} = \sum_{i \in \mathcal{M}} \lambda_i$.
-Let $h(\mu)$ denote the steady-state hit rate of a cache slot accessed at rate $\mu$ on the shared edge cache; under \ac{LRU}, $h$ is monotonically increasing in $\mu$ and saturates near $1$ for popular content.
+Let $h(\mu)$ denote the steady-state hit rate of a cache slot accessed at rate $\mu$ on the shared edge cache. Under \ac{LRU}, $h$ is monotonically increasing in $\mu$ and saturates near $1$ for popular content.
 A style-$j \in \mathcal{M}$ request hits the per-tile pooled slot at rate $\Lambda_\mathcal{M}/N$, while a style served as shaved \ac{MLT} hits its own \emph{(tile, style)} slot at rate only $\lambda_i/N$.
 Moving style $i$ from $\mathcal{M}$ to the \ac{MLT}-served set is net-beneficial when
 \[
@@ -503,7 +503,7 @@ We execute no rendering benchmarks, as the diverse styles reference incompatible
 
 \subsection{Results}\label{sub:cross_results}
 
-\cref{fig:cross_style_reduction} shows per-style percentage reductions (raw, gzip, Brotli) across the 13 Maputnik styles, sorted by raw reduction; the key question here is whether the distribution clusters tightly around the deep corpus median or fans out with substantial per-style variance.
+\cref{fig:cross_style_reduction} shows per-style percentage reductions (raw, gzip, Brotli) across the 13 Maputnik styles, sorted by raw reduction. The key question here is whether the distribution clusters tightly around the deep corpus median or fans out with substantial per-style variance.
 \cref{fig:cross_style_complexity_scatter} then plots each style's initial complexity against its achievable reduction, testing the hypothesis that verbose institutional styles (the right-hand side of the scatter) have disproportionately more optimizations headroom than already-compact minimal basemaps on the left.
 
 The distribution fans out considerably:
@@ -511,19 +511,19 @@ raw reductions range from \qty{3.2}{\percent} (Stadia Outdoors) to \qty{67.7}{\p
 Under gzip compression the range narrows to \qtyrange{3.9}{22.4}{\percent} (median \qty{11.4}{\percent}), confirming that some of the raw-byte savings overlap with what gzip already captures.
 The top reducers - LocationIQ Streets (\qty{67.7}{\percent} raw), Americana (\qty{59.2}{\percent}), and MapTiler Toner (\qty{57.5}{\percent}) - are styles with either verbose filter logic (LocationIQ, Americana) or highly repetitive property structures (Toner).
 At the low end, Stadia Outdoors (\qty{3.2}{\percent}) and the two AWS styles (both at \qty{10.6}{\percent}) leave little for the optimizer to remove: the AWS pair shares a codebase of hand-tuned expressions with few redundancies, while Stadia Outdoors is a compact, already-minified basemap.
-We observe no statistically significant correlation between initial \ac{AST} node count and reduction ($r = 0.35$, $n = 13$, $p = 0.24$); the sample size is too small for this correlation to be meaningful.  Americana has by far the highest initial complexity (\num{48510} nodes) and is also one of the top three reducers, but it is a single high-leverage point: dropping it flips the sign to $r = -0.54$, underscoring that no stable trend exists at this sample size.
+We observe no statistically significant correlation between initial \ac{AST} node count and reduction ($r = 0.35$, $n = 13$, $p = 0.24$). The sample size is too small for this correlation to be meaningful.  Americana has by far the highest initial complexity (\num{48510} nodes) and is also one of the top three reducers, but it is a single high-leverage point: dropping it flips the sign to $r = -0.54$, underscoring that no stable trend exists at this sample size.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/cross_style_reduction.pdf}
-    \caption{Per-style percentage reduction in style size (raw, gzip, Brotli) across the Maputnik generalization corpus; styles are sorted by raw reduction. Raw reductions range from \qty{3.2}{\percent} to \qty{67.7}{\percent}, confirming that automatic optimization yields meaningful gains across styles regardless of origin.}
+    \caption{Per-style percentage reduction in style size (raw, gzip, Brotli) across the Maputnik generalization corpus, with styles sorted by raw reduction. Raw reductions range from \qty{3.2}{\percent} to \qty{67.7}{\percent}, confirming that automatic optimization yields meaningful gains across styles regardless of origin.}
     \label{fig:cross_style_reduction}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/cross_style_complexity_scatter.pdf}
-    \caption{Relationship between initial style complexity (\ac{AST} node count) and achievable raw style size reduction across the Maputnik generalization corpus. The correlation is not statistically significant ($r = 0.35$, $n = 13$, $p = 0.24$), and is driven by a single high-leverage point (Americana); dropping it flips the sign to $r = -0.54$. Optimization yield is therefore not reliably predictable from complexity alone, but a combination of other factors such as the cartographers' skill.}
+    \caption{Relationship between initial style complexity (\ac{AST} node count) and achievable raw style size reduction across the Maputnik generalization corpus. The correlation is not statistically significant ($r = 0.35$, $n = 13$, $p = 0.24$), and is driven by a single high-leverage point (Americana). Dropping it flips the sign to $r = -0.54$. Optimization yield is therefore not reliably predictable from complexity alone, but a combination of other factors such as the cartographers' skill.}
     \label{fig:cross_style_complexity_scatter}
 \end{figure}
 
@@ -541,7 +541,7 @@ Layer count reduction (\%)      &    0.0 &    0.8 &   4.8 &  7.0 & 27.0 \\
 \ac{AST} node count change (\%) & $-269.2$ & $-102.9$ & $-47.9$ & 0.0 & 62.2 \\
 \bottomrule
 \end{tabular}
-\caption{Distribution of style-size and complexity changes across the Maputnik generalization corpus (13 styles, static passes only). Median raw reduction is \qty{31.4}{\percent} and median Brotli reduction is \qty{9.8}{\percent}. The \ac{AST}-node row is signed: positive values denote a reduction in node count, negative values denote growth from expression rewriting (e.g.\ unrolling \texttt{match} into nested \texttt{case}); only three of the 13 styles see a net node-count reduction, indicating that the byte-size gains come predominantly from style-level passes (default stripping, layer merging, metadata stripping) rather than from expression simplification alone. Source data: \texttt{scripts/data/cross\_style\_summary.csv}.}
+\caption{Distribution of style-size and complexity changes across the Maputnik generalization corpus (13 styles, static passes only). Median raw reduction is \qty{31.4}{\percent} and median Brotli reduction is \qty{9.8}{\percent}. The \ac{AST}-node row is signed: positive values denote a reduction in node count, negative values denote growth from expression rewriting (e.g.\ unrolling \texttt{match} into nested \texttt{case}). Only three of the 13 styles see a net node-count reduction, indicating that the byte-size gains come predominantly from style-level passes (default stripping, layer merging, metadata stripping) rather than from expression simplification alone. Source data: \texttt{scripts/data/cross\_style\_summary.csv}.}
 \label{tab:cross_style_summary}
 \end{table}
 
@@ -575,7 +575,7 @@ Compact basemaps authored by experienced cartographers, which already use effici
 \section{Combined Results}\label{sec:exp_combined}
 \begin{keytakeaways}
 \item The three optimization channels compose additively, not synergistically.
-\item Data-level passes do almost nothing for sustained frame rate; their lever is load time.
+\item Data-level passes do almost nothing for sustained frame rate. Their lever is load time.
 \item No single pass dominates across styles - the multi-pass design is what generalizes.
 \end{keytakeaways}
 
@@ -591,13 +591,13 @@ Expression passes (steps~1-7) produce a diffuse, moderate improvement across mos
 \cref{fig:heatmap_fps} shows the companion \ac{FPS} view: the gain is broadly aligned with the load-time pattern but lands more uniformly across scenarios, because once tiles are decoded the sustained frame rate is driven by per-feature evaluation cost rather than by tile-fetch latency.
 
 A side effect we did not expect on first reading was that the frame-time consistency metric in \cref{fig:heatmapjankcount} \emph{got worse} as the pipeline got faster - the jank count goes up across the ablation.
-The explanation, once we plotted it next to \ac{FPS}, is that we are now running well above 2000\,\ac{FPS}, where smaller variations such as \ac{GC}-pauses register as proportionally large frame-time outliers; on real consumer hardware capped well below that rate the same pauses would not cross the jank threshold.
+The explanation, once we plotted it next to \ac{FPS}, is that we are now running well above 2000\,\ac{FPS}, where smaller variations such as \ac{GC}-pauses register as proportionally large frame-time outliers. On real consumer hardware capped well below that rate the same pauses would not cross the jank threshold.
 The metric is doing what it should - flagging fragile frames - but it is reading a regime the renderer was never expected to enter, which is worth keeping in mind when interpreting the heatmap.
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[height=0.9\textheight]{figures/heatmap_loadMs.pdf}
-	\caption{Heatmap of load time across scenarios (rows) and ablation steps (columns); darker cells indicate greater improvement relative to baseline. Urban, tile-dense scenarios (New York, Tokyo, Paris) show the largest absolute improvements; structural passes produce concentrated gains where dead elimination or layer merging applies.}
+	\caption{Heatmap of load time across scenarios (rows) and ablation steps (columns), where darker cells indicate greater improvement relative to baseline. Urban, tile-dense scenarios (New York, Tokyo, Paris) show the largest absolute improvements. Structural passes produce concentrated gains where dead elimination or layer merging applies.}
 	\label{fig:heatmap_loadMs}
 \end{figure}
 
@@ -620,7 +620,7 @@ The metric is doing what it should - flagging fragile frames - but it is reading
 
 \cref{fig:time_breakdown} decomposes load time into its constituent phases - style parse, first tile, first frame, and remaining load - across ablation steps.
 The style-parse component shrinks monotonically as the style document gets smaller, dropping from the baseline to a visibly shorter bar by step~7 (after expression passes).
-The first-tile and remaining-load components are stable across style-only steps, confirming that style optimizations primarily affects parse time rather than tile-fetch time; this changes only at the tile-shaving steps (17-19), where smaller tiles reduce the first-tile phase.
+The first-tile and remaining-load components are stable across style-only steps, confirming that style optimizations primarily affects parse time rather than tile-fetch time. This changes only at the tile-shaving steps (17-19), where smaller tiles reduce the first-tile phase.
 
 \cref{fig:memory_ablation} tracks browser heap memory across steps.
 Style-level passes move the resident JS heap only modestly: from the baseline mean of \qty{86.0}{\mega\byte} the heap drifts to \qty{82.9}{\mega\byte} by step~15, a total reduction of \qty{3.1}{\mega\byte} (\qty{-3.6}{\percent}), with no single style-level pass dominating.
@@ -629,14 +629,14 @@ The dominant heap reduction arrives with the data-level passes: tile shaving (st
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/time_breakdown.pdf}
-    \caption{Time breakdown across ablation steps: style parse, first tile, first frame, and remaining load time. Style-parse time shrinks monotonically with each expression pass; first-tile and remaining-load times are unchanged by style-only steps and decrease only when tile shaving is applied (steps~17-19).}
+    \caption{Time breakdown across ablation steps: style parse, first tile, first frame, and remaining load time. Style-parse time shrinks monotonically with each expression pass. First-tile and remaining-load times are unchanged by style-only steps and decrease only when tile shaving is applied (steps~17-19).}
     \label{fig:time_breakdown}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/memory_ablation.pdf}
-    \caption{Heap memory usage (mean \texttt{heapUsedMB} across all scenarios and benchmark styles) across ablation steps. Style-level passes (steps 1-15) reduce the heap by \qty{3.1}{\mega\byte} (\qty{-3.6}{\percent}); the bulk of the heap savings comes from data-level passes (steps 17-19) where the in-memory tile payload itself shrinks, yielding a cumulative reduction of \qty{-35.7}{\percent} from baseline to step~19.}
+    \caption{Heap memory usage (mean \texttt{heapUsedMB} across all scenarios and benchmark styles) across ablation steps. Style-level passes (steps 1-15) reduce the heap by \qty{3.1}{\mega\byte} (\qty{-3.6}{\percent}). The bulk of the heap savings comes from data-level passes (steps 17-19) where the in-memory tile payload itself shrinks, yielding a cumulative reduction of \qty{-35.7}{\percent} from baseline to step~19.}
     \label{fig:memory_ablation}
 \end{figure}
 
@@ -657,7 +657,7 @@ The dominant heap reduction arrives with the data-level passes: tile shaving (st
 {\ifnum\isBold=1\textbf{\style}\else\style\fi &
  \num{\baseGzip} & \num{\optGzip} & \reduction &
  \fmtdelta{\deltaLoad} & \fmtdelta{\deltaFps}}%
-\caption{Per-style summary: baseline and optimized style size (gzip), size reduction, and change in load time and \ac{FPS} (medians across scenarios). Styles below the rule include tile-level optimizations (steps~1-19); those above include style-level optimizations only (steps~1-15). Tile shaving produces the most visible drops in load time and \ac{FPS} improvements.}
+\caption{Per-style summary: baseline and optimized style size (gzip), size reduction, and change in load time and \ac{FPS} (medians across scenarios). Styles below the rule include tile-level optimizations (steps~1-19), and those above include style-level optimizations only (steps~1-15). Tile shaving produces the most visible drops in load time and \ac{FPS} improvements.}
 \label{tab:per_style_summary}
 \end{table}
 
@@ -681,7 +681,7 @@ The dominant heap reduction arrives with the data-level passes: tile shaving (st
 {\step & \pass\ifnum\dagger=1\textsuperscript{$\dagger$}\fi &
  \fmtdelta{\deltaRaw} & \fmtdelta{\deltaGzip} & \fmtdelta{\deltaBrotli} &
  \fmtdelta{\deltaLoad} & \fmtdeltaint{\deltaLayers}}%
-\caption{Marginal contribution of each ablation step to style size (raw, gzip, Brotli), load time, and layer count; values are percentage of baseline, medians across 12 styles and 18 scenarios. Data-level tile shaving dominates transfer-size and load-time metrics; style-level passes contribute primarily to parse-time and style-size reductions and serve as enablers for the data-level pipeline.}
+\caption{Marginal contribution of each ablation step to style size (raw, gzip, Brotli), load time, and layer count. Values are percentage of baseline, medians across 12 styles and 18 scenarios. Data-level tile shaving dominates transfer-size and load-time metrics. Style-level passes contribute primarily to parse-time and style-size reductions and serve as enablers for the data-level pipeline.}
 \label{tab:marginal_contribution}
 \end{table}
 
@@ -700,7 +700,7 @@ Data-level tile shaving dominates the transfer-size metric, as tiles are fetched
 
 \paragraph{Load time metrics}
 Both style size (initial fetch and parse) and tile size (first tile fetch) influence load time.
-Style-level passes improve style parse time; data-level passes improve first-tile time.
+Style-level passes improve style parse time. Data-level passes improve first-tile time.
 The relative contribution depends on the network bandwidth: under the \qty{10}{\Mbps} throttle, tile-fetch latency dominates; under the \qty{1.5}{\Mbps} throttle, style-fetch latency becomes significant for large styles.
 
 \subsection{Preprocessing Cost}\label{sub:preprocessing_cost}
@@ -712,7 +712,7 @@ Preprocessing cost is therefore amortised over all subsequent tile deliveries an
 In this section we measure each of the four additive cost terms $C_\text{style}$, $C_\text{stats}$, $C_\text{adv}$, and $C_\text{enc}$ from the preprocessing cost model (\cref{eq:cost_model}, \cref{sub:preprocessing_cost_model}) on a real tileset, and confirm that the cost-control mechanisms formalised there keep the multi-strategy overhead well below the na\"ive worst case.
 
 \paragraph{Measured stage costs}
-\Cref{tab:preprocessing_cost} reports wall-clock time for each stage of the preprocessing pipeline on the Germany OpenMapTiles tileset (\num{256156} tiles after pruning, zoom 0-14), which we measured on an AMD Ryzen~7 3700X (8 cores / 16 threads), \qty{46}{\gibi\byte} \ac{RAM}, NVMe SSD; median of three runs.
+\Cref{tab:preprocessing_cost} reports wall-clock time for each stage of the preprocessing pipeline on the Germany OpenMapTiles tileset (\num{256156} tiles after pruning, zoom 0-14), which we measured on an AMD Ryzen~7 3700X (8 cores / 16 threads), \qty{46}{\gibi\byte} \ac{RAM}, NVMe SSD (median of three runs).
 \emph{Style optimization} ($C_\text{style}$) and \emph{advisory computation} ($C_\text{adv}$) are negligible: Liberty's 111-layer style completes all passes in \qty{7.5}{\milli\second} and the advisory in \qty{1.1}{\milli\second}.
 \emph{Tile-statistics collection} ($C_\text{stats}$) takes \qty{57.4}{\second} for a single-threaded scan of all \num{256588} source tiles.
 \emph{Tile pruning and \ac{MVT} re-encoding} ($C_\text{enc}$, MVT) takes \qty{15.6}{\second} using Rayon\footnote{\url{https://github.com/rayon-rs/rayon}, last accessed 2026-05-23} parallelism.
@@ -743,7 +743,7 @@ Overhead factor & auto\,/\,none (single-threaded CPU time) & $1.95\times$ \\
 Taken together, the cost-control mechanisms formalised in \cref{sub:preprocessing_cost_model} - bounding-box pruning, data profiling, warm-start caching, scratch-buffer recycling, and the \ac{RAII} alternatives guard - reduce the measured overhead of the full sort-strategy competition to $1.95\times$ compared to a fixed-plan (single-strategy) encoder (\cref{tab:preprocessing_cost}), well below the na\"ive $4\times$ expectation from four candidate sort orders.
 We empirically confirm that the trial-and-retain loop costs $k$ encode passes plus $\mathcal{O}(1)$ bookkeeping rather than $k$ encode passes plus $k$ full buffer clones.
 We pay this cost once per tileset build and amortise it over every subsequent tile request.
-The total single-threaded pipeline time (statistics collection through \ac{MLT} encoding with full competition) is under \qty{7}{\minute} on the Germany tileset; with 16-thread parallelism the end-to-end wall-clock time drops to approximately \qty{2}{\minute} - perfectly acceptable for an offline build stage.
+The total single-threaded pipeline time (statistics collection through \ac{MLT} encoding with full competition) is under \qty{7}{\minute} on the Germany tileset. With 16-thread parallelism the end-to-end wall-clock time drops to approximately \qty{2}{\minute} - perfectly acceptable for an offline build stage.
 The effect of this on client side performance is not as big as it could currently be, because internally we transform data to \acsp{MVT} instead of a more efficient in-memory-structure.
 
 \subsection{Complexity Metrics}\label{sub:combined_complexity}
@@ -757,7 +757,7 @@ Where the same step appears across two complexity axes, we describe the connecti
 
 \subsection{Discussion}\label{sub:combined_discussion}
 
-Composed end-to-end across the ten deep-corpus styles, the full pipeline cuts per-style median load time by \qty{71}{\percent} and lifts \ac{FPS} by \qty{152}{\percent}; the three optimization channels (expression, structural, data) compose additively, not synergistically.
+Composed end-to-end across the ten deep-corpus styles, the full pipeline cuts per-style median load time by \qty{71}{\percent} and lifts \ac{FPS} by \qty{152}{\percent}. The three optimization channels (expression, structural, data) compose additively, not synergistically.
 The following paragraphs decompose which cost channel each family acts on, separate the load-time levers from the frame-rate levers, and close with the measurement-noise caveats that bound these headline numbers.
 
 \paragraph{Three plausible improvement channels}
@@ -765,7 +765,7 @@ The full pipeline ablation points to three plausible channels by which the optim
 The expression passes (\cref{sub:expression_optimizations}) plausibly reduce per-feature evaluation cost - fewer \ac{AST} nodes mean fewer interpreter steps per feature per frame.
 Dead elimination and layer merging (\cref{sub:structural_optimizations}) operate one level up, cutting draw calls, \ac{GPU} state changes, and per-layer filter evaluations.
 Tile shaving and re-encoding (\cref{sub:data_optimizations}) sit on a different axis entirely: they reduce transfer and decode cost so that load time and time-to-first-tile drop, with a secondary effect on average frame time via lower \ac{GC}-spend.
-No renderer instrumentation separates these channels directly; the decomposition is inferred from the proxy metrics and the time breakdown (\cref{fig:time_breakdown}).
+No renderer instrumentation separates these channels directly. The decomposition is inferred from the proxy metrics and the time breakdown (\cref{fig:time_breakdown}).
 What makes them additive in the aggregate (as already shown quantitatively in \cref{sub:mlt_results}) is that they target non-overlapping costs: simplification cannot shrink tiles, shaving cannot prune expressions.
 
 \paragraph{Load time vs.\ frame rate}
@@ -797,7 +797,7 @@ Across every comparison, the fraction of differing pixels stayed below pixelmatc
 In this section we discuss potential threats to the validity of the experimental findings.
 
 \paragraph{Internal validity}
-We conducted all rendering benchmarks on a single hardware configuration (\ac{GPU} model, \ac{CPU}, memory) running a specific browser version with ANGLE/Vulkan as the graphics backend; the full host, driver, toolchain, and dependency dump is in \cref{app:bench_env}.
+We conducted all rendering benchmarks on a single hardware configuration (\ac{GPU} model, \ac{CPU}, memory) running a specific browser version with ANGLE/Vulkan as the graphics backend. The full host, driver, toolchain, and dependency dump is in \cref{app:bench_env}.
 Performance characteristics may differ on other hardware or with different graphics backends (e.g., native OpenGL, DirectX, Metal).
 We chose the 15-run median to reduce measurement noise, but rare performance events (e.g., \ac{GPU} thermal throttling, garbage collection pauses) may not be fully captured.
 The caching proxy eliminates network variability but also prevents observation of real-world caching effects and \ac{CDN} behavior.
@@ -810,7 +810,7 @@ The 15 benchmark styles, while diverse, may not represent all style authoring pa
 
 \paragraph{End-to-end data-level coverage}
 We benchmark the full rendering pipeline - style optimizations through tile shaving to \ac{MLT} re-encoding - end-to-end on 10 of the 15 deep-corpus styles (bright, dark-matter, fiord, klokan-basic, liberty, osm-bright, osm-liberty, positron, stadia-outdoors, toner).
-ICGC Fosc and ICGC Gris were excluded because the legacy \mlprop{\texttt{text-field}} handling described in \cref{sub:deep_corpus} renders incorrectly under MapLibre's silent migration; the BasemapDE pair was excluded because its tile source is not \ac{OMT}-compatible and we could not provision matching shaved tiles.
+ICGC Fosc and ICGC Gris were excluded because the legacy \mlprop{\texttt{text-field}} handling described in \cref{sub:deep_corpus} renders incorrectly under MapLibre's silent migration. The BasemapDE pair was excluded because its tile source is not \ac{OMT}-compatible and we could not provision matching shaved tiles.
 For the remaining \ac{OMT}-compatible deep-corpus styles we verified the tile-shaving step alone (advisory generation and \ac{MVT} pruning, without rendering) on the same Germany tileset (\cref{fig:tile_shave_per_style}), confirming that shaving effectiveness generalizes across styles with reductions of \qtyrange{19.8}{46.3}{\percent}.
 The remaining limitation is that tile statistics at a sample rate of~1.0 require access to the underlying tile data, which is available only for \ac{OSM}-based tilesets accessed via a local \texttt{.mbtiles} file.
 The style-only results (Experiments~1-2) cover all 15 styles and are not affected by this limitation.
@@ -824,24 +824,24 @@ The tile statistics (\cref{sub:tile_statistics}) count feature \emph{occurrences
 This inflates total feature counts and distorts absolute selectivity estimates, though relative selectivity ordering (which is all the reordering heuristic of \cref{sec:selectivity_reordering} consumes) is less affected.
 We made this choice deliberatiley because the underlying features are not a concearn for the renderer on most layers (exception being symbol placement which is map-global instead of tile-local).
 
-The selectivity estimation model assumes independence between filter predicates (\cref{eq:selectivity_compound}), which may not hold for correlated properties; map-style filters in practice do exhibit correlations (e.g.\ \mlval{\texttt{class}} and \mlval{\texttt{subclass}} in OpenMapTiles), so we treat the estimator as a first-order approximation rather than a calibrated model, and we understand selectivity-based reordering as a heuristic that produces a locally-good ordering rather than a provably-optimal one.
+The selectivity estimation model assumes independence between filter predicates (\cref{eq:selectivity_compound}), which may not hold for correlated properties. Map-style filters in practice do exhibit correlations (e.g.\ \mlval{\texttt{class}} and \mlval{\texttt{subclass}} in OpenMapTiles), so we treat the estimator as a first-order approximation rather than a calibrated model, and we understand selectivity-based reordering as a heuristic that produces a locally-good ordering rather than a provably-optimal one.
 
 The 15-run median provides robustness against outliers but does not quantify sampling uncertainty on its own.
 We computed bootstrap \qty{95}{\percent} confidence intervals~\cite{efronIntroductionBootstrap1998} (10\,000 resamples, percentile method) over the per-(style, variant) measurement pools for \texttt{loadMs} and \texttt{fps}.
 Error bars in the waterfall (\cref{fig:waterfall_loadMs}), and rendering-metrics (\cref{fig:rendering_metrics_mlt}) figures represent these bootstrap \qty{95}{\percent} CIs.
 Wilcoxon signed-rank tests (or Mann-Whitney~U where sample sizes differ) confirm that the full-pipeline load-time reductions are highly significant for both end-to-end styles (Fiord: \qty{370.9}{\milli\second}$\to$\qty{120.5}{\milli\second}, $p < 10^{-45}$, $n = 270$; Liberty: \qty{466.5}{\milli\second}$\to$\qty{133.7}{\milli\second}, $p < 10^{-74}$, $n = 254$; Fiord's pool covers all 18 scenarios $\times$ 15 runs, Liberty's full-pipeline pool covers 17 of 18 scenarios -- one scenario was absent from the pipeline output and one scenario contributed 14 of 15 runs).
-Because the 18 scenarios share hardware, tile data, and styles, they are not fully independent observations; the effective sample size is smaller than $n = 270$, and we interpret the reported $p$-values as descriptive evidence of large effect sizes rather than as strict inferential tests.
+Because the 18 scenarios share hardware, tile data, and styles, they are not fully independent observations. The effective sample size is smaller than $n = 270$, and we interpret the reported $p$-values as descriptive evidence of large effect sizes rather than as strict inferential tests.
 
 Style-only effects on load time are smaller and, for individual styles, not consistently distinguishable from measurement noise.
 
-The cumulative ablation design (\cref{sub:ablation}) means that the reported marginal contribution of each pass depends on the ordering of preceding passes; a leave-one-out or fractional-factorial design would isolate each pass's standalone contribution more cleanly but we did not run it for cost reasons.
+The cumulative ablation design (\cref{sub:ablation}) means that the reported marginal contribution of each pass depends on the ordering of preceding passes. A leave-one-out or fractional-factorial design would isolate each pass's standalone contribution more cleanly but we did not run it for cost reasons.
 
 Tail metrics (p99 frame time, jank count) are particularly sensitive to sample size: with $n=15$ runs, the tail carries only a handful of informative samples per cell, and the reported numbers should be read as directional rather than conclusive.
-The full-pipeline ablation performs thousands of pairwise comparisons across metrics, styles, scenarios, and ablation steps; we apply no multiple-comparisons correction (Bonferroni, Benjamini-Hochberg), so individual per-cell \enquote{significant} differences should not be read as hypothesis tests, only as descriptive summaries.
+The full-pipeline ablation performs thousands of pairwise comparisons across metrics, styles, scenarios, and ablation steps. We apply no multiple-comparisons correction (Bonferroni, Benjamini-Hochberg), so individual per-cell \enquote{significant} differences should not be read as hypothesis tests, only as descriptive summaries.
 
 \begin{chaptersummary}
 Each pass family behaves differently in isolation: expression passes barely move load time on their own but enable the downstream passes; the structural family's gains come almost entirely from dead-layer elimination and layer merging; and on the data side, \textbf{tile shaving dominates} with a \qty{-71.5}{\percent} \textbf{median load reduction}, while the \ac{MLT} encoder's per-stream strategy competition - not the format itself - delivers a further \qty{28}{\percent} tile-volume cut over the Java reference (\qty{12}{\percent} over gzip-compressed \ac{MVT}).
-Composed end-to-end across the ten deep-corpus styles benchmarked with tile data, the full pipeline reduces load time by \qtyrange{63}{74}{\percent} (per-style median \qty{71}{\percent}) and improves \ac{FPS} by \qtyrange{100}{200}{\percent} (per-style median \qty{152}{\percent}), but the cross-family interaction is \textbf{additive rather than synergistic}; the pooled Fiord+Liberty aggregate used in the \ac{MLT} discussion (\qty{+176}{\percent}) is a different aggregation of the same data restricted to the two end-to-end styles, not a conflicting headline.
+Composed end-to-end across the ten deep-corpus styles benchmarked with tile data, the full pipeline reduces load time by \qtyrange{63}{74}{\percent} (per-style median \qty{71}{\percent}) and improves \ac{FPS} by \qtyrange{100}{200}{\percent} (per-style median \qty{152}{\percent}), but the cross-family interaction is \textbf{additive rather than synergistic}. The pooled Fiord+Liberty aggregate used in the \ac{MLT} discussion (\qty{+176}{\percent}) is a different aggregation of the same data restricted to the two end-to-end styles, not a conflicting headline.
 The static passes generalize: a \textbf{median \qty{31.4}{\percent} raw style reduction across 13 unseen styles}, with none regressed.
 
 The following chapter consolidates these findings into architectural claims, answers the research questions of \cref{sec:research_goals}, and identifies the directions left open.

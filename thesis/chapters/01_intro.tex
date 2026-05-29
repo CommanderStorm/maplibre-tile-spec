@@ -1,7 +1,7 @@
 \chapter{Introduction}\label{ch:introduction}
 
 An interactive vector map runs two paths: a per-tile path that fetches, decodes, and binds the style to each tile's features at load time, and a per-frame path that re-evaluates view-dependent expressions and submits draw calls to the \ac{GPU}.
-A slow network stalls the first; a battery- or thermally-bound device stalls the second.
+A slow network stalls the first. A battery- or thermally-bound device stalls the second.
 MapLibre GL~JS\footnote{\url{https://maplibre.org/maplibre-gl-js/docs/}, last accessed 2026-06-28} and Mapbox GL~JS\footnote{\url{https://www.mapbox.com/mapbox-gljs}, last accessed 2026-06-28} deliver these maps by streaming tiled geometry to the browser and letting a client-side style document drive a \ac{WebGL}- or \ac{WebGPU}-based rendering pipeline.
 This architecture is what makes panning, zooming, and rotation smooth when it works, and what makes them stutter when it does not.
 
@@ -36,18 +36,29 @@ The magnitude of the resulting gains varies by style and scenario, as quantified
 
 We make the following main contributions:
 
-\begin{enumerate}
-    \item A \textbf{three-level optimization pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering), structural passes (dead layer elimination, metadata refinement, layer merging), and data-level transformations (tile shaving, encoding strategy selection), modeled on peephole optimizers and query planners from the compiler and database literature.
-    Expression passes work on raw style \ac{JSON}, structural passes on a typed style model, and data passes on tile payloads.
-    Each representation is chosen to match its level's reasoning requirements (\cref{sub:pipeline}).
+\begin{enumerate}[label=\textbf{C\arabic*}]
+    \item A \textbf{formalization of joint style and tile co-optimization} as a transformation $\mathcal{O}: \mathcal{S} \times \mathcal{T} \to \mathcal{S} \times \mathcal{T}$ under visual equivalence (\cref{eq:visual_equivalence}) and strict idempotency (\cref{eq:idempotency}).
+    Compiler optimization and columnar encoding have each addressed one side in isolation.
+    No prior work, to our knowledge, treats both sides jointly under a soundness criterion (\cref{sec:problem_statement}).
 
-    \item \textbf{Style-driven tile shaving}, the dominant source of load-time improvements we observe in this work, which derives a pruning advisory from the optimized style to eliminate unused properties, geometry types, property values, and feature IDs from tile data.
-    Style-level passes further refine the advisory, though we find the interaction remains additive rather than synergistic (\cref{sub:mlt_discussion}).
+    \item A \textbf{novel three-level co-optimization strategy} (\cref{sub:pipeline}).
+    The first level applies expression-level peephole rewrites under fixpoint iteration.
+    The second level performs structural transformations over a typed style model (dead layer elimination, metadata refinement, layer merging).
+    The third level transforms tile payloads and introduces two techniques that are, to our knowledge, novel.
+    \textbf{Style-driven tile shaving} (\cref{sub:tile_shaving}) derives a pruning advisory from the optimized style and removes unused properties, geometry types, values, and feature IDs from tile data.
+    \textbf{Adaptive multi-strategy encoding} for the \ac{MLT} columnar format (\cref{sub:data_optimizations}) competes sort orderings, integer encodings, and string compression strategies at encode time rather than committing to a fixed plan.
+    Style-level passes further refine the pruning advisory, though the cross-family interaction stays additive rather than synergistic (\cref{sub:mlt_discussion}).
 
-	\item An \textbf{automatic encoding strategy selection} for the \ac{MLT} columnar format that reformulates tile encoding as a multi-strategy competition over sort orderings, integer encodings, and string compression strategies
-	The approach adapts to the altered data characteristics introduced by style-driven shaving, including changes in value distributions and column cardinalities.
+    \item An \textbf{end-to-end implementation} of the strategy in Rust and Java.
+    It integrates with the MapLibre style runtime and the \ac{MLT} tile pipeline, and is released as open source.
 
-    \item An \textbf{empirical evaluation} across 15 styles, 18 scenarios, and 19~cumulative ablation steps plus one plain-tile-shaving comparison (fixed pass ordering; we discuss interaction effects in \cref{sec:threats}), which we validated end-to-end on ten deep-corpus styles with tile data, demonstrating measurable improvements in tile volume, load time, and rendering stability.
+    \item An \textbf{empirical evaluation on four complementary corpora}.
+    The Germany OpenMapTiles tileset provides an encoder-only, style-independent baseline.
+    The ten-style OpenMapTiles deep corpus carries the end-to-end browser benchmarks.
+    An eleven-style \ac{OMT}-compatible subset is measured for tile-shaving effectiveness only.
+    A thirteen-style Maputnik generalization corpus is evaluated under static style passes alone.
+    Together they span 18 scenarios and 19 cumulative ablation steps under fixed pass ordering (interaction effects discussed in \cref{sec:threats}).
+    We quantify load-time, tile-volume, and \ac{FPS} effects, and answer the additive-versus-synergistic question of R2 at both the aggregate and per-scenario levels.
 \end{enumerate}
 
 \section{Outline}\label{sec:outline}
@@ -56,5 +67,5 @@ We make the following main contributions:
 
 \cref{ch:methods} states the joint problem formally in \cref{sec:problem_statement} - producing $(S', T')$ from $(S, T)$ under the pixel-equivalence constraint of \cref{eq:visual_equivalence} - and details the three-level pipeline that solves it: expression rewrites over raw \ac{JSON}, structural passes over a typed style model, and data-level passes that emit a style-driven pruning advisory and re-encode in \ac{MLT} with automatic strategy selection.
 
-\cref{ch:experiments} measures the isolated and combined effects through a cumulative ablation across 15~styles and 18~scenarios; the full pipeline achieves load-time reductions of \qtyrange{63}{74}{\percent} (median \qty{71}{\percent}), \ac{FPS} gains of \qtyrange{100}{200}{\percent}, and a \qty{28}{\percent} tile-volume reduction over the reference \ac{MVT} baseline, but the composition turns out to be \emph{additive rather than synergistic} at the aggregate level.
+\cref{ch:experiments} measures the isolated and combined effects through a cumulative ablation across 15~styles and 18~scenarios. The full pipeline achieves load-time reductions of \qtyrange{63}{74}{\percent} (median \qty{71}{\percent}), \ac{FPS} gains of \qtyrange{100}{200}{\percent}, and a \qty{28}{\percent} tile-volume reduction over the reference \ac{MVT} baseline, but the composition turns out to be \emph{additive rather than synergistic} at the aggregate level.
 \cref{ch:conclusion} revisits R1-R3 in \cref{sec:rq_revisited}, names tile shaving and columnar re-encoding as the primary levers, and points to selective-column decoding, learned encoding selection, and online deployment as the natural next steps.

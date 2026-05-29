@@ -951,7 +951,7 @@ We derive the interning table from the tile statistics: we sort all distinct val
 The most common value receives index~0, the second most common receives~1, and so on.
 
 This transformation has two benefits.
-First, it reduces the per-feature storage cost from a variable-length string (with length prefix and dictionary overhead) to a small integer (typically \qtyrange{1}{2}{\byte} as a \ac{VarInt}, see \cref{sub:integer_encoding}).
+First, it reduces the per-feature storage cost from a variable-length string (with length prefix and dictionary overhead) to a small integer (typically \qtyrange{1}{2}{\byte} as a \ac{VarInt}, see \cref{sub:physical_integer_compressions}).
 Second, the frequency ordering means that common values receive small indices, which compress well under \ac{VarInt} and delta encoding.
 
 The optimizer rewrites the corresponding style expressions to reference the integer indices rather than the original string values.

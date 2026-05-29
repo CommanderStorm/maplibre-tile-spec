@@ -523,7 +523,11 @@ The approach is optimal over its search space but does not discover strategies o
 \section{Data Encoding and Compression}\label{sec:data_encoding}
 
 Efficient encoding of tile data is essential for interactive map performance, as tiles are fetched continuously during map interaction.
-In this section we survey the encoding and compression techniques we use in our data-level optimizations of \cref{ch:methods}.
+A column has to be both \emph{represented} as a value sequence and \emph{packed} into bytes, and some named schemes only address the first step while relying on the second to actually shrink the byte count.
+
+Following the MLT specification, we call the first kind a \emph{logical-level technique} and the second a \emph{physical-level technique}.
+A column applies zero or more logical techniques in chain and then exactly one physical technique, for example DeltaRLE~$\rightarrow$~FastPFOR.
+\Cref{sub:logical_integer_encodings,sub:physical_integer_compressions} catalogue the techniques we use in our data-level optimizations of \cref{ch:methods}.
 
 \subsection{Column-Oriented Storage}\label{sub:column_storage}
 
@@ -539,56 +543,75 @@ Third, \emph{vectorised processing}: columnar data enables \ac{SIMD}-style batch
 
 In the context of vector tiles, the row-oriented \ac{MVT} format stores all properties of a feature together, whereas the columnar \ac{MLT} format stores each property as an independent column.
 The columnar layout allows per-column encoding strategies:
-a column of \texttt{road} classes can use dictionary encoding, while a column of building heights can use delta-rle encoding, each chosen independently.
+a column of \texttt{road} classes can use dictionary encoding, while a column of building heights can use a DeltaRLE logical chain handed to a physical technique such as FastPFOR, each chosen independently.
 
-\subsection{Integer Encoding}\label{sub:integer_encoding}
+\subsection{Logical Integer Encodings}\label{sub:logical_integer_encodings}
 
 Integer columns appear throughout tile data: geometry coordinates, feature IDs, property values, and dictionary indices.
-Several encoding schemes exploit structural properties of integer sequences:
+Logical-level techniques rewrite the value sequence so that a downstream physical technique (\cref{sub:physical_integer_compressions}) sees a distribution that packs to fewer bytes.
+Several such techniques exploit structural properties of integer sequences:
 
 \begin{description}
-    \item[\textbf{\acf{VarInt}}] represents each integer using a variable number of bytes, where smaller values require fewer bytes.
-    The encoding uses 7~bits per byte for data and 1~bit as a continuation flag, so values in $[0, 127]$ require 1~byte, values in $[128, 16383]$ require 2~bytes, and so on\footnote{\url{https://protobuf.dev/}, last accessed 2026-04-21}.
-    Signed integers are mapped to unsigned integers via \emph{zigzag encoding} ($n \mapsto 2n$ for $n \geq 0$, $n \mapsto -2n-1$ for $n < 0$), ensuring that small-magnitude negative numbers also produce small encoded values.
+    \item[\textbf{Zigzag encoding}] maps signed integers to unsigned ones ($n \mapsto 2n$ for $n \geq 0$, $n \mapsto -2n-1$ for $n < 0$) so that small-magnitude negative values also produce small unsigned codes.
+    The byte count is unchanged on its own and the saving comes from the downstream physical technique (typically VarInt).
 
     \item[\textbf{Delta encoding}] replaces each value with the difference from its predecessor: given a sequence $v_0, v_1, \ldots, v_n$, the encoded sequence is $v_0,\, v_1 - v_0,\, v_2 - v_1,\, \ldots,\, v_n - v_{n-1}$.
-    For monotonically increasing sequences (e.g., sorted feature IDs), deltas are small non-negative integers that compress well under \ac{VarInt} encoding.
+    Like zigzag, delta does not shrink the column by itself.
+    It produces the same number of values at (often) smaller magnitude, which then pack well under VarInt or FastPFOR.
 
     \item[\textbf{\acf{RLE}}] replaces consecutive runs of identical values with (value, count) pairs.
-    It is most effective for columns with low cardinality and clustered values - for example, a road-class column sorted by class produces long runs of identical values.
-
-    \item[\textbf{\acf{FastPFOR}}] is a block-based encoding that partitions the input into fixed-size blocks (typically 128 or 256 values), computes the minimum bit width needed to represent most values in each block, and packs them at that width~\cite{lemireDecodingBillionsIntegers2015}.
-    Exceptional values that exceed the frame width are stored in a separate patch list.
-    This scheme achieves near-optimal bit packing for blocks where most values have similar magnitude, while gracefully handling outliers.
+    Unlike zigzag and delta, RLE reduces the symbol count on its own.
+    MLT still classifies it as logical because it composes with other logical steps before a physical technique.
+    It is most effective for low-cardinality, clustered columns, for example a road-class column sorted by class.
 \end{description}
 
-These encodings can be composed:
-delta encoding followed by \ac{RLE} (\emph{delta-\acs{RLE}}) is effective for sequences that are approximately sorted, as the delta transform produces long runs of small values (often zero for duplicate consecutive entries).
+Logical techniques chain freely.
+The canonical chain applies delta first and then \ac{RLE} (written DeltaRLE), effective for approximately sorted sequences where delta produces long runs of small (often zero) values that \ac{RLE} then collapses.
 
-The question of which encoding to apply to a given column has been studied systematically:
-Abadi et~al.~\cite{abadiIntegratingCompressionExecution2006} proposed property-based selection rules, and Damme et~al.~\cite{dammeComprehensiveExperimentalSurvey2019} developed a cost-model-driven selection strategy that picks the encoding with the lowest expected cost for a given data distribution.
-Our encoding competition in \cref{sub:encoding_strategies} takes an exhaustive rather than cost-model approach: we trial a pruned set of candidate encodings and retain the smallest output.
+\subsection{Physical Integer Compressions}\label{sub:physical_integer_compressions}
+
+A physical-level technique packs a value sequence (possibly the output of a logical chain) into bytes, and each integer column applies exactly one.
+Our encoder uses two:
+
+\begin{description}
+    \item[\textbf{\acf{VarInt}}] represents each integer with a variable number of bytes, using 7~bits per byte for data and 1~bit as a continuation flag, so values in $[0, 127]$ take 1~byte, $[128, 16383]$ take 2~bytes, and so on\footnote{\url{https://protobuf.dev/}, last accessed 2026-04-21}.
+    VarInt expects unsigned values, which is why a signed integer column is normally preceded by a zigzag remap.
+
+    \item[\textbf{\acf{FastPFOR}}] partitions the input into fixed-size blocks (typically 128 or 256 values), computes the minimum bit width that fits most values in each block, and packs at that width, with outliers in a separate patch list~\cite{lemireDecodingBillionsIntegers2015}.
+    This achieves near-optimal bit packing when most values share a similar magnitude.
+\end{description}
+
+Choosing the physical technique for a given logical chain has been studied systematically.
+Abadi et~al.~\cite{abadiIntegratingCompressionExecution2006} proposed property-based selection rules, and Damme et~al.~\cite{dammeComprehensiveExperimentalSurvey2019} developed a cost-model-driven strategy that picks the lowest expected cost for a given data distribution.
+A third school sidesteps both rule and model and decides empirically: BtrBlocks~\cite{kuschewskiBtrBlocksEfficientColumnar2023} trial-encodes candidate schemes on a sample of each column block and keeps the smallest result, arguing that lightweight on-sample trials are both more accurate than a cost model and cheap enough to run at encode time.
+Our encoding competition in \cref{sub:encoding_strategies} sits in this same trial-based family.
+It trials a pruned set of (logical chain, physical technique) pairs and retains the smallest output, but operates on each whole tile rather than on a sample, since per-tile data volumes are modest.
 
 \subsection{String Compression}\label{sub:string_compression}
 
 String data in vector tiles includes feature names, road classes, land-use categories, and administrative identifiers.
-Two complementary compression strategies address different aspects of string redundancy.
+The same logical-then-physical split applies as for integer columns.
 
-\textbf{Dictionary encoding} deduplicates string values by storing each unique string once in a dictionary and replacing occurrences with integer indices into the dictionary.
-This is effective when many features share the same string value (e.g., thousands of features with \texttt{class = \mlval{"residential"}}).
-The integer indices are themselves amenable to the integer encoding schemes described above.
+\textbf{Dictionary encoding} is the logical-level string technique.
+It stores each unique string once and replaces occurrences with integer indices, which is effective when many features share the same value (e.g., thousands of features with \texttt{class = \mlval{"residential"}}).
+The resulting index column is itself handed to the integer techniques of \cref{sub:logical_integer_encodings,sub:physical_integer_compressions}.
 
-\textbf{\acf{FSST}}~\cite{bonczFSSTFastRandom2020} is a lightweight, block-oriented string compressor that learns a \emph{symbol table} of up to 255 frequent byte sequences from the input corpus and replaces occurrences with single-byte codes.
-Unlike general-purpose compressors such as LZ77 or zstd, \ac{FSST} preserves random access, so each compressed string can be decompressed independently without context from prior strings.
+\textbf{\acf{FSST}}~\cite{bonczFSSTFastRandom2020} is the physical-level string technique.
+It is a lightweight, block-oriented compressor that learns a \emph{symbol table} of up to 255 frequent byte sequences from the input corpus and replaces occurrences with single-byte codes.
+Unlike general-purpose compressors such as LZ77 or zstd, \ac{FSST} preserves random access, so each compressed string can be decompressed independently.
 The symbol table is stored once and amortised over all strings in the column.
 
-The two strategies compose by applying \ac{FSST} to the deduplicated dictionary strings compresses both the unique values and the byte-level redundancy within them.
+The two compose in the same logical-then-physical pattern.
+Applying \ac{FSST} to the deduplicated dictionary strings compresses both the unique values and the byte-level redundancy within them.
 
 \subsection{Space-Filling Curves}\label{sub:space_filling_curves}
 
 \emph{Space-filling curves} map multi-dimensional points to a one-dimensional ordering while preserving spatial locality.
 Points that are close in two-dimensional space tend to receive nearby positions on the curve~\cite{moonAnalysisClusteringProperties2001}.
-This property is exploited in tile encoding to reorder features so that spatially adjacent features are stored contiguously, improving the effectiveness of delta and \ac{RLE} encoding on geometry and property columns.
+Such curves play two roles in tile encoding.
+As a logical encoding they map a 2D coordinate to a single integer column (\cref{sub:logical_integer_encodings}).
+As a \emph{feature ordering} they sort features before per-column encoding so that spatially adjacent features end up contiguous, improving the effectiveness of delta and \ac{RLE} on geometry and property columns.
+This subsection treats the feature-ordering use.
 
 Two space-filling curves are commonly used.
 
@@ -611,11 +634,11 @@ For tile data, we assign each feature a curve index based on its first vertex co
 When multiple string columns share overlapping vocabularies, storing a single shared dictionary can reduce overhead compared to per-column dictionaries.
 Identifying which columns share sufficient overlap is a set similarity problem.
 
-\emph{MinHash}~\cite{broderResemblanceContainmentDocuments1998} is a locality-sensitive hashing technique that efficiently estimates the \emph{Jaccard similarity} between two sets $A$ and $B$:
+\emph{MinHash}~\cite{broderResemblanceContainmentDocuments1998} is a locality-sensitive hashing technique that estimates the \emph{Jaccard similarity} between two sets $A$ and $B$:
 \begin{equation}\label{eq:jaccard}
     J(A, B) = \frac{|A \cap B|}{|A \cup B|}
 \end{equation}
-Rather than computing the exact intersection and union (which requires $\mathcal{O}(|A| + |B|)$ time and space), MinHash constructs a compact \emph{signature} of $k$ hash values for each set.
+MinHash yields no asymptotic improvement over the exact computation. Constructing a signature requires examining every element of $A$ and $B$, so the time complexity remains $\mathcal{O}(|A|+|B|)$, and the input sets must be retained throughout construction. The reduction is a constant factor and applies to the persistent representation. Whereas the exact computation stores all $\mathcal{O}(|A|+|B|)$ elements, MinHash stores only $k$ hash values per set. For fixed $k$, the saving in persistent storage grows without bound as $|A|$ and $|B|$ increase.
 For each of $k$ independent hash functions $h_1, \ldots, h_k$, the minimum hash value over all elements is recorded: $\mathit{sig}_i(A) = \min_{a \in A} h_i(a)$.
 The Jaccard similarity is then estimated as:
 \begin{equation}\label{eq:minhash}
@@ -657,7 +680,7 @@ These can be benchmarked at different workload levels~\cite{jainArtComputerSyste
 Our benchmark harness controls for network variability (via a caching proxy) and \ac{GPU} variability (via hardware-accelerated rendering with ANGLE/Vulkan) to achieve reproducible results at the macro level.
 
 \begin{chaptersummary}
-Three theoretical traditions map onto the three levels of the pipeline: \textbf{compiler optimization} (peephole rewriting, constant folding, fixpoint iteration) drives the expression-level passes that simplify each style's \ac{JSON} expressions without schema knowledge; \textbf{query optimization} (projection pushdown, selectivity estimation) shapes the structural passes and the pruning advisory that bridges style and data; and the \textbf{encoding techniques} surveyed last - columnar storage, integer coding, \ac{FSST}, and space-filling curves - feed the data-level passes that re-encode shaved tiles with automatic strategy selection.
+Three theoretical traditions map onto the three levels of the pipeline: \textbf{compiler optimization} (peephole rewriting, constant folding, fixpoint iteration) drives the expression-level passes that simplify each style's \ac{JSON} expressions without schema knowledge; \textbf{query optimization} (projection pushdown, selectivity estimation) shapes the structural passes and the pruning advisory that bridges style and data; and the \textbf{encoding techniques} surveyed last - columnar storage, the logical encodings (zigzag, delta, \ac{RLE}, dictionary) and physical techniques (VarInt, FastPFOR, \ac{FSST}) they hand off to, and space-filling curves - feed the data-level passes that re-encode shaved tiles with automatic strategy selection.
 We adopt the benchmarking literature's statistical methodology (bootstrap confidence intervals, warm-up handling, metric separation) rather than extending it.
 
 The following chapter formalises the joint optimization problem and turns these foundations into concrete passes and an evaluation methodology.
