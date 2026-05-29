@@ -45,7 +45,7 @@ The second constraint is \emph{strict idempotency}:
 Feeding $\mathcal{O}$'s output back as input yields the same pair, ruling out unbounded chained improvement by construction.
 The expression-pass fixpoint of \cref{sub:fixpoint} enforces idempotency on the style half.
 The deterministic, statistics-driven encoding choices of \cref{sub:data_optimizations} enforce it on the tile half.
-Both halves are exercised by the round-trip proptest and on the tile level by the libFuzzer harness of \cref{par:encoder_validation}.
+Both halves are exercised on the style level by the round-trip proptest and on the tile level by the libFuzzer harness of \cref{par:encoder_validation}.
 
 \section{Scope}\label{sec:scope}
 
