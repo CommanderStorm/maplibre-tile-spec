@@ -31,7 +31,7 @@ This means that due to missing checks, layer merging and all follow-on operation
 \emph{OSM-Liberty} triggered an \ac{MLT} rendering fault at certain viewports during the cross-style run. These four viewports are thus excluded from the reported tile rewrite results.
 \end{tcolorbox}
 
-\section{Experiment 1: Expression-Level Optimisations}\label{sec:exp_expressions}
+\section{Experiment 1: Expression-Level Optimizations}\label{sec:exp_expressions}
 \begin{keytakeaways}
 \item Expression passes barely move load time on their own (\qty{-1.8}{\percent} median, within per-style noise).
 \item Their real value is enabling downstream passes: narrowed pruning advisory, exposed dead layers.
@@ -61,6 +61,9 @@ Stats-driven folding (step~4) delivers the second-largest raw-size reduction (\q
 The size effect of expression passes is more pronounced than the rendering effect: Fiord's raw style shrinks by \qty{20.3}{\percent} (\num{22215}$\to$\qty{17707}{\byte}), while Liberty - already compact in its expression usage - shrinks by \qty{7.0}{\percent} (\num{43060}$\to$\qty{40056}{\byte}).
 Under gzip, the reductions are \qty{8.3}{\percent} and \qty{5.9}{\percent} respectively, confirming that some of the raw-byte savings are absorbed by the compressor.
 
+Where load time barely moves, the style-parse component does: \cref{fig:marginal_styleParseMs} isolates the per-pass effect on \texttt{styleParseMs} and shows that the size-reducing passes (in particular default stripping) translate directly into a shorter parse step, even when their effect on end-to-end load time is within noise.
+This is the mechanism behind the parse-time leg of the time breakdown shown later in \cref{fig:time_breakdown}.
+
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{figures/waterfall_loadMs.pdf}
@@ -73,6 +76,13 @@ Under gzip, the reductions are \qty{8.3}{\percent} and \qty{5.9}{\percent} respe
     \includegraphics[width=\linewidth]{figures/marginal_loadMs.pdf}
     \caption{Marginal contribution of each expression pass to load time reduction shows the effect of each of the passes cleanly. }
     \label{fig:marginal_loadMs}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{figures/marginal_styleParseMs.pdf}
+    \caption{Marginal contribution of each expression pass to \texttt{styleParseMs}. The size-reducing passes (default stripping in particular) shorten the parse step monotonically, even where their end-to-end load-time effect is within noise; this is the proximate mechanism behind the style-parse leg of the time breakdown in \cref{fig:time_breakdown}.}
+    \label{fig:marginal_styleParseMs}
 \end{figure}
 
 \subsection{Discussion}\label{sub:expr_discussion}
@@ -106,7 +116,7 @@ Simpler filters are also more amenable to the advisory's static analysis, becaus
 The magnitude of this interaction is quantified in \cref{sec:exp_mlt}.
 
 
-\section{Experiment 2: Structural Optimisations}\label{sec:exp_structural}
+\section{Experiment 2: Structural Optimizations}\label{sec:exp_structural}
 \begin{keytakeaways}
 \item Dead-layer elimination and layer merging produce nearly all the structural-family gains;\newline
       the other passes are negligible on their own.
@@ -132,7 +142,8 @@ We report the effects on performance generalized in \cref{sub:cross_results} (ov
 \subsection{Results}\label{sub:structural_results}
 
 \cref{fig:complexity_layer_count} tracks layer count across the structural ablation steps, showing which passes concretely remove layers rather than merely rewriting them.
-\cref{fig:style_size_ablation} complements this with the raw, gzip, and Brotli style sizes, confirming that a reduction in layer count also translates into a reduction in transfer size and not just a reshuffling of the serialized form.
+\cref{fig:complexity_total_expression_nodes,fig:complexity_filter_count} extend the complexity view to the two remaining metrics introduced in \cref{sub:structural_evaluation}: total expression-tree node count and filter count.
+\cref{fig:style_size_ablation} complements these with the raw, gzip, and Brotli style sizes, confirming that the structural reductions also translate into smaller transfer size rather than just reshuffling the serialized form.
 
 
 \begin{figure}[htbp]
@@ -140,6 +151,20 @@ We report the effects on performance generalized in \cref{sub:cross_results} (ov
 	\includegraphics[width=\linewidth]{figures/complexity_layer_count.pdf}
 	\caption{Layer count across cumulative ablation steps on the liberty style: only layer merging reduces the layer count. Dead elimination rarely removes whole layers, because styles are designed to expose parts of the map rather than leave entire layers unreferenced.}
 	\label{fig:complexity_layer_count}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{figures/complexity_total_expression_nodes.pdf}
+	\caption{Total expression-tree node count across cumulative ablation steps. Expression passes (steps~1-7) produce the largest reductions, with Fiord dropping by \qty{36.8}{\percent} (\num{1610}$\to$\num{1018}) and Liberty by \qty{10.5}{\percent} (\num{3537}$\to$\num{3167}); structural passes contribute additional, smaller reductions by removing or merging layers that own subtrees.}
+	\label{fig:complexity_total_expression_nodes}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{figures/complexity_filter_count.pdf}
+	\caption{Filter count across cumulative ablation steps. Metadata refinement (consuming zoom predicates) and dead elimination drive most of the filter-count reduction; cleanup removes the residual \mlval{\texttt{true}} filters that refinement leaves behind.}
+	\label{fig:complexity_filter_count}
 \end{figure}
 
 \begin{figure}[htbp]
@@ -195,7 +220,7 @@ Similarly, metadata refinement's tightened zoom bounds cause the advisory to mar
 We characterize this interaction fully in \cref{sub:mlt_discussion} and quantify it in \cref{sub:mlt_results}; the aggregate data shows that the composition is additive rather than synergistic, but the advisory-narrowing effect is a necessary precondition for style-dependent tile shaving.
 
 
-\section{Experiment 3: Data-Level Optimisations}\label{sec:exp_mlt}
+\section{Experiment 3: Data-Level Optimizations}\label{sec:exp_mlt}
 \begin{keytakeaways}
 \item Tile shaving dominates: \qty{-71.5}{\percent} median load; style passes contribute additively, not synergistically.
 \item The \ac{MLT} format alone is not the win - \ac{MLT}-Java drifts above $1.0\times$ \ac{MVT} under gzip/Brotli;\newline
@@ -563,6 +588,7 @@ style-level dead elimination narrows tile pruning advisories, and metadata refin
 \cref{fig:heatmap_loadMs} presents the full scenario$\times$step load-time heatmap.
 Load-time improvements are unevenly distributed across scenarios: urban, tile-dense scenarios (New York, Tokyo, Paris) show larger absolute improvements than sparse scenarios (Sahara, Amazon), because the tile-fetch component of load time dominates in dense areas.
 Expression passes (steps~1-7) produce a diffuse, moderate improvement across most scenarios, whereas the improvement from structural passes (steps~8-15) is concentrated in the few styles and scenarios where dead elimination or layer merging applies.
+\cref{fig:heatmap_fps} shows the companion \ac{FPS} view: the gain is broadly aligned with the load-time pattern but lands more uniformly across scenarios, because once tiles are decoded the sustained frame rate is driven by per-feature evaluation cost rather than by tile-fetch latency.
 
 A side effect we did not expect on first reading was that the frame-time consistency metric in \cref{fig:heatmapjankcount} \emph{got worse} as the pipeline got faster - the jank count goes up across the ablation.
 The explanation, once we plotted it next to \ac{FPS}, is that we are now running well above 2000\,\ac{FPS}, where smaller variations such as \ac{GC}-pauses register as proportionally large frame-time outliers; on real consumer hardware capped well below that rate the same pauses would not cross the jank threshold.
@@ -573,6 +599,13 @@ The metric is doing what it should - flagging fragile frames - but it is reading
 	\includegraphics[height=0.9\textheight]{figures/heatmap_loadMs.pdf}
 	\caption{Heatmap of load time across scenarios (rows) and ablation steps (columns); darker cells indicate greater improvement relative to baseline. Urban, tile-dense scenarios (New York, Tokyo, Paris) show the largest absolute improvements; structural passes produce concentrated gains where dead elimination or layer merging applies.}
 	\label{fig:heatmap_loadMs}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[height=0.9\textheight]{figures/heatmap_fps.pdf}
+	\caption{Heatmap of \ac{FPS} across scenarios (rows) and ablation steps (columns). Compared to \cref{fig:heatmap_loadMs}, the \ac{FPS} gains are distributed more uniformly across scenarios, since sustained frame rate is driven by per-feature evaluation cost rather than by tile-fetch latency once tiles are resident.}
+	\label{fig:heatmap_fps}
 \end{figure}
 
 \begin{figure}[tbph]

@@ -356,14 +356,14 @@ for (const sourceLayerId in layerFamilies) {
 }
 \end{lstlisting}
 
-\section{Compiler Optimisation Techniques}\label{sec:compiler_optimizations}
+\section{Compiler Optimization Techniques}\label{sec:compiler_optimizations}
 
 The style expressions used by map renderers such as MapLibre are small programs in a special purpose \ac{DSL}:
 they contain conditionals (\mlop{case}, \mlop{match}), boolean operators (\mlop{all}, \mlop{any}), arithmetic, and data access (\mlop{get}, \mlop{has}), variables (global state, local state, feature state).
 Optimising these expressions draws directly on techniques developed over decades in compiler construction~\cite{ahoCompilersPrinciplesTechniques2007}.
 In this section we introduce the foundational concepts we apply in \cref{ch:methods}.
 
-\subsection{Peephole Optimisation}
+\subsection{Peephole Optimization}
 
 \begin{sloppypar}
 A \emph{peephole optimizer} examines a small, fixed-size window of code (the \enquote{peephole}) and applies local pattern-matching rewrites that replace instruction sequences with shorter or faster equivalents~\cite{davidsonCodeSelectionObject1984}.
@@ -466,7 +466,7 @@ A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcomb
 \end{sloppypar}
 
 
-\subsection{Profile-Guided Optimisation}\label{sub:pgo}
+\subsection{Profile-Guided Optimization}\label{sub:pgo}
 
 \emph{\ac{PGO}} uses runtime execution profiles to specialise a program for its observed workload~\cite{changUsingProfileInformation1991}.
 Classical \ac{PGO} instruments a program, collects execution frequencies and branch probabilities from representative inputs, and feeds this profile back into the compiler to guide inlining, code layout, and branch prediction hints.
@@ -476,13 +476,13 @@ Our style optimizer performs an analogous form of \ac{PGO}:
 we treat tile-level statistics (value cardinalities, per-property frequency distributions, geometry-type counts) as the ``profile data,'' and our stats-driven folding pass uses this profile to specialise the style for the observed data distribution - collapsing \mlop{match} arms whose values never occur in the tile census, tightening zoom bounds based on observed data ranges, and converting high-selectivity predicates into constants.
 The key difference from classical \ac{PGO} is that our profile is exact (the tile census covers every feature in the tileset at a sample rate of~1.0) rather than sampled, and our optimization target is a declarative style document rather than machine code.
 
-\section{Query Optimisation}\label{sec:query_optimizations}
+\section{Query Optimization}\label{sec:query_optimizations}
 
 Style filters in map rendering are structurally equivalent to database query predicates:
 both select a subset of records (features) from a dataset (tile) based on attribute conditions.
 Techniques from relational query optimizations therefore apply directly.
 
-\subsection{Cost-Based Query Optimisation}
+\subsection{Cost-Based Query Optimization}
 
 A \emph{cost-based query optimizer} selects among semantically equivalent query execution plans by estimating the cost of each plan and choosing the cheapest~\cite{selingerAccessPathSelection1979}.
 The pioneering System~R optimizer introduced this approach for SQL queries, estimating costs based on I/O operations and \ac{CPU} time.

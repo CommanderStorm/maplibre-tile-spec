@@ -1,8 +1,8 @@
 \chapter{Introduction}\label{ch:introduction}
 
-A single rendered frame in an interactive vector map has to fit a tile fetch, an evaluation of style expressions over every visible feature, and a \ac{GPU} submit inside the same frame budget, and on a slow connection or a battery-bound device any of the three can become the bottleneck.
-MapLibre GL~JS\footnote{We target MapLibre GL~JS, the open-source fork of Mapbox GL~JS, because its source code permits the static analysis and runtime instrumentation that a style optimizer requires.
-The proprietary Mapbox codebase does not allow independent research evaluation.} and Mapbox GL~JS deliver these maps by streaming tiled geometry to the browser and letting a client-side style document drive a \ac{WebGL}- or \ac{WebGPU}-based rendering pipeline.
+An interactive vector map runs two paths: a per-tile path that fetches, decodes, and binds the style to each tile's features at load time, and a per-frame path that re-evaluates view-dependent expressions and submits draw calls to the \ac{GPU}.
+A slow network stalls the first; a battery- or thermally-bound device stalls the second.
+MapLibre GL~JS\footnote{\url{https://maplibre.org/maplibre-gl-js/docs/}, last accessed 2026-06-28} and Mapbox GL~JS\footnote{\url{https://www.mapbox.com/mapbox-gljs}, last accessed 2026-06-28} deliver these maps by streaming tiled geometry to the browser and letting a client-side style document drive a \ac{WebGL}- or \ac{WebGPU}-based rendering pipeline.
 This architecture is what makes panning, zooming, and rotation smooth when it works, and what makes them stutter when it does not.
 
 As map deployments scale - from personal projects to platforms serving millions of daily users - the cost of suboptimal performance compounds.
@@ -27,7 +27,9 @@ Three research questions guide our work:
     \item \textbf{How expensive are these optimizations} in terms of preprocessing time, and what are the \textbf{tradeoffs between decoding latency, rendering throughput, and transfer size}?
 \end{enumerate}
 
-To answer these questions, we design and implement a standalone optimizer that consumes a MapLibre style document and optional tile-level statistics, and produces a equivalent (\cref{eq:visual_equivalence}) style whose rendering performance and network utilsation is measurably improved.
+To answer these questions, we design and implement a standalone optimizer.
+It consumes a MapLibre style document and optional tile-level statistics, and emits a replacement $(S', T')$ that is visually equivalent (\cref{eq:visual_equivalence}) and strictly idempotent (\cref{eq:idempotency}).
+The magnitude of the resulting gains varies by style and scenario, as quantified in \cref{ch:experiments}.
 
 \newpage
 \section{Contributions}\label{sec:contributions}
@@ -36,13 +38,8 @@ We make the following main contributions:
 
 \begin{enumerate}
     \item A \textbf{three-level optimization pipeline} comprising expression-level rewrites (constant folding, algebraic simplification, stats-driven folding, selectivity reordering), structural passes (dead layer elimination, metadata refinement, layer merging), and data-level transformations (tile shaving, encoding strategy selection), modeled on peephole optimizers and query planners from the compiler and database literature.
-    We decompose the pipeline along three distinct input representations:
-    Expression passes operate on raw \ac{JSON} arrays with no schema knowledge, enabling fast, composable peephole rules.
-    Structural passes require a typed model of the full style document to reason across layers and sources.
-    And data passes operate on tile content rather than the style, requiring a different input representation entirely.
-
-    We treat the three levels as complementary rather than co-equal:
-    each targets a different performance bottleneck, and their relative importance varies by deployment scenario.
+    Expression passes work on raw style \ac{JSON}, structural passes on a typed style model, and data passes on tile payloads.
+    Each representation is chosen to match its level's reasoning requirements (\cref{sub:pipeline}).
 
     \item \textbf{Style-driven tile shaving}, the dominant source of load-time improvements we observe in this work, which derives a pruning advisory from the optimized style to eliminate unused properties, geometry types, property values, and feature IDs from tile data.
     Style-level passes further refine the advisory, though we find the interaction remains additive rather than synergistic (\cref{sub:mlt_discussion}).

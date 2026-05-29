@@ -13,7 +13,7 @@ We work through these areas in the same order:
 \cref{sec:rw_style_optimizations} for style-level work and its \ac{CSS}-minification cousins,
 and \cref{sec:rw_benchmarking} for rendering benchmarking.
 
-\section{Tile Data Optimisation}\label{sec:rw_tile_data}
+\section{Tile Data Optimization}\label{sec:rw_tile_data}
 
 The most direct approach to reducing tile transfer cost is to remove data that the rendering style does not reference.
 
@@ -97,7 +97,7 @@ The reason it is not, in practice, is granularity.
 Parquet's per-column-chunk metadata is amortised over the large row groups of analytical workloads, but at the \qtyrange{10}{100}{\kilo\byte} tile sizes we care about that overhead dominates the payload.
 A purpose-built tile format earns its keep here despite the ecosystem support that adopting GeoParquet would have brought along.
 
-\section{Style Optimisation}\label{sec:rw_style_optimizations}
+\section{Style Optimization}\label{sec:rw_style_optimizations}
 
 In contrast to data-level optimizations, style-level optimization techniques have attracted comparatively little research attention.
 
