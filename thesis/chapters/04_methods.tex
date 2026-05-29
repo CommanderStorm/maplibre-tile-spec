@@ -23,8 +23,8 @@ The deployment cost is intentionally not formalised as a single closed-form func
 $\mathcal{O}$ is correspondingly not posed as a single-objective minimisation.
 Several passes (e.g.\ selectivity reordering, \cref{sub:expression_optimizations}) deliberately trade a small regression in load time for a larger improvement in FPS, and the encoder competition (\cref{sub:encoding_strategies}) locally minimises encoded byte size as a contributing quantity to load time without committing to any weighting between the deployment axes.
 We characterise each pass empirically against the metric battery of \cref{sub:metrics} in the ablation of \cref{ch:experiments}, and the resulting per-axis breakdown is what lets an operator compose the pass set that suits their deployment priorities.
-$\mathcal{O}$ must satisfy two formal constraints.
 
+$\mathcal{O}$ must satisfy two formal constraints.
 The first constraint is \emph{visual equivalence}.
 Writing $\equiv$ for pixel-identity,
 \begin{equation}\label{eq:visual_equivalence}
