@@ -12,9 +12,10 @@ With the foundations of \cref{ch:theoretical_background} in place, we state the 
 Let $\mathcal{S}$ be the set of syntactically valid MapLibre style~\ac{JSON} documents.\newline
 Let $\mathcal{T}$ be the set of tile sets, each a finite family of tiles indexed by source and $(x, y, z)$.\newline
 Let $\mathcal{V}$ be the set of \emph{viewing states}: tuples $(\text{lat}_\text{center}, \text{lat}_\text{center}, z, \text{roll}, \text{pitch}, \text{bearing}, \text{viewport size})$, the six degrees of freedom plus the viewport.\newline
-Let $\mathcal{I}$ be the set of rasterised images, and let MapLibre's deterministic rendering function be
+Let $\mathcal{I}$ be the set of rasterised images and let $\bot \notin \mathcal{I}$ denote a runtime evaluation error that aborts rendering, as introduced for ill-formed feature-state and global-state references in \cref{sub:feature_state}.
+Let MapLibre's deterministic rendering function be
 \begin{equation}\label{eq:render_function}
-    R : \mathcal{S} \times \mathcal{T} \times \mathcal{V} \to \mathcal{I}
+    R : \mathcal{S} \times \mathcal{T} \times \mathcal{V} \to \mathcal{I} \cup \{\bot\}
 \end{equation}
 
 The optimizer is a function $\mathcal{O}: \mathcal{S} \times \mathcal{T} \to \mathcal{S} \times \mathcal{T}$ with $(S', T') = \mathcal{O}(S, T)$.
@@ -26,10 +27,12 @@ We characterise each pass empirically against the metric battery of \cref{sub:me
 
 $\mathcal{O}$ must satisfy two formal constraints.
 The first constraint is \emph{visual equivalence}.
-Writing $\equiv$ for pixel-identity,
+Writing $\equiv$ for pixel-identity on $\mathcal{I}$,
 \begin{equation}\label{eq:visual_equivalence}
-    \forall v \in \mathcal{V}:\; R(S, T, v) \equiv R(S', T', v).
+    \forall v \in \mathcal{V}:\; R(S, T, v) \neq \bot \;\Rightarrow\; R(S', T', v) \equiv R(S, T, v).
 \end{equation}
+The constraint is asymmetric in $\bot$.
+An optimisation pass may suppress a runtime evaluation error that the original style would have raised, but it must never introduce one that the original would not have raised.
 In practice we sample $v$ on a discrete grid of zooms and viewports, and check $\equiv$ by direct image comparison rather than by formal proof.
 \Cref{eq:visual_equivalence} doubles as the \emph{soundness criterion} for every pass in this chapter.
 Any rewrite whose correctness depends on a MapLibre runtime invariant must either preserve the invariant or reject the rewrite when the invariant cannot be established.
@@ -73,13 +76,17 @@ The following concerns are deliberately out of scope:
 
 To evaluate the effectiveness of the optimizations strategies developed in this work, we adopted a benchmarking-driven approach.
 We first established a reliable performance baseline and then ran cumulative ablation experiments that isolate the contribution of each optimizations pass.
-Under the soundness contract of \cref{sec:scope}, the passes from~\cref{sub:pipeline} together aim to improve the deployment metrics of \cref{sub:metrics} -- with the load-time / FPS trade-off discussed in \cref{sec:problem_statement} -- in exchange for the preprocessing cost $C_\text{total}$ of \cref{sub:preprocessing_cost_model}.
+Under the soundness contract of \cref{sec:scope}, the passes from~\cref{sub:pipeline} together aim to improve the deployment metrics of \cref{sub:metrics} in exchange for the preprocessing cost $C_\text{total}$ of \cref{sub:preprocessing_cost_model}.
+The load-time / FPS trade-off underlying these metrics is discussed in \cref{sec:problem_statement}.
 
 \subsection{Three-Level Optimization Pipeline}\label{sub:pipeline}
 
 \Cref{fig:system_architecture} sketches the optimizer system as a whole.
 At the centre sits the \emph{Optimiser}, a pipeline of passes at three levels of abstraction.
-Around it are three supporting components, each detailed in its own section: a code-generation front end (\cref{sub:codegen}) that produces typed Rust types from the upstream MapLibre style specification; a tile-statistics scanner (\cref{sub:tile_statistics}) that profiles \ac{MVT} tiles for the stats-driven and data-level passes and a validation harness - pixel-exact render tests plus a curated style corpus - that exercises both pipelines against the visual-equivalence guarantee of \cref{eq:visual_equivalence}.
+Around it are three supporting components, each detailed in its own section.
+A code-generation front end (\cref{sub:codegen}) produces typed Rust types from the upstream MapLibre style specification.
+A tile-statistics scanner (\cref{sub:tile_statistics}) profiles \ac{MVT} tiles for the stats-driven and data-level passes.
+A validation harness (pixel-exact render tests plus a curated style corpus) exercises both pipelines against the visual-equivalence guarantee of \cref{eq:visual_equivalence}.
 The three pass levels at the centre are:
 
 \begin{enumerate}
@@ -87,8 +94,8 @@ The three pass levels at the centre are:
     They run to a fixpoint with a hard cap of eight iterations.
     In practice every style in the benchmarking and Maputnik\footnote{\url{https://maputnik.github.io/}, last accessed 2026-05-23} corpora converges within two to three iterations, well below the cap, because human-authored styles tend to reuse a small repertoire of patterns.
     The formal termination measure and confluence (\cref{sub:fixpoint}) discussion are given alongside the pass descriptions.
-    \item \textbf{Structural passes} (\cref{sub:structural_optimizations}) deserialize the style into the typed Rust spec produced by the codegen front end and apply transformations that require cross-layer or cross-source reasoning -- dead layer elimination, metadata refinement, layer merging, and cleanup.
-    A cross-phase \emph{filter-to-property constant propagation} -- substituting equality constraints extracted from a layer's filter into that layer's paint and layout expressions -- bridges the expression and structural phases and is detailed in \cref{sub:structural_optimizations}.
+    \item \textbf{Structural passes} (\cref{sub:structural_optimizations}) deserialize the style into the typed Rust spec produced by the codegen front end and apply transformations that require cross-layer or cross-source reasoning, namely dead layer elimination, metadata refinement, layer merging, and cleanup.
+    A cross-phase \emph{filter-to-property constant propagation}, which substitutes equality constraints extracted from a layer's filter into that layer's paint and layout expressions, bridges the expression and structural phases and is detailed in \cref{sub:structural_optimizations}.
     \item \textbf{Data passes} (\cref{sub:data_optimizations}) transform the served tile data via a style-driven pruning advisory and the conversion from \ac{MVT} to \ac{MLT}.
 \end{enumerate}
 
@@ -161,7 +168,11 @@ We design structural passes to operate on Rust types \emph{generated} from the u
 This shifts spec drift from a manual synchronisation burden to a regenerator invocation, and gives every pass typed access to defaults, value types, and expression capabilities.
 Hand-written Rust types are not a viable alternative: MapLibre publishes the specification in its own \ac{JSON}-based \ac{DSL}, and a hand-maintained shadow would require manual synchronisation with every specification change and risk silent divergence.
 
-The generation pipeline (top row of \cref{fig:system_architecture}) proceeds in three stages: it \emph{decodes} the published \texttt{v8.json} into an internal representation; it \emph{normalizes} the result into a stable intermediate representation - the \texttt{MIR} - that resolves cross-cutting concerns (in particular, it collapses paint and layout properties that the spec defines across multiple sections into per-layer field definitions carrying type, default, and expression-capability metadata); finally, a code emitter \emph{generates} Rust sources with round-trip serialization support.
+The generation pipeline (top row of \cref{fig:system_architecture}) proceeds in three stages.
+First, it \emph{decodes} the published \texttt{v8.json} into an internal representation.
+Second, it \emph{normalizes} the result into a stable intermediate representation (the \texttt{MIR}) that resolves cross-cutting concerns.
+In particular, it collapses paint and layout properties that the spec defines across multiple sections into per-layer field definitions carrying type, default, and expression-capability metadata.
+Third, a code emitter \emph{generates} Rust sources with round-trip serialization support.
 
 This metadata is the substrate for two structural passes.
 Layer merging queries the MIR to decide whether a differing paint property supports feature-driven expressions - and can therefore be wrapped in a \mlop{case}/ \mlop{match} over the filter discriminator - or is camera-only and must remain uniform across merged layers.
@@ -226,7 +237,7 @@ Individual rules are simple and local, but their composition through fixpoint it
 \paragraph{Constant Folding}
 The constant folding pass implements 17~rewrite rules that collectively perform the role of constant propagation and dead code elimination in a compiler (\cref{sec:compiler_optimizations}).
 Boolean algebra rules evaluate \mlop{all}/ \mlop{any} nodes with known operands: a vacuous \texttt{[\mlop{"all"}]} rewrites to \mlval{true} (vacuous truth), a vacuous \texttt{[\mlop{"any"}]} to \mlval{false} (vacuous disjunction), and boolean absorption removes known-true operands from \mlop{all} and known-false operands from \mlop{any}.
-Absorption is sound because MapLibre filter operators are pure (the filter language exposes no feature-state mutation), so dropping an operand cannot discard an observable side effect.
+Absorption is sound because MapLibre filter operators are pure (the filter language exposes no feature-state mutation, see \cref{sub:feature_state}), so dropping an operand cannot discard an observable side effect, and the asymmetric form of \cref{eq:visual_equivalence} permits dropping an operand whose evaluation would have raised $\bot$.
 Comparison rules evaluate binary comparisons with two literal operands.
 Dead-branch elimination removes arms from \mlop{case} and \mlop{match} expressions whose guard is statically false.
 
@@ -644,7 +655,8 @@ This pass extracts implicit zoom bounds from filter predicates and paint ramps, 
 Accurate metadata allows the renderer to skip entire layers at zoom levels where they are invisible, avoiding filter evaluation, partially geometry decoding, and draw-call submission.
 
 \emph{Filter-based extraction} walks the filter expression tree and recognizes zoom predicates of the form \texttt{[\mlop{">="},~[\mlop{"zoom"}],~$z$]} or \texttt{[\mlop{"<="},~[\mlop{"zoom"}],~$z$]}.
-Within an \mlop{all} node, it intersects the extracted bounds (the tighter of the bounds applies); within an \mlop{any} node, it unions them (the layer is visible if any branch is satisfied).
+Within an \mlop{all} node, it intersects the extracted bounds (the tighter of the bounds applies).
+Within an \mlop{any} node, it unions them (the layer is visible if any branch is satisfied).
 The pass rounds extracted fractional bounds to integer zoom levels because tile zoom levels are integral.
 For a comparison operator with threshold~$n$, the extracted zoom interval is:
 \begin{equation}\label{eq:zoom_bounds}
@@ -668,13 +680,14 @@ After extraction, the pass removes the consumed zoom predicates from the filter,
 \emph{Paint-based visibility analysis} infers zoom bounds from paint properties that control visibility.
 For opacity properties, the pass examines \mlop{interpolate} and \mlop{step} expressions to find the zoom level at which the property transitions from zero to a non-zero value.
 For example, a fill layer whose \mlprop{fill-opacity} is a step function that outputs~0 below zoom~12 and~1 above is effectively invisible below zoom~12. The pass therefore raises \mlprop{minzoom} to~12.
-For symbol layers, \emph{either} text or icon opacity must be non-zero (the layer is visible if any symbol component is visible); for all other layer types, \emph{both} size and opacity must be non-zero.
+For symbol layers, \emph{either} text or icon opacity must be non-zero (the layer is visible if any symbol component is visible).
+For all other layer types, \emph{both} size and opacity must be non-zero.
 
 \emph{Stats-driven refinement} tightens bounds using actual tile coverage: if a source layer's first tile appears at zoom~4, the pass raises the layer's \mlprop{minzoom} to~4 regardless of what the filter permits, since there is no data to render below that zoom.
 This refinement only tightens bounds. It never loosens them due to \cref{eq:visual_equivalence}.
 
 A subtle but load-bearing correctness concern is MapLibre's \emph{overzoom} behavior: when a client requests a tile at a zoom level beyond a source's \mlprop{maxzoom}, the renderer reuses the nearest available tile from a lower zoom and upscales it.
-A naive stats-driven tightening - \enquote{the last tile containing polygons appears at zoom~12, therefore set \mlprop{maxzoom}=\mlval{12}} - would change the rendered output if the layer is visible at zoom~13 or~14 via overzoom from zoom~12.
+A na\"ive stats-driven tightening - \enquote{the last tile containing polygons appears at zoom~12, therefore set \mlprop{maxzoom}=\mlval{12}} - would change the rendered output if the layer is visible at zoom~13 or~14 via overzoom from zoom~12.
 
 Because our work requires  \cref{eq:visual_equivalence}, the metadata refinement pass enforces two asymmetric rules:
 \begin{enumerate}
@@ -847,7 +860,7 @@ Transparent re-encoding  & full scan & Re-encode \ac{MVT} tiles into the \ac{MLT
 Compression optimizations & full scan & Apply column-aware compression strategies based on data characteristics [\ac{PGO} optimizations] \\
 \bottomrule
 \end{tblr}
-\caption{Data-level optimization techniques, all requiring a full tile scan.  Together they form a logical--physical--cost pipeline: tile shaving eliminates unreferenced data, re-encoding transforms the wire format, and compression optimizations select the most compact per-column encoding strategy.}
+\caption{Data-level optimization techniques, all requiring a full tile scan. Together they form a logical, physical, and cost pipeline: tile shaving eliminates unreferenced data, re-encoding transforms the wire format, and compression optimizations select the most compact per-column encoding strategy.}
 \label{tab:data_passes}
 \end{table}
 
@@ -964,8 +977,7 @@ We describe this in detail in \cref{sub:encoding_strategies}.
 
 \subsection{Reencoding data}
 
-The encoder re-encodes the pruned and transformed data into the \ac{MLT} columnar format.
-This is done via
+The encoder re-encodes the pruned and transformed data into the \ac{MLT} columnar format through a multi-strategy competition over per-column encodings, complemented by dictionary sharing across columns, geometry- and feature-ID-specific encoders, and a round-trip correctness check against the input.
 
 \paragraph{Automatic Encoding Strategy Selection}\label{sub:encoding_strategies}
 The re-encoding proceeds in three stages.
@@ -1318,7 +1330,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{\mlval{nam
 \end{figure}
 
 \paragraph{Geometry encoding}
-The encoder encodes geometry vertices as either \emph{componentwise deltas} (CWD), \emph{Hilbert-code dictionaries}, \emph{Morton-code dictionaries} or plain verticies.
+The encoder encodes geometry vertices as either \emph{componentwise deltas} (CWD), \emph{Hilbert-code dictionaries}, \emph{Morton-code dictionaries} or plain vertices.
 CWD encodes each vertex as the delta from the previous vertex, producing a single interleaved stream $[x_0, y_0, \Delta x_1, \Delta y_1, \ldots]$ that is then compressed via the per-stream integer competition.
 The Morton/Hilbert-code dictionary approach computes a Z-order code for each unique vertex pair, stores the deduplicated codes as a sorted dictionary, and references them via per-vertex offset indices - producing two streams (offsets and dictionary deltas) instead of one.
 The encoder tries both strategies (when the coordinate range permits Morton encoding, i.e., both axes fit within 16~bits after shifting) and retains the smaller result.
@@ -1326,17 +1338,15 @@ The encoder tries both strategies (when the coordinate range permits Morton enco
 
 \paragraph{Feature IDs encoding}
 The encoder encodes feature IDs through the same per-stream integer competition as other integer columns, using an explicit \texttt{IdWidth} tag (\texttt{Id32} or \texttt{Id64}) to select the physical word width.
-The \ac{FastPFOR} codec operates on 32-bit blocks by construction, so only 32-bit ID streams and property columns reach it; 64-bit streams fall back to \ac{VarInt} (the \ac{VarInt} candidate list covers both widths).
-The encoder chooses \texttt{Id32} when the maximum observed ID fits in \texttt{u32}, narrowing 64-bit-declared ID columns whose actual values fit in 32 bits. We cover the round-trip correctness of this narrowing by single-case-tests and round-trip-proptest over $[0,\,\texttt{u32::MAX}]$ and $[0,\,\texttt{u64::MAX}]$ domains.
+The encoder chooses \texttt{Id32} when the maximum observed ID fits in \texttt{u32}, narrowing 64-bit-declared ID columns whose actual values fit in 32 bits.
 
-The same data profiler that drives the inner competition discovers structural patterns (sequential, constant): sequential IDs reach DeltaRle, constant IDs reach \ac{RLE}, and short or irregular sequences fall back to plain \ac{VarInt}.
+The same data profiler that drives the inner competition discovers structural patterns.
+Sequential IDs reach DeltaRle, constant IDs reach \ac{RLE}, and short or irregular sequences fall back to plain \ac{VarInt}.
 
 \paragraph{Encoder cost amortisation}
-Warm-start caching makes multi-trial encoding affordable - the encoder computes \ac{FSST} compressors, Morton metadata, and vertex-strategy decisions once and reuses them across sort trials.
-Furtermore, scratch buffers grow on first use and are recycled.
-
-The alternatives mechanism is an \ac{RAII} stack of \texttt{AltSession} guards: each candidate writes into a sub-range of the encoder's buffers, and the guard's \texttt{Drop} impl retains only the bytes of the smallest candidate and rolls the cursor back for the others, so nesting lets the inner per-stream competition resolve before the enclosing sort-strategy trial commits.
-In the pathological case, this could result in as many \texttt{memcpy} calls as \texttt{AltSession::with}, but in practice they are ordered by decending choice-likelyhood.
+Warm-start caching makes multi-trial encoding affordable.
+The encoder computes \ac{FSST} compressors, Morton metadata, and vertex-strategy decisions once and reuses them across sort trials, and scratch buffers grow on first use and are recycled across candidates.
+A scoped rollback mechanism shares the encoder's buffers across candidates, so the inner per-stream competition resolves before the enclosing sort-strategy trial commits.
 
 \paragraph{Encoder correctness validation}\label{par:encoder_validation}
 \begin{sloppypar}
@@ -1469,7 +1479,7 @@ we do not claim it is unbiased across all real-world usage patterns, but we clai
 
 Since many of the investigated optimizations techniques have not previously been studied in the context of map rendering pipelines, we must evaluate their effectiveness empirically.
 We carry out this empirical evaluation in \cref{ch:experiments}. The rest of this section defines the methodology that chapter applies.
-Our evaluation reports the deployment metrics framed in \cref{sec:problem_statement} along several axes -- data savings (which feed the load-time axis), rendering performance, optimization cost (the $C_\text{total}$ breakdown of \cref{sub:preprocessing_cost_model}), and qualitative efficiency:
+Our evaluation reports the deployment metrics framed in \cref{sec:problem_statement} along several axes: data savings (which feed the load-time axis), rendering performance, optimization cost (the $C_\text{total}$ breakdown of \cref{sub:preprocessing_cost_model}), and qualitative efficiency.
 
 \begin{description}
     \item[\textbf{Data savings}] reduction in style size (raw, gzip, and Brotli) and tile transfer volume.
@@ -1496,7 +1506,9 @@ Per run, the benchmark harness collects the following metrics:
     \item[\textbf{Idle time}] time the renderer spends idle (waiting for tiles or \ac{GPU} sync), indicating headroom.
 \end{description}
 
-\noindent Additionally, we compute static metrics for each optimized style without running the renderer: \textbf{style size} as raw byte count, gzip-compressed size, and Brotli-compressed size; and \textbf{complexity metrics} comprising total \ac{AST} node count, maximum expression depth, layer count, filter count, and expression operator histogram.
+\noindent Additionally, we compute static metrics for each optimized style without running the renderer.
+\textbf{Style size} covers raw byte count, gzip-compressed size, and Brotli-compressed size.
+\textbf{Complexity metrics} comprise total \ac{AST} node count, maximum expression depth, layer count, filter count, and expression operator histogram.
 
 \subsection{Ablation Methodology}\label{sub:ablation}
 
