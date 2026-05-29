@@ -617,7 +617,7 @@ Pass & Data & Description [compiler analogy] \\
 Metadata stripping           & none      & Remove \texttt{metadata} fields at the style root and layer level [debug info stripping] \\
 Dead layer/source elimination & none / sampling & Remove layers with always-false filters, geometry-type mismatches (with stats), or empty source-layers; prune unreferenced sources [dead code elimination] \\
 Metadata refinement          & none / sampling & Extract \mlprop{minzoom}/ \mlprop{maxzoom} bounds from filter predicates and paint ramps; tighten bounds using tile coverage statistics; remove consumed zoom predicates from filters [range analysis] \\
-Cleanup                      & none      & Remove empty \mlprop{paint}/\mlprop{layout} sections, invisible layers (\texttt{\mlprop{visibility}:~\mlval{none}}, zero opacity), trivially true filters, and root-level properties at specification defaults [dead code elimination] \\
+Cleanup                      & none      & Remove empty \mlprop{paint}/\mlprop{layout} sections, invisible layers (\texttt{\mlprop{visibility}:~\mlval{none}}, zero opacity), trivially \mlval{true} filters, and root-level properties at specification defaults [dead code elimination] \\
 Layer merging                & none      & Merge identical adjacent layers by synthesising \mlop{case}/ \mlop{match} expressions, with zoom-tolerant matching and sort-key preservation [basic block merging] \\
 Source zoom tightening       & none      & Tighten source \mlprop{minzoom}/ \mlprop{maxzoom} based on the zoom ranges of layers that reference them [liveness analysis] \\
 \bottomrule
@@ -628,10 +628,10 @@ Source zoom tightening       & none      & Tighten source \mlprop{minzoom}/ \mlp
 
 
 \paragraph{Dead layer and source elimination}
-The pass treats a layer as dead - and removes it - if any of the following conditions hold:
-(1)~its filter is the literal \mlval{false} (produced by contradiction detection or stats-driven folding in the expression phase);
-(2)~its source layer contains zero features according to tile statistics;
-(3)~its geometry type does not match the source layer's geometry types (e.g.\ a \texttt{\mlval{fill}} layer targeting a source layer that contains only points).
+The pass treats a layer as dead - and removes it - under three conditions.
+First, its filter is the literal \mlval{false}, produced by contradiction detection or stats-driven folding in the expression phase.
+Second, its source layer contains zero features according to tile statistics.
+Third, its geometry type does not match the source layer's geometry types, for example a \texttt{\mlval{fill}} layer targeting a source layer that contains only points.
 After removing dead layers, the pass prunes sources that are no longer referenced by any surviving layer.
 This mirrors dead code elimination followed by unreachable function removal in a compiler (\cref{sec:compiler_optimizations}).
 Its downstream effect on the tile pruning advisory (\cref{sub:tile_shaving}) is the entry point for the data-level cascade evaluated in \cref{sub:mlt_results}.
@@ -691,11 +691,7 @@ The source-zoom-tightening pass follows the same principle: it tightens a source
 Taken together, these rules ensure that no optimizations can remove a pixel the original style would have rendered via overzoom.
 
 \paragraph{Cleanup}
-The cleanup pass performs four operations:
-(1)~it removes empty \mlprop{paint} and \mlprop{layout} sections (which may have become empty after default stripping or stats-driven folding);
-(2)~it removes invisible layers (\texttt{\mlprop{visibility}:~\mlval{none}}, or zero opacity that is not an expression);
-(3)~it removes trivially true filters (\texttt{[\mlop{"literal"},~\mlval{true}]}), which are semantically equivalent to no filter;
-(4)~it strips root-level style properties that equal their specification defaults (bearing, pitch, roll, transition).
+The cleanup pass performs four operations: it removes empty \mlprop{paint} and \mlprop{layout} sections that may have become empty after default stripping or stats-driven folding, removes invisible layers (\texttt{\mlprop{visibility}:~\mlval{none}}, or zero opacity that is not an expression), removes trivially true filters (\texttt{[\mlop{"literal"},~\mlval{true}]}) that are semantically equivalent to no filter, and strips root-level style properties that equal their specification defaults (bearing, pitch, roll, transition).
 Cleanup runs after metadata refinement because refinement may render filters trivially true or make layers invisible.
 
 \paragraph{Layer merging}
@@ -713,15 +709,21 @@ Layer types that support sort keys (\texttt{\mlval{fill}}, \texttt{\mlval{line}}
 \Cref{lst:placement} shows the per-layer processing. \stepcirc{1} constructs a fresh instance when a symbol layer's placement begins, and \stepcirc{2} tears it down before the next layer starts. The underlying \texttt{Placement} object (and its \texttt{CollisionIndex}) is shared across all layers via \texttt{this.placement}, which is what makes the \texttt{LayerPlacement} scope per-layer rather than global.
 Symbols from earlier layers are fully placed before later layers begin, so layer ordering determines placement priority. Merging two symbol layers into one would interleave their symbols within a single \texttt{LayerPlacement}, changing which symbols take priority and therefore altering collision outcomes.
 
-The merge pass has to preserve three invariants that collectively witness the visual-equivalence constraint of \cref{sec:problem_statement}:
-(1)~every feature drawn by the original $k$ layers must still be drawn by the merged layer, with the same paint and layout properties it would have had;
-(2)~the per-layer draw order (the painter's algorithm) must be preserved so that the top-most pixel at each screen position is unchanged; and
-(3)~any MapLibre runtime behavior whose scope is the individual layer - per-layer symbol placement (which iterates the shared, tile-wide \texttt{CollisionIndex} one symbol layer at a time), \texttt{\mlop{feature-state}}, \texttt{\mlprop{*-translate}} and similar camera-only properties - must not have that scope widened by the merge.
-Invariant~(1) holds because the merged filter is the disjunction of the original filters ($\bigvee_i F_i$), the merged paint/layout expression is a \mlop{case}/ \mlop{match} on the same discriminator that selects the original per-layer value, and the optimizer refuses the merge whenever any differing property lacks \texttt{expression.feature} support (so there is always a syntactic vehicle for the per-feature branch).
-The synthesised sort key preserves invariant~(2): for layer types that expose a \texttt{\{\mlprop{fill,line,circle}\}\mlprop{-sort-key}} layout property, the pass emits a \mlop{case}/ \mlop{match} sort key that maps each original layer's features to an ascending integer reflecting the original declaration order, and the MapLibre renderer sorts features within the merged layer by this key before drawing.
+The merge pass has to preserve three invariants that collectively witness the visual-equivalence constraint of \cref{sec:problem_statement}.
+
+\textbf{Coverage.}
+Every feature drawn by the original $k$ layers must still be drawn by the merged layer, with the same paint and layout properties it would have had.
+This holds because the merged filter is the disjunction of the original filters ($\bigvee_i F_i$), the merged paint/layout expression is a \mlop{case}/ \mlop{match} on the same discriminator that selects the original per-layer value, and the optimizer refuses the merge whenever any differing property lacks \texttt{expression.feature} support (so there is always a syntactic vehicle for the per-feature branch).
+
+\textbf{Painter order.}
+The per-layer draw order (the painter's algorithm) must be preserved so that the top-most pixel at each screen position is unchanged.
+The synthesised sort key delivers this: for layer types that expose a \texttt{\{\mlprop{fill,line,circle}\}\mlprop{-sort-key}} layout property, the pass emits a \mlop{case}/ \mlop{match} sort key that maps each original layer's features to an ascending integer reflecting the original declaration order, and the MapLibre renderer sorts features within the merged layer by this key before drawing.
 The merge pass refuses to proceed if any candidate layer already carries an explicit sort key, because combining a user-declared sort key with a synthesised one would over-determine the ordering.
 We accept \texttt{\mlprop{fill-extrusion}} layers as merge candidates in principle, but the current implementation inherits the same \texttt{\{\mlprop{fill,line,circle}\}\mlprop{-sort-key}} restriction. In practice their relative ordering is dominated by the depth buffer rather than the painter's algorithm, so the renderer uses the \texttt{\{\mlprop{fill,line,circle}\}\mlprop{-sort-key}} property to break ties at co-planar surfaces only.
-Invariant~(3) is guaranteed by the exclusion of symbol layers from the candidate set (which preserves per-layer placement ordering even though the underlying \texttt{CollisionIndex} is tile-wide), by the \texttt{expression.feature} gate (camera-only properties must be uniform and thus remain layer-scoped after the merge), and by refusing to merge layers with differing non-mergeable properties at all.
+
+\textbf{Layer scope.}
+Any MapLibre runtime behavior whose scope is the individual layer - per-layer symbol placement (which iterates the shared, tile-wide \texttt{CollisionIndex} one symbol layer at a time), \texttt{\mlop{feature-state}}, \texttt{\mlprop{*-translate}} and similar camera-only properties - must not have that scope widened by the merge.
+This is guaranteed by the exclusion of symbol layers from the candidate set (which preserves per-layer placement ordering even though the underlying \texttt{CollisionIndex} is tile-wide), by the \texttt{expression.feature} gate (camera-only properties must be uniform and thus remain layer-scoped after the merge), and by refusing to merge layers with differing non-mergeable properties at all.
 
 \paragraph{Scope of filter-to-property propagation}
 The filter-to-property constant propagation pass extracts equality constraints from a layer's filter and substitutes them into the layer's paint and layout expressions.
@@ -969,7 +971,10 @@ The encoder re-encodes the pruned and transformed data into the \ac{MLT} columna
 This is done via
 
 \paragraph{Automatic Encoding Strategy Selection}\label{sub:encoding_strategies}
-The re-encoding proceeds in three stages: (1)~the encoder converts the row-oriented \ac{MVT} features into an owned columnar representation (\texttt{StagedLayer01}), with separate arrays for each property column, the geometry vertex buffer, and the feature ID column; (2)~it optionally reorders the columnar data according to the sort strategy competition; (3)~it independently encodes each column using the per-stream encoding competition.\newline
+The re-encoding proceeds in three stages.
+First, the encoder converts the row-oriented \ac{MVT} features into an owned columnar representation (\texttt{StagedLayer01}), with separate arrays for each property column, the geometry vertex buffer, and the feature ID column.
+Second, it optionally reorders the columnar data according to the sort strategy competition.
+Third, it independently encodes each column using the per-stream encoding competition.
 The final wire format consists of three concatenated sections per layer: a header (layer name, tile extent, column count), a metadata section (column types, encoding descriptors), and a data section (the encoded streams).
 
 We reformulate the encoding problem in the Rust-based encoder as a \emph{multi-strategy competition} inspired by \ac{PGO} in compilers (\cref{sub:pgo})~\cite{changUsingProfileInformation1991} and the instance-optimized systems vision of SageDB~\cite{dingSageDBInstanceOptimizedData2022}:
@@ -1338,11 +1343,11 @@ In the pathological case, this could result in as many \texttt{memcpy} calls as 
 
 \paragraph{Encoder correctness validation}\label{par:encoder_validation}
 \begin{sloppypar}
-    Because \ac{FastPFOR} explicitly disclaims input validation and the encoder performs narrowing, run-encoding, and dictionary rebuilds that each have independent failure modes, we validate the encoder with a multi-layer test harness:
-    (i)~an in-tree proptest suite covering every \texttt{IntEncoder} variant, with round-trip assertions across the full representable range of the selected physical type;
-    (ii)~a libFuzzer harness that fuzzes full \texttt{DecodedLayer} round-trips, with a corpus accumulated over previous runs;
-    (iii)~snapshot tests via \texttt{insta} for the per-stream profiler's candidate lists, pinning the pruning heuristics to known-good outputs; and
-    (iv)~the pixel-exact visual validation described in \cref{sec:visual_correctness}, which exercises the full decode path against a known-good baseline.
+    Because \ac{FastPFOR} explicitly disclaims input validation and the encoder performs narrowing, run-encoding, and dictionary rebuilds that each have independent failure modes, we validate the encoder with a multi-layer test harness.
+    An in-tree proptest suite covers every \texttt{IntEncoder} variant with round-trip assertions across the full representable range of the selected physical type.
+    A libFuzzer harness fuzzes full \texttt{DecodedLayer} round-trips, with a corpus accumulated over previous runs.
+    Snapshot tests via \texttt{insta} pin the per-stream profiler's candidate lists to known-good outputs.
+    The pixel-exact visual validation described in \cref{sec:visual_correctness} exercises the full decode path against a known-good baseline.
 \end{sloppypar}
 
 \subsection{Metadata Optimizations}\label{sub:metadata_optimizations}
