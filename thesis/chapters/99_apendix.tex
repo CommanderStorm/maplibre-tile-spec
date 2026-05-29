@@ -107,8 +107,7 @@ for (this.currentLayer = 0;
 }
 \end{lstlisting}
 
-The per-layer placement loop reproduced below justifies the exclusion of symbol layers from the merge candidate set in \cref{sub:structural_optimizations}.
-\stepcirc{1} constructs a fresh \texttt{LayerPlacement} when a symbol layer's placement begins and \stepcirc{2} tears it down before the next layer starts.
+\Cref{lst:placement} reproduces the per-layer placement loop that justifies the exclusion of symbol layers from the merge candidate set in \cref{sub:structural_optimizations}, where \stepcirc{1} constructs a fresh \texttt{LayerPlacement} when a symbol layer's placement begins and \stepcirc{2} tears it down before the next layer starts.
 This means that two symbol layers fused into one would interleave their symbols within a single \texttt{LayerPlacement} and alter collision outcomes.
 
 \begin{lstlisting}[
@@ -138,8 +137,8 @@ while (this._currentPlacementIndex >= 0) {
 }
 \end{lstlisting}
 
-The \texttt{FillBucket.populate} method below witnesses the filter-first evaluation order on which the filter-to-property constant-propagation pass in \cref{sub:structural_optimizations} depends.
-\stepcirc{1} rejects a feature before any paint or layout expression is evaluated, so any equality constraint extracted from a layer's filter is guaranteed to hold for every feature that reaches \stepcirc{2}.
+\Cref{lst:bucket_populate} reproduces the \texttt{FillBucket.populate} method, which witnesses the filter-first evaluation order on which the filter-to-property constant-propagation pass in \cref{sub:structural_optimizations} depends.
+In it, \stepcirc{1} rejects a feature before any paint or layout expression is evaluated, so any equality constraint extracted from a layer's filter is guaranteed to hold for every feature that reaches \stepcirc{2}.
 
 \begin{lstlisting}[
 	language=TypeScript,
@@ -521,7 +520,7 @@ We exclude Americana from the per-style tables due to incomplete benchmark data 
 
 \section{Per-Zoom Tile Size Breakdown}\label{app_tile_sizes}
 
-In \cref{tab:tile_sizes_per_zoom}, we report the per-zoom-level tile size (gzip) for the Germany OpenMapTiles tileset across four encoding configurations: the \ac{MVT} baseline, the Tremmel \& Zink \ac{MLT}-Java encoder, the \ac{MLT}-Rust encoder (without shaving), and the full pipeline (style optimizations + tile shaving + \ac{MLT}-Rust encoding).
+In \cref{tab:tile_sizes_per_zoom}, we report the per-zoom-level tile size (gzip) for the Germany OpenMapTiles tileset across four encoding configurations: the \ac{MVT} baseline, the reference \ac{MLT} encoder of Tremmel \& Zink, our \ac{MLT} encoder (without shaving), and the full pipeline (style optimizations + tile shaving + our encoder).
 For the shaved configuration, we use the advisory generated from the fiord style.
 Other styles would produce slightly different shaving results depending on their property and layer references.
 
@@ -531,9 +530,9 @@ Other styles would produce slightly different shaving results depending on their
   tabular=r r r r r r r,
   table head={\toprule
     \textbf{Zoom} & \textbf{Tiles} & \textbf{MVT} &
-    \textbf{MLT-Java} & \textbf{MLT-Rust} &
-    \textbf{MLT-Rust} & \textbf{$\Delta$\%} \\
-     & & & & & \textbf{(shaved)} & \textbf{vs.\ MVT} \\
+    \textbf{MLT} & \textbf{MLT} &
+    \textbf{MLT} & \textbf{$\Delta$\%} \\
+     & & & \textbf{(reference)} & \textbf{(this work)} & \textbf{(shaved)} & \textbf{vs.\ MVT} \\
     \midrule},
   table foot=\bottomrule,
   head to column names,

@@ -55,6 +55,17 @@ SOURCE_MARKERS = {
     "MLT-Rust-shaved": "cross",
 }
 
+# Display labels for legends/captions. Internal IDs stay language-tagged
+# (they key into CSV columns and other scripts); the rendered output uses
+# the thesis framing of "reference" vs "this work".
+SOURCE_DISPLAY = {
+    "MVT": "MVT",
+    "MVT-shaved": "MVT (shaved)",
+    "MLT-Java": "MLT (reference)",
+    "MLT-Rust": "MLT (this work)",
+    "MLT-Rust-shaved": "MLT (this work, shaved)",
+}
+
 COMPRESSION_DASHES = {
     "plain": "solid",
     "gzip": "dash",
@@ -176,7 +187,7 @@ def plot_encoder_comparison_per_zoom(df: pd.DataFrame) -> None:
             fig.add_trace(go.Bar(
                 x=s["zoom"],
                 y=s["total_bytes"],
-                name=source,
+                name=SOURCE_DISPLAY[source],
                 marker_color=SOURCE_COLORS[source],
                 marker_pattern_shape=SOURCE_PATTERNS[source],
                 showlegend=show,
@@ -270,7 +281,7 @@ def plot_shaving_effectiveness_per_zoom(df: pd.DataFrame) -> None:
             fig.add_trace(go.Bar(
                 x=s["zoom"],
                 y=s["total_bytes"],
-                name=source,
+                name=SOURCE_DISPLAY[source],
                 marker_color=SOURCE_COLORS[source],
                 marker_pattern_shape=SOURCE_PATTERNS[source],
                 showlegend=show,
@@ -318,10 +329,10 @@ def plot_compression_ratio_per_zoom(df: pd.DataFrame) -> None:
                 x=list(common),
                 y=ratio.values,
                 mode="lines+markers",
-                name=f"{source} / {comp}",
+                name=f"{SOURCE_DISPLAY[source]} / {comp}",
                 marker=dict(color=SOURCE_COLORS[source], size=7, symbol=SOURCE_MARKERS[source]),
                 line=dict(color=SOURCE_COLORS[source], width=2, dash=COMPRESSION_DASHES[comp]),
-                hovertemplate=f"{source} ({comp})<br>Zoom %{{x}}<br>Ratio: %{{y:.3f}}<extra></extra>",
+                hovertemplate=f"{SOURCE_DISPLAY[source]} ({comp})<br>Zoom %{{x}}<br>Ratio: %{{y:.3f}}<extra></extra>",
             ))
 
     fig.add_hline(y=1.0, line_dash="dash", line_color=SOURCE_COLORS["MVT"], annotation_text="1.0 (parity)")

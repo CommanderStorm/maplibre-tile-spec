@@ -81,7 +81,7 @@ Our encoding competition differs from these systems by operating at tile granula
 We also include application-specific optimizations like spatial sort-order dimension (ID, Hilbert, Morton) that database encoders do not consider.
 This competition is an instance of \emph{instance-optimized} system design as proposed by Kraska~\cite{dingSageDBInstanceOptimizedData2022}: rather than committing to a fixed encoding plan, the encoder uses the data distribution of each tile to select optimal physical representations, exactly the approach advocated by the SageDB vision~\cite{dingSageDBInstanceOptimizedData2022} and realised concretely by Ding et~al.~\cite{dingInstanceOptimizedDataLayouts2021}, who showed that instance-optimized data layouts reduce blocks accessed by 93\% on cloud analytics workloads, and at the column-block level by BtrBlocks~\cite{kuschewskiBtrBlocksEfficientColumnar2023}.
 Alternative approaches to encoding selection include Fehér et~al.'s~\cite{feherAdaptiveColumnCompression2022} adaptive compression family, which selects encodings at runtime using segment-level measurements, and Cen et~al.'s~\cite{cenLEALearnedEncoding2021} LEA, a learned encoding advisor that uses ML models to predict the best encoding per column - achieving 19\% lower latency and 26\% less space than heuristic selection on TPC-H.
-Our trial-based competition is closest in spirit to the profile-guided approach, but substitutes exhaustive evaluation over a bounded candidate space for the learned or heuristic strategies used in database systems.
+Our trial-based competition is closest in spirit to the instance-optimized approach, but substitutes exhaustive evaluation over a bounded candidate space for the learned or heuristic strategies used in database systems.
 
 Gaffuri~\cite{gaffuriWebMappingVector2012} presented one of the earliest academic treatments of vector tile architecture for web maps, proposing a framework integrating tiling, spatial indexing, and generalization for multi-scale data.
 His work established the architectural vocabulary that \ac{MVT} and \ac{MLT} build on, but predates the shift to columnar encoding and does not consider style-awareness as a dimension of the encoding problem - precisely the dimension we add to the tile encoding pipeline.
@@ -128,7 +128,8 @@ Netek et al.~\cite{netekPerformanceTestingVector2020} compared vector and raster
 They find that vector tiles offer better loading times, though raster tiles may be preferable on very slow connections.
 
 Balla and Gede~\cite{ballaVectorDataRendering2025} benchmarked \ac{GeoJSON} rendering performance across Leaflet, OpenLayers, MapLibre GL~JS, and Mapbox GL~JS with varying feature counts.
-Below 10\,000 features, \ac{SVG}-based renderers (Leaflet, OpenLayers) are faster; above 50\,000 features, \ac{WebGL}-based renderers (Mapbox GL~JS, MapLibre GL~JS) dominate due to \ac{GPU} acceleration.
+Below 10\,000 features, \ac{SVG}-based renderers (Leaflet, OpenLayers) are faster.
+Above 50\,000 features, \ac{WebGL}-based renderers (Mapbox GL~JS, MapLibre GL~JS) dominate due to \ac{GPU} acceleration.
 
 \begin{sloppypar}
 Rechsteiner~\cite{rechsteinerPerformancevergleichOpenSourceVectorTilesServerloesungenZur2024} compared open-source vector tile server implementations.

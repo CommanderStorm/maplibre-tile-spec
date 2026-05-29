@@ -83,7 +83,11 @@ These low-level graphics building blocks are linked to map data through sprites,
 	\label{fig:basic-arch}
 \end{figure}
 
-As a lower-level representation layer for displaying map content, the following components are required, as shown in \cref{fig:basic-arch}: \emph{styles} define the visual appearance of the map and reference the other required resources; \emph{tiles} provide the geometry (points, lines, polygons) and associated attributes (for example, building heights) displayed on the map; \emph{sprites} supply the icons; and \emph{fonts} provide the glyphs used to render text labels.
+As a lower-level representation layer for displaying map content, the following components are required, as shown in \cref{fig:basic-arch}.
+\emph{Styles} define the visual appearance of the map and reference the other required resources.
+\emph{Tiles} provide the geometry (points, lines, polygons) and associated attributes (for example, building heights) displayed on the map.
+\emph{Sprites} supply the icons.
+\emph{Fonts} provide the glyphs used to render text labels.
 Occasionally, additional assets such as 3D geometry models or terrain are used as well.
 
 There are several approaches to delivering client-side rendered vector maps.
@@ -150,11 +154,10 @@ Lower zoom levels cover large geographic areas with simplified geometry with hig
 The client requests only the tiles intersecting the current viewport, and as the user pans or zooms, new tiles are fetched while old ones are discarded or cached.
 When a client requests a tile at a zoom level beyond the source's maximum, the renderer \emph{overzooms}: it upscales the nearest available tile from the source's highest available zoom to fill the viewport.
 
-The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched, which means that a layer's effective visibility at a given camera zoom cannot be determined from filter or data bounds alone - it is a function of both the layer's filter and the source's \mlprop{maxzoom}.
-This observation has direct consequences for any optimizer that rewrites zoom bounds, and we revisit it in \cref{ch:methods}.
-In particular, tightening a layer's \mlprop{maxzoom} is only sound when it accounts for overzoom: removing a layer at zoom~14 would suppress its rendering at zoom~15 and beyond if the source's maximum zoom is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.
-\Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \mlprop{maxzoom} tile: \stepcirc{1}~rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/ \texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}), and \stepcirc{2}~clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
-Both operations consume the source's \mlprop{maxzoom} tile as input. Tightening that \mlprop{maxzoom} removes the upstream tile the slicer rescales and clips, which is why the soundness rule above forbids any rewrite that does not preserve every layer's effective overzoom range.
+The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched. A layer's effective visibility at a given camera zoom is therefore a function of both the layer's filter and the source's \mlprop{maxzoom}, not the layer bounds alone.
+This observation has direct consequences for any optimizer that rewrites zoom bounds. Removing a layer at zoom~14, for example, would suppress its rendering at zoom~15 and beyond if the source's \mlprop{maxzoom} is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom. We turn this into the asymmetric \mlprop{minzoom}/\mlprop{maxzoom} tightening rule in \cref{sub:structural_optimizations}.
+\Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \mlprop{maxzoom} tile. \stepcirc{1}~Rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/ \texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}). \stepcirc{2}~Clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
+Both operations consume the source's \mlprop{maxzoom} tile as input, which is what makes \mlprop{maxzoom} tightening risky in a way that \mlprop{minzoom} tightening is not.
 
 \begin{lstlisting}[
   language=TypeScript,
@@ -209,10 +212,10 @@ The following formats are used for encoding and transferring data to the client:
     \item[\textbf{\acf{MVT}}]\footnote{\url{https://github.com/mapbox/vector-tile-spec/tree/master/2.1}, last accessed 2026-04-21} is the dominant vector tile format, adopted as a \emph{de~facto} standard across open-source map renderers including MapLibre.
     It uses the \ac{PBF}\footnote{\url{https://protobuf.dev/}, last accessed 2026-04-21} as its wire format and stores features in a \emph{row-oriented} layout:
 \begin{itemize}
-    \item Each feature carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
+    \item Each \texttt{Feature} carries its own list of property tags encoded as alternating key and value indices into per-layer string and value tables.
     \item Geometry is encoded as a sequence of \texttt{MoveTo}, \texttt{LineTo}, and \texttt{ClosePath} commands with delta-encoded integer coordinates relative to the tile extent (typically \texttt{4096} units per tile edge).
     This is also known as "turtle style graphics"\footnote{\url{https://docs.python.org/3/library/turtle.html}, last accessed 2026-5-27} as an analogy to the \texttt{turtle} python module.
-    \item The row-oriented layout means that accessing a single property column requires parsing past all other properties of the same feature, and that compression operates on the interleaved byte stream rather than on homogeneous data columns.
+    \item The row-oriented layout means that accessing a single property column requires parsing past all other properties of the same \texttt{Feature}, and that compression operates on the interleaved byte stream rather than on homogeneous data columns.
 \end{itemize}
 
 
@@ -261,7 +264,8 @@ The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre
     A feature is drawn by a layer only if the layer's filter evaluates to \mlval{true} for that feature's properties and geometry type.
 
     \item[\textbf{Paint and layout properties}] control the visual appearance and placement of rendered features.
-    Paint properties (colors, opacities, widths) can be changed without triggering a re-layout; layout properties (text anchoring, icon rotation, symbol spacing) affect feature placement and require re-evaluation when modified.
+    Paint properties (colors, opacities, widths) can be changed without triggering a re-layout.
+    Layout properties (text anchoring, icon rotation, symbol spacing) affect feature placement and require re-evaluation when modified.
 
     \item[\textbf{Metadata bounds}] (\mlprop{minzoom}, \mlprop{maxzoom}) restrict the zoom range in which a layer is active.
     This allows the renderer to skip layers outside that range before filter evaluation or geometry decoding.
@@ -353,10 +357,24 @@ for (const sourceLayerId in layerFamilies) {
 }
 \end{lstlisting}
 
+\subsection{Feature and Global State}\label{sub:feature_state}
+
+A MapLibre map carries two runtime key-value stores that sit alongside the JSON style document and the encoded tile data, even though they live in neither.
+\emph{Feature state} is a per-feature map keyed by the (source, source-layer, feature ID) triple, mutated from the host application via \texttt{setFeatureState} and \texttt{removeFeatureState}, and read from style expressions through the \texttt{[\mlop{"feature-state"},~key]} operator.
+Its canonical use is interactive UI such as hover highlighting or click-driven selection.
+\emph{Global state} is a map-wide key-value store mutated via \texttt{setGlobalStateProperty} and read through the \texttt{[\mlop{"global-state"},~key]} operator.
+It typically backs application-wide toggles such as a day/night switch or a per-mode road-class filter.
+
+A state change re-evaluates the dependent paint expressions at render time, without re-parsing the tile or re-running bucket population.
+This is what keeps feature state cheap enough to drive hover effects.
+Both stores are mutated by the host application at runtime, after the style document and tile data have been loaded, so their values are not determined by either.
+A reference whose key is missing from the store, or whose stored value has a type the consuming expression cannot handle, raises a runtime evaluation error that aborts rendering for the affected expression.
+Feature-state addressing further requires stable feature IDs, since the keying triple includes the feature ID.
+
 \section{Compiler Optimization Techniques}\label{sec:compiler_optimizations}
 
 The style expressions used by map renderers such as MapLibre are small programs in a special purpose \ac{DSL}:
-they contain conditionals (\mlop{case}, \mlop{match}), boolean operators (\mlop{all}, \mlop{any}), arithmetic, and data access (\mlop{get}, \mlop{has}), variables (global state, local state, feature state).
+they contain conditionals (\mlop{case}, \mlop{match}), boolean operators (\mlop{all}, \mlop{any}), arithmetic, and data access (\mlop{get}, \mlop{has}), and variables (lexical bindings via \mlop{let}/ \mlop{var}, and the runtime stores of \cref{sub:feature_state}).
 Optimising these expressions draws directly on techniques developed over decades in compiler construction~\cite{ahoCompilersPrinciplesTechniques2007}.
 In this section we introduce the foundational concepts we apply in \cref{ch:methods}.
 
@@ -453,25 +471,16 @@ constant folding a subexpression may create a new constant parent, which in turn
 A single traversal is therefore generally insufficient.
 
 \begin{sloppypar}
-\emph{Fixpoint iteration} addresses this by applying the entire rule set repeatedly until no rule fires - that is, until the expression reaches a \emph{fixpoint} at which no further rewrites apply.
+The remedy is to apply the entire rule set repeatedly until no rule fires.
+A term to which no rule applies is descriptively a \emph{fixpoint} of the rewrite function and equivalently a \emph{normal form} of the underlying rewrite system.
 We treat our expression-level optimizer formally as a \ac{TRS}: the style expressions are terms, and the peephole rules are rewrite rules applied modulo a traversal strategy~\cite{baaderTermRewritingAll1999}.
-For a monotone transformation $f$ on a finite domain, the sequence $x,\, f(x),\, f(f(x)),\, \ldots$ is guaranteed to converge~\cite{ahoCompilersPrinciplesTechniques2007}.
-In practice, convergence is rapid:
-most programs stabilise within a small number of iterations, and a conservative upper bound on iterations serves as a safety limit.
-We revisit the standard \ac{TRS} notions of confluence (whether all rule-application sequences converge to the same normal form) and termination (whether all sequences reach a normal form) in the context of our concrete rewrite system in \cref{sub:expression_optimizations}.
+The right theoretical lens is therefore the \ac{TRS} pair of \emph{termination} (whether every reduction sequence reaches a normal form) and \emph{confluence} (whether all sequences reach the same one), rather than the lattice-theoretic monotone-convergence framing of classical dataflow fixpoint iteration~\cite{ahoCompilersPrinciplesTechniques2007}.
+Our rewrite function is not monotone in any standard ordering.
+\Cref{sub:expression_optimizations} gives a lexicographic measure $\mu$ on which most rules strictly decrease, together with the two rules (De~Morgan and distributive factoring) that can temporarily increase it, so a Knaster-Tarski-style convergence theorem does not apply here.
+In practice the loop reaches a normal form within a small number of iterations, and we impose a hard cap of eight iterations as a safety bound rather than as a convergence guarantee.
 A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcombVerifyingImprovingHalides2020} showed that Halide's \ac{DSL} optimizer - which, like our expression passes, applies a set of hand-written rewrite rules in a fixed order to simplify \ac{DSL} expression trees - suffers from the same confluence and termination concerns, and developed synthesis-based techniques to verify correctness and discover missing rules.
 \end{sloppypar}
 
-
-\subsection{Profile-Guided Optimization}\label{sub:pgo}
-
-\emph{\ac{PGO}} uses runtime execution profiles to specialise a program for its observed workload~\cite{changUsingProfileInformation1991}.
-Classical \ac{PGO} instruments a program, collects execution frequencies and branch probabilities from representative inputs, and feeds this profile back into the compiler to guide inlining, code layout, and branch prediction hints.
-Arnold et~al.~\cite{arnoldSurveyAdaptiveOptimization2005} survey how virtual machines extend \ac{PGO} to an \emph{adaptive} setting, where profiles are collected and optimizations applied continuously at runtime.
-
-Our style optimizer performs an analogous form of \ac{PGO}:
-we treat tile-level statistics (value cardinalities, per-property frequency distributions, geometry-type counts) as the ``profile data,'' and our stats-driven folding pass uses this profile to specialise the style for the observed data distribution - collapsing \mlop{match} arms whose values never occur in the tile census, tightening zoom bounds based on observed data ranges, and converting high-selectivity predicates into constants.
-The key difference from classical \ac{PGO} is that our profile is exact (the tile census covers every feature in the tileset at a sample rate of~1.0) rather than sampled, and our optimization target is a declarative style document rather than machine code.
 
 \section{Query Optimization}\label{sec:query_optimizations}
 
@@ -509,16 +518,20 @@ In OpenMapTiles, for example, \texttt{class} and \texttt{subclass} are strongly 
 A joint-distribution estimator, such as the one we propose in \cref{sec:selectivity_reordering}, would therefore give tighter bounds, but our selectivity signal is consumed only by a \emph{reordering} heuristic - not by a cost-based plan chooser - and reordering is monotone in the ordering of the individual selectivities rather than in their absolute values.
 The independence-estimator error therefore propagates into the quality of the short-circuit ordering but never into the correctness of the rewritten style, which makes the cheap estimator an acceptable engineering choice for our use case.
 
-\subsection{Partial Evaluation and Superoptimization}\label{sub:partial_eval}
+\subsection{Partial Evaluation}\label{sub:partial_eval}
 
 \emph{Partial evaluation} (also called program specialization) transforms a program with respect to known static inputs, producing a residual program that depends only on the remaining dynamic inputs~\cite{jonesPartialEvaluationAutomatic1993}.
 The style optimizer performs partial evaluation of the rendering function: the style (static input) is known at optimization time, while tile data (dynamic input) varies at runtime.
-Filter-to-property constant propagation (\cref{sub:structural_optimizations}) is a textbook instance:
-an equality constraint in the filter (static) is substituted into paint expressions, collapsing data-dependent branches that can never be reached given the known filter.
+Filter-to-property constant propagation (\cref{sub:structural_optimizations}) is a textbook instance.
+MapLibre paints only features that pass the filter (\cref{lst:bucket_populate}), so any equality constraint in the filter holds for every feature reaching the paint expression.
+The optimizer substitutes that constraint into the paint expression and folds away the branches it rules out, while the filter itself stays unchanged and still runs at render time against dynamic feature data.
+The same framing covers the stats-driven folding pass, where the tile's value distribution (cardinalities, per-property frequencies, geometry-type counts) is the additional static input that lets the optimizer collapse \mlop{match} arms over absent values, tighten zoom bounds, and convert high-selectivity predicates into constants.
+This is distinct from profile-guided optimization, which would require measuring per-expression hotness at render time and specialising the hot paths.
+The style optimizer never observes render-time execution and therefore does not perform that kind of specialisation.
 
-The encoding strategy competition (\cref{sub:encoding_strategies}) shares the spirit of \emph{superoptimization}~\cite{massalinSuperoptimizerLookSmallest1987} in that we exhaustively evaluate all candidate strategies over the actual data and retain the smallest result, rather than using profile data to guide a heuristic decision as in classical \ac{PGO} (\cref{sub:pgo}).
-Unlike true superoptimization, however, the candidate set is designer-specified (sort orders $\times$ encoding schemes) and the profiler prunes the search space before exhaustive evaluation. We therefore characterize it more precisely as \emph{exhaustive strategy selection} over a bounded candidate space.
-The approach is optimal over its search space but does not discover strategies outside it.
+The encoding strategy competition (\cref{sub:encoding_strategies}) is not partial evaluation but a single-output search.
+It trials each candidate from a designer-specified set (sort orders $\times$ encoding schemes) on the actual data and emits the smallest, with a profiler pruning the search beforehand.
+We characterise this as \emph{exhaustive strategy selection} over a bounded candidate space, optimal within that space but blind to strategies outside it.
 
 \section{Data Encoding and Compression}\label{sec:data_encoding}
 
@@ -625,7 +638,7 @@ Morton codes are fast to compute via bit-interleaving instructions, but the Z-or
 
 The \textbf{Hilbert curve} traces a continuous path through the grid without the inter-quadrant jumps of the Z-order curve, achieving better locality preservation at the cost of a more complex index computation~\cite{moonAnalysisClusteringProperties2001}.
 The Hilbert curve has also been used as the basis for spatial index structures: the Hilbert R-tree~\cite{kamelHilbertRtreeImproved1994} orders rectangles along the Hilbert curve to achieve tighter node packing than conventional R-trees, and FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11} uses a packed Hilbert R-tree for spatial indexing of its features.
-The Hilbert index is computed recursively: the unit square is divided into four quadrants, each mapped to a sub-range of the curve; the quadrant containing the point determines the high-order bits of the index, and the process recurses on the sub-quadrant.
+The Hilbert index is computed recursively. The unit square is divided into four quadrants, each mapped to a sub-range of the curve. The quadrant containing the point determines the high-order bits of the index, and the process recurses on the sub-quadrant.
 
 For tile data, we assign each feature a curve index based on its first vertex coordinate, and our encoding competition described in \cref{ch:methods} selects the feature ordering that produces the smallest encoded output (across Morton, Hilbert, and non-spatial orderings).
 
@@ -680,7 +693,10 @@ These can be benchmarked at different workload levels~\cite{jainArtComputerSyste
 Our benchmark harness controls for network variability (via a caching proxy) and \ac{GPU} variability (via hardware-accelerated rendering with ANGLE/Vulkan) to achieve reproducible results at the macro level.
 
 \begin{chaptersummary}
-Three theoretical traditions map onto the three levels of the pipeline: \textbf{compiler optimization} (peephole rewriting, constant folding, fixpoint iteration) drives the expression-level passes that simplify each style's \ac{JSON} expressions without schema knowledge; \textbf{query optimization} (projection pushdown, selectivity estimation) shapes the structural passes and the pruning advisory that bridges style and data; and the \textbf{encoding techniques} surveyed last - columnar storage, the logical encodings (zigzag, delta, \ac{RLE}, dictionary) and physical techniques (VarInt, FastPFOR, \ac{FSST}) they hand off to, and space-filling curves - feed the data-level passes that re-encode shaved tiles with automatic strategy selection.
+Three theoretical traditions map onto the three levels of the pipeline.
+\textbf{Compiler optimization} (peephole rewriting, constant folding, fixpoint iteration) drives the expression-level passes that simplify each style's \ac{JSON} expressions without schema knowledge.
+\textbf{Query optimization} (projection pushdown, selectivity estimation) shapes the structural passes and the pruning advisory that bridges style and data.
+The \textbf{encoding techniques} surveyed last feed the data-level passes that re-encode shaved tiles with automatic strategy selection. These cover columnar storage, the logical encodings (zigzag, delta, \ac{RLE}, dictionary) and physical techniques (VarInt, FastPFOR, \ac{FSST}) they hand off to, and space-filling curves.
 We adopt the benchmarking literature's statistical methodology (bootstrap confidence intervals, warm-up handling, metric separation) rather than extending it.
 
 The following chapter formalises the joint optimization problem and turns these foundations into concrete passes and an evaluation methodology.

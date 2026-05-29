@@ -42,7 +42,7 @@ We make the following main contributions:
     No prior work, to our knowledge, treats both sides jointly under a soundness criterion (\cref{sec:problem_statement}).
 
     \item A \textbf{novel three-level co-optimization strategy} (\cref{sub:pipeline}).
-    The first level applies expression-level peephole rewrites under fixpoint iteration.
+    The first level applies expression-level peephole rewrites and iterates them to a fixpoint.
     The second level performs structural transformations over a typed style model (dead layer elimination, metadata refinement, layer merging).
     The third level transforms tile payloads and introduces two techniques that are, to our knowledge, novel.
     \textbf{Style-driven tile shaving} (\cref{sub:tile_shaving}) derives a pruning advisory from the optimized style and removes unused properties, geometry types, values, and feature IDs from tile data.

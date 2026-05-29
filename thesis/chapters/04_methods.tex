@@ -69,7 +69,7 @@ The following concerns are deliberately out of scope:
     \item[\emph{Proprietary style corpora}] Mapbox Streets, Esri vector basemaps, and similar commercial styles are excluded by their terms of service.
     \item[\emph{Tile schemas other than \ac{OMT}}] Non-\ac{OMT} vector tile sources are excluded from the deep-corpus evaluation, and the stats-driven thresholds used by the pipeline are tuned on Germany~\ac{OMT} only (\cref{sec:gathering_sample}).
     \item[\emph{Online and incremental serving}] The optimizer is an offline, one-shot rebuild over a (style, tile~set) pair. No integration with a live tile server is assumed, and the optimized artefacts can be served by any standards-compliant tile infrastructure.
-    \item[\emph{The reference Java encoder}] The legacy self-contained Java \ac{MLT} encoder of~\cite{tremmelMapLibreTileNext2025b} is retained as a baseline for the encoding experiments of \cref{ch:experiments}. It is not a target of optimization in this thesis.
+    \item[\emph{The reference \ac{MLT} encoder}] The legacy self-contained \ac{MLT} encoder of~\cite{tremmelMapLibreTileNext2025b} is retained as a baseline for the encoding experiments of \cref{ch:experiments}. It is not a target of optimization in this thesis.
 \end{description}
 
 \section{Approach and Basic Building Blocks}\label{sec:approach}
@@ -636,19 +636,12 @@ Source zoom tightening       & none      & Tighten source \mlprop{minzoom}/ \mlp
 
 
 \paragraph{Dead layer and source elimination}
-The pass treats a layer as dead - and removes it - under three conditions.
-First, its filter is the literal \mlval{false}, produced by contradiction detection or stats-driven folding in the expression phase.
-Second, its source layer contains zero features according to tile statistics.
-Third, its geometry type does not match the source layer's geometry types, for example a \texttt{\mlval{fill}} layer targeting a source layer that contains only points.
-After removing dead layers, the pass prunes sources that are no longer referenced by any surviving layer.
+The pass treats a layer as dead when its filter is the literal \mlval{false} (produced by contradiction detection or stats-driven folding in the expression phase), when its source layer carries zero features per tile statistics, or when its geometry type does not match the source layer's available types.
+After removing dead layers, the pass prunes sources that no surviving layer references.
 This mirrors dead code elimination followed by unreachable function removal in a compiler (\cref{sec:compiler_optimizations}).
 Its downstream effect on the tile pruning advisory (\cref{sub:tile_shaving}) is the entry point for the data-level cascade evaluated in \cref{sub:mlt_results}.
 
-Geometry-type mismatch detection is particularly effective for tile schemas such as OpenMapTiles, where a single source layer (e.g.\ \texttt{transportation}) may contain mixed geometry types:
-A \texttt{\mlval{fill}} layer referencing such a source is dead if the source contains no polygons. A \texttt{\mlval{circle}} layer is dead if it contains no points.
-A \texttt{\mlval{line}} layer can draw both on polygons and lines, but not points.
-A \texttt{\mlval{symbol}}/ \texttt{\mlval{circle}} layer can draw on polygons, lines and points and is never dead.
-This information is only available with tile statistics, which is why we provide both a static and a stats-driven variant of the pass.
+Geometry-type mismatch is particularly effective on schemas such as OpenMapTiles, where a single source layer (e.g.\ \texttt{transportation}) carries mixed geometry. \texttt{\mlval{fill}} layers require polygons, \texttt{\mlval{circle}} requires points, \texttt{\mlval{line}} draws on polygons or lines but not points, and \texttt{\mlval{symbol}} layers draw on all three and so are never killed by this rule. The check requires tile statistics, so we provide both static and stats-driven variants of the pass.
 
 \paragraph{Metadata refinement}
 This pass extracts implicit zoom bounds from filter predicates and paint ramps, and lifts them into the layer's explicit \mlprop{minzoom}/ \mlprop{maxzoom} metadata.
@@ -710,14 +703,14 @@ The motivation is that fewer layers means fewer rendering passes: the renderer p
 \Cref{lst:painter_loop} shows the two render-pass loops the painter runs over \texttt{layerIds}: the opaque pass walks them top-to-bottom (\texttt{currentLayer} from \texttt{layerIds.length - 1} down to \texttt{0}), the translucent pass walks them bottom-to-top, and each iteration of either loop dispatches one \texttt{this.renderLayer(...)} call.
 Each layer eliminated by the merge therefore shortens \texttt{layerIds} by one entry and removes exactly one \texttt{renderLayer} dispatch from each pass.
 
-The merging algorithm proceeds in three phases, illustrated in \cref{fig:layer_merge_example}.
+A second per-layer loop in the renderer has the opposite implication for the merging pass and makes \mlval{symbol} layers non-mergeable. \Cref{lst:placement} shows the per-layer processing of symbol placement, where \stepcirc{1} constructs a fresh \texttt{LayerPlacement} instance when a symbol layer's placement begins, and \stepcirc{2} tears it down before the next layer starts. The underlying \texttt{Placement} object (and its \texttt{CollisionIndex}) is shared across all layers via \texttt{this.placement}, which is what makes the \texttt{LayerPlacement} scope per-layer rather than global.
+Symbols from earlier layers are fully placed before later layers begin, so layer ordering determines placement priority. Merging two symbol layers into one would interleave their symbols within a single \texttt{LayerPlacement}, changing which symbols take priority and therefore altering collision outcomes.
+
+With both renderer-side loops accounted for, we can describe the algorithm itself. The merging pass proceeds in three phases, illustrated in \cref{fig:layer_merge_example}.
 \emph{Phase}~\stepcirc{1} (candidate identification) scans the layer list for contiguous runs of layers that share the same type, source, and source-layer, and whose differing properties are all mergeable.
 A property is mergeable if, according to the MIR field metadata, it supports feature-driven expressions (i.e.\ its \texttt{expression.feature} flag is \mlval{true}, meaning it can vary per feature within a layer) and is not a zoom ramp (\mlop{interpolate} or \mlop{step} over \texttt{[\mlop{"zoom"}]}), which must remain at the top level of a property expression and cannot be nested inside a \mlop{case}/ \mlop{match} wrapper.
 Camera-only properties (such as \texttt{\mlprop{line-dasharray}} or \texttt{\mlprop{*-translate}}) must be uniform across all layers in a merge group, since they cannot be conditioned on feature attributes.
-Layer types that support sort keys (\texttt{\mlval{fill}}, \texttt{\mlval{line}}, \texttt{\mlval{circle}}, \texttt{\mlval{fill-extrusion}}) are candidates; \texttt{\mlval{symbol}} layers are excluded because MapLibre performs symbol placement layer by layer (the tile-wide \texttt{CollisionIndex} is queried iteratively, one symbol layer at a time, so layer ordering determines placement priority), and merging symbol layers would alter which labels can suppress each other, changing the rendered output.
-
-\Cref{lst:placement} shows the per-layer processing. \stepcirc{1} constructs a fresh instance when a symbol layer's placement begins, and \stepcirc{2} tears it down before the next layer starts. The underlying \texttt{Placement} object (and its \texttt{CollisionIndex}) is shared across all layers via \texttt{this.placement}, which is what makes the \texttt{LayerPlacement} scope per-layer rather than global.
-Symbols from earlier layers are fully placed before later layers begin, so layer ordering determines placement priority. Merging two symbol layers into one would interleave their symbols within a single \texttt{LayerPlacement}, changing which symbols take priority and therefore altering collision outcomes.
+Layer types that support sort keys (\texttt{\mlval{fill}}, \texttt{\mlval{line}}, \texttt{\mlval{circle}}, \texttt{\mlval{fill-extrusion}}) are candidates. The \texttt{\mlval{symbol}} type is excluded for the placement-scope reason given above.
 
 The merge pass has to preserve three invariants that collectively witness the visual-equivalence constraint of \cref{sec:problem_statement}.
 
@@ -737,14 +730,12 @@ This is guaranteed by the exclusion of symbol layers from the candidate set (whi
 
 \paragraph{Scope of filter-to-property propagation}
 The filter-to-property constant propagation pass extracts equality constraints from a layer's filter and substitutes them into the layer's paint and layout expressions.
-Its soundness depends on a MapLibre evaluation-order invariant: the filter is evaluated first, and paint/layout expressions are only evaluated for features that passed the filter.
-\Cref{lst:bucket_populate} shows this invariant in the \texttt{FillBucket.populate} method:\\
-\noindent The early \texttt{if (!this.layers[0].\_featureFilter.filter(\dots)) continue;} guard rejects a feature before any paint or layout expression is evaluated, so any equality constraint extracted from the filter is guaranteed to hold for every feature that reaches the subsequent \texttt{bucketFeatures.push} and can be safely substituted into the layer's paint/layout expressions.
+Its soundness depends on a MapLibre evaluation-order invariant. The filter is evaluated first, and paint/layout expressions are only evaluated for features that passed the filter.
+\Cref{lst:bucket_populate} shows this invariant in the \texttt{FillBucket.populate} method, where \stepcirc{1} rejects a feature before any paint or layout expression is evaluated, so any equality constraint extracted from the filter is guaranteed to hold for every feature that reaches \stepcirc{2} and can be safely substituted into the layer's paint/layout expressions.
 This holds for the data-driven expression variants used across all MapLibre versions this thesis targets (\mlop{match}, \mlop{case}, \mlop{get}, etc.).
 
-The propagation is strictly \emph{intra-layer} (intra-procedural, in the compiler terminology of \cref{sec:compiler_optimizations}).
-Constraints from one layer never flow into another, even if two layers share a source-layer, because the filter of one layer has no bearing on features rendered by a sibling layer.
-The propagation also intentionally ignores (Phase~\stepcirc{1}) \texttt{[\mlop{"feature-state"}, \ldots]} references, because the feature state is updated from the client at render time and cannot be statically constrained by the filter.
+Propagation is strictly \emph{intra-layer} (intra-procedural in compiler terms, \cref{sec:compiler_optimizations}). Constraints from one layer never flow to a sibling that shares the same source.
+Phase~\stepcirc{1} also ignores \texttt{[\mlop{"feature-state"}, \ldots]} references, since feature state is set from the client at render time and cannot be statically constrained by the filter.
 
 \emph{Phase}~\stepcirc{2} (match-pattern detection) checks whether all filters within a candidate group match the pattern \texttt{[\mlop{"=="},~[\mlop{"get"},~P],~\mlop{literal}]} on the same property~$P$.
 If so, the merged filter is a compact \mlop{match} expression rather than a verbose \mlop{case} chain, and merged paint/layout properties also use \mlop{match} with the same discriminator.
@@ -885,7 +876,7 @@ The bridge between style-level and data-level optimizations is the \emph{tile pr
 We compute the advisory from the \emph{optimized} style (after all expression and structural passes) together with tile statistics.
 \noindent
 This ordering is important: style-level dead layer elimination, metadata refinement, and layer merging reduce the set of live style layers, which in turn reduces the set of referenced properties and geometry types in the advisory.
-The preceding style optimizations thus feed into data-level savings, jointly improving the load-time component of the deployment metrics (\cref{sub:metrics}), though the aggregate interaction is additive rather than synergistic (\cref{sub:mlt_results}).
+The preceding style optimizations thus feed into data-level savings, jointly improving the load-time component of the deployment metrics (\cref{sub:metrics}). The empirical character of this interaction is taken up in \cref{sub:mlt_results}.
 This cascade mirrors the materialized-view maintenance problem described in \cref{sub:materialized_views}: the rendering style acts as the view definition, the tile set as the base relation, and the shaved tile as the materialized view.
 
 \noindent The advisory captures the following per source-layer:
@@ -981,20 +972,21 @@ The encoder re-encodes the pruned and transformed data into the \ac{MLT} columna
 
 \paragraph{Automatic Encoding Strategy Selection}\label{sub:encoding_strategies}
 The re-encoding proceeds in three stages.
-First, the encoder converts the row-oriented \ac{MVT} features into an owned columnar representation (\texttt{StagedLayer01}), with separate arrays for each property column, the geometry vertex buffer, and the feature ID column.
+First, the encoder converts the row-oriented \ac{MVT} features into an owned columnar representation, with separate arrays for each property column, the geometry vertex buffer, and the feature ID column.
 Second, it optionally reorders the columnar data according to the sort strategy competition.
 Third, it independently encodes each column using the per-stream encoding competition.
 The final wire format consists of three concatenated sections per layer: a header (layer name, tile extent, column count), a metadata section (column types, encoding descriptors), and a data section (the encoded streams).
 
-We reformulate the encoding problem in the Rust-based encoder as a \emph{multi-strategy competition} inspired by \ac{PGO} in compilers (\cref{sub:pgo})~\cite{changUsingProfileInformation1991} and the instance-optimized systems vision of SageDB~\cite{dingSageDBInstanceOptimizedData2022}:
+We reformulate the encoding problem in our encoder as a \emph{multi-strategy competition} inspired by \ac{PGO} in compilers (\cref{sub:pgo})~\cite{changUsingProfileInformation1991} and the instance-optimized systems vision of SageDB~\cite{dingSageDBInstanceOptimizedData2022}:
 rather than committing to a single encoding plan, the encoder uses the data distribution of each tile to try multiple strategies, measures the output size of each, and selects the smallest result.
 
 This competition operates at two nested levels.
-An \emph{outer loop} that trials multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
+An \emph{outer loop} that tries multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
 We deliberately make the inner competition criterion \emph{single-objective} (smallest encoded size).
 We do not resolve multi-axis trade-offs - between transfer size, decoding latency, rendering throughput, and preprocessing cost - inside the encoder. We report them separately per metric in the ablation evaluation (\cref{ch:experiments}), consistent with \cref{sec:problem_statement}: the deployment metrics of \cref{sub:metrics} are characterised per-axis rather than aggregated into a single objective, and the encoder's local size minimisation is a contributing quantity to the load-time axis rather than a global cost function.
 
 A no-copy alternatives mechanism lets each candidate write into the encoder's buffers and rolls losing candidates back by resetting cursor positions, so the inner and outer competitions nest without redundant allocation.
+Combined with warm-start caching of \ac{FSST} compressors and vertex-strategy decisions across sort trials, this keeps the cost of the nested competition near-additive rather than multiplicative in the number of trials. \cref{ch:experiments} reports the resulting preprocessing time empirically.
 \Cref{fig:arch_enc} summarizes the encoder and decoder data-flow in \texttt{mlt-core}.
 
 \begin{figure}[htbp]
@@ -1006,17 +998,17 @@ A no-copy alternatives mechanism lets each candidate write into the encoder's bu
                         minimum width=2.4cm, font=\small, align=center},
             decode/.style={box, fill=roleSrc!20},
             dec/.style={box, fill=roleOpt!35, minimum width=1.6cm},
-            io/.style={font=\small\ttfamily},
+            io/.style={font=\small},
             arrow/.style={-Stealth, thick},
             lbl/.style={font=\scriptsize\itshape, text=darkgray},
             node distance=1.7cm,
         ]
             % Main pipeline on centre line (x=0)
-            \node[io]     (u8)     {\&[u8]};
-            \node[decode, below=of u8, minimum width=3.2cm, align=left]     (name)
-                {\texttt{enum <Name> \{}\\[1pt]\quad\texttt{Raw(Raw*),}\\[0pt]\quad\texttt{Parsed(Parsed*),}\\[1pt]\texttt{\}}};
+            \node[io]     (u8)     {Wire bytes};
+            \node[decode, below=of u8, minimum width=3.2cm, align=center]     (name)
+                {Columnar layer\\{\scriptsize per column: raw bytes}\\{\scriptsize or parsed values}};
             \draw[arrow] (u8)   -- node[left, lbl, align=right] {zero-copy parse} (name);
-            \node[decode, below=of name] (tile)   {Tile*};
+            \node[decode, below=of name] (tile)   {Row-oriented features};
             \draw[arrow] (name) -- node[left, lbl, align=right] {convert to\\row format} (tile);
 
             % Decoder off-centre towards the middle (right side)
@@ -1032,7 +1024,7 @@ A no-copy alternatives mechanism lets each candidate write into the encoder's bu
 
             % Decoder arrows
         \end{tikzpicture}
-        \caption{Decoding pipeline: An input \texttt{\&[u8]} slice is zero-copy parsed into a \texttt{<Name>} container whose columns are held as \texttt{Raw,\,Parsed} variants, decoded on demand. columnar data can then be converted to row-oriented \texttt{Tile*} features as needed.}
+        \caption{Decoding pipeline. An input byte slice is zero-copy parsed into a columnar layer whose columns are held lazily as either raw bytes or parsed values, decoded on demand. The columnar data is converted to row-oriented features as needed.}
         \label{fig:arch_dec_sub}
     \end{subfigure}
     \hfill
@@ -1043,19 +1035,19 @@ A no-copy alternatives mechanism lets each candidate write into the encoder's bu
                         minimum width=2.0cm, font=\small, align=center},
             encode/.style={box, fill=roleData!25},
             enc/.style={box, fill=roleOpt!35, minimum width=1.6cm},
-            io/.style={font=\small\ttfamily},
+            io/.style={font=\small},
             arrow/.style={-Stealth, thick},
             lbl/.style={font=\scriptsize\itshape, text=darkgray},
             node distance=1.2cm,
         ]
             % Main pipeline on centre line (x=0)
-            \node[io]     (write)   {impl Write};
-            \node[encode, below=of write]   (encoded) {Encoded*};
-            \node[encode, below=1.4cm of encoded] (staged)  {Staged*};
-            \node[encode, below=of staged]  (tile)    {Tile*};
+            \node[io]     (write)   {Byte sink};
+            \node[encode, below=of write]   (encoded) {Wire-ready bytes};
+            \node[encode, below=1.4cm of encoded] (staged)  {Staged columnar layer};
+            \node[encode, below=of staged]  (tile)    {Row-oriented features};
 
-            % *Encoder off-centre towards the middle (left side)
-            \node[enc] at ($(staged)!0.5!(encoded) + (-2.5,0)$) (encnode) {*Encoder\\{\scriptsize reusable buffers,}\\{\scriptsize caching}};
+            % Encoder off-centre towards the middle (left side)
+            \node[enc] at ($(staged)!0.5!(encoded) + (-2.5,0)$) (encnode) {Encoder\\{\scriptsize reusable buffers,}\\{\scriptsize caching}};
 
             \draw[arrow] (tile)    -- node[right, lbl, align=left] {convert to\\columnar} (staged);
             \draw[arrow] (staged)  -- node[right, lbl, align=left] {fully encode to\\wire-ready format} (encoded);
@@ -1068,7 +1060,7 @@ A no-copy alternatives mechanism lets each candidate write into the encoder's bu
             \draw[-Stealth, thick, densely dashed] (staged.west) -| (encnode.south);
             \draw[-Stealth, thick, densely dashed] (encnode.north) |- (encoded.west);
         \end{tikzpicture}
-        \caption{Encoding pipeline: Row-oriented \texttt{Tile*} features are converted to columnar \texttt{Staged*} data, fully encoded to wire-ready \texttt{Encoded*} byte buffers via \texttt{*Encoder} types that implement the multi-strategy competition, and written to an \texttt{impl Write} sink via a final zero-copy step.}
+        \caption{Encoding pipeline. Row-oriented features are converted to a staged columnar layer, fully encoded to wire-ready byte buffers by the encoder that implements the multi-strategy competition, and written to a byte sink via a final zero-copy step.}
         \label{fig:arch_enc_sub}
     \end{subfigure}
     \caption{Encoder~\subref{fig:arch_enc_sub} and decoder~\subref{fig:arch_dec_sub} data-flow in \texttt{mlt-core}}
@@ -1081,7 +1073,7 @@ Different orderings favour different encoding schemes: spatial orderings cluster
 Which ordering wins depends on the value distributions and cardinalities of the specific layer: a layer dominated by a single repeated property value may benefit most from spatial clustering, while a layer with sequential IDs and high-cardinality properties may favour ID ordering.
 Because this balance shifts across layers, zoom levels, and tilesets, no single ordering dominates universally, and the choice cannot be resolved statically.
 
-The encoder therefore trials multiple sort strategies on the same data and retains the encoding with the smallest total byte count; \cref{fig:sort_competition} diagrams the resulting trial-and-retain loop, including the bounding-box pruning that skips spatial trials for large, widely-spread layers.
+The encoder therefore tries multiple sort strategies on the same data and retains the encoding with the smallest total byte count; \cref{fig:sort_competition} diagrams the resulting trial-and-retain loop, including the bounding-box pruning that skips spatial trials for large, widely-spread layers.
 The implemented strategies and their rationale are:
 
 \begin{description}
@@ -1166,29 +1158,20 @@ We considered property-based sort strategies but did not include them in the cur
 
 To avoid wasting trials on unpromising strategies, a \emph{bounding-box heuristic} skips spatial sorting on large layers whose features are too spatially dispersed for locality clustering to help.
 Specifically, for layers with more than \texttt{512} features, the heuristic prunes spatial trials when the first-vertex bounding box covers more than \texttt{80\%} of the tile extent on \emph{both} axes.
-The encoder always trials small layers (below the threshold), since the absolute cost of an extra encoding pass is negligible for them.
+The encoder always tries small layers (below the threshold), since the absolute cost of an extra encoding pass is negligible for them.
 We derived the thresholds experimentally from Germany-wide OpenMapTiles.
 
-In an inner loop, a per-stream encoding competition trials every viable integer encoding for the data stream .
+In an inner loop, a per-stream encoding competition tries every viable integer encoding for the data stream.
 Each candidate pairs a \emph{logical} encoding (Plain, Delta, \ac{RLE}, or DeltaRle) with a \emph{physical} encoding (\ac{VarInt} or \ac{FastPFOR}~\cite{lemireDecodingBillionsIntegers2015}).
 The general stream competition currently covers these four logical encodings. The encoder applies geometry-specific strategies (Morton-delta, componentwise-delta) via a separate encoding path optimized for coordinate data, since their semantics are tied to the two-dimensional structure of vertex sequences and do not generalize to property columns.
 Extending the general competition to include additional strategies (e.g., frame-of-reference without delta, or hybrid schemes) is a direction for future work, though the current candidate set captures the dominant encoding patterns observed in the benchmark tileset.
 The na\"ive approach - encoding every combination and comparing - would be prohibitively expensive for large tiles.
 Instead, a \emph{data profiler} samples a contiguous block taken from the middle of the stream: it profiles streams with at most $512$ values in full, and profiles longer streams over $\lfloor |s| / 100 \rfloor$ values clamped to $[512,\, 16384]$.
 We chose the contiguous mid-stream window over a random sample because permutation destroys \ac{RLE} run lengths and delta-bit-width statistics, and because the middle of a spatially or ID-sorted stream is a representative point away from the boundary artefacts at the ends.
-The profiler computes four metrics in a single pass:
-
-\begin{description}
-    \item[\emph{Average run length} ($\bar{S} = |s| / n_{\text{runs}}$)] the mean number of consecutive identical values.
-    \item[\emph{Delta average run length} ($\bar{S}_\Delta = (|s|-1) / n_{\Delta\text{-runs}}$)] the mean run length in the zigzag-encoded delta stream.
-    \item[\emph{Sortedness}] whether the sample is monotonically ascending or descending.
-    \item[\emph{Bit-width sums}] the total bit widths of both raw values and zigzag-encoded deltas, used to estimate whether delta encoding reduces the representation cost.
-\end{description}
-
-Based on these statistics $\bar{S}$, the profiler prunes candidates before any full encoding is attempted:
-it excludes \ac{RLE} when $\bar{S}_\text{rle} < 2.0$;
-it excludes Delta when the stream is unsorted \emph{and} delta bit widths exceed raw bit widths;
-it excludes DeltaRle when $\bar{S}_\Delta < 2.0$ and neither \ac{RLE} nor Delta is independently viable.
+The profiler completes a single pass over the sample to prune candidates before any full encoding is attempted.
+It excludes \ac{RLE} when the average run length $\bar{S} = |s| / n_{\text{runs}}$ falls below 2.0.
+It excludes Delta when the stream is non-monotonic and the summed bit width of the zigzag-encoded deltas exceeds that of the raw values.
+It excludes DeltaRle when the delta-stream average run length $\bar{S}_\Delta = (|s|-1) / n_{\Delta\text{-runs}}$ falls below 2.0 and neither \ac{RLE} nor Delta is independently viable.
 The encoder only offers \ac{FastPFOR} for 32-bit integer types, as the algorithm's block structure is designed for fixed-width words.
 The encoder fully encodes the remaining candidates (typically two to four) and commits the smallest output.
 
@@ -1207,15 +1190,15 @@ String columns compete across four strategies, reflecting the two orthogonal dim
 \end{description}
 
 A viability probe ensures that the encoder only attempts \ac{FSST} when the symbol-table overhead (up to \qty{2040}{\byte}) is likely to be recouped: it excludes columns below \num{2048}~raw bytes and evaluates a trial compression on a sample of up to \num{256} strings before committing.
-The encoder caches trained \ac{FSST} compressors by column name in a \texttt{HashMap} and reuses them across all sort-strategy trials, avoiding redundant training.
+The encoder caches trained \ac{FSST} compressors by column name and reuses them across all sort-strategy trials, avoiding redundant training.
 A \emph{pruning variant} of the \ac{FSST} compressor removes symbols whose observed frequency in the trial compression falls below a viability threshold, shrinking the stored symbol table at no additional decoder cost.
 
 \paragraph{Shared dictionary grouping}\label{sub:cardinality}
 The \ac{MLT} format supports shared dictionaries where multiple string columns reference a common deduplicated corpus, amortising dictionary overhead across columns with overlapping vocabularies.
-The prior Java encoder groups columns by naming prefix (e.g., \texttt{\mlval{name}}, \texttt{\mlval{name:en}}, \texttt{\mlval{name:de}}), which misses semantic overlaps (e.g., \texttt{\mlval{class}} and \texttt{\mlval{subclass}} in OpenMapTiles share many values).
+The reference encoder groups columns by naming prefix (e.g., \texttt{\mlval{name}}, \texttt{\mlval{name:en}}, \texttt{\mlval{name:de}}), which misses semantic overlaps (e.g., \texttt{\mlval{class}} and \texttt{\mlval{subclass}} in OpenMapTiles share many values).
 
 \begin{sloppypar}
-    Our Rust encoder replaces prefix matching with MinHash-based similarity clustering (\cref{sub:lsh})~\cite{broderResemblanceContainmentDocuments1998}.
+    Our encoder replaces prefix matching with MinHash-based similarity clustering (\cref{sub:lsh})~\cite{broderResemblanceContainmentDocuments1998}.
     \Cref{fig:minhash_clustering} walks through the four-step pipeline from per-column vocabularies through MinHash signatures and pairwise Jaccard estimation to the final Union-Find clustering.
     For each string column, the encoder computes two MinHash sketches of $128$ permutations: one over exact string values and one over byte trigrams (3-byte sliding windows).
     The choice of 128 permutations corresponds to an expected standard error of approximately $1/\sqrt{128} \approx 8.8\%$ on the Jaccard estimate, which is adequate for the binary accept/reject decision of the clustering step.
@@ -1223,11 +1206,9 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{\mlval{nam
     The encoder estimates pairwise Jaccard similarity as $\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| / 128$ for each sketch type and takes the maximum of two estimates.
     The encoder unifies columns whose similarity exceeds \texttt{7.5\%} via a Union-Find structure (union by size). The low threshold reflects that even small vocabulary overlap reduces the marginal cost of adding a column to an existing dictionary.
     The encoder discards groups with fewer than two members.
-    We selected the threshold and similarity mode via a sweep over $[2.5\%, 20\%]$ under three similarity modes (\emph{hybrid} taking $\max(\hat{J}_\text{exact}, \hat{J}_\text{trigram})$, \emph{only-trigram}, \emph{only-exact}), applied to the Germany OpenMapTiles tileset and measuring the total encoded size after clustering and graphed in \cref{fig:minhash_sweep}.
-    All three modes produce monotonically smaller output as the threshold decreases (i.e.\ as more column pairs qualify for grouping), with hybrid mode producing the smallest output at every threshold at no signficant performance cost.
-    The total spread across all 15 cells is approximately \qty{6}{\mega\byte} ($\approx \qty{0.19}{\percent}$ of the \qty{3.14}{\giga\byte} tileset), indicating that shared-dictionary grouping has a measurable but modest effect on total encoded size.
-    The hybrid mode at 0.025 yields the overall minimum. However, the marginal improvement from 0.075 to 0.025 is only \qty{1.6}{\mega\byte}, and lower thresholds increase the risk of false-positive unions on tilesets with different vocabulary distributions.
-    We therefore retain the value 0.075 as a conservative default that captures the majority of the grouping benefit while leaving headroom for datasets where column vocabularies are less correlated than in OpenMapTiles.
+    We selected the threshold and similarity mode via a sweep over $[2.5\%, 20\%]$ on the Germany OpenMapTiles tileset under three similarity modes (\emph{hybrid} taking $\max(\hat{J}_\text{exact}, \hat{J}_\text{trigram})$, \emph{only-trigram}, \emph{only-exact}), summarised in \cref{fig:minhash_sweep} in the appendix.
+    Hybrid mode wins at every threshold at no significant performance cost, and the curve is nearly flat below \qty{7.5}{\percent}, where the empirical optimum at \qty{2.5}{\percent} saves only an additional \qty{1.6}{\mega\byte} on the \qty{3.14}{\giga\byte} tileset at the cost of false-positive union risk on tilesets with less correlated vocabularies.
+    We therefore retain \qty{7.5}{\percent} as a conservative default that captures the majority of the grouping benefit.
 \end{sloppypar}
 
 \DeclareRobustCommand{\circled}[1]{\tikz[baseline=(char.base)]{\node[circle, draw, inner sep=1pt, font=\scriptsize\bfseries] (char) {#1};}}
@@ -1267,7 +1248,7 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{\mlval{nam
                 \end{tabular}%
             };
             \node[steplabel, above=1pt of hash] {\circled{2} MinHash signatures (128 permutations)};
-            
+
             % Bottom-right (Step 3): Pairwise Jaccard
             \node[stepbox, anchor=north] (sim) at ($(hash.south)+(0,-0.8cm)$) {%
             	\begin{tabular}{@{}l c c l@{}}
@@ -1279,15 +1260,15 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{\mlval{nam
             		\texttt{\mlval{name:de}} vs.\ \texttt{\mlval{name:fr}}
             		& 0.14 & \textbf{0.35}
             		& shared trigrams\\
-            		
+
             		\texttt{\mlval{class}} vs.\ \texttt{\mlval{subclass}}
             		& 0.45 & \textbf{0.57}
             		& shared values \\
-            		
+
             		\texttt{\mlval{name:de}} vs.\ \texttt{\mlval{class}}
             		& 0.00 & \textbf{0.01}
             		& unrelated \\
-            		
+
             		\texttt{\mlval{maxspeed}} vs.\ others
             		& 0.00 & 0.00
             		& no overlap \\
@@ -1322,13 +1303,6 @@ The prior Java encoder groups columns by naming prefix (e.g., \texttt{\mlval{nam
     \label{fig:minhash_clustering}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\linewidth]{figures/minhash_sweep.pdf}
-    \caption{Total encoded mbtiles size of the Germany OpenMapTiles tileset under different MinHash similarity modes and Jaccard thresholds.  Lower is better.  The hybrid mode (teal) produces the smallest output at every threshold. All modes increase monotonically with threshold as fewer column pairs qualify for shared-dictionary grouping. The y-axis is zoomed to the data range to make the differences visible: the full range spans approximately \qty{6}{\mega\byte} out of \qty{3.14}{\giga\byte} total}
-    \label{fig:minhash_sweep}
-\end{figure}
-
 \paragraph{Geometry encoding}
 The encoder encodes geometry vertices as either \emph{componentwise deltas} (CWD), \emph{Hilbert-code dictionaries}, \emph{Morton-code dictionaries} or plain vertices.
 CWD encodes each vertex as the delta from the previous vertex, producing a single interleaved stream $[x_0, y_0, \Delta x_1, \Delta y_1, \ldots]$ that is then compressed via the per-stream integer competition.
@@ -1337,48 +1311,15 @@ The encoder tries both strategies (when the coordinate range permits Morton enco
 
 
 \paragraph{Feature IDs encoding}
-The encoder encodes feature IDs through the same per-stream integer competition as other integer columns, using an explicit \texttt{IdWidth} tag (\texttt{Id32} or \texttt{Id64}) to select the physical word width.
-The encoder chooses \texttt{Id32} when the maximum observed ID fits in \texttt{u32}, narrowing 64-bit-declared ID columns whose actual values fit in 32 bits.
+The encoder encodes feature IDs through the same per-stream integer competition as other integer columns, with an explicit tag selecting between 32-bit and 64-bit word widths.
+The encoder narrows 64-bit-declared ID columns to 32 bits when every observed value fits.
 
 The same data profiler that drives the inner competition discovers structural patterns.
 Sequential IDs reach DeltaRle, constant IDs reach \ac{RLE}, and short or irregular sequences fall back to plain \ac{VarInt}.
 
-\paragraph{Encoder cost amortisation}
-Warm-start caching makes multi-trial encoding affordable.
-The encoder computes \ac{FSST} compressors, Morton metadata, and vertex-strategy decisions once and reuses them across sort trials, and scratch buffers grow on first use and are recycled across candidates.
-A scoped rollback mechanism shares the encoder's buffers across candidates, so the inner per-stream competition resolves before the enclosing sort-strategy trial commits.
-
 \paragraph{Encoder correctness validation}\label{par:encoder_validation}
-\begin{sloppypar}
-    Because \ac{FastPFOR} explicitly disclaims input validation and the encoder performs narrowing, run-encoding, and dictionary rebuilds that each have independent failure modes, we validate the encoder with a multi-layer test harness.
-    An in-tree proptest suite covers every \texttt{IntEncoder} variant with round-trip assertions across the full representable range of the selected physical type.
-    A libFuzzer harness fuzzes full \texttt{DecodedLayer} round-trips, with a corpus accumulated over previous runs.
-    Snapshot tests via \texttt{insta} pin the per-stream profiler's candidate lists to known-good outputs.
-    The pixel-exact visual validation described in \cref{sec:visual_correctness} exercises the full decode path against a known-good baseline.
-\end{sloppypar}
-
-\subsection{Metadata Optimizations}\label{sub:metadata_optimizations}
-
-Metadata optimizations provide the client with more accurate information, enabling it to skip unnecessary work during rendering.
-\cref{tab:metadata_passes} summarizes the techniques we implemented.
-
-\begin{table}[htbp]
-    \centering
-    \begin{tblr}{
-            colspec = {p{3.8cm} p{1.8cm} p{9.5cm}},
-            rows = {font=\small},
-            row{1} = {font=\small\bfseries},
-        }
-        \toprule
-        Pass & Data & Description \\
-        \midrule
-        Dead source elimination & none      & Remove sources that are no longer referenced after dead layer elimination \\
-        Metadata refinement     & sampling  & Provide accurate \mlprop{minzoom}/ \mlprop{maxzoom} bounds derived from filter analysis and tile statistics \\
-        \bottomrule
-    \end{tblr}
-    \caption{Metadata-level optimization techniques.  Both tighten the metadata exposed to the renderer, enabling it to skip tile fetches and rendering work outside the true data range.}
-    \label{tab:metadata_passes}
-\end{table}
+Because \ac{FastPFOR} disclaims input validation and the encoder's narrowing, run-encoding, and dictionary rebuild stages have independent failure modes, we validate correctness through property-based round-trips per integer encoder, coverage-guided fuzzing over full layer round-trips, snapshot tests over the profiler's candidate selection, and the pixel-exact end-to-end check from \cref{sec:visual_correctness}.
+This soft-correctness guarantee underwrites the experimental results in \cref{ch:experiments}.
 
 \subsection{Tile Statistics Collection}\label{sub:tile_statistics}
 
@@ -1407,32 +1348,23 @@ A sample-rate guard in the optimizer enforces this distinction: passes that perm
 
 \subsection{Preprocessing Cost Model}\label{sub:preprocessing_cost_model}
 
-All optimizations described above run \emph{offline}: we optimize a style once and serve it many times, and we re-encode tiles once per tileset build.
-The full preprocessing cost of a tileset $T$ served by a style $S$ decomposes into four additive terms:
+All optimizations described above run \emph{offline}: we pay them once per (style, tileset) build and amortise them across every subsequent tile request and rendering session.
+The total preprocessing cost decomposes into four additive terms:
 \begin{equation}\label{eq:cost_model}
     C_\text{total}(S, T) \;=\; C_\text{style}(S) \;+\; C_\text{stats}(T) \;+\; C_\text{adv}(S) \;+\; C_\text{enc}(S, T),
 \end{equation}
-where $C_\text{style}$ is the cost of running all expression and structural passes to fixpoint on a single style \ac{JSON} (\cref{sub:expression_optimizations,sub:structural_optimizations}), $C_\text{stats}$ is the one-off cost of scanning $T$ to produce the per-layer statistical profile consumed by stats-driven folding and selectivity reordering (\cref{sub:tile_statistics}), $C_\text{adv}$ is the cost of computing the tile pruning advisory from the optimized style (\cref{sub:tile_shaving}), and $C_\text{enc}$ is the cost of the sort-strategy and per-stream encoding competition that actually writes the optimized \ac{MLT} tiles (\cref{sub:encoding_strategies}).
-$C_\text{style}$ scales with the style size alone and is independent of $|T|$; $C_\text{stats}$ and $C_\text{enc}$ scale with the number of tiles; $C_\text{adv}$ scales with the product of layer count and the number of distinct categorical values tracked below the cardinality threshold.
-All four terms are paid \emph{once} per (style, tileset) build and are amortised across every tile request, every rendering session, and every re-run of the rendering benchmark.
-
-Several mechanisms keep $C_\text{enc}$ bounded even with a multi-strategy competition.
-\emph{Bounding-box pruning} (\cref{sub:encoding_strategies}) skips Hilbert and Morton trials for large, spatially dispersed layers, removing the two most expensive candidates from the outer loop whenever they are unlikely to help.
-\emph{Data profiling} samples a contiguous mid-stream window to rule out logical encodings that cannot possibly win before any full encode pass is run, reducing the per-stream candidate set from the na\"ive worst case of eight to an average of two to three fully executed trials.
-\emph{\ac{FSST} warm-start caching} trains a symbol table exactly once per distinct unique-value set and reuses it across every sort-strategy trial, so the trained compressor is not rebuilt when the same column is re-encoded under a different feature ordering. The same applies to Morton dictionary metadata and HyperLogLog~\cite{flajoletHyperLogLogAnalysisNearoptimal2007} vertex-uniqueness sketches.
-\emph{Scratch-buffer recycling} in the writer reuses temporary arrays for delta computation, run counting, and bit packing across streams and across sort trials, so per-stream work does not allocate at all in the steady state.
-Finally, the \emph{\ac{RAII} alternatives guard} realises the inner competition as a stack of savepoints into the encoder's output buffers: each candidate writes directly into the final buffer positions, it commits the smallest winner in place, and rolls the losers back simply by resetting the buffer cursor - no candidate bytes are ever copied, and pushing additional savepoints supports nesting (per-stream competition inside a sort-strategy trial).
-This is what makes the multi-strategy approach affordable: the cost of trialling $k$ candidates is $k$ encode passes plus $\mathcal{O}(1)$ bookkeeping, not $k$ encode passes plus $k$ full buffer clones.
-We measure the empirical overhead ratio induced by these mechanisms in \cref{sub:preprocessing_cost}.
+covering style passes (\cref{sub:expression_optimizations,sub:structural_optimizations}), tile statistics (\cref{sub:tile_statistics}), advisory computation (\cref{sub:tile_shaving}), and \ac{MLT} re-encoding under the sort-strategy and per-stream encoding competition (\cref{sub:encoding_strategies}).
+Five mechanisms - bounding-box pruning, data profiling, \ac{FSST} warm-start caching, scratch-buffer recycling, and the \ac{RAII} alternatives guard - keep $C_\text{enc}$ bounded under the multi-strategy competition.
+We report wall-clock cost on the Germany OpenMapTiles tileset in \cref{sub:preprocessing_cost}. The focus of this thesis is on the delivery and rendering improvements that this one-off cost buys.
 
 \section{Gathering a Representative Sample}\label{sec:gathering_sample}
 
-Evaluating an optimizer requires both a diverse set of styles and realistic tile data.
-We employ a two-tier strategy.
+Our deep evaluation runs 15 styles (\cref{sub:deep_corpus}) against reproducible tile data (\cref{sub:tile_data}) and a stratified scenario sample (\cref{sub:scenarios}).
+A further 13 styles (\cref{sub:generalization_corpus}) carry static-only checks to test whether gains generalise beyond the deep tier.
 
 \subsection{Benchmarking Corpus}\label{sub:deep_corpus}
 
-For rendering benchmarks that require tile data and animated camera scenarios, we curated a corpus of 15 publicly available styles that use the OpenMapTiles or BasemapDE schema:
+We curated a corpus of 15 publicly available styles that use the OpenMapTiles or BasemapDE schema:
 four \textbf{OpenFreeMap} styles (liberty, bright, positron, fiord);
 seven \textbf{OpenMapTiles community} styles (dark-matter, osm-bright, klokan-basic, toner, osm-liberty, americana, stadia-outdoors);
 and four \textbf{government and institutional} styles (ICGC~fosc, ICGC~gris, Basemap\-DE\footnote{\url{https://basemap.de/}, last accessed 2026-05-23} topo\-graphic, Basemap\-DE color).
@@ -1495,7 +1427,7 @@ Per run, the benchmark harness collects the following metrics:
 \begin{description}
     \item[\textbf{Load time}] wall-clock time from requesting the map to completion of the initial render, including style parsing, tile fetching, tile decoding, and first paint.
     Within the rendering benchmark, decoding latency is embedded in \texttt{loadMs} rather than isolated, because the browser-based harness cannot separate decoder wall-clock time from the surrounding fetch and first-paint work without renderer-internal instrumentation.
-    We instead measure isolated decoding throughput via Criterion\footnote{\url{https://github.com/bheisler/criterion.rs}, last accessed 2026-05-23} micro-benchmarks on the Rust decoder (\cref{tab:decode_throughput}).
+    We instead measure isolated decoding throughput via Criterion\footnote{\url{https://github.com/bheisler/criterion.rs}, last accessed 2026-05-23} micro-benchmarks on our decoder (\cref{tab:decode_throughput}).
     \item[\textbf{Style parse time}] time spent parsing and compiling the style \ac{JSON} into the renderer's internal representation.
     \item[\textbf{Time to first tile} (\texttt{firstTileMs})] time from map initialisation until the first tile is decoded and ready for rendering.
     \item[\textbf{Time to first frame}] time until the first frame is composited and presented.
