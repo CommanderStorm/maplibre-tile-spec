@@ -375,10 +375,7 @@ Visual equivalence - the soundness criterion of~(\ref{eq:visual_equivalence}) - 
 
 
 \paragraph{Concrete examples}
-To illustrate how expression passes compose, \cref{fig:expr_before_after} shows two representative transformations.
-In the first, the pass factors two equality tests within an \mlop{any} node and rewrites them to a compact \mlop{in} expression.
-In the second, filter-to-property constant propagation resolves a data-driven \mlop{match} to a literal by substituting a constraint extracted from the layer's filter.
-We drew both examples from the optimizer's test suite.
+To illustrate how expression passes compose, \cref{fig:expr_before_after} shows four representative transformations.
 
 \begin{figure}[ht]
 	\centering
