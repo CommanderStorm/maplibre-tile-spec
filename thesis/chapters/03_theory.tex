@@ -636,17 +636,17 @@ Benchmarking refers to the systematic measurement of system performance using co
 The purpose of benchmarking is to evaluate system behavior, compare alternative implementations, and quantify the effects of optimizations.
 
 According to Jain~\cite{jainArtComputerSystems1991}, a good evaluation must start with selecting relevant metrics.
-Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that na\"ive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent \ac{JVM}/engine invocations. That principle informs the bootstrap CI methodology we use.
+Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that naive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent \ac{JVM}/engine invocations. That principle informs the bootstrap CI methodology we use.
 The bootstrap itself, a resampling method for constructing confidence intervals without distributional assumptions, was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1998} and is the specific statistical technique we apply throughout our evaluation (\cref{ch:experiments}).
 Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} codified twelve common pitfalls in reporting performance results. Our evaluation in \cref{ch:experiments} follows their guidelines by reporting per-metric confidence intervals and separating throughput from latency measurements.
 In the context of web maps, the candidate metrics span a range from deployment-critical on battery-constrained targets to directly user-visible on the desktop:
 
 \begin{description}
-    \item[\textbf{Resource utilisation}], such as \ac{CPU} load, \ac{GPU} utilisation, and memory consumption to have pointers where further optimizations is possible.
-    \item[\textbf{Latency and responsiveness}], measuring the time between initiating an operation (for example zooming) and the first visible result.
-    \item[\textbf{Throughput}], typically measured in \acp{FPS} or frame time, describing how many frames can be rendered per second.
-    \item[\textbf{Frame stability}], which captures variations in frame time and identifies dropped frames or rendering stutters.
-    \item[\textbf{Network utilisation}], including transferred bytes, tile request rates, and bandwidth consumption.
+    \item[\textbf{Resource utilisation,}] such as \ac{CPU} load, \ac{GPU} utilisation, and memory consumption to have pointers where further optimizations is possible.
+    \item[\textbf{Latency and responsiveness,}] measuring the time between initiating an operation (for example zooming) and the first visible result.
+    \item[\textbf{Throughput,}] typically measured in \acp{FPS} or frame time, describing how many frames can be rendered per second.
+    \item[\textbf{Frame stability,}] which captures variations in frame time and identifies dropped frames or rendering stutters.
+    \item[\textbf{Network utilisation,}] including transferred bytes, tile request rates, and bandwidth consumption.
     \item[\textbf{Power consumption}] in Watts, which is relevant for mobile devices and battery-powered systems.  We do not measure power consumption. We use no \ac{RAPL} counters, battery deltas, or external power meters, as our benchmark host is a desktop workstation rather than a battery-constrained mobile device.  We list power here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets. Cellular radio energy is proportional to data volume, and \ac{GPU} active time scales with draw-call count.
 \end{description}
 
