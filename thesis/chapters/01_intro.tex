@@ -2,10 +2,10 @@
 
 An interactive vector map runs two paths: a per-tile path that fetches, decodes, and binds the style to each tile's features at load time, and a per-frame path that re-evaluates view-dependent expressions and submits draw calls to the \ac{GPU}.
 A slow network stalls the first. A battery- or thermally-bound device stalls the second.
-MapLibre GL~JS\footnote{\url{https://maplibre.org/maplibre-gl-js/docs/}, last accessed 2026-06-28} and Mapbox GL~JS\footnote{\url{https://www.mapbox.com/mapbox-gljs}, last accessed 2026-06-28} deliver these maps by streaming tiled geometry to the browser and letting a client-side style document drive a \ac{WebGL}- or \ac{WebGPU}-based rendering pipeline.
+MapLibre GL~JS\footnote{\url{https://maplibre.org/maplibre-gl-js/docs/}, last accessed 2026-05-28} and Mapbox GL~JS\footnote{\url{https://www.mapbox.com/mapbox-gljs}, last accessed 2026-05-28} deliver these maps by streaming tiled geometry to the browser and letting a client-side style document drive a \ac{WebGL}- or \ac{WebGPU}-based rendering pipeline.
 This architecture is what makes panning, zooming, and rotation smooth when it works, and what makes them stutter when it does not.
 
-As map deployments scale - from personal projects to platforms serving millions of daily users - the cost of suboptimal performance compounds.
+As map deployments scale from personal projects to platforms serving millions of daily users, the cost of suboptimal performance compounds.
 Larger tiles increase transfer time and bandwidth cost, redundant style layers waste rendering cycles and unnecessary properties inflate decoding overhead.
 On mobile devices, these inefficiencies translate directly into battery drain and thermal throttling, though we leave direct energy measurement outside the scope of this work.
 On unstable network connections, such as on trains or aeroplanes, these translate to degraded user experiences.
@@ -13,7 +13,7 @@ On unstable network connections, such as on trains or aeroplanes, these translat
 Despite this, the map rendering and geospatial community has largely treated style authoring and data preparation as independent concerns: styles are hand-tuned for visual appearance, while tiles are encoded with general-purpose content and compression.
 The interaction between the two is left unexploited.
 For example, a style filter that matches on a property value may, after constant folding with tile-level statistics, simplify to a form that no longer references this property.
-This in turn allows the data encoder to drop the corresponding column from every tile - a saving that neither style simplification nor data pruning could achieve independently.
+This in turn allows the data encoder to drop the corresponding column from every tile, a saving that neither style simplification nor data pruning could achieve independently.
 We ask whether such cross-level interactions produce measurably super-additive gains, or whether the levels compose merely additively, as a central empirical question of this work that we formalise in \cref{sec:problem_statement}.
 
 \section{Research Goals}\label{sec:research_goals}
@@ -23,7 +23,7 @@ Three research questions guide our work:
 
 \begin{enumerate}[label=\textbf{R\arabic*}]
     \item To what extent \textbf{can automatic data and style co-optimization improve rendering performance and reduce map tile size}?
-    \item \textbf{Which techniques} - such as expression simplification, dead layer elimination, layer merging, tile shaving, and columnar re-encoding - \textbf{are most effective}, \textbf{and how do they interact}?  In particular, R2 asks whether the composition of style-level and data-level optimizations is additive or synergistic.
+    \item \textbf{Which techniques} (such as expression simplification, dead layer elimination, layer merging, tile shaving, and columnar re-encoding) \textbf{are most effective}, \textbf{and how do they interact}?  In particular, R2 asks whether the composition of style-level and data-level optimizations is additive or synergistic.
     \item \textbf{How expensive are these optimizations} in terms of preprocessing time, and what are the \textbf{tradeoffs between decoding latency, rendering throughput, and transfer size}?
 \end{enumerate}
 
@@ -63,9 +63,5 @@ We make the following main contributions:
 
 \section{Outline}\label{sec:outline}
 
-\cref{ch:related_work} shows that prior work attacks each level in isolation - tile-data pruners are style-blind, columnar formats ignore which properties the style actually reads, and style-level optimizers are limited to default-stripping analogues - and \cref{ch:theoretical_background} assembles the compiler, query-optimization, and columnar-encoding foundations the pipeline reuses.
-
-\cref{ch:methods} states the joint problem formally in \cref{sec:problem_statement} - producing $(S', T')$ from $(S, T)$ under the pixel-equivalence constraint of \cref{eq:visual_equivalence} - and details the three-level pipeline that solves it: expression rewrites over raw \ac{JSON}, structural passes over a typed style model, and data-level passes that emit a style-driven pruning advisory and re-encode in \ac{MLT} with automatic strategy selection.
-
-\cref{ch:experiments} measures the isolated and combined effects through a cumulative ablation across 15~styles and 18~scenarios. The full pipeline achieves load-time reductions of \qtyrange{63}{74}{\percent} (median \qty{71}{\percent}), \ac{FPS} gains of \qtyrange{100}{200}{\percent}, and a \qty{28}{\percent} tile-volume reduction over the reference \ac{MVT} baseline, but the composition turns out to be \emph{additive rather than synergistic} at the aggregate level.
-\cref{ch:conclusion} revisits R1-R3 in \cref{sec:rq_revisited}, names tile shaving and columnar re-encoding as the primary levers, and points to selective-column decoding, learned encoding selection, and online deployment as the natural next steps.
+The pipeline composes expression-level rewrites, structural style passes, and a style-driven pruning advisory that feeds \ac{MLT} re-encoding. \Cref{ch:methods} states the joint problem formally under the pixel-equivalence constraint of \cref{eq:visual_equivalence} and details the three levels, with the prior-art positioning and theoretical background in \cref{ch:related_work} and \cref{ch:theoretical_background}.
+\Cref{ch:experiments} measures the isolated and combined effects through a cumulative ablation across 15~styles and 18~scenarios, and \cref{ch:conclusion} revisits R1-R3 in \cref{sec:rq_revisited} and names tile shaving and columnar re-encoding as the primary levers.
