@@ -705,7 +705,7 @@ Cleanup runs after metadata refinement because refinement may render filters tri
 
 \paragraph{Layer Merging}
 Layer merging identifies adjacent layers of the same type with identical paint and layout properties (modulo filter differences) and merges them into a single layer.
-The motivation is that fewer layers means fewer rendering passes. The renderer processes layers sequentially, and each layer incurs setup cost (binding textures, configuring blend state, submitting draw calls).
+The motivation is that fewer layers mean fewer rendering passes. The renderer processes layers sequentially, and each layer incurs setup costs (binding textures, configuring blend state, submitting draw calls).
 \Cref{lst:painter_loop} shows the two render-pass loops the painter runs over \texttt{layerIds}: the opaque pass walks them top-to-bottom (\texttt{currentLayer} from \texttt{layerIds.length - 1} down to \texttt{0}), the translucent pass walks them bottom-to-top, and each iteration of either loop dispatches one \texttt{this.renderLayer(...)} call.
 Each layer eliminated by the merge therefore shortens \texttt{layerIds} by one entry and removes exactly one \texttt{renderLayer} dispatch from each pass.
 
