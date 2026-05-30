@@ -64,7 +64,7 @@ The following concerns are deliberately out of scope:
     \item[\emph{Energy measurement}] Energy effects are discussed only qualitatively. We report no \ac{RAPL} or battery deltas because the benchmark host is a desktop workstation rather than a mobile device (\cref{sub:metrics}).
     \item[\emph{Lossy geometry transformations}] Coordinate-precision reduction, Visvalingam-Whyatt, Douglas-Peucker, and polygon coalescing would violate the pixel-identity contract of \cref{eq:visual_equivalence}.
     Writing a visually non-lossy gepgraphic simplification is deferred to future work. 
-    We therefore quantify the size reductions achievable \emph{without} touching geometry, understating that there is headroom that composition with an upstream simplifier could reach.
+    We therefore quantify the size reductions achievable \emph{without} touching geometry, understating that there is headroom that composition with an geographic simplifier could reach.
     \item[\emph{Symbol-layer merging}] MapLibre evaluates symbol placement per layer through a tile-wide\newline
     \noindent\texttt{CollisionIndex}, so merging symbol layers would alter label suppression order. The detailed argument is given alongside the structural passes (\cref{sub:structural_optimizations}).
     \item[\emph{Proprietary style corpora}] Mapbox Streets, Esri vector basemaps, and similar commercial styles are excluded by their terms of service.
