@@ -638,7 +638,7 @@ The purpose of benchmarking is to evaluate system behavior, compare alternative 
 According to Jain~\cite{jainArtComputerSystems1991}, a good evaluation must start with selecting relevant metrics.
 Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that na\"ive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent \ac{JVM}/engine invocations. That principle informs the bootstrap CI methodology we use.
 The bootstrap itself, a resampling method for constructing confidence intervals without distributional assumptions, was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1998} and is the specific statistical technique we apply throughout our evaluation (\cref{ch:experiments}).
-Hoefler~et~al~\cite{hoeflerScientificBenchmarkingParallel2015} codified twelve common pitfalls in reporting performance results. Our evaluation in \cref{ch:experiments} follows their guidelines by reporting per-metric confidence intervals and separating throughput from latency measurements.
+Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} codified twelve common pitfalls in reporting performance results. Our evaluation in \cref{ch:experiments} follows their guidelines by reporting per-metric confidence intervals and separating throughput from latency measurements.
 In the context of web maps, the candidate metrics span a range from deployment-critical on battery-constrained targets to directly user-visible on the desktop:
 
 \begin{description}
@@ -668,5 +668,5 @@ Three theoretical traditions map onto the three levels of the pipeline.
 The \textbf{encoding techniques} surveyed last feed the data-level passes that re-encode shaved tiles with automatic strategy selection. These cover columnar storage, the logical encodings (zigzag, delta, \ac{RLE}, dictionary) and physical techniques (VarInt, FastPFOR, \ac{FSST}) they hand off to, and space-filling curves.
 We adopt the benchmarking literature's statistical methodology (bootstrap confidence intervals, warm-up handling, metric separation) rather than extending it.
 
-The following chapter (\cref{sub:problem_statement}) formalises the joint optimization problem and turns these foundations into concrete passes and an evaluation methodology.
+The following chapter (\cref{sec:problem_statement}) formalises the joint optimization problem and turns these foundations into concrete passes and an evaluation methodology.
 \end{chaptersummary}
