@@ -152,7 +152,7 @@ This observation has direct consequences for any optimizer that rewrites zoom bo
 Removing a layer at zoom~14, for example, will suppress its rendering at zoom~15 and beyond if the source's \mlprop{maxzoom} is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.
 We turn this into the asymmetric \mlprop{minzoom}/ \mlprop{maxzoom} tightening rule in \cref{sub:structural_optimizations}.
 \Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \mlprop{maxzoom} tile.
-\stepcirc{1}~Rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset ($offsetX \notin \{null,0\} \cup offsetY \notin \{null,0\} \Rightarrow x = x * scale - offsetX$). \stepcirc{2}~Clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
+\stepcirc{1}~Rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset ($offsetX \notin \{null,0\} \lor offsetY \notin \{null,0\} \Rightarrow x = x * scale - offsetX$). \stepcirc{2}~Clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
 Both operations consume the source's \mlprop{maxzoom} tile as input, which is what makes \mlprop{maxzoom} tightening risky in a way that \mlprop{minzoom} tightening is not.
 
 \clearpage
