@@ -103,7 +103,7 @@ Tiles, by contrast, can be stored and accessed using three major approaches:
 Dynamic data sources can be updated frequently by applying incremental diffs, whereas the other approaches typically require a full rebuild when the underlying data changes.
 At larger scales, in-memory caching of tiles via regional or \ac{CDN}-style infrastructure, combined with fallback to runtime-dynamic data, is essential for performance and cost.
 
-Although all of these resources can be optimized, tiles are usually the most critical due to their continuously streaming nature as a user moves the map.
+Although all of these resources can be optimized, tiles are usualy the most critical due to their continuously streaming nature as a user moves the map.
 They usualy have a cumulatively higher data volume due to this, even though their individual tiles may be much smaller.
 All other resources may depend on locale slightly (for example loading different Unicode ranges or fonts), but are only handled one time.
 
