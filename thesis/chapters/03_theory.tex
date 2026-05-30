@@ -448,14 +448,13 @@ A filter \texttt{[\mlop{"all"}, \mlval{true}, x]} is simplified to~\texttt{x} by
 
 Individual peephole rules may expose further opportunities. Constant folding a subexpression may create a new constant parent that enables dead branch elimination, so a single traversal is generally insufficient.
 
-\begin{sloppypar}
-The remedy is to apply the entire rule set repeatedly until no rule fires. A term to which no rule applies is a \emph{fixpoint} of the rewrite function, equivalently a \emph{normal form} of the underlying rewrite system.
-We treat our expression-level optimizer formally as a \ac{TRS}~\cite{baaderTermRewritingAll1999}, which makes the relevant theoretical lens the pair of \emph{termination} and \emph{confluence} rather than the lattice-theoretic monotone-convergence framing of classical dataflow fixpoint iteration~\cite{ahoCompilersPrinciplesTechniques2007}.
-\Cref{sub:expression_optimizations} gives a lexicographic measure on which most rules strictly decrease, together with the two rules (De~Morgan and distributive factoring) that can temporarily increase it, so a Knaster-Tarski-style convergence theorem does not apply.
+The remedy is to apply the entire rule set repeatedly until no rule fires.
+A term to which no rule applies is a \emph{fixpoint} of the rewrite function, equivalently a \emph{normal form} of the underlying rewrite system.
+We treat our expression-level optimizer formally as a \ac{TRS}~\cite{baaderTermRewritingAll1999}, which makes the relevant theoretical lens the pair of \emph{termination}\footnote{every reduction sequence reaches a normal point} and \emph{confluence}\footnote{all sequnences reach the same one} rather than the lattice-theoretic monotone-convergence framing of classical dataflow fixpoint iteration~\cite{ahoCompilersPrinciplesTechniques2007}.
+\Cref{sub:expression_optimizations} gives a lexicographic measure on which most rules strictly decrease, together with the two rules (De~Morgan and distributive factoring) that can temporarily increase it, so a Knaster-Tarski-style convergence theorem~\cite{tarskiLatticetheoreticalFixpointTheorem1955} does not apply.
+
 In practice the loop reaches a normal form within a handful of iterations and we cap it at eight as a safety bound.
 Newcomb et~al.~\cite{newcombVerifyingImprovingHalides2020} reported similar confluence and termination concerns for Halide's hand-written rewrite optimizer and used synthesis-based techniques to verify correctness and discover missing rules.
-\end{sloppypar}
-
 
 \section{Query Optimization}\label{sec:query_optimizations}
 
