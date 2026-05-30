@@ -70,7 +70,7 @@ The following concerns are deliberately out of scope:
     \item[\emph{Proprietary style corpora}] Mapbox Streets, Esri vector basemaps, and similar commercial styles are excluded by their terms of service.
     \item[\emph{Tile schemas other than \ac{OMT}}] Non-\ac{OMT} vector tile sources are excluded from the deep-corpus evaluation, and the stats-driven thresholds used by the pipeline are tuned on Germany~\ac{OMT} only (\cref{sec:gathering_sample}).
     \item[\emph{Online and incremental serving}] The optimizer is an offline, one-shot rebuild over a (style, tile~set) pair. No integration with a live tile server is assumed, and the optimized artefacts can be served by any standards-compliant tile infrastructure.
-    \item[\emph{The reference \ac{MLT} encoder}] The legacy self-contained \ac{MLT} encoder of~\cite{tremmelMapLibreTileNext2025b} is retained as a baseline for the encoding experiments of \cref{ch:experiments}. It is not a target of optimization in this thesis.
+    \item[\emph{The reference \ac{MLT} encoder}] The legacy self-contained \ac{MLT} encoder of Tremmel~\&~Zink~\cite{tremmelMapLibreTileNext2025b} is retained as a baseline for the encoding experiments of \cref{ch:experiments}. It is not a target of optimization in this thesis.
 \end{description}
 
 \section{Approach and Basic Building Blocks}\label{sec:approach}
