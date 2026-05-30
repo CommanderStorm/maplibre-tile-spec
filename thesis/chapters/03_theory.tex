@@ -1,15 +1,7 @@
 \chapter{Theoretical Background}\label{ch:theoretical_background}
 
-The gap we identified in \cref{ch:related_work} is that no existing tool composes style rewrites with data-level pruning into a joint pipeline.
-Closing this gap calls for foundations from several fields:
-The map rendering architecture that defines what we are optimizing, the compiler techniques whose analogues drive our expression-level passes, the query optimization concepts that inform our filter rewriting and predicate reordering, and the columnar encoding strategies behind our data-level passes.
-
-We introduce these foundations in the order in which the optimizer consumes them.
-In \cref{sec:map_rendering_approaches} we describe the map rendering process and its resource pipeline.
-In \cref{sec:compiler_optimizations} we survey compiler optimization techniques - peephole rewriting, constant folding, and fixpoint iteration - whose analogues we apply to style expressions.
-In \cref{sec:query_optimizations} we present query optimization concepts - predicate pushdown and selectivity estimation - that we use for filter rewriting and reordering.
-In \cref{sec:data_encoding} we cover the columnar encoding and compression schemes we employ at the tile level.
-In \cref{sec:benchmarking} we cover our benchmarking methodology.
+The gap identified in \cref{ch:related_work}, that no existing tool composes style rewrites with data-level pruning into a joint pipeline, sits at the intersection of four traditions that each supply analogues for one layer of our pipeline.
+We treat map rendering architecture (\cref{sec:map_rendering_approaches}), compiler optimization (\cref{sec:compiler_optimizations}), query optimization (\cref{sec:query_optimizations}), and columnar encoding (\cref{sec:data_encoding}) in turn, then close with the benchmarking methodology that grounds the empirical chapter (\cref{sec:benchmarking}).
 
 \section{Map Rendering Approaches}\label{sec:map_rendering_approaches}
 
@@ -93,7 +85,7 @@ Occasionally, additional assets such as 3D geometry models or terrain are used a
 There are several approaches to delivering client-side rendered vector maps.
 
 Styles, sprites, and fonts are typically served from a file server or \ac{CDN} and require little processing.
-In some cases, parts of these resources may be generated dynamically - for example, to support complex text shaping for Arabic, Hebrew, Indic, or Japanese scripts as described by Wipfli~\cite{wipfliComplexTextPlugin2025} for MapLibre or Lengyel~\cite{lengelDecadeSlug} for SLUG.
+In some cases, parts of these resources may be generated dynamically, for example to support complex text shaping for Arabic, Hebrew, Indic, or Japanese scripts as described by Wipfli~\cite{wipfliComplexTextPlugin2025} for MapLibre or Lengyel~\cite{lengelDecadeSlug} for SLUG.
 This processing currently usually handled ahead of time on the server-side.
 
 Tiles, by contrast, can be stored and accessed using three major approaches:
@@ -109,7 +101,7 @@ Tiles, by contrast, can be stored and accessed using three major approaches:
 \end{description}
 
 Dynamic data sources can be updated frequently by applying incremental diffs, whereas the other approaches typically require a full rebuild when the underlying data changes.
-At larger scales, in-memory caching of tiles via regional or \ac{CDN}-style infrastructure - combined with fallback to runtime-dynamic data - is essential for performance and cost.
+At larger scales, in-memory caching of tiles via regional or \ac{CDN}-style infrastructure, combined with fallback to runtime-dynamic data, is essential for performance and cost.
 
 Although all of these resources can be optimized, tiles are usually the most critical due to their continuously streaming nature as a user moves the map.
 They usualy have a cumulatively higher data volume due to this, even though their individual tiles may be much smaller.
@@ -203,11 +195,11 @@ The following formats are used for encoding and transferring data to the client:
     They require no client-side rendering logic but cannot be restyled, rotated at arbitrary angles (beyond the affine transform imposed by globe mode), or queried interactively, as the visual representation is fixed at generation time.
 
     \item[\textbf{Analysis-focused formats}] such as FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11}, GeoParquet\footnote{\url{https://geoparquet.org/}, last accessed 2026-05-11}, and GeoArrow are optimized for analytical queries (filtering, aggregation, joins) rather than tile-based rendering.
-    They support random access and columnar scans but do not follow the tiled spatial access pattern required by interactive map renderers, so we do not consider them further.
-    GeoParquet in particular supports row-group-level predicate pushdown and column pruning - operations analogous to the tile shaving and selective column access we apply to \ac{MLT} - but operates on large per-file datasets rather than on the small, spatially-partitioned tiles that interactive renderers fetch individually. The per-tile overhead of Parquet's row-group and column-chunk metadata would dominate at typical tile sizes (\qtyrange{10}{100}{\kilo\byte}).
+    GeoParquet's row-group predicate pushdown and column pruning are analogous to the tile shaving we apply to \ac{MLT}, but they operate at per-file granularity.
+    Parquet's row-group and column-chunk metadata would dominate at typical tile sizes (\qtyrange{1}{10}{\kilo\byte}), so we do not consider these formats further.
 
     \item[\textbf{\ac{GeoJSON}}]~\cite{butlerGeoJSONFormat2016} is a \ac{JSON}-based geospatial interchange format.
-    Its human-readable structure makes it useful for debugging and small overlays, but its verbosity - text-encoded coordinates and repeated property keys per feature - makes it impractical for the continuous tile streaming required by interactive map renderers.
+    Its human-readable structure makes it useful for debugging and small overlays, but its verbosity (text-encoded coordinates and repeated property keys per feature) makes it impractical for the continuous tile streaming required by interactive map renderers.
 
     \item[\textbf{\acf{MVT}}]\footnote{\url{https://github.com/mapbox/vector-tile-spec/tree/master/2.1}, last accessed 2026-04-21} is the dominant vector tile format, adopted as a \emph{de~facto} standard across open-source map renderers including MapLibre.
     It uses the \ac{PBF}\footnote{\url{https://protobuf.dev/}, last accessed 2026-04-21} as its wire format and stores features in a \emph{row-oriented} layout:
@@ -221,7 +213,7 @@ The following formats are used for encoding and transferring data to the client:
 
     \item[\textbf{\acf{MLT}}] \begin{sloppypar} is a columnar vector tile format proposed by Tremmel et~al.~\cite{tremmelMapLibreTileNext2025b}.
     Instead of the row-major key-value-pair layout of \ac{MVT}, \ac{MLT} stores each property as an independent column with type-specific encoding.
-    This columnar layout enables per-column compression strategies - for example, dictionary encoding for low-cardinality string columns, delta encoding for monotonically increasing integers, or run-length encoding for repeated values - and eliminates the per-feature tag overhead of the protobuf encoding.
+    This columnar layout enables per-column compression strategies (for example, dictionary encoding for low-cardinality string columns, delta encoding for monotonically increasing integers, or run-length encoding for repeated values) and eliminates the per-feature tag overhead of the protobuf encoding.
     Tremmel et~al.\ report up to $3\times$ tile size reduction on encoded tilesets and up to $6\times$ on certain large tiles, with the realised ratio depending on data characteristics.\end{sloppypar}
 \end{description}
 
@@ -248,7 +240,7 @@ Three architectural approaches to map styling have been established:
     This offers maximum flexibility but makes static analysis and automatic optimizations impossible, since the styling logic is opaque to the rendering engine.
 \end{description}
 
-We focus on client-side declarative styles, specifically the MapLibre style specification, as it is the most widely adopted approach in open-source map rendering and - its declarative nature makes it amenable to static analysis and automatic optimizations.
+We focus on client-side declarative styles, specifically the MapLibre style specification. It is the most widely adopted approach in open-source map rendering, and its declarative nature makes it amenable to static analysis and automatic optimizations.
 
 The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre-style-spec/}, last accessed 2025-10-24} defines a map's appearance as a \ac{JSON} document with the following key components:
 
@@ -301,18 +293,16 @@ renderLayer(painter, tileManager, layer, coords, renderOptions) {
 \end{description}
 
 Filters and properties can be specified as literal constants, as \emph{zoom-dependent} expressions (varying with the camera zoom level via \mlop{interpolate} or \mlop{step} ramps), as \emph{data-driven} expressions (varying per feature based on property values via \mlop{match}, \mlop{case}, or \mlop{get} operators), or as a combination of both.
-The resulting expression trees can be deeply nested and may contain redundant or unreachable branches - characteristics that make them amenable to the same kinds of simplification and optimizations techniques used in compilers and database query planners.
+The resulting expression trees can be deeply nested and may contain redundant or unreachable branches. These characteristics make them amenable to the same kinds of simplification and optimizations techniques used in compilers and database query planners.
 
 \Cref{lst:worker_pipeline} shows the worker's tile-parse pipeline as five named steps, marked inline as \stepcirc{1} to \stepcirc{5}.
 
-\noindent Every optimization we present in \cref{ch:methods} attaches to one of these steps:
-merging layers reduces work for \stepcirc{1};
-pruning features server-side makes \stepcirc{2} not handle them;
-tightening \mlprop{minzoom}/ \mlprop{maxzoom} makes the
-\stepcirc{3} guard true earlier;
-pre-folding zoom-dependent constants reduces the work in \stepcirc{4}; and
-filter-to-property propagation simplifies the per-feature work inside
-\stepcirc{5}.
+\noindent Every optimization we present in \cref{ch:methods} attaches to one of these steps.
+Merging layers reduces work for \stepcirc{1}.
+Pruning features server-side makes \stepcirc{2} not handle them.
+Tightening \mlprop{minzoom}/ \mlprop{maxzoom} makes the \stepcirc{3} guard true earlier.
+Pre-folding zoom-dependent constants reduces the work in \stepcirc{4}.
+Filter-to-property propagation simplifies the per-feature work inside \stepcirc{5}.
 
 \begin{lstlisting}[
     language=TypeScript,
@@ -382,9 +372,8 @@ In this section we introduce the foundational concepts we apply in \cref{ch:meth
 
 \begin{sloppypar}
 A \emph{peephole optimizer} examines a small, fixed-size window of code (the \enquote{peephole}) and applies local pattern-matching rewrites that replace instruction sequences with shorter or faster equivalents~\cite{davidsonCodeSelectionObject1984}.
-Each rewrite rule is independent:
-it matches a local pattern and emits a replacement, without requiring knowledge of the surrounding program.
-The simplicity of individual rules is offset by their composition through repeated application - many small, local improvements accumulate into significant global optimizations.
+Each rewrite rule is independent, matching a local pattern and emitting a replacement without requiring knowledge of the surrounding program.
+Many small, local improvements compose into significant global optimizations under repeated application.
 \end{sloppypar}
 
 Peephole optimizers are classified by the level at which they operate.
@@ -401,14 +390,14 @@ In a style context, a comparison such as \texttt{[\mlop{"=="},~\mlval{2},~\mlval
 \emph{Constant propagation} extends this idea by tracking the known values of variables through the program's control flow and substituting them at their use sites.
 If a variable is assigned a constant, all subsequent references to that variable can be replaced by the constant, potentially enabling further constant folding at the use sites.
 
-A more powerful variant, \acf{SCCP}, combines constant propagation with dead branch analysis in a single pass: it simultaneously determines which values are constant \emph{and} which branches are reachable, enabling the discovery of constants that are only visible when unreachable code is ignored~\cite{wegmanConstantPropagationConditional1991}.
+A more powerful variant, \acf{SCCP}, combines constant propagation with dead branch analysis in a single pass. It simultaneously determines which values are constant \emph{and} which branches are reachable, enabling the discovery of constants that are only visible when unreachable code is ignored~\cite{wegmanConstantPropagationConditional1991}.
 
 \subsection{Dead Code Elimination}
 
 \acf{DCE} removes program statements whose results are never used or whose control-flow paths are unreachable~\cite{ahoCompilersPrinciplesTechniques2007}.
 Two common forms are \emph{unreachable code elimination}, which removes code that can never be executed (e.g., code after a guaranteed return, or branches guarded by a statically false condition), and \emph{dead store elimination}, which removes assignments to variables that are never subsequently read.
 
-In the map-style domain, dead code elimination corresponds to removing style layers that can never produce visible output - because their filter is unsatisfiable, their geometry type does not match the data, or their paint properties render them invisible (e.g., zero opacity at all zoom levels).
+In the map-style domain, dead code elimination corresponds to removing style layers that can never produce visible output, because their filter is unsatisfiable, their geometry type does not match the data, or their paint properties render them invisible (e.g., zero opacity at all zoom levels).
 
 \subsection{Algebraic Simplification}
 
@@ -466,19 +455,14 @@ A filter \texttt{[\mlop{"all"}, \mlval{true}, x]} is simplified to~\texttt{x} by
 
 \subsection{Fixpoint Iteration}\label{sub:fixpoint}
 
-Individual peephole rules may expose further optimizations opportunities:
-constant folding a subexpression may create a new constant parent, which in turn enables dead branch elimination.
-A single traversal is therefore generally insufficient.
+Individual peephole rules may expose further opportunities. Constant folding a subexpression may create a new constant parent that enables dead branch elimination, so a single traversal is generally insufficient.
 
 \begin{sloppypar}
-The remedy is to apply the entire rule set repeatedly until no rule fires.
-A term to which no rule applies is descriptively a \emph{fixpoint} of the rewrite function and equivalently a \emph{normal form} of the underlying rewrite system.
-We treat our expression-level optimizer formally as a \ac{TRS}: the style expressions are terms, and the peephole rules are rewrite rules applied modulo a traversal strategy~\cite{baaderTermRewritingAll1999}.
-The right theoretical lens is therefore the \ac{TRS} pair of \emph{termination} (whether every reduction sequence reaches a normal form) and \emph{confluence} (whether all sequences reach the same one), rather than the lattice-theoretic monotone-convergence framing of classical dataflow fixpoint iteration~\cite{ahoCompilersPrinciplesTechniques2007}.
-Our rewrite function is not monotone in any standard ordering.
-\Cref{sub:expression_optimizations} gives a lexicographic measure $\mu$ on which most rules strictly decrease, together with the two rules (De~Morgan and distributive factoring) that can temporarily increase it, so a Knaster-Tarski-style convergence theorem does not apply here.
-In practice the loop reaches a normal form within a small number of iterations, and we impose a hard cap of eight iterations as a safety bound rather than as a convergence guarantee.
-A closely parallel case study is Halide's \ac{TRS}: Newcomb et~al.~\cite{newcombVerifyingImprovingHalides2020} showed that Halide's \ac{DSL} optimizer - which, like our expression passes, applies a set of hand-written rewrite rules in a fixed order to simplify \ac{DSL} expression trees - suffers from the same confluence and termination concerns, and developed synthesis-based techniques to verify correctness and discover missing rules.
+The remedy is to apply the entire rule set repeatedly until no rule fires. A term to which no rule applies is a \emph{fixpoint} of the rewrite function, equivalently a \emph{normal form} of the underlying rewrite system.
+We treat our expression-level optimizer formally as a \ac{TRS}~\cite{baaderTermRewritingAll1999}, which makes the relevant theoretical lens the pair of \emph{termination} and \emph{confluence} rather than the lattice-theoretic monotone-convergence framing of classical dataflow fixpoint iteration~\cite{ahoCompilersPrinciplesTechniques2007}.
+\Cref{sub:expression_optimizations} gives a lexicographic measure on which most rules strictly decrease, together with the two rules (De~Morgan and distributive factoring) that can temporarily increase it, so a Knaster-Tarski-style convergence theorem does not apply.
+In practice the loop reaches a normal form within a handful of iterations and we cap it at eight as a safety bound.
+Newcomb et~al.~\cite{newcombVerifyingImprovingHalides2020} reported similar confluence and termination concerns for Halide's hand-written rewrite optimizer and used synthesis-based techniques to verify correctness and discover missing rules.
 \end{sloppypar}
 
 
@@ -491,16 +475,13 @@ Techniques from relational query optimizations therefore apply directly.
 \subsection{Cost-Based Query Optimization}
 
 A \emph{cost-based query optimizer} selects among semantically equivalent query execution plans by estimating the cost of each plan and choosing the cheapest~\cite{selingerAccessPathSelection1979}.
-The pioneering System~R optimizer introduced this approach for SQL queries, estimating costs based on I/O operations and \ac{CPU} time.
 
-The key insight is that the \emph{order} in which predicates are evaluated affects performance even when the final result is identical.
-In a conjunction $p_1 \land p_2 \land \cdots \land p_n$ evaluated with short-circuit semantics, placing the predicate most likely to evaluate to \mlval{false} first minimizes the expected number of evaluations, because once any predicate evaluates to \mlval{false}, the remaining predicates are skipped.
-For disjunction ($p_1 \lor p_2 \lor \cdots \lor p_n$), the opposite ordering is optimal: the predicate most likely to be \mlval{true} should come first.
+The key insight is that the \emph{order} in which predicates are evaluated affects performance even when the final result is identical. Under short-circuit semantics, a conjunction $p_1 \land p_2 \land \cdots \land p_n$ is fastest when the most-likely-\mlval{false} predicate comes first, and a disjunction $p_1 \lor p_2 \lor \cdots \lor p_n$ places the most-likely-\mlval{true} predicate first.
 
 \subsection{Selectivity Estimation}
 
 Estimating the expected fraction of records satisfying a predicate is known as \emph{selectivity estimation}.
-Selinger et~al.~\cite{selingerAccessPathSelection1979} introduced the foundational formulas for estimating selectivity under the \emph{independence assumption} - the assumption that attribute values in different columns are statistically independent.
+Selinger et~al.~\cite{selingerAccessPathSelection1979} introduced the foundational formulas for estimating selectivity under the \emph{independence assumption}, the assumption that attribute values in different columns are statistically independent.
 
 For a single equality predicate $A = v$ on a column with $d$ distinct values, the estimated selectivity is $s = 1/d$ (uniform distribution assumption).
 When value-frequency histograms are available, the estimate improves to $s = \mathit{freq}(v) / N$, where $N$ is the total number of records.
@@ -511,11 +492,11 @@ Compound predicates are estimated by combining individual selectivities:
 \end{align*}
 
 The independence assumption is known to be inaccurate when columns are correlated, but it provides a computationally cheap approximation that is effective in practice~\cite{selingerAccessPathSelection1979}.
-More sophisticated estimators - such as multi-dimensional histograms, sampling-based methods, or the lightweight graphical models proposed by Tzoumas et~al.~\cite{tzoumasLightweightGraphicalModels2011} that capture inter-attribute correlations without the full cost of joint-distribution estimation - improve accuracy at higher computational cost.
+More sophisticated estimators (such as multi-dimensional histograms, sampling-based methods, or the lightweight graphical models proposed by Tzoumas et~al.~\cite{tzoumasLightweightGraphicalModels2011} that capture inter-attribute correlations without the full cost of joint-distribution estimation) improve accuracy at higher computational cost.
 
 Map-style filters are in fact known to violate independence:
 In OpenMapTiles, for example, \texttt{class} and \texttt{subclass} are strongly correlated by schema design (every value of \texttt{subclass} implies a constrained set of \texttt{class} values), as are \texttt{admin\_level} and \texttt{maritime}.
-A joint-distribution estimator, such as the one we propose in \cref{sec:selectivity_reordering}, would therefore give tighter bounds, but our selectivity signal is consumed only by a \emph{reordering} heuristic - not by a cost-based plan chooser - and reordering is monotone in the ordering of the individual selectivities rather than in their absolute values.
+A joint-distribution estimator, such as the one we propose in \cref{sec:selectivity_reordering}, would therefore give tighter bounds, but our selectivity signal is consumed only by a \emph{reordering} heuristic (not by a cost-based plan chooser) and reordering is monotone in the ordering of the individual selectivities rather than in their absolute values.
 The independence-estimator error therefore propagates into the quality of the short-circuit ordering but never into the correctness of the rewritten style, which makes the cheap estimator an acceptable engineering choice for our use case.
 
 \subsection{Partial Evaluation}\label{sub:partial_eval}
@@ -548,11 +529,8 @@ Traditional database systems store data in \emph{row-oriented} layouts, where al
 This layout is efficient for transactional workloads that access entire records, but wasteful for analytical queries that access only a few columns, as the entire record must be read to access any single attribute.
 
 \emph{Column-oriented} (columnar) storage transposes this layout, storing all values of a single attribute contiguously~\cite{abadiDesignImplementationModern2013}.
-The foundational system in this space is Dremel~\cite{melnikDremelInteractiveAnalysis}, which introduced the record shredding and assembly algorithm for nested columnar data using definition and repetition levels - the same representation pattern that directly inspired Apache Parquet and, by extension, the columnar layout that \ac{MLT} adapts for tile data.
-This has several advantages for read-heavy workloads.
-First, \emph{reduced I/O}: only the columns referenced by a query need to be read from disk or transferred over the network.
-Second, \emph{better compression}: values of the same type and semantic domain are stored together, exhibiting higher local homogeneity and thus compressing more effectively than interleaved multi-type records.
-Third, \emph{vectorised processing}: columnar data enables \ac{SIMD}-style batch operations on arrays of values of the same type.
+The foundational system in this space is Dremel~\cite{melnikDremelInteractiveAnalysis}, which introduced the record shredding and assembly algorithm for nested columnar data using definition and repetition levels, the representation pattern that directly inspired Apache Parquet and, by extension, the columnar layout that \ac{MLT} adapts for tile data.
+This layout offers three advantages for read-heavy workloads. \emph{Reduced I/O} follows from reading or transferring only the referenced columns. \emph{Better compression} follows from the higher local homogeneity of values of the same type and semantic domain compared to interleaved multi-type records. \emph{Vectorised processing} follows from the layout's natural fit for \ac{SIMD}-style batch operations over arrays of the same type.
 
 In the context of vector tiles, the row-oriented \ac{MVT} format stores all properties of a feature together, whereas the columnar \ac{MLT} format stores each property as an independent column.
 The columnar layout allows per-column encoding strategies:
@@ -667,8 +645,8 @@ Benchmarking refers to the systematic measurement of system performance using co
 The purpose of benchmarking is to evaluate system behavior, compare alternative implementations, and quantify the effects of optimizations.
 
 According to Jain~\cite{jainArtComputerSystems1991}, a good evaluation must start with selecting relevant metrics.
-Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that na\"ive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent \ac{JVM}/engine invocations - a principle that informs the bootstrap CI methodology we use.
-The bootstrap itself - a resampling method for constructing confidence intervals without distributional assumptions - was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1998} and is the specific statistical technique we apply throughout our evaluation (\cref{ch:experiments}).
+Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that na\"ive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent \ac{JVM}/engine invocations. That principle informs the bootstrap CI methodology we use.
+The bootstrap itself, a resampling method for constructing confidence intervals without distributional assumptions, was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1998} and is the specific statistical technique we apply throughout our evaluation (\cref{ch:experiments}).
 Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} codified twelve common pitfalls in reporting performance results. Our evaluation in \cref{ch:experiments} follows their guidelines by reporting per-metric confidence intervals and separating throughput from latency measurements.
 In the context of web maps, the candidate metrics span a range from deployment-critical on battery-constrained targets to directly user-visible on the desktop:
 
@@ -678,7 +656,7 @@ In the context of web maps, the candidate metrics span a range from deployment-c
     \item[\textbf{Throughput}], typically measured in \acp{FPS} or frame time, describing how many frames can be rendered per second.
     \item[\textbf{Frame stability}], which captures variations in frame time and identifies dropped frames or rendering stutters.
     \item[\textbf{Network utilisation}], including transferred bytes, tile request rates, and bandwidth consumption.
-    \item[\textbf{Power consumption}] in Watts, which is relevant for mobile devices and battery-powered systems.  We do not measure power consumption - we use no \ac{RAPL} counters, battery deltas, or external power meters, as our benchmark host is a desktop workstation rather than a battery-constrained mobile device.  We list power here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets. Cellular radio energy is proportional to data volume, and \ac{GPU} active time scales with draw-call count.
+    \item[\textbf{Power consumption}] in Watts, which is relevant for mobile devices and battery-powered systems.  We do not measure power consumption. We use no \ac{RAPL} counters, battery deltas, or external power meters, as our benchmark host is a desktop workstation rather than a battery-constrained mobile device.  We list power here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets. Cellular radio energy is proportional to data volume, and \ac{GPU} active time scales with draw-call count.
 \end{description}
 
 These can be benchmarked at different workload levels~\cite{jainArtComputerSystems1991}:
