@@ -329,7 +329,7 @@ Within \mlop{match} expressions, the pass merges duplicate arms and removes arms
 
 \begin{sloppypar}
 The pass detects boolean \mlop{match} patterns (\texttt{[\mlop{"match"},\allowbreak~x,\allowbreak~labels,\allowbreak~\mlval{true},\allowbreak~\mlval{false}]}) and rewrites them to \texttt{[\mlop{"in"},\allowbreak~x,\allowbreak~[\mlop{"literal"},\allowbreak~labels]]}.
-Interpolation and step ramp simplification detects ramps where all stops map to the same value and collapses them to that constant.
+Interpolation and step ramp simplification detects ramps, where all stops map to the same value and collapses them to that constant.
 \mlop{let}/ \mlop{var} inlining replaces singly-used variable references with the bound expression, eliminating the binding overhead.
 \end{sloppypar}
 
