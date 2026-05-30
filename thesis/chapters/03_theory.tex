@@ -280,19 +280,6 @@ isHidden(zoom: number = this.minzoom, roundMinZoom: boolean = false) {
 \end{minipage}
 
 \Cref{lst:ishidden_usage} reproduces the two call-sites that establish those two stages: the worker calls \texttt{layer.isHidden(this.zoom, true)} and \texttt{continue}s before bucket creation, and the painter's \texttt{renderLayer} returns immediately on \texttt{layer.isHidden(this.transform.zoom)} before dispatching any \texttt{draw.fill}/ \texttt{draw.line}/ \texttt{draw.symbol} call.
-
-\begin{minipage}{\dimexpr\linewidth\relax}
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS usages of \texttt{isHidden}},label=lst:ishidden_usage,xleftmargin=2em]
-// src/source/worker_tile.ts - worker skips bucket creation
-if (layer.isHidden(this.zoom, true)) continue;
-
-// src/render/painter.ts - painter skips draw calls
-renderLayer(painter, tileManager, layer, coords, renderOptions) {
-    if (layer.isHidden(this.transform.zoom)) return;
-    // ...dispatches to draw.fill, draw.line, draw.symbol, etc.
-}
-\end{lstlisting}
-\end{minipage}
 \end{description}
 \end{description}
 
