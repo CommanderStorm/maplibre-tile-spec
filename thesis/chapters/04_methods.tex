@@ -66,7 +66,7 @@ The following concerns are deliberately out of scope:
     Writing a visually non-lossy gepgraphic simplification is deferred to future work. 
     We therefore quantify the size reductions achievable \emph{without} touching geometry, understating that there is headroom that composition with an geographic simplifier could reach at the cost of changing the style output.
     \item[\emph{Symbol-layer merging}] MapLibre evaluates symbol placement per layer through a tile-wide\newline
-    \noindent\texttt{CollisionIndex}, so merging symbol layers would alter label suppression order. The detailed argument is given alongside the structural passes (\cref{sub:structural_optimizations}).
+    \noindent\texttt{CollisionIndex}, so merging symbol layers would alter label suppression order. The detailed argument is given along the structural passes (\cref{sub:structural_optimizations}).
     \item[\emph{Proprietary style corpora}] Mapbox Streets, Esri vector basemaps, and similar commercial styles are excluded by their terms of service.
     \item[\emph{Tile schemas other than \ac{OMT}}] Non-\ac{OMT} vector tile sources are excluded from the deep-corpus evaluation, and the stats-driven thresholds used by the pipeline are tuned on Germany~\ac{OMT} only (\cref{sec:gathering_sample}).
     \item[\emph{Online and incremental serving}] The optimizer is an offline, one-shot rebuild over a (style, tile~set) pair. No integration with a live tile server is assumed, and the optimized artefacts can be served by any standards-compliant tile infrastructure.
