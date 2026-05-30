@@ -270,8 +270,7 @@ The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre
     The worker invokes \texttt{layer.isHidden(this.zoom, true)} to skip bucket creation during tile parsing, while the renderer returns early from \texttt{renderLayer} on \texttt{layer.isHidden(this.transform.zoom)} before dispatching draw calls.
     
     \begin{minipage}{\dimexpr\linewidth\relax}
-\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method},label=lst:ishidden]
-// src/style/style_layer.ts:328-332
+\begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS \texttt{isHidden} method from \texttt{src/style/style\_layer.ts}},label=lst:ishidden]
 isHidden(zoom: number = this.minzoom, roundMinZoom: boolean = false) {
     if (this.minzoom && zoom < (roundMinZoom ? Math.floor(this.minzoom) : this.minzoom)) return true;
     if (this.maxzoom && zoom >= this.maxzoom) return true;
