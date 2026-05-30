@@ -231,7 +231,10 @@ Among these passes, we expect constant folding to dominate because reducing an e
 
 We organize the expression pass engine as a table of rewrite rules (\cref{tab:all_rewrite_rules}), each gated by a \emph{pass flag} (which pass must be enabled) and scoped to a \emph{rule scope} (whether the rule applies to filters only, to paint/layout properties, or to both).
 Selectivity reordering runs as a separate pass after the rewrite table has stabilised.
-We further classify rules by their \emph{type}: \emph{pure} rules operate on the expression array alone, \emph{MIR-aware} rules additionally consult the specification's type metadata (e.g.\ to determine whether an operator is pure or to look up default values), and \emph{stats-driven} rules are recursive tree folds that receive tile statistics and layer-level context.
+We further classify rules by their \emph{type}:
+	\emph{pure} rules operate on the expression array alone,
+	\emph{MIR-aware} rules additionally consult the specification's type metadata (e.g.\ to determine whether an operator is pure or to look up default values), and
+	\emph{stats-driven} rules are recursive tree folds that receive tile statistics and layer-level context.
 A post-order visitor walks every expression node in the style. At each node, it tests all applicable peephole rules and the first matching rule fires.
 Stats-driven rules run as separate tree folds after the peephole pass, because they require recursive context threading that the node-local peephole architecture does not provide.
 We modeled this architecture on peephole optimizers in production compilers.
