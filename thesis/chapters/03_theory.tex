@@ -148,8 +148,11 @@ The client requests only the tiles intersecting the current viewport, and as the
 When a client requests a tile at a zoom level beyond the source's maximum, the renderer \emph{overzooms}: it upscales the nearest available tile from the source's highest available zoom to fill the viewport.
 
 The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched. A layer's effective visibility at a given camera zoom is therefore a function of both the layer's filter and the source's \mlprop{maxzoom}, not the layer bounds alone.
-This observation has direct consequences for any optimizer that rewrites zoom bounds. Removing a layer at zoom~14, for example, would suppress its rendering at zoom~15 and beyond if the source's \mlprop{maxzoom} is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom. We turn this into the asymmetric \mlprop{minzoom}/\mlprop{maxzoom} tightening rule in \cref{sub:structural_optimizations}.
-\Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \mlprop{maxzoom} tile. \stepcirc{1}~Rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/ \texttt{offsetY}, then \texttt{p.x = p.x * scale - offsetX}). \stepcirc{2}~Clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
+This observation has direct consequences for any optimizer that rewrites zoom bounds.
+Removing a layer at zoom~14, for example, will suppress its rendering at zoom~15 and beyond if the source's \mlprop{maxzoom} is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.
+We turn this into the asymmetric \mlprop{minzoom}/\mlprop{maxzoom} tightening rule in \cref{sub:structural_optimizations}.
+\Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \mlprop{maxzoom} tile.
+\stepcirc{1}~Rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset (\texttt{offsetX}/ \texttt{offsetY}, then $x = x * scale - offsetX$). \stepcirc{2}~Clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
 Both operations consume the source's \mlprop{maxzoom} tile as input, which is what makes \mlprop{maxzoom} tightening risky in a way that \mlprop{minzoom} tightening is not.
 
 \begin{lstlisting}[
