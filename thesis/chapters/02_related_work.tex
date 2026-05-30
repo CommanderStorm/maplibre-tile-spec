@@ -4,7 +4,7 @@
 The literature relevant to close that gap is imbalanced.
 Tile data pruning has been attacked head-on by several open-source tools, each addressing a slice of the problem and no one uniting this work with style rewriting.
 Tile encoding has seen substantial recent activity around columnar formats, but the style is always treated as a downstream consumer rather than an input.
-Style-level optimization has attracted comparatively little research attention, and the closest precedents come from outside the map domain entirely.
+Style-level optimization has attracted comparatively little research attention, and the closest precedents come entirely from outside the map domain.
 Benchmarking methodology, finally, is the area where the prior art is mature, and we mostly borrow rather than contribute.
 
 We work through these areas in the same order:
@@ -15,7 +15,7 @@ and \cref{sec:rw_benchmarking} for rendering benchmarking.
 
 \section{Tile Data Optimization}\label{sec:rw_tile_data}
 
-The most direct approach to reducing tile transfer cost is to remove data that the rendering style does not reference.
+The most direct approach to reduce tile transfer cost is to remove unreferenced data from a style.
 
 Mapbox developed \texttt{vtshaver}\footnote{\url{https://github.com/mapbox/vtshaver}, last accessed 2025-10-20}, a C++/Node.js tool that takes a vector tile and a Mapbox GL style, analyses which layers, features, and properties the style references, and strips everything else.
 This reduces tile size and decoding cost, but \texttt{vtshaver} operates exclusively on the data side.
@@ -35,7 +35,7 @@ It does not perform expression-level rewrites, cross-layer merging, or data-driv
 Tippecanoe\footnote{\url{https://github.com/felt/tippecanoe}, last accessed 2026-04-21} is the standard open-source tool for building vector tilesets from large \ac{GeoJSON} or FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11} collections.
 It implements several data-level optimizations heuristics: feature dropping based on density budgets (\texttt{--drop-densest-as-needed}), polygon coalescing at low zoom levels, Visvalingam line simplification~\cite{visvalingamLineGeneralisationRepeated1993}, and attribute exclusion.
 The line simplification algorithms used throughout the geospatial toolchain (Douglas-Peucker~\cite{douglasALGORITHMSREDUCTIONNUMBER1973} for its computational simplicity and Visvalingam-Whyatt~\cite{visvalingamLineGeneralisationRepeated1993} for its area-based perceptual fidelity) are instances of \emph{cartographic generalization}, the principled reduction of map detail to match the target scale.
-Tile data at different zoom levels is, in effect, a discrete multi-scale generalization hierarchy, though this thesis does not contribute new generalization algorithms.
+Tile data at different zoom levels is, in effect, a discrete multi-scale generalization hierarchy. However, this thesis does not contribute new generalization algorithms.
 These heuristics are effective but purely data-driven. Tippecanoe has no knowledge of which style will render the tiles and therefore cannot tailor its decisions to the rendering workload.
 
 From a cartographic perspective, we understand style-driven tile shaving as a form of \emph{model generalization}~\cite{mcmasterGeneralizationDigitalCartography1992}.
