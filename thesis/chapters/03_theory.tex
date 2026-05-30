@@ -511,6 +511,7 @@ A column has to be both \emph{represented} as a value sequence and \emph{packed}
 
 Following the MLT specification, we call the first kind a \emph{logical-level technique} and the second a \emph{physical-level technique}.
 A column applies zero or more logical techniques in chain and then exactly one physical technique, for example DeltaRLE~$\rightarrow$~FastPFOR.
+
 \Cref{sub:logical_integer_encodings,sub:physical_integer_compressions} catalogue the techniques we use in our data-level optimizations of \cref{ch:methods}.
 
 \subsection{Column-Oriented Storage}\label{sub:column_storage}
