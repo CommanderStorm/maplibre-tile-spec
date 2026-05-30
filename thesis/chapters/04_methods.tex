@@ -83,8 +83,8 @@ The load-time / FPS trade-off underlying these metrics is discussed in \cref{sec
 \subsection{Three-Level Optimization Pipeline}\label{sub:pipeline}
 
 \Cref{fig:system_architecture} sketches the optimizer system as a whole.
-At the centre sits the \emph{Optimiser}, a pipeline of passes at three levels of abstraction.
-Around it are three supporting components, each detailed in its own section.
+At the centre sits the \emph{optimiser}, a pipeline of passes at three levels of abstraction.
+Around the optimiser are three supporting components, each detailed in its own section.
 A code-generation front end (\cref{sub:codegen}) produces typed Rust types from the upstream MapLibre style specification.
 A tile-statistics scanner (\cref{sub:tile_statistics}) profiles \ac{MVT} tiles for the stats-driven and data-level passes.
 A validation harness (pixel-exact render tests plus a curated style corpus) exercises both pipelines against the visual-equivalence guarantee of \cref{eq:visual_equivalence}.
@@ -171,7 +171,7 @@ Hand-written Rust types are not a viable alternative: MapLibre publishes the spe
 
 The generation pipeline (top row of \cref{fig:system_architecture}) proceeds in three stages.
 First, it \emph{decodes} the published \texttt{v8.json} into an internal representation.
-Second, it \emph{normalizes} the result into a stable intermediate representation (the \texttt{MIR}) that resolves cross-cutting concerns.
+Second, it \emph{normalizes} the result into a stable intermediate representation (the \texttt{MIR}\footnote{The \texttt{MIR} draws on the normalized-IR design of MLIR~\cite{lattnerMLIRScalingCompiler2021}, providing a stable form between upstream sources and downstream consumers (the codegen emitter and the structural passes). The dialect, lowering, and pass-manager machinery of the full MLIR framework is not carried over. The optimizer operates at a single abstraction level with no code-generation target, and round-trips its output to JSON for unmodified MapLibre renderers.}) that resolves cross-cutting concerns.
 In particular, it collapses paint and layout properties that the spec defines across multiple sections into per-layer field definitions carrying type, default, and expression-capability metadata.
 Third, a code emitter \emph{generates} Rust sources with round-trip serialization support.
 
