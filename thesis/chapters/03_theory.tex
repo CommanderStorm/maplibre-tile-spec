@@ -67,7 +67,7 @@ These low-level graphics building blocks are linked to map data through sprites,
 		{over the network};
 		
 		% Data Source (bottom)
-		\node[datasource, below=1.4cm of server] (datasource) {Data Source};
+		\node[datasource, below=1cm of server] (datasource) {Data Source};
 		
 		\draw[arrow] (datasource.north) -- node[label] {convert to serving-friendly representation} (server.south);
 	\end{tikzpicture}
