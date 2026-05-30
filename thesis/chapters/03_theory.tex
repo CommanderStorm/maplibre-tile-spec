@@ -134,7 +134,7 @@ Sprites in computer graphics are a fairly solved problem.
 To avoid having to request hundreds to thousands of small files or to have to render SVGs on a client, this work is shifted to the server and the server delivers sprite sheets.
 This allows efficient \ac{GPU} Sprite instancing.
 
-Common open-source renderers like maplibre or source available renderers like mapbox do this by shipping plain \ac{PNG} or \acs{SDF}-\acs{PNG}~\cite{greenImprovedAlphatestedMagnification2007} sprite sheets together with a lookup table recording where on the sprite sheet each sprite is located, whether it is a \ac{SDF}, and whether there are regions that can be stretched to account for placing text inside the sprite.
+Common open-source renderers like MapLibre or source available renderers like Mapbox do this by shipping plain \ac{PNG} or \acs{SDF}-\acs{PNG}~\cite{greenImprovedAlphatestedMagnification2007} sprite sheets together with a lookup table recording where on the sprite sheet each sprite is located, whether it is a \ac{SDF}, and whether there are regions that can be stretched to account for placing text (for example for highway shields) inside the sprite.
 
 \subsection{Tiles}\label{sec:tiles}
 
