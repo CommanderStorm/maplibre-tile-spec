@@ -82,8 +82,7 @@ We characterize each rule by its pass assignment, scope (filter-only or both fil
 
 \section{MapLibre GL-JS Reference Excerpts}
 
-The two render-pass loops the painter runs over \texttt{layerIds}.
-The opaque pass top-to-bottom and the translucent pass bottom-to-top - are the basis for the layer-merging savings discussed in \cref{sub:structural_optimizations}.
+The two render-pass loops the painter runs over \texttt{layerIds} (the opaque pass top-to-bottom and the translucent pass bottom-to-top) are the basis for the layer-merging savings discussed in \cref{sub:structural_optimizations}.
 Every layer eliminated by a merge shortens \texttt{layerIds} and removes one texttt{renderLayer} dispatch from each pass.
 
 \begin{lstlisting}[language=TypeScript,caption={MapLibre GL-JS painter render loop (\texttt{src/render/painter.ts})},label=lst:painter_loop]
@@ -606,6 +605,7 @@ Form factor   & Desktop workstation \\
 \bottomrule
 \end{tabular}
 \caption{Workstation hardware specifications}
+\label{tab:bench_hardware}
 \end{table}
 
 \subsection{Operating System and Graphics Stack}\label{app:bench_os}
@@ -685,7 +685,7 @@ Used chrome launch flags are \texttt{--enable-gpu},\allowbreak\texttt{--ignore-g
 		Device pixel ratio           & \texttt{1.0} (\cref{sec:visual_correctness}) \\
 		\bottomrule
 	\end{tabular}
-	\caption{Headless browser harness driving the rendering scenarios. The bench harness produces the timings reported in \cref{ch:experiments}; the separate visual-check harness is used offline for \texttt{pixelmatch}-based correctness validation.}
+	\caption{Headless browser harness driving the rendering scenarios. The bench harness produces the timings reported in \cref{ch:experiments}. The separate visual-check harness is used offline for \texttt{pixelmatch}-based correctness validation.}
 	\label{tab:bench_browser}
 \end{table}
 
