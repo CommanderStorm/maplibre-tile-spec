@@ -22,7 +22,7 @@ $\mathcal{O}$ pays a one-off preprocessing cost $C_\text{total}(S, T)$, analytic
 The deployment cost is intentionally not formalised as a single closed-form function: it depends on hardware, camera scenario, and tile cache state, and is therefore measured empirically rather than declared analytically.
 $\mathcal{O}$ is correspondingly not posed as a single-objective minimisation.
 Several passes (e.g.\ selectivity reordering, \cref{sub:expression_optimizations}) deliberately trade a small regression in load time for a larger improvement in FPS, and the encoder competition (\cref{sub:encoding_strategies}) locally minimises encoded byte size as a contributing quantity to load time without committing to any weighting between the deployment axes.
-We characterise each pass empirically against the metric battery of \cref{sub:metrics} in the ablation of \cref{ch:experiments}, and the resulting per-axis breakdown is what lets an operator compose the pass set that suits their deployment priorities.
+We characterise each pass empirically against the metric battery of \cref{sub:metrics} in the ablation of \cref{ch:experiments}, and the resulting per-axis breakdown is what lets an operator compose the pass set that suits the deployment priorities.
 
 $\mathcal{O}$ must satisfy two formal constraints.
 The first constraint is \emph{visual equivalence}.
@@ -77,7 +77,7 @@ The following concerns are deliberately out of scope:
 
 To evaluate the effectiveness of the optimizations strategies developed in this work, we adopted a benchmarking-driven approach.
 We first established a reliable performance baseline and then ran cumulative ablation experiments that isolate the contribution of each optimizations pass.
-Under the soundness contract of \cref{sec:scope}, the passes from~\cref{sub:pipeline} together aim to improve the deployment metrics of \cref{sub:metrics} in exchange for the preprocessing cost $C_\text{total}$ of \cref{sub:preprocessing_cost_model}.
+Under the soundness contract of \cref{sec:scope}, the passes from~\cref{sub:pipeline} aim to improve the deployment metrics of \cref{sub:metrics} in exchange for the preprocessing cost $C_\text{total}$ of \cref{sub:preprocessing_cost_model}.
 The load-time / FPS trade-off underlying these metrics is discussed in \cref{sec:problem_statement}.
 
 \subsection{Three-Level Optimization Pipeline}\label{sub:pipeline}
