@@ -134,7 +134,8 @@ Sprite rendering is a well-established technique in computer graphics.
 To avoid having to request hundreds to thousands of small files or to have to render SVGs on a client, this work is shifted to the server and the server delivers sprite sheets.
 This allows efficient \ac{GPU} Sprite instancing.
 
-Common renderers like MapLibre or Mapbox do this by shipping plain \ac{PNG} or \acs{SDF}-\acs{PNG}~\cite{greenImprovedAlphatestedMagnification2007} sprite sheets together with a lookup table recording where on the sprite sheet each sprite is located, whether it is a \ac{SDF}, and whether there are regions that can be stretched to account for placing text (for example for highway shields) inside the sprite.
+Common renderers like MapLibre or Mapbox do this by shipping plain \ac{PNG} or \acs{SDF}-\acs{PNG}~\cite{greenImprovedAlphatestedMagnification2007} sprite sheets together with a lookup table.
+The lookup table records the location of each sprite, whether it is an SDF, and optional stretchable regions for symbols such as highway shields.
 
 \subsection{Tiles}\label{sec:tiles}
 
