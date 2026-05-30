@@ -566,7 +566,7 @@ Our encoder uses two:
 Choosing the physical technique for a given logical chain has been studied systematically.
 Abadi et~al.~\cite{abadiIntegratingCompressionExecution2006} proposed property-based selection rules, and Damme et~al.~\cite{dammeComprehensiveExperimentalSurvey2019} developed a cost-model-driven strategy that picks the lowest expected cost for a given data distribution.
 A third school sidesteps both rule and model and decides empirically: BtrBlocks~\cite{kuschewskiBtrBlocksEfficientColumnar2023} trial-encodes candidate schemes on a sample of each column block and keeps the smallest result, arguing that lightweight on-sample trials are both more accurate than a cost model and cheap enough to run at encode time.
-Our encoding competition in \cref{sub:encoding_strategies} sits in this same trial-based family.
+Our encoding competition in \cref{sub:encoding_strategies} sits in the same trial-based family.
 It trials a pruned set of (logical chain, physical technique) pairs and retains the smallest output, but operates on each whole tile rather than on a sample, since per-tile data volumes are modest.
 
 \subsection{String Compression}\label{sub:string_compression}
@@ -575,7 +575,7 @@ String data in vector tiles includes feature names, road classes, land-use categ
 The same logical-then-physical split applies as for integer columns.
 
 \textbf{Dictionary encoding} is the logical-level string technique.
-It stores each unique string once and replaces occurrences with integer indices, which is effective when many features share the same value (e.g., thousands of features with \texttt{class = \mlval{"residential"}}).
+It stores each unique string once and replaces occurrences with integer indices, which is effective when many features share the same value (e.g. thousands of features with \texttt{class = \mlval{"residential"}}).
 The resulting index column is itself handed to the integer techniques of \cref{sub:logical_integer_encodings,sub:physical_integer_compressions}.
 
 \textbf{\acf{FSST}}~\cite{bonczFSSTFastRandom2020} is the physical-level string technique.
