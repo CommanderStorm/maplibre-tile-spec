@@ -82,11 +82,11 @@ As a lower-level representation layer for displaying map content, the following 
 \emph{Fonts} provide the glyphs used to render text labels.
 Occasionally, additional assets such as 3D geometry models or terrain are used as well.
 
-There are several approaches to delivering client-side rendered vector maps.
+There are several approaches to deliver client-side rendered vector maps.
 
 Styles, sprites, and fonts are typically served from a file server or \ac{CDN} and require little processing.
 In some cases, parts of these resources may be generated dynamically, for example to support complex text shaping for Arabic, Hebrew, Indic, or Japanese scripts as described by Wipfli~\cite{wipfliComplexTextPlugin2025} for MapLibre or Lengyel~\cite{lengelDecadeSlug} for SLUG.
-This processing currently usually handled ahead of time on the server-side.
+This processing is currently usually handled ahead of time on the server-side.
 
 Tiles, by contrast, can be stored and accessed using three major approaches:
 
