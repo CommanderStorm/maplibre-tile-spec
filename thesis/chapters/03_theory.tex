@@ -580,7 +580,7 @@ The resulting index column is itself handed to the integer techniques of \cref{s
 
 \textbf{\acf{FSST}}~\cite{bonczFSSTFastRandom2020} is the physical-level string technique.
 It is a lightweight, block-oriented compressor that learns a \emph{symbol table} of up to 255 frequent byte sequences from the input corpus and replaces occurrences with single-byte codes.
-Unlike general-purpose compressors such as LZ77 or zstd, \ac{FSST} preserves random access, so each compressed string can be decompressed independently.
+Unlike general-purpose compressors such as LZ77~\cite{zivUniversalAlgorithmSequential1977a} or ~\cite{colletZstandardCompressionApplication2021}, \ac{FSST} preserves random access, so each compressed string can be decompressed independently.
 The symbol table is stored once and amortised over all strings in the column.
 
 The two compose in the same logical-then-physical pattern.
