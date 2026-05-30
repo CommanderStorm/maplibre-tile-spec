@@ -64,8 +64,8 @@ Its row orientation means that accessing a single property column requires scann
 Tremmel et al.~\cite{tremmelMapLibreTileNext2025b} introduced the MapLibre Tile (MLT) format, a columnar alternative that achieves up to $3\times$ tile size reduction on encoded tilesets and up to $6\times$ on certain large tiles relative to \ac{MVT}.
 \ac{MLT} uses column-oriented storage with lightweight compression (delta encoding, run-length encoding, dictionary encoding, and \ac{FSST}~\cite{bonczFSSTFastRandom2020}) and is designed for \ac{GPU}-accelerated processing.
 At the archive layer, Tremmel~\cite{tremmelCOMTILESCASESTUDY2023} proposed COMTiles, a cloud-optimized tile archive format that complements the per-tile encoding of \ac{MLT} by addressing the container and delivery layer for planet-scale tilesets.
-However, their work does not consider styles:
-the encoding strategy is chosen without knowledge which properties the renderer will actually access, leaving potential for further size reduction through style-aware pruning before encoding.
+However, their work does not consider styles.
+The encoding strategy is chosen without knowledge which properties the renderer will actually access, leaving potential for further size reduction through style-aware pruning before encoding.
 Removing properties and features changes column cardinalities and value distributions. For instance, pruning rare road classes can convert a high-cardinality string column into one amenable to dictionary or run-length encoding, so the optimal encoding strategy for the shaved tile differs from the original.
 
 The encoding techniques used in \ac{MLT} draw on a rich literature in columnar database compression.
