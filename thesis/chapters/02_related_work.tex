@@ -92,7 +92,7 @@ GeoParquet uses the same per-page encoding competition (dictionary, \ac{RLE}, de
 The reason it is not, in practice, is granularity.
 Parquet's per-column-chunk metadata is amortised over the large row groups of analytical workloads, but at the \qtyrange{10}{100}{\kilo\byte} tile sizes we care about that overhead dominates the payload.
 A purpose-built tile format earns its keep here despite the ecosystem support that adopting GeoParquet would have brought along.
-Our data encoding level optimisations are explained in \cref{sub:encoding_strategies}.
+Our encoding level optimisations are explained in \cref{sub:encoding_strategies}.
 
 \section{Style Optimization}\label{sec:rw_style_optimizations}
 
@@ -119,7 +119,7 @@ Our layer-merging pass (\cref{ch:methods}) attacks the same declarative-rule-mer
 More broadly, rule-based optimization is a well-studied paradigm in databases and compilers, and a rule-based style rewriter sits between two architectural reference points.
 Pirahesh et~al.~\cite{piraheshExtensibleRuleBased1992} established \emph{rule-based query rewriting} as a distinct optimization phase in the Starburst system, in which declarative transformation rules are applied in priority order before cost-based plan selection.
 The modern state of the art for avoiding rule-ordering sensitivity is \emph{equality saturation}~\cite{tateEqualitySaturationNew2009,willseyEggFastExtensible2021}, in which an e-graph simultaneously represents all equivalent forms and selects an optimum after saturation.
-\Cref{ch:methods} positions the expression-level pass against these two reference points.
+Our style level optimisations are explained in \cref{sub:structural_optimizations}.
 
 \section{Rendering Performance Benchmarking}\label{sec:rw_benchmarking}
 
