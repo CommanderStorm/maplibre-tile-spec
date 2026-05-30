@@ -100,8 +100,10 @@ The three pass levels at the centre are:
     \item \textbf{Data passes} (\cref{sub:data_optimizations}) transform the served tile data via a style-driven pruning advisory and the conversion from \ac{MVT} to \ac{MLT}.
 \end{enumerate}
 
-\noindent We chose this ordering as a deliberate resolution of the \emph{phase ordering problem}~\cite{clickCombiningAnalysesCombining1995}.
-Expression passes run first so that structural passes operate on already-simplified expressions, dead elimination precedes layer merging so that gaps left by removed layers expose new merging opportunities, and the data phase consumes the fully optimized style so that the pruning advisory reflects the final set of live layers and properties.
+\noindent We chose this ordering to address the \emph{phase ordering problem}~\cite{clickCombiningAnalysesCombining1995}.
+Expression passes run first, allowing subsequent structural passes to operate on simplified expressions.
+Dead elimination then removes unused layers before layer merging, creating additional merging opportunities.
+Finally, the data phase processes the fully optimized style so that pruning recommendations are based on the final set of live layers and properties.
 
 \begin{figure}[htbp]
     \centering
