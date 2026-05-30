@@ -150,11 +150,12 @@ When a client requests a tile at a zoom level beyond the source's maximum, the r
 The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched. A layer's effective visibility at a given camera zoom is therefore a function of both the layer's filter and the source's \mlprop{maxzoom}, not the layer bounds alone.
 This observation has direct consequences for any optimizer that rewrites zoom bounds.
 Removing a layer at zoom~14, for example, will suppress its rendering at zoom~15 and beyond if the source's \mlprop{maxzoom} is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.
-We turn this into the asymmetric \mlprop{minzoom}/\mlprop{maxzoom} tightening rule in \cref{sub:structural_optimizations}.
+We turn this into the asymmetric \mlprop{minzoom}/ \mlprop{maxzoom} tightening rule in \cref{sub:structural_optimizations}.
 \Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \mlprop{maxzoom} tile.
 \stepcirc{1}~Rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset ($offsetX \notin \{null,0\} \cup offsetY \notin \{null,0\} \Rightarrow x = x * scale - offsetX$). \stepcirc{2}~Clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
 Both operations consume the source's \mlprop{maxzoom} tile as input, which is what makes \mlprop{maxzoom} tightening risky in a way that \mlprop{minzoom} tightening is not.
 
+\clearpage
 \begin{lstlisting}[
   language=TypeScript,
   caption={Condensed MapLibre GL-JS overzoom implementation (\texttt{src/source/vector\_tile\_overzoomed.ts})},
@@ -234,7 +235,7 @@ Three architectural approaches to map styling have been established:
 \begin{description}
     \item[\textbf{Server-side declarative}] styles, such as MapCSS, define rendering rules on the server.
     The server evaluates the style against the data and produces pre-rendered raster tiles that the client displays without further interpretation.
-    This simplifies the client but prevents client-side restyling and limits interactivity.
+    This simplifies the clients rendering logic, but prevents client-side restyling and limits interactivity.
 
     \item[\textbf{Client-side declarative}] \begin{sloppypar} styles, as used by MapLibre\footnote{\url{https://maplibre.org/}, last accessed 2026-03-16} and Mapbox\footnote{\url{https://www.mapbox.com/}, last accessed 2026-03-16}, transmit a machine-readable style document to the client, which interprets the style at render time.
     This style can also be shipped with the code of the rendering engine to the client or partially constructed (e.g. road shields) there.
