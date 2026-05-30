@@ -253,12 +253,12 @@ The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre
     \item[\textbf{Sources}] declare where tile data comes from (tile server URL, or inline \ac{GeoJSON}) and at which zoom levels tiles are available (\mlprop{minzoom}, \mlprop{maxzoom}).
 
     \item[\textbf{Layers}] are the central rendering unit.
-    Each layer references a source and a \emph{source-layer} within that source, specifies a \emph{type} (\texttt{\mlval{fill}}, \texttt{\mlval{line}}, \texttt{\mlval{circle}}, \texttt{\mlval{symbol}}, \texttt{\mlval{fill-extrusion}}, \texttt{\mlval{raster}}, \texttt{\mlval{background}}, or \texttt{\mlval{hillshade}}) and carries a set of paint and layout properties that control its appearance.
+    Each layer references a source and a \emph{source-layer} within that source, specifies a \emph{type} (\texttt{\mlval{fill}}, \texttt{\mlval{line}}, \texttt{\mlval{circle}}, \texttt{\mlval{symbol}}, \texttt{\mlval{fill-extrusion}}, \texttt{\mlval{raster}}, \texttt{\mlval{background}} or \texttt{\mlval{hillshade}}) and carries a set of paint and layout properties that control its appearance.
     Layers are drawn in declaration order from bottom to top.
     \begin{description}
 
     \item[\textbf{Filters}] are boolean expressions attached to layers that select which features from the source-layer are rendered.
-    A feature is drawn by a layer only if the layer's filter evaluates to \mlval{true} for that feature's properties and geometry type.
+    A feature is drawn by a layer only if the layer's filter evaluates \mlval{true} for that feature's properties and geometry type.
 
     \item[\textbf{Paint and layout properties}] control the visual appearance and placement of rendered features.
     Paint properties (colors, opacities, widths) can be changed without triggering a re-layout.
@@ -344,7 +344,7 @@ A MapLibre map carries two runtime key-value stores that sit alongside the JSON 
 \emph{Feature state} is a per-feature map keyed by the (source, source-layer, feature ID) triple, mutated from the host application via \texttt{setFeatureState} and \texttt{removeFeatureState}, and read from style expressions through the \texttt{[\mlop{"feature-state"},~key]} operator.
 Its canonical use is interactive UI such as hover highlighting or click-driven selection.
 \emph{Global state} is a map-wide key-value store mutated via \texttt{setGlobalStateProperty} and read through the \texttt{[\mlop{"global-state"},~key]} operator.
-It typically backs application-wide toggles such as a day/night switch or a per-mode road-class filter.
+It typically backs up application-wide toggles such as a day/night switch or a per-mode road-class filter.
 
 A state change re-evaluates the dependent paint expressions at render time, without re-parsing the tile or re-running bucket population.
 This is what keeps feature state cheap enough to drive hover effects.
