@@ -53,7 +53,7 @@ Our optimizations operate downstream, on the data and style that emerge from suc
 A rendering style is a declarative specification over a tabular feature set, which puts style-driven tile pruning in the same shape as the column- and predicate-skipping problems that database query optimizers have long attacked.
 Rule-based query rewriting was established as a distinct optimization phase by Pirahesh et~al.'s Starburst system~\cite{piraheshExtensibleRuleBased1992}, and projection and predicate pushdown~\cite{graefeQueryEvaluationTechniques1993} are the canonical mechanisms by which modern engines such as Spark SQL~\cite{armbrustSparkSQLRelational2015} avoid materialising columns the query never reads.
 Columnar storage systems built on Parquet (whose nested representation originates in Dremel's record shredding and assembly~\cite{melnikDremelInteractiveAnalysis}) or ORC depend on this pushdown, and Abadi et~al.~\cite{abadiMaterializationStrategiesColumnOriented2007} characterised the early versus late materialisation trade-off it implies.
-The data level optimisations are characterised in \cref{sub:data_optimizations}.
+Our data level optimisations are explained in \cref{sub:data_optimizations}.
 
 \section{Tile Encoding and Format Innovation}\label{sec:rw_tile_encoding}
 
@@ -92,6 +92,7 @@ GeoParquet uses the same per-page encoding competition (dictionary, \ac{RLE}, de
 The reason it is not, in practice, is granularity.
 Parquet's per-column-chunk metadata is amortised over the large row groups of analytical workloads, but at the \qtyrange{10}{100}{\kilo\byte} tile sizes we care about that overhead dominates the payload.
 A purpose-built tile format earns its keep here despite the ecosystem support that adopting GeoParquet would have brought along.
+Our data encoding level optimisations are explained in \cref{sub:encoding_strategies}.
 
 \section{Style Optimization}\label{sec:rw_style_optimizations}
 
