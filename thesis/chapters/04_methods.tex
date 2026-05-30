@@ -718,7 +718,7 @@ A property is mergeable if, according to the MIR field metadata,
   it supports feature-driven expressions (i.e.\ its \texttt{expression.feature} flag is \mlval{true}, meaning it can vary per feature within a layer) and
   it is not a zoom ramp (\mlop{interpolate} or \mlop{step} over \texttt{[\mlop{"zoom"}]}).
   Both of these must remain at the top level of a property expression and cannot be nested inside a \mlop{case}/ \mlop{match} wrapper.
-  Doing so would introduce an $BOt$ which is not allowed according to \cref{eq:visual_equivalence}.
+Doing so would introduce an $BOt$ which is not allowed according to \cref{eq:visual_equivalence}.
 Camera-only properties (such as \texttt{\mlprop{line-dasharray}} or \texttt{\mlprop{*-translate}}) must be uniform across all layers in a merge group, since they cannot be conditioned on feature attributes.
 Layer types that support sort keys (\texttt{\mlval{fill}}, \texttt{\mlval{line}}, \texttt{\mlval{circle}}, \texttt{\mlval{fill-extrusion}}) are candidates. The \texttt{\mlval{symbol}} type is excluded for the placement-scope reason given above.
 
