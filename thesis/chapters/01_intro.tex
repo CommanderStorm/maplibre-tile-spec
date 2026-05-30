@@ -3,7 +3,7 @@
 An interactive vector map runs two paths: a per-tile path that fetches, decodes, and binds the style to each tile's features at load time, and a per-frame path that re-evaluates view-dependent expressions and submits draw calls to the \ac{GPU}.
 A slow network stalls the first. A battery- or thermally-bound device stalls the second.
 MapLibre GL~JS\footnote{\url{https://maplibre.org/maplibre-gl-js/docs/}, last accessed 2026-05-28} and Mapbox GL~JS\footnote{\url{https://www.mapbox.com/mapbox-gljs}, last accessed 2026-05-28} deliver these maps by streaming tiled geometry to the browser.
-They empower a client with client-side style document drive a \ac{WebGL} or \ac{WebGPU} based rendering pipeline.
+They empower a client with client-side style document driving a \ac{WebGL} or \ac{WebGPU} based rendering pipeline.
 This architecture is what makes panning, zooming, and rotation smooth when it works, and what makes them stutter when it does not.
 
 As map deployments scale from personal projects to platforms serving millions of daily users, the cost of suboptimal performance compounds.
