@@ -119,7 +119,7 @@ Our layer-merging pass (\cref{ch:methods}) attacks the same declarative-rule-mer
 More broadly, rule-based optimization is a well-studied paradigm in databases and compilers, and a rule-based style rewriter sits between two architectural reference points.
 Pirahesh et~al.~\cite{piraheshExtensibleRuleBased1992} established \emph{rule-based query rewriting} as a distinct optimization phase in the Starburst system, in which declarative transformation rules are applied in priority order before cost-based plan selection.
 The modern state of the art for avoiding rule-ordering sensitivity is \emph{equality saturation}~\cite{tateEqualitySaturationNew2009,willseyEggFastExtensible2021}, in which an e-graph simultaneously represents all equivalent forms and selects an optimum after saturation.
-Our style level optimisations are explained in \cref{sub:structural_optimizations}.
+Our style level optimisations are explained in \cref{sub:expression_optimizations,sub:structural_optimizations}.
 
 \section{Rendering Performance Benchmarking}\label{sec:rw_benchmarking}
 
