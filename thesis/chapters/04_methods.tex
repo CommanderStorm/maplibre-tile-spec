@@ -85,7 +85,7 @@ The load-time / FPS trade-off underlying these metrics is discussed in \cref{sec
 \Cref{fig:system_architecture} sketches the optimizer system as a whole.
 At the centre sits the \emph{optimiser}, a pipeline of passes at three levels of abstraction.
 Around the optimiser are three supporting components, each detailed in its own section.
-A code-generation front end (\cref{sub:codegen}) produces typed Rust types from the upstream MapLibre style specification.
+A code-generation front end (\cref{sub:codegen}) produces Rust types from the upstream MapLibre style specification.
 A tile-statistics scanner (\cref{sub:tile_statistics}) profiles \ac{MVT} tiles for the stats-driven and data-level passes.
 A validation harness (pixel-exact render tests plus a curated style corpus) exercises both pipelines against the visual-equivalence guarantee of \cref{eq:visual_equivalence}.
 The three pass levels at the centre are:
