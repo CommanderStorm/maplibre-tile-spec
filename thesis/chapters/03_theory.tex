@@ -235,7 +235,7 @@ Three architectural approaches to map styling have been established:
 \begin{description}
     \item[\textbf{Server-side declarative}] styles, such as MapCSS, define rendering rules on the server.
     The server evaluates the style against the data and produces pre-rendered raster tiles that the client displays without further interpretation.
-    This simplifies the clients rendering logic, but prevents client-side restyling and limits interactivity.
+    This simplifies the clients rendering logic, but prevents client-side restyling and thus limits interactivity.
 
     \item[\textbf{Client-side declarative}] \begin{sloppypar} styles, as used by MapLibre\footnote{\url{https://maplibre.org/}, last accessed 2026-03-16} and Mapbox\footnote{\url{https://www.mapbox.com/}, last accessed 2026-03-16}, transmit a machine-readable style document to the client, which interprets the style at render time.
     This style can also be shipped with the code of the rendering engine to the client or partially constructed (e.g. road shields) there.
