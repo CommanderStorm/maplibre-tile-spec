@@ -52,7 +52,8 @@ Both halves are exercised on the style level by the round-trip proptest and on t
 \section{Scope}\label{sec:scope}
 
 We target MapLibre GL~JS as the system under test.
-As discussed in \cref{sec:styles}, performance research on interactive vector maps is concentrated on Mapbox and MapLibre styles. The Mapbox codebase is proprietary and may not be evaluated without explicit consent, leaving MapLibre as the only viable open research target.
+As discussed in \cref{sec:styles}, performance research on interactive vector maps is concentrated on Mapbox and MapLibre styles.
+The Mapbox codebase is proprietary and may not be evaluated without explicit consent, leaving MapLibre as the only viable open research target.
 Within MapLibre, the web renderer \texttt{maplibre-gl-js} is the reference implementation that first tracks new specification features and exposes the richest instrumentation hooks for Puppeteer-driven benchmarking, which is what makes it our benchmark target rather than the Native or mobile renderers that share the same styling engine.
 
 In scope are the three pass families that make up the optimizer pipeline (\cref{sub:pipeline}): expression-level rewrites on style~\ac{JSON} (constant folding, algebraic simplification, statistics-driven folding, selectivity reordering), structural rewrites over a typed style model (dead-layer elimination, metadata refinement, layer merging), and data-level rewrites on the served tile payload (style-driven tile shaving and \ac{MLT} encoding-strategy selection).
@@ -61,16 +62,20 @@ Style and data passes are co-designed so that data rewrites are advised by the o
 The following concerns are deliberately out of scope:
 
 \begin{description}
-    \item[\emph{Energy measurement}] Energy effects are discussed only qualitatively. We report no \ac{RAPL} or battery deltas because the benchmark host is a desktop workstation rather than a mobile device (\cref{sub:metrics}).
+    \item[\emph{Energy measurement}] Energy effects are discussed only qualitatively.
+We report no \ac{RAPL} or battery deltas because the benchmark host is a desktop workstation rather than a mobile device (\cref{sub:metrics}).
     \item[\emph{Lossy geometry transformations}] Coordinate-precision reduction, Visvalingam-Whyatt, Douglas-Peucker, and polygon coalescing would violate the pixel-identity contract of \cref{eq:visual_equivalence}.
     Writing a visually non-lossy gepgraphic simplification is deferred to future work.
     We therefore quantify the size reductions achievable \emph{without} touching geometry, understating that there is headroom that composition with an geographic simplifier could reach at the cost of changing the style output.
     \item[\emph{Symbol-layer merging}] MapLibre evaluates symbol placement per layer through a tile-wide\newline
-    \noindent\texttt{CollisionIndex}, so merging symbol layers would alter label suppression order. The detailed argument is given along the structural passes (\cref{sub:structural_optimizations}).
+    \noindent\texttt{CollisionIndex}, so merging symbol layers would alter label suppression order.
+The detailed argument is given along the structural passes (\cref{sub:structural_optimizations}).
     \item[\emph{Proprietary style corpora}] Mapbox Streets, Esri vector basemaps, and similar commercial styles are excluded by their terms of service.
     \item[\emph{Tile schemas other than \ac{OMT}}] Non-\ac{OMT} vector tile sources are excluded from the deep-corpus evaluation, and the stats-driven thresholds used by the pipeline are tuned on Germany~\ac{OMT} only (\cref{sec:gathering_sample}).
-    \item[\emph{Online and incremental serving}] The optimizer is an offline, one-shot rebuild over a (style, tile~set) pair. No integration with a live tile server is assumed, and the optimized artefacts can be served by any standards-compliant tile infrastructure.
-    \item[\emph{The reference \ac{MLT} encoder}] The legacy self-contained \ac{MLT} encoder of Tremmel~\&~Zink~\cite{tremmelMapLibreTileNext2025b} is retained as a baseline for the encoding experiments of \cref{ch:experiments}. It is not a target of optimization in this thesis.
+    \item[\emph{Online and incremental serving}] The optimizer is an offline, one-shot rebuild over a (style, tile~set) pair.
+No integration with a live tile server is assumed, and the optimized artefacts can be served by any standards-compliant tile infrastructure.
+    \item[\emph{The reference \ac{MLT} encoder}] The legacy self-contained \ac{MLT} encoder of Tremmel~\&~Zink~\cite{tremmelMapLibreTileNext2025b} is retained as a baseline for the encoding experiments of \cref{ch:experiments}.
+It is not a target of optimization in this thesis.
 \end{description}
 
 \section{Approach and Basic Building Blocks}\label{sec:approach}
@@ -159,9 +164,11 @@ Finally, the data phase processes the fully optimized style so that pruning reco
         \draw[validation] (test) -- node[right, validationlabel] {validate} (serial);
         \draw[validation] (test) -- node[right, validationlabel] {validate} (opt);
     \end{tikzpicture}
-    \caption{System architecture.
+    \caption{
+System architecture.
     The \emph{codegen pipeline} (top) transforms the upstream \texttt{v8.json} style specification through three stages into generated Rust types (\texttt{SerialSpec}) used for typed style manipulation, with the MIR providing spec metadata to the optimizer.
-    The \emph{data pipeline} (bottom) decodes \acs{MVT} tiles and scans them to produce tile statistics that feed into data-driven optimizations passes. Render tests validate round-trip correctness and the style corpus is used to both validate the codegen and evaluate the optimizer.}
+    The \emph{data pipeline} (bottom) decodes \acs{MVT} tiles and scans them to produce tile statistics that feed into data-driven optimizations passes.
+Render tests validate round-trip correctness and the style corpus is used to both validate the codegen and evaluate the optimizer.}
     \label{fig:system_architecture}
 \end{figure}
 
@@ -173,7 +180,9 @@ Hand-written Rust types are not a viable alternative: MapLibre publishes the spe
 
 The generation pipeline (top row of \cref{fig:system_architecture}) proceeds in three stages.
 First, it \emph{decodes} the published \texttt{v8.json} into an internal representation.
-Second, it \emph{normalizes} the result into a stable intermediate representation (the \texttt{MIR}\footnote{The \texttt{MIR} draws on the normalized-IR design of MLIR~\cite{lattnerMLIRScalingCompiler2021}, providing a stable form between upstream sources and downstream consumers (the codegen emitter and the structural passes). The dialect, lowering, and pass-manager machinery of the full MLIR framework is not carried over. The optimizer operates at a single abstraction level with no code-generation target, and round-trips its output to JSON for unmodified MapLibre renderers.}) that resolves cross-cutting concerns.
+Second, it \emph{normalizes} the result into a stable intermediate representation (the \texttt{MIR}\footnote{The \texttt{MIR} draws on the normalized-IR design of MLIR~\cite{lattnerMLIRScalingCompiler2021}, providing a stable form between upstream sources and downstream consumers (the codegen emitter and the structural passes).
+The dialect, lowering, and pass-manager machinery of the full MLIR framework is not carried over.
+The optimizer operates at a single abstraction level with no code-generation target, and round-trips its output to JSON for unmodified MapLibre renderers.}) that resolves cross-cutting concerns.
 In particular, it collapses paint and layout properties that the spec defines across multiple sections into per-layer field definitions carrying type, default, and expression-capability metadata.
 Third, a code emitter \emph{generates} Rust sources with round-trip serialization support.
 
@@ -183,7 +192,8 @@ Default stripping compares property values against the specification defaults en
 
 \subsection{Implementation}\label{sub:implementation}
 
-The style optimizer is a standalone Rust binary. The tile re-encoder described in \cref{sub:data_optimizations} shares the same Cargo workspace and is split into a core encoder/decoder crate and a Java wrapper crate so that a \ac{JVM}-based tile-generation pipeline can consume the encoder without re-implementing it.
+The style optimizer is a standalone Rust binary.
+The tile re-encoder described in \cref{sub:data_optimizations} shares the same Cargo workspace and is split into a core encoder/decoder crate and a Java wrapper crate so that a \ac{JVM}-based tile-generation pipeline can consume the encoder without re-implementing it.
 The cross-language surface is generated by \emph{Diplomat}\footnote{\url{https://github.com/rust-diplomat/diplomat}, last accessed 2026-05-11}, which produces idiomatic, language-specific bindings directly from annotated Rust types, replacing the earlier \texttt{cbindgen}\footnote{\url{https://github.com/mozilla/cbindgen}, last accessed 2026-05-23}/\texttt{jextract}\footnote{\url{https://github.com/openjdk/jextract}, last accessed 2026-05-23} approach.
 The Java wrapper exposes the generated bindings through the Panama \ac{FFM} \ac{API} (JEP~454)\footnote{\url{https://openjdk.org/jeps/454}, last accessed 2026-05-23} rather than conventional \ac{JNI} glue, eliminating hand-written C stubs and giving the \ac{JVM} direct, zero-copy access to off-heap buffers.
 This is the boundary shape a columnar encoder requires: each tile is handed over as a batch of parallel \texttt{MemorySegment}s rather than one call per feature, amortising the per-boundary cost over thousands of features in one encoder invocation.
@@ -191,11 +201,16 @@ This is the boundary shape a columnar encoder requires: each tile is handed over
 \section{Building Optimizations}\label{sec:building_optimizations}
 
 The implemented passes target three areas of the rendering pipeline: style expressions, structural properties, and tile data.
-We classify each pass by \emph{where} it operates and its \emph{data requirements} (none, sampling, or full scan). Many are analogues of well-known compiler and query-processing techniques.
+We classify each pass by \emph{where} it operates and its \emph{data requirements} (none, sampling, or full scan).
+Many are analogues of well-known compiler and query-processing techniques.
 
 Each level discharges the visual-equivalence contract of \cref{sec:scope} in a different way.
-For expression-level passes, the termination measure $\mu(S)$ (\cref{eq:termination_measure}) witnesses this. Each rewrite strictly reduces $\mu$ while preserving expression semantics.
-For structural passes, we argue soundness per-pass in the paragraphs below. Dead elimination preserves equivalence because it only removes layers that produce no visible output. Metadata refinement preserves equivalence because it only tightens bounds that the renderer would enforce anyway (with the overzoom asymmetry detailed below). Layer merging preserves equivalence via the three invariants of \cref{sub:structural_optimizations}.
+For expression-level passes, the termination measure $\mu(S)$ (\cref{eq:termination_measure}) witnesses this.
+Each rewrite strictly reduces $\mu$ while preserving expression semantics.
+For structural passes, we argue soundness per-pass in the paragraphs below.
+Dead elimination preserves equivalence because it only removes layers that produce no visible output.
+Metadata refinement preserves equivalence because it only tightens bounds that the renderer would enforce anyway (with the overzoom asymmetry detailed below).
+Layer merging preserves equivalence via the three invariants of \cref{sub:structural_optimizations}.
 For data-level passes, the pruning advisory removes only data that no live style layer references, so the rendering function $R$ receives the same effective input.
 
 \subsection{Expression-Level Optimizations}\label{sub:expression_optimizations}
@@ -223,11 +238,14 @@ Colour minification           & none     & Compress color literals to their shor
 Selectivity reordering        & sampling & Reorder filter predicates by selectivity so the most discriminating condition is evaluated first [predicate reordering] \\
 \bottomrule
 \end{tblr}
-\caption{Expression-level optimization passes, each annotated with its data dependency (\emph{none} = static only; \emph{sampling} = requires a tile-statistics scan) and its compiler-optimization analogue.  Passes requiring no statistics run unconditionally. Sampling passes additionally fold expressions using observed value distributions.}
+\caption{
+Expression-level optimization passes, each annotated with its data dependency (\emph{none} = static only; \emph{sampling} = requires a tile-statistics scan) and its compiler-optimization analogue.  Passes requiring no statistics run unconditionally.
+Sampling passes additionally fold expressions using observed value distributions.}
 \label{tab:expression_passes}
 \end{table}
 
-Among these passes, we expect constant folding to dominate because reducing an expression to a literal eliminates all per-feature evaluation cost. The other passes primarily shorten the evaluation path rather than eliminating it.
+Among these passes, we expect constant folding to dominate because reducing an expression to a literal eliminates all per-feature evaluation cost.
+The other passes primarily shorten the evaluation path rather than eliminating it.
 
 We organize the expression pass engine as a table of rewrite rules (\cref{tab:all_rewrite_rules}), each gated by a \emph{pass flag} (which pass must be enabled) and scoped to a \emph{rule scope} (whether the rule applies to filters only, to paint/layout properties, or to both).
 Selectivity reordering runs as a separate pass after the rewrite table has stabilised.
@@ -235,7 +253,8 @@ We further classify rules by their \emph{type}:
 	\emph{pure} rules operate on the expression array alone,
 	\emph{MIR-aware} rules additionally consult the specification's type metadata (e.g.\ to determine whether an operator is pure or to look up default values), and
 	\emph{stats-driven} rules are recursive tree folds that receive tile statistics and layer-level context.
-A post-order visitor walks every expression node in the style. At each node, it tests all applicable peephole rules and the first matching rule fires.
+A post-order visitor walks every expression node in the style.
+At each node, it tests all applicable peephole rules and the first matching rule fires.
 Stats-driven rules run as separate tree folds after the peephole pass, because they require recursive context threading that the node-local peephole architecture does not provide.
 We modeled this architecture on peephole optimizers in production compilers.
 Individual rules are simple and local, but their composition through fixpoint iteration (\cref{sub:fixpoint}) achieves global simplifications.
@@ -275,7 +294,8 @@ When tile statistics are available, the optimizer extends constant folding with 
 These rules receive tile statistics for the relevant source layer and fold expressions that are statically indeterminate but data-determinate:
 
 \begin{description}
-    \item[\textbf{Property presence folding}] if a property is present in every feature, \texttt{[\mlop{"has"},~\mlval{"p"}]} folds to \mlval{true}. If present in none, it folds to \mlval{false}.
+    \item[\textbf{Property presence folding}] if a property is present in every feature, \texttt{[\mlop{"has"},~\mlval{"p"}]} folds to \mlval{true}.
+If present in none, it folds to \mlval{false}.
     \item[\textbf{Single-value folding}] if a property has cardinality~1 and is present in all features, \texttt{[\mlop{"get"},~\mlval{"p"}]} folds to the single known value.
     \item[\textbf{Geometry-type folding}] if a source layer contains only one geometry type, comparisons against \mlop{geometry-type} fold to a boolean.
     \item[\textbf{Range folding}] numeric comparisons against a property with known data range $[\mathrm{min},\, \mathrm{max}]$ are folded when the predicate is trivially satisfied or violated.
@@ -296,11 +316,14 @@ These rules receive tile statistics for the relevant source layer and fold expre
     \end{equation}
     All cases additionally require that the property is present in all features (otherwise the comparison is undefined for absent features).
     We apply the equality and disequality rules only to integer-typed columns, because floating-point equality is not a reliable oracle: a stats min/max pair derived from observed doubles may legitimately exclude a literal by a trailing-bit margin, but the filter is still defined (and, for correctness, treated as non-foldable).
-    We apply strict-inequality folds on floating-point columns at the reported min/max values exactly. Stats collection uses the observed extrema rather than synthetic bounds, so the boundary comparison coincides with a value that actually occurs, which is the only case where the fold is unconditionally sound.
-    \item[\textbf{Match/in arm pruning}] the pass removes arms referencing values absent from the tile statistics. If all arms are pruned, the expression collapses to its fallback.
+    We apply strict-inequality folds on floating-point columns at the reported min/max values exactly.
+Stats collection uses the observed extrema rather than synthetic bounds, so the boundary comparison coincides with a value that actually occurs, which is the only case where the fold is unconditionally sound.
+    \item[\textbf{Match/in arm pruning}] the pass removes arms referencing values absent from the tile statistics.
+If all arms are pruned, the expression collapses to its fallback.
     \item[\textbf{Match arm reordering}] the pass reorders arms by descending frequency so the renderer evaluates the most common case first.
     \item[\textbf{Data-ramp pruning}] for \mlop{step} and \mlop{interpolate} expressions driven by a numeric property with known data range $[\mathrm{min},\, \mathrm{max}]$, the pass prunes stops outside the observed range.
-    In a \mlop{step} expression, it removes stops with thresholds above $\mathrm{max}$. When the property is present in all features, it absorbs stops below $\mathrm{min}$ into the default.
+    In a \mlop{step} expression, it removes stops with thresholds above $\mathrm{max}$.
+When the property is present in all features, it absorbs stops below $\mathrm{min}$ into the default.
     In an \mlop{interpolate} expression, it prunes stops outside the $[\mathrm{min},\, \mathrm{max}]$ interval symmetrically.
 \end{description}
 
@@ -309,7 +332,8 @@ This bounds the cost on high-cardinality properties (names, identifiers) while r
 We motivated the choice of 200 with the OpenMapTiles schema: every categorical property that is used as a \mlop{match}/ \mlop{case} discriminator in the benchmark styles (\texttt{\mlval{class}}, \texttt{\mlval{subclass}}, \texttt{\mlval{admin\_level}}, \texttt{\mlval{kind}}, land-use codes) has fewer than 200 distinct values across the Germany tileset, whereas high-cardinality string columns (feature names, identifiers) exceed it by one or more orders of magnitude.
 The threshold therefore separates the \enquote{folding-useful} properties from the \enquote{folding-useless} ones without tuning for any specific style.
 
-We gate folds whose effect is irreversible (those that change the set of rendered features) on a full-census sample rate, as discussed in \cref{sub:tile_statistics}. At lower sample rates the statistics are used only for reordering and selectivity estimation.
+We gate folds whose effect is irreversible (those that change the set of rendered features) on a full-census sample rate, as discussed in \cref{sub:tile_statistics}.
+At lower sample rates the statistics are used only for reordering and selectivity estimation.
 
 \paragraph{Expression Simplification}
 Applying the algebraic identities from \cref{sec:compiler_optimizations}, De~Morgan's laws push negations inward to expose further folding:
@@ -336,7 +360,8 @@ Interpolation and step ramp simplification detects ramps, where all stops map to
 \paragraph{Default Stripping}
 The pass removes properties whose value equals the specification default.
 We derive the defaults from the code-generated Rust types: each property's default is known from the upstream \texttt{v8.json}.
-The pass strips only plain scalar values. It never removes expression-valued properties, even if they would evaluate to the default at all zoom levels, to avoid the risk of changing renderer behavior when the expression's mere presence affects layout (e.g.\ \texttt{\mlprop{text-radial-offset}} suppresses \texttt{\mlprop{text-offset}} regardless of its value).
+The pass strips only plain scalar values.
+It never removes expression-valued properties, even if they would evaluate to the default at all zoom levels, to avoid the risk of changing renderer behavior when the expression's mere presence affects layout (e.g.\ \texttt{\mlprop{text-radial-offset}} suppresses \texttt{\mlprop{text-offset}} regardless of its value).
 
 \paragraph{Selectivity Reordering}\label{sec:selectivity_reordering}
 For variadic boolean expressions (\mlop{all}, \mlop{any}), the pass reorders predicates by estimated selectivity to exploit short-circuit evaluation, applying the selectivity-estimation framework of \cref{sec:query_optimizations}.
@@ -369,7 +394,9 @@ Because the rendering benefit of predicate reordering depends on the proportion 
 \paragraph{Termination and Confluence of the Fixpoint}
 The expression-level phase applies the entire rewrite rule set until the style \ac{JSON} stops changing.
 In the \ac{TRS} framing of \cref{sub:fixpoint}, this is the standard normal-form criterion.
-We impose a hard cap of \texttt{8} iterations. This is the \emph{formal} termination guarantee. The fixpoint loop executes at most 8 passes regardless of rule behavior.
+We impose a hard cap of \texttt{8} iterations.
+This is the \emph{formal} termination guarantee.
+The fixpoint loop executes at most 8 passes regardless of rule behavior.
 
 The majority of the rules described above strictly decrease a lexicographic measure
 \begin{equation}\label{eq:termination_measure}
@@ -385,7 +412,8 @@ In both cases, subsequent rules within the same or next iteration typically comp
 In the general case, however, compensating rules are not guaranteed to fire (e.g., when De~Morgan produces negated predicates that admit no further simplification at the top level of a filter).
 In practice, all styles in the benchmark corpus converge within three iterations, well below the hard cap, because the monotone majority of rules drives $\mu$ toward zero and the non-monotone rules fire at most once per expression.
 
-The rewrite system is not confluent. The first matching rule fires (table iteration order defines implicit priority), and selectivity reordering depends on data-dependent statistics.
+The rewrite system is not confluent.
+The first matching rule fires (table iteration order defines implicit priority), and selectivity reordering depends on data-dependent statistics.
 Different rule orderings could therefore yield different but visually equivalent output.
 Visual equivalence (the soundness criterion of~(\ref{eq:visual_equivalence})) is preserved regardless, because every individual rule preserves expression semantics.
 
@@ -451,7 +479,8 @@ To illustrate how expression passes compose, \cref{fig:expr_before_after} shows 
 			\end{lstlisting}
 		\end{minipage}
 
-		\caption{Expression rewriting via distributive factoring and \mlop{any}$\to$\mlop{in} promotion.}
+		\caption{
+Expression rewriting via distributive factoring and \mlop{any}$\to$\mlop{in} promotion.}
 		\label{fig:expr_a}
 	\end{subfigure}
 
@@ -505,7 +534,8 @@ paint:
 			\end{lstlisting}
 		\end{minipage}
 
-		\caption{Filter to Property Constant Propagation simplifying data-driven to constant.}
+		\caption{
+Filter to Property Constant Propagation simplifying data-driven to constant.}
 		\label{fig:expr_b}
 	\end{subfigure}
 
@@ -553,7 +583,8 @@ paint:
 			\end{lstlisting}
 		\end{minipage}
 
-		\caption{Duplicate predicate elimination via subsumption.}
+		\caption{
+Duplicate predicate elimination via subsumption.}
 		\label{fig:expr_c}
 	\end{subfigure}
 
@@ -604,11 +635,14 @@ paint:
 			\end{lstlisting}
 		\end{minipage}
 
-		\caption{Negation pushdown and operator normalization.}
+		\caption{
+Negation pushdown and operator normalization.}
 		\label{fig:expr_d}
 	\end{subfigure}
 
-	\caption{Examples of expression-level transformations applied to representative style inputs. Each panel shows a before/after \ac{JSON} example pair demonstrating how these optimisations interact.}
+	\caption{
+Examples of expression-level transformations applied to representative style inputs.
+Each panel shows a before/after \ac{JSON} example pair demonstrating how these optimisations interact.}
 	\label{fig:expr_before_after}
 \end{figure}
 
@@ -632,11 +666,12 @@ Metadata stripping           & none      & Remove \texttt{metadata} fields at th
 Dead layer/source elimination & none / sampling & Remove layers with always-false filters, geometry-type mismatches (with stats), or empty source-layers; prune unreferenced sources [dead code elimination] \\
 Metadata refinement          & none / sampling & Extract \mlprop{minzoom}/ \mlprop{maxzoom} bounds from filter predicates and paint ramps; tighten bounds using tile coverage statistics; remove consumed zoom predicates from filters [range analysis] \\
 Cleanup                      & none      & Remove empty \mlprop{paint}/\mlprop{layout} sections, invisible layers (\texttt{\mlprop{visibility}:~\mlval{none}}, zero opacity), trivially \mlval{true} filters, and root-level properties at specification defaults [dead code elimination] \\
-Layer merging                & none      & Merge identical adjacent layers by synthesising \mlop{case}/ \mlop{match} expressions, with zoom-tolerant matching and sort-key preservation [basic block merging] \\
+Layer merging                & none      & Merge identical adjacent layers by synthezising \mlop{case}/ \mlop{match} expressions, with zoom-tolerant matching and sort-key preservation [basic block merging] \\
 Source zoom tightening       & none      & Tighten source \mlprop{minzoom}/ \mlprop{maxzoom} based on the zoom ranges of layers that reference them [liveness analysis] \\
 \bottomrule
 \end{tblr}
-\caption{Structural optimization passes operating on the typed Rust style representation, each annotated with its data dependency and compiler-optimization analogue.  Passes marked \emph{none/sampling} run unconditionally but gain additional precision when tile statistics are available.}
+\caption{
+Structural optimization passes operating on the typed Rust style representation, each annotated with its data dependency and compiler-optimization analogue.  Passes marked \emph{none/sampling} run unconditionally but gain additional precision when tile statistics are available.}
 \label{tab:structural_passes}
 \end{table}
 
@@ -647,7 +682,8 @@ After removing dead layers, the pass prunes sources that no surviving layer refe
 This mirrors dead code elimination followed by unreachable function removal in a compiler (\cref{sec:compiler_optimizations}).
 Its downstream effect on the tile pruning advisory (\cref{sub:tile_shaving}) is the entry point for the data-level cascade evaluated in \cref{sub:mlt_results}.
 
-Geometry-type mismatch is particularly effective on schemas such as OpenMapTiles, where a single source layer (e.g.\ \texttt{transportation}) carries mixed geometry. \texttt{\mlval{fill}} layers require polygons, \texttt{\mlval{circle}} requires points, \texttt{\mlval{line}} draws on polygons or lines but not points, and \texttt{\mlval{symbol}} layers draw on all three and so are never killed by this rule. The check requires tile statistics, so we provide both static and stats-driven variants of the pass.
+Geometry-type mismatch is particularly effective on schemas such as OpenMapTiles, where a single source layer (e.g.\ \texttt{transportation}) carries mixed geometry. \texttt{\mlval{fill}} layers require polygons, \texttt{\mlval{circle}} requires points, \texttt{\mlval{line}} draws on polygons or lines but not points, and \texttt{\mlval{symbol}} layers draw on all three and so are never killed by this rule.
+The check requires tile statistics, so we provide both static and stats-driven variants of the pass.
 
 \paragraph{Metadata Refinement}
 This pass extracts implicit zoom bounds from filter predicates and paint ramps, and lifts them into the layer's explicit \mlprop{minzoom}/ \mlprop{maxzoom} metadata.
@@ -678,12 +714,14 @@ After extraction, the pass removes the consumed zoom predicates from the filter,
 
 \emph{Paint-based visibility analysis} infers zoom bounds from paint properties that control visibility.
 For opacity properties, the pass examines \mlop{interpolate} and \mlop{step} expressions to find the zoom level at which the property transitions from zero to a non-zero value.
-For example, a fill layer whose \mlprop{fill-opacity} is a step function that outputs~0 below zoom~12 and~1 above is effectively invisible below zoom~12. The pass therefore raises \mlprop{minzoom} to~12.
+For example, a fill layer whose \mlprop{fill-opacity} is a step function that outputs~0 below zoom~12 and~1 above is effectively invisible below zoom~12.
+The pass therefore raises \mlprop{minzoom} to~12.
 For symbol layers, \emph{either} text or icon opacity must be non-zero (the layer is visible if any symbol component is visible).
 For all other layer types, \emph{both} size and opacity must be non-zero.
 
 \emph{Stats-driven refinement} tightens bounds using actual tile coverage: if a source layer's first tile appears at zoom~4, the pass raises the layer's \mlprop{minzoom} to~4 regardless of what the filter permits, since there is no data to render below that zoom.
-This refinement only tightens bounds. It never loosens them due to \cref{eq:visual_equivalence}.
+This refinement only tightens bounds.
+It never loosens them due to \cref{eq:visual_equivalence}.
 
 A subtle but load-bearing correctness concern is MapLibre's \emph{overzoom} behavior: when a client requests a tile at a zoom level beyond a source's \mlprop{maxzoom}, the renderer reuses the nearest available tile from a lower zoom and upscales it.
 A naive stats-driven tightening (\enquote{the last tile containing polygons appears at zoom~12, therefore set \mlprop{maxzoom}=\mlval{12}}) would change the rendered output if the layer is visible at zoom~13 or~14 via overzoom from zoom~12.
@@ -691,9 +729,10 @@ A naive stats-driven tightening (\enquote{the last tile containing polygons appe
 Because our work requires  \cref{eq:visual_equivalence}, the metadata refinement pass enforces two asymmetric rules:
 \begin{enumerate}
     \item \textbf{\mlprop{minzoom} is symmetric.}
-    Vector tiles are not \emph{underzoomed} (the renderer will not synthesise a coarser tile from a finer one) so raising \mlprop{minzoom} to the first data-carrying zoom never removes a rendered pixel.
+    Vector tiles are not \emph{underzoomed} (the renderer will not synthezise a coarser tile from a finer one) so raising \mlprop{minzoom} to the first data-carrying zoom never removes a rendered pixel.
     \item \textbf{\mlprop{maxzoom} is asymmetric.}
-    The refinement pass tightens the layer's \mlprop{maxzoom} to the last data-carrying zoom $z^{*}$ only when $z^{*}$ is strictly less than the \emph{source's} \mlprop{maxzoom}. Otherwise, the layer's tiles at $z^{*}$ will be overzoomed to produce higher zoom levels, and the layer remains rendered beyond $z^{*}$.
+    The refinement pass tightens the layer's \mlprop{maxzoom} to the last data-carrying zoom $z^{*}$ only when $z^{*}$ is strictly less than the \emph{source's} \mlprop{maxzoom}.
+Otherwise, the layer's tiles at $z^{*}$ will be overzoomed to produce higher zoom levels, and the layer remains rendered beyond $z^{*}$.
 \end{enumerate}
 The zoom-folding rule that collapses zoom comparisons in filters is similarly one-sided: only \mlprop{minzoom} is used as a lower bound for the fold, because a layer's effective \mlprop{maxzoom} is not an upper bound on the camera zoom once overzooming is considered.
 The source-zoom-tightening pass follows the same principle: it tightens a source's \mlprop{maxzoom} only as far as the maximum \mlprop{maxzoom} of any layer referencing it, which already respects the overzoom rule above, and it never tightens below the source's declared bounds.
@@ -705,22 +744,27 @@ Cleanup runs after metadata refinement because refinement may render filters tri
 
 \paragraph{Layer Merging}
 Layer merging identifies adjacent layers of the same type with identical paint and layout properties (modulo filter differences) and merges them into a single layer.
-The motivation is that fewer layers means fewer rendering passes. The renderer processes layers sequentially, and each layer incurs setup costs (binding textures, configuring blend state, submitting draw calls).
+The motivation is that fewer layers means fewer rendering passes.
+The renderer processes layers sequentially, and each layer incurs setup costs (binding textures, configuring blend state, submitting draw calls).
 \Cref{lst:painter_loop} shows the two render-pass loops the painter runs over \texttt{layerIds}: the opaque pass walks them top-to-bottom (\texttt{currentLayer} from \texttt{layerIds.length - 1} down to \texttt{0}), the translucent pass walks them bottom-to-top, and each iteration of either loop dispatches one \texttt{this.renderLayer(...)} call.
 Each layer eliminated by the merge therefore shortens \texttt{layerIds} by one entry and removes exactly one \texttt{renderLayer} dispatch from each pass.
 
-A second per-layer loop in the renderer has the opposite implication for the merging pass and makes \mlval{symbol} layers non-mergeable. \Cref{lst:placement} shows the per-layer processing of symbol placement, where \stepcirc{1} constructs a fresh \texttt{LayerPlacement} instance when a symbol layer's placement begins, and \stepcirc{2} tears it down before the next layer starts. The underlying \texttt{Placement} object (and its \texttt{CollisionIndex}) is shared across all layers via \texttt{this.placement}, which is what makes the \texttt{LayerPlacement} scope per-layer rather than global.
-Symbols from earlier layers are fully placed before later layers begin, so layer ordering determines placement priority. Merging two symbol layers into one would interleave their symbols within a single \texttt{LayerPlacement}, changing which symbols take priority and therefore altering collision outcomes.
+A second per-layer loop in the renderer has the opposite implication for the merging pass and makes \mlval{symbol} layers non-mergeable. \Cref{lst:placement} shows the per-layer processing of symbol placement, where \stepcirc{1} constructs a fresh \texttt{LayerPlacement} instance when a symbol layer's placement begins, and \stepcirc{2} tears it down before the next layer starts.
+The underlying \texttt{Placement} object (and its \texttt{CollisionIndex}) is shared across all layers via \texttt{this.placement}, which is what makes the \texttt{LayerPlacement} scope per-layer rather than global.
+Symbols from earlier layers are fully placed before later layers begin, so layer ordering determines placement priority.
+Merging two symbol layers into one would interleave their symbols within a single \texttt{LayerPlacement}, changing which symbols take priority and therefore altering collision outcomes.
 
-With both renderer-side loops accounted for, we can describe the algorithm itself. The merging pass proceeds in three phases, illustrated in \cref{fig:layer_merge_example}.
+With both renderer-side loops accounted for, we can describe the algorithm itself.
+The merging pass proceeds in three phases, illustrated in \cref{fig:layer_merge_example}.
 \emph{Phase}~\stepcirc{1} (candidate identification) scans the layer list for contiguous runs of layers that share the same type, source, and source-layer, and whose differing properties are all mergeable.
-A property is mergeable if, according to the MIR field metadata, 
+A property is mergeable if, according to the MIR field metadata,
   it supports feature-driven expressions (i.e.\ its \texttt{expression.feature} flag is \mlval{true}, meaning it can vary per feature within a layer) and
   it is not a zoom ramp (\mlop{interpolate} or \mlop{step} over \texttt{[\mlop{"zoom"}]}).
   Both of these must remain at the top level of a property expression and cannot be nested inside a \mlop{case}/ \mlop{match} wrapper.
 Doing so would introduce an $\bot$ which is not allowed according to \cref{eq:visual_equivalence}.
 Camera-only properties (such as \texttt{\mlprop{line-dasharray}} or \texttt{\mlprop{*-translate}}) must be uniform across all layers in a merge group, since they cannot be conditioned on feature attributes.
-Layer types that support sort keys (\texttt{\mlval{fill}}, \texttt{\mlval{line}}, \texttt{\mlval{circle}}, \texttt{\mlval{fill-extrusion}}) are candidates. The \texttt{\mlval{symbol}} type is excluded for the placement-scope reason given above.
+Layer types that support sort keys (\texttt{\mlval{fill}}, \texttt{\mlval{line}}, \texttt{\mlval{circle}}, \texttt{\mlval{fill-extrusion}}) are candidates.
+The \texttt{\mlval{symbol}} type is excluded for the placement-scope reason given above.
 
 The merge pass has to preserve three invariants that collectively witness the visual-equivalence constraint of \cref{sec:problem_statement}.
 
@@ -730,9 +774,9 @@ This holds because the merged filter is the disjunction $\bigvee_i F_i$, the mer
 
 \textbf{Painter order.}
 The per-layer draw order must be preserved so the top-most pixel at each screen position is unchanged.
-For layer types that expose \texttt{\{\mlprop{fill,line,circle}\}\mlprop{-sort-key}}, the pass synthesises a \mlop{case}/\mlop{match} sort key mapping each original layer's features to an ascending integer in declaration order, which the MapLibre renderer then applies before drawing.
-The pass refuses to merge any candidate that already carries an explicit sort key, since combining a user-declared key with a synthesised one would over-determine the ordering.
-\texttt{\mlprop{fill-extrusion}} layers are eligible in principle but inherit the same sort-key restriction, and their relative ordering is in any case dominated by the depth buffer rather than the painter's algorithm, so the synthesised key only breaks ties at co-planar surfaces.
+For layer types that expose \texttt{\{\mlprop{fill,line,circle}\}\mlprop{-sort-key}}, the pass synthezises a \mlop{case}/\mlop{match} sort key mapping each original layer's features to an ascending integer in declaration order, which the MapLibre renderer then applies before drawing.
+The pass refuses to merge any candidate that already carries an explicit sort key, since combining a user-declared key with a synthezised one would over-determine the ordering.
+\texttt{\mlprop{fill-extrusion}} layers are eligible in principle but inherit the same sort-key restriction, and their relative ordering is in any case dominated by the depth buffer rather than the painter's algorithm, so the synthezised key only breaks ties at co-planar surfaces.
 
 \textbf{Layer scope.}
 Any MapLibre runtime behavior whose scope is the individual layer (per-layer symbol placement against the tile-wide \texttt{CollisionIndex}, \texttt{\mlop{feature-state}}, \texttt{\mlprop{*-translate}}, and other camera-only properties) must not have that scope widened by the merge.
@@ -740,22 +784,29 @@ This is guaranteed by excluding symbol layers from the candidate set, by the \te
 
 \paragraph{Scope of Filter-to-Property Propagation}
 The filter-to-property constant propagation pass extracts equality constraints from a layer's filter and substitutes them into the layer's paint and layout expressions.
-Its soundness depends on a MapLibre evaluation-order invariant. The filter is evaluated first, and paint/layout expressions are only evaluated for features that passed the filter.
-\Cref{lst:bucket_populate} shows this invariant in the \texttt{FillBucket.populate} method, where \stepcirc{1} rejects a feature before any paint or layout expression is evaluated, so any equality constraint extracted from the filter is guaranteed to hold for every feature that reaches \stepcirc{2} and can be safely substituted into the layer's paint/layout expressions.
+Its soundness depends on a MapLibre evaluation-order invariant.
+The filter is evaluated first, and paint/layout expressions are only evaluated for features that passed the filter.
+\Cref{lst:bucket_populate} shows this invariant in the \texttt{FillBucket.populate} method, where \stepcirc{1} rejects a feature before any paint or layout expression is evaluated.
+Any equality constraint extracted from the filter is guaranteed to hold for every feature that reaches \stepcirc{2} and can be safely substituted into the layer's paint/layout expressions.
 This holds for the data-driven expression variants used across all MapLibre versions this thesis targets (\mlop{match}, \mlop{case}, \mlop{get}, etc.).
 
-Propagation is strictly \emph{intra-layer} (intra-procedural in compiler terms, \cref{sec:compiler_optimizations}). Constraints from one layer never flow to a sibling that shares the same source.
+Propagation is strictly \emph{intra-layer} (intra-procedural in compiler terms, \cref{sec:compiler_optimizations}).
+Constraints from one layer never flow to a sibling that shares the same source.
 Phase~\stepcirc{1} also ignores \texttt{[\mlop{"feature-state"}, \ldots]} references, since feature state is set from the client at render time and cannot be statically constrained by the filter.
 
 \emph{Phase}~\stepcirc{2} (match-pattern detection) checks whether all filters within a candidate group match the pattern \texttt{[\mlop{"=="},~[\mlop{"get"},~P],~\mlop{literal}]} on the same property~$P$.
 If so, the merged filter is a compact \mlop{match} expression rather than a verbose \mlop{case} chain, and merged paint/layout properties also use \mlop{match} with the same discriminator.
-This pattern is common in practice. Road styles frequently define separate layers for motorway, trunk, primary, secondary, and tertiary, differing only in width, color and layering, and for casing major roads there are usually two such layers per class.
+This pattern is common in practice.
+Road styles frequently define separate layers for \texttt{highway} = \{\texttt{motorway}, \texttt{trunk}, \texttt{primary}, \texttt{secondary}, \texttt{tertiary\}.
+These layers commonly differ only in width, color and layering, and for casing major roads there are usually two such layers per class.
 
-\Cref{fig:layer_merge_example} works through exactly this case: three adjacent \texttt{\mlval{line}} layers keyed on \texttt{\mlval{class}} collapse into a single layer whose filter, \mlprop{line-color}, \mlprop{line-width}, and synthesised \mlprop{line-sort-key} are all \mlop{match} expressions over the same discriminator, with Phase~\stepcirc{1} (mergeability) and Phase~\stepcirc{3} (identical zoom ranges) discharged trivially.
+\Cref{fig:layer_merge_example} works through exactly this case: three adjacent \texttt{\mlval{line}} layers keyed on \texttt{\mlval{class}} collapse into a single layer whose filter, \mlprop{line-color}, \mlprop{line-width}, and synthezised \mlprop{line-sort-key} are all \mlop{match} expressions over the same discriminator, with Phase~\stepcirc{1} (mergeability) and Phase~\stepcirc{3} (identical zoom ranges) discharged trivially.
 
-\emph{Phase}~\stepcirc{3} (zoom-tolerant merging) handles layers whose zoom ranges differ slightly. It wraps each sub-filter with zoom guards (\texttt{[\mlop{">="},\allowbreak~[\mlop{"zoom"}],\allowbreak~lo]}, \texttt{[\mlop{"<="},\allowbreak~[\mlop{"zoom"}],\allowbreak~hi]}) and unions the zoom ranges into the merged layer's bounds, trading a slightly more complex filter for one fewer layer.
+\emph{Phase}~\stepcirc{3} (zoom-tolerant merging) handles layers whose zoom ranges differ slightly.
+It wraps each sub-filter with zoom guards (\texttt{[\mlop{">="},\allowbreak~[\mlop{"zoom"}],\allowbreak~lo]}, \texttt{[\mlop{"<="},\allowbreak~[\mlop{"zoom"}],\allowbreak~hi]}) and unions the zoom ranges into the merged layer's bounds, trading a slightly more complex filter for one fewer layer.
 
-The synthesised \emph{sort key} that preserves inter-layer draw order uses the discriminator value as its index under a \mlop{match} pattern and tests filters in reverse order (last painter wins) under a \mlop{case} pattern. The pass emits a sort key only for layer types that support \texttt{\mlprop{*-sort-key}} and that do not already define one.
+The synthezised \emph{sort key} that preserves inter-layer draw order uses the discriminator value as its index under a \mlop{match} pattern and tests filters in reverse order (last painter wins) under a \mlop{case} pattern.
+The pass emits a sort key only for layer types that support \texttt{\mlprop{*-sort-key}} and that do not already define one.
 
 \paragraph{Source Zoom Tightening}
 After all layer-level passes, this pass tightens source \mlprop{minzoom}/ \mlprop{maxzoom} bounds to the effective zoom range of the layers that reference each source.
@@ -829,8 +880,9 @@ Tighter source bounds allow the tile server (or client-side tile manager) to ski
         \draw[arrow] (p2.east) -- (out.west);
         \draw[arrow] (p3.east) -- (out.west |- p3.east);
     \end{tikzpicture}}
-    \caption{Layer merging example.  Three adjacent line layers differing only in filter literal, color, and width are merged via the \mlop{match} pattern (Phase~2).
-    The merged layer uses \texttt{[\mlop{"match"}, [\mlop{"get"}, \mlval{"class"}], \ldots]} for the filter, each differing paint property, and a synthesised sort key that preserves the original draw order.
+    \caption{
+Layer merging example.  Three adjacent line layers differing only in filter literal, color, and width are merged via the \mlop{match} pattern (Phase~2).
+    The merged layer uses \texttt{[\mlop{"match"}, [\mlop{"get"}, \mlval{"class"}], \ldots]} for the filter, each differing paint property, and a synthezised sort key that preserves the original draw order.
     Phase~1 validates that all differing properties support feature-driven expressions, and Phase~3 confirms identical zoom ranges, so no zoom guards are needed}
     \label{fig:layer_merge_example}
 \end{figure}
@@ -856,7 +908,9 @@ Transparent re-encoding  & full scan & Re-encode \ac{MVT} tiles into the \ac{MLT
 Compression optimizations & full scan & Apply column-aware compression strategies based on data characteristics [\ac{PGO} optimizations] \\
 \bottomrule
 \end{tblr}
-\caption{Data-level optimization techniques, all requiring a full tile scan. Together they form a logical, physical, and cost pipeline: tile shaving eliminates unreferenced data, re-encoding transforms the wire format, and compression optimizations select the most compact per-column encoding strategy.}
+\caption{
+Data-level optimization techniques, all requiring a full tile scan.
+Together they form a logical, physical, and cost pipeline: tile shaving eliminates unreferenced data, re-encoding transforms the wire format, and compression optimizations select the most compact per-column encoding strategy.}
 \label{tab:data_passes}
 \end{table}
 
@@ -943,7 +997,8 @@ The cascade mirrors the materialized-view maintenance problem, with the renderin
         };
         \draw[dashed, gray] (prune) -- (ops);
     \end{tikzpicture}
-    \caption{Style-driven tile shaving pipeline.  The optimized style and tile statistics jointly produce a pruning advisory.  Each \ac{MVT} tile is pruned according to the advisory, transformed, and re-encoded as \ac{MLT}.  Style-level dead layer elimination narrows the advisory, which can reduce the data that must be encoded}
+    \caption{
+Style-driven tile shaving pipeline.  The optimized style and tile statistics jointly produce a pruning advisory.  Each \ac{MVT} tile is pruned according to the advisory, transformed, and re-encoded as \ac{MLT}.  Style-level dead layer elimination narrows the advisory, which can reduce the data that must be encoded}
     \label{fig:tile_shaving_pipeline}
 \end{figure}
 
@@ -961,7 +1016,8 @@ Second, the frequency ordering means that common values receive small indices, w
 The optimizer rewrites the corresponding style expressions to reference the integer indices rather than the original string values.
 For example, the optimizer rewrites a filter \texttt{[\mlop{"=="}, [\mlop{"get"}, \mlval{"class"}], \mlval{"primary"}]} to \texttt{[\mlop{"=="}, [\mlop{"get"}, \mlval{"class"}], \mlval{0}]} if \texttt{\mlval{"primary"}} is the most frequent value.
 This rewriting ensures that the optimized style remains consistent with the transformed tile data.
-Because interned tiles encode property values as style-specific integer indices rather than original strings, they are only compatible with the paired optimized style. Other consumers (debugging tools, alternative renderers) would see opaque integers.
+Because interned tiles encode property values as style-specific integer indices rather than original strings, they are only compatible with the paired optimized style.
+Other consumers (debugging tools, alternative renderers) would see opaque integers.
 We therefore treat interning as an optional pipeline stage that can be disabled for multi-consumer deployments where tiles must remain self-describing.
 
 \paragraph{Feature reordering}\label{sub:feature_reordering}
@@ -986,7 +1042,8 @@ rather than committing to a single encoding plan, the encoder uses the data dist
 This competition operates at two nested levels.
 An \emph{outer loop} that tries multiple feature sort orderings, and an \emph{inner loop} that selects the best integer encoding for each individual data stream.
 We deliberately make the inner competition criterion \emph{single-objective} (smallest encoded size).
-We do not resolve multi-axis trade-offs (between transfer size, decoding latency, rendering throughput, and preprocessing cost) inside the encoder. We report them separately per metric in the ablation evaluation (\cref{ch:experiments}), consistent with \cref{sec:problem_statement}: the deployment metrics of \cref{sub:metrics} are characterised per-axis rather than aggregated into a single objective, and the encoder's local size minimisation is a contributing quantity to the load-time axis rather than a global cost function.
+We do not resolve multi-axis trade-offs (between transfer size, decoding latency, rendering throughput, and preprocessing cost) inside the encoder.
+We report them separately per metric in the ablation evaluation (\cref{ch:experiments}), consistent with \cref{sec:problem_statement}: the deployment metrics of \cref{sub:metrics} are characterised per-axis rather than aggregated into a single objective, and the encoder's local size minimisation is a contributing quantity to the load-time axis rather than a global cost function.
 
 A no-copy alternatives mechanism lets each candidate write into the encoder's buffers and rolls losing candidates back by resetting cursor positions, so the inner and outer competitions nest without redundant allocation.
 Combined with warm-start caching of \ac{FSST} compressors and vertex-strategy decisions across sort trials, this keeps the cost of the nested competition near-additive rather than multiplicative in the number of trials. \cref{ch:experiments} reports the resulting preprocessing time empirically.
@@ -1027,7 +1084,10 @@ Combined with warm-start caching of \ac{FSST} compressors and vertex-strategy de
 
             % Decoder arrows
         \end{tikzpicture}
-        \caption{Decoding pipeline. An input byte slice is zero-copy parsed into a columnar layer whose columns are held lazily as either raw bytes or parsed values, decoded on demand. The columnar data is converted to row-oriented features as needed.}
+        \caption{
+Decoding pipeline.
+An input byte slice is zero-copy parsed into a columnar layer whose columns are held lazily as either raw bytes or parsed values, decoded on demand.
+The columnar data is converted to row-oriented features as needed.}
         \label{fig:arch_dec_sub}
     \end{subfigure}
     \hfill
@@ -1063,17 +1123,23 @@ Combined with warm-start caching of \ac{FSST} compressors and vertex-strategy de
             \draw[-Stealth, thick, densely dashed] (staged.west) -| (encnode.south);
             \draw[-Stealth, thick, densely dashed] (encnode.north) |- (encoded.west);
         \end{tikzpicture}
-        \caption{Encoding pipeline. Row-oriented features are converted to a staged columnar layer, fully encoded to wire-ready byte buffers by the encoder that implements the multi-strategy competition, and written to a byte sink via a final zero-copy step.}
+        \caption{
+Encoding pipeline.
+Row-oriented features are converted to a staged columnar layer, fully encoded to wire-ready byte buffers by the encoder that implements the multi-strategy competition, and written to a byte sink via a final zero-copy step.}
         \label{fig:arch_enc_sub}
     \end{subfigure}
-    \caption{Encoder~\subref{fig:arch_enc_sub} and decoder~\subref{fig:arch_dec_sub} data-flow in \texttt{mlt-core}}
+    \caption{
+Encoder~\subref{fig:arch_enc_sub} and decoder~\subref{fig:arch_dec_sub} data-flow in \texttt{mlt-core}}
     \label{fig:arch_enc}
 \end{figure}
 
 In an outer loop, the encoder runs a sort-strategy competition.
 Reordering features within a layer permutes every parallel column (geometry, IDs, and all properties) simultaneously.
-Different orderings favour different encoding schemes. Spatial orderings cluster nearby geometries and their correlated properties, improving \ac{RLE} run lengths. ID ordering produces sequential integer sequences amenable to delta-\acs{RLE}.
-Which ordering wins depends on the value distributions and cardinalities of the specific layer. A layer dominated by a single repeated property value may benefit most from spatial clustering, while a layer with sequential IDs and high-cardinality properties may favour ID ordering.
+Different orderings favour different encoding schemes.
+Spatial orderings cluster nearby geometries and their correlated properties, improving \ac{RLE} run lengths.
+ID ordering produces sequential integer sequences amenable to delta-\acs{RLE}.
+Which ordering wins depends on the value distributions and cardinalities of the specific layer.
+A layer dominated by a single repeated property value may benefit most from spatial clustering, while a layer with sequential IDs and high-cardinality properties may favour ID ordering.
 Because this balance shifts across layers, zoom levels, and tilesets, no single ordering dominates universally, and the choice cannot be resolved statically.
 
 The encoder therefore tries multiple sort strategies on the same data and retains the encoding with the smallest total byte count; \cref{fig:sort_competition} diagrams the resulting trial-and-retain loop, including the bounding-box pruning that skips spatial trials for large, widely-spread layers.
@@ -1151,10 +1217,12 @@ We considered property-based sort strategies but did not include them in the cur
         \node[output, right=2.2cm of more] (best) {Emit smallest encoding\\{\scriptsize\texttt{best.into\_layer\_bytes()}}};
         \draw[arrow] (more.east) -- node[above, label] {no} (best.west);
     \end{tikzpicture}
-    \caption{Multi-strategy sort competition.
+    \caption{
+Multi-strategy sort competition.
         Shared-dictionary string groups are computed once and reused across all trials.
         The encoder collects candidate sort strategies, pruning spatial strategies via the bounding-box heuristic for large, widely-spread layers.
-        For each candidate, the layer is cloned, sorted, and columnarized via \texttt{from\_tile}. The columnar data is then encoded with per-stream integer competitions.
+        For each candidate, the layer is cloned, sorted, and columnarized via \texttt{from\_tile}.
+The columnar data is then encoded with per-stream integer competitions.
         The encoding with the smallest \texttt{total\_len()} is retained}
     \label{fig:sort_competition}
 \end{figure}
@@ -1166,7 +1234,8 @@ We derived the thresholds experimentally from Germany-wide OpenMapTiles.
 
 In an inner loop, a per-stream encoding competition tries every viable integer encoding for the data stream.
 Each candidate pairs a \emph{logical} encoding (Plain, Delta, \ac{RLE}, or DeltaRle) with a \emph{physical} encoding (\ac{VarInt} or \ac{FastPFOR}~\cite{lemireDecodingBillionsIntegers2015}).
-The general stream competition currently covers these four logical encodings. The encoder applies geometry-specific strategies (Morton-delta, componentwise-delta) via a separate encoding path optimized for coordinate data, since their semantics are tied to the two-dimensional structure of vertex sequences and do not generalize to property columns.
+The general stream competition currently covers these four logical encodings.
+The encoder applies geometry-specific strategies (Morton-delta, componentwise-delta) via a separate encoding path optimized for coordinate data, since their semantics are tied to the two-dimensional structure of vertex sequences and do not generalize to property columns.
 Extending the general competition to include additional strategies (e.g., frame-of-reference without delta, or hybrid schemes) is a direction for future work, though the current candidate set captures the dominant encoding patterns observed in the benchmark tileset.
 The naive approach of encoding every combination and comparing would be prohibitively expensive for large tiles.
 Instead, a \emph{data profiler} samples a contiguous block taken from the middle of the stream: it profiles streams with at most $512$ values in full, and profiles longer streams over $\lfloor |s| / 100 \rfloor$ values clamped to $[512,\, 16384]$.
@@ -1188,7 +1257,8 @@ String columns compete across four strategies, reflecting the two orthogonal dim
     Effective when many features share the same string value (e.g., road names that repeat across tiles).
     \item[\textbf{\ac{FSST}} (\cref{sub:string_compression})]~\cite{bonczFSSTFastRandom2020}
     A lightweight, random-access string compressor that learns a symbol table of up to~255 frequent byte sequences and replaces occurrences with single-byte codes.
-    The encoder stores the symbol table once per column. The compressed corpus remains directly scannable without decompression.
+    The encoder stores the symbol table once per column.
+The compressed corpus remains directly scannable without decompression.
     \item[\textbf{\ac{FSST} + Dictionary}] \ac{FSST} applied to a deduplicated dictionary, combining both deduplication and byte-level compression.
 \end{description}
 
@@ -1207,7 +1277,8 @@ The reference encoder groups columns by naming prefix (e.g., \texttt{\mlval{name
     The choice of 128 permutations corresponds to an expected standard error of approximately $1/\sqrt{128} \approx 8.8\%$ on the Jaccard estimate, which is adequate for the binary accept/reject decision of the clustering step.
     The trigram sketch captures partial overlap between columns whose values are substrings or morphological variants of each other.
     The encoder estimates pairwise Jaccard similarity as $\hat{J} = |\{i : h_i^{(a)} = h_i^{(b)}\}| / 128$ for each sketch type and takes the maximum of two estimates.
-    The encoder unifies columns whose similarity exceeds \texttt{7.5\%} via a Union-Find structure (union by size). The low threshold reflects that even small vocabulary overlap reduces the marginal cost of adding a column to an existing dictionary.
+    The encoder unifies columns whose similarity exceeds \texttt{7.5\%} via a Union-Find structure (union by size).
+The low threshold reflects that even small vocabulary overlap reduces the marginal cost of adding a column to an existing dictionary.
     The encoder discards groups with fewer than two members.
     We selected the threshold and similarity mode via a sweep over $[2.5\%, 20\%]$ on the Germany OpenMapTiles tileset under three similarity modes (\emph{hybrid} taking $\max(\hat{J}_\text{exact}, \hat{J}_\text{trigram})$, \emph{only-trigram}, \emph{only-exact}), summarised in \cref{fig:minhash_sweep} in the appendix.
     Hybrid mode wins at every threshold at no significant performance cost, and the curve is nearly flat below \qty{7.5}{\percent}, where the empirical optimum at \qty{2.5}{\percent} saves only an additional \qty{1.6}{\mega\byte} on the \qty{3.14}{\giga\byte} tileset at the cost of false-positive union risk on tilesets with less correlated vocabularies.
@@ -1297,12 +1368,16 @@ The reference encoder groups columns by naming prefix (e.g., \texttt{\mlval{name
             \draw[arrow] (sim) -- node[above, font=\scriptsize\itshape] {$>\tau$} (res);
 
     \end{tikzpicture}}
-    \caption{MinHash-based shared dictionary clustering (clockwise from top-left).
+    \caption{
+MinHash-based shared dictionary clustering (clockwise from top-left).
         \circled{1}~Each string column's distinct values form a set.
         \circled{2}~Two 128-permutation MinHash sketches are computed per column: one over exact string values, one over byte trigrams (3-byte sliding windows).
-        \circled{3}~Pairwise Jaccard similarity is estimated by counting matching hash positions. The maximum of the two sketch types is compared against threshold $\tau = 0.075$.
-        Exact matching detects columns that share literal values (\texttt{\mlval{class}}/ \texttt{\mlval{subclass}}). Trigram matching detects cross-language morphological variants (\texttt{\mlval{name:de}}/ \texttt{\mlval{name:fr}} in a border region).
-        \circled{4}~Column pairs exceeding the threshold are unified via Union-Find. The resulting groups share a single deduplicated dictionary corpus}
+        \circled{3}~Pairwise Jaccard similarity is estimated by counting matching hash positions.
+The maximum of the two sketch types is compared against threshold $\tau = 0.075$.
+        Exact matching detects columns that share literal values (\texttt{\mlval{class}}/ \texttt{\mlval{subclass}}).
+Trigram matching detects cross-language morphological variants (\texttt{\mlval{name:de}}/ \texttt{\mlval{name:fr}} in a border region).
+        \circled{4}~Column pairs exceeding the threshold are unified via Union-Find.
+The resulting groups share a single deduplicated dictionary corpus}
     \label{fig:minhash_clustering}
 \end{figure}
 
@@ -1327,12 +1402,14 @@ This soft-correctness guarantee underwrites the experimental results in \cref{ch
 \subsection{Tile Statistics Collection}\label{sub:tile_statistics}
 
 Several optimizations passes require knowledge of the actual tile data, namely stats-driven constant folding and selectivity reordering (\cref{sub:expression_optimizations}), dead elimination with geometry-type mismatch and metadata refinement (\cref{sub:structural_optimizations}), and the tile pruning advisory (\cref{sub:tile_shaving}).
-A statistics collection phase provides this knowledge by scanning the tile set and producing a per-source, per-source-layer statistical profile. The optimizer accepts either an MBTiles database, in which case the scan runs on demand, or a pre-computed statistics file produced by an earlier scan.
+A statistics collection phase provides this knowledge by scanning the tile set and producing a per-source, per-source-layer statistical profile.
+The optimizer accepts either an MBTiles database, in which case the scan runs on demand, or a pre-computed statistics file produced by an earlier scan.
 
 For each source layer, the phase collects the following statistics:
 
 \begin{description}
-    \item[\textbf{Feature count}] total number of features across all tiles\footnote{Contrairy to na"ive reasoning, eatures appearing in multiple tiles at different zoom levels are counted multipe times, as the optimizer reasons per-tile, not per-geographic-entity. This creates bias, but bias that is representative to the usecase of rendering maps, where tiled features are used instead of geographic features.}.
+    \item[\textbf{Feature count}] total number of features across all tiles\footnote{Contrairy to na"ive reasoning, eatures appearing in multiple tiles at different zoom levels are counted multipe times, as the optimizer reasons per-tile, not per-geographic-entity.
+This creates bias, but bias that is representative to the usecase of rendering maps, where tiled features are used instead of geographic features.}.
     \item[\textbf{Features by zoom}] a per-zoom-level feature count, used by metadata refinement to determine the first and last zoom level at which data exists.
     \item[\textbf{Geometry types}] counts of Point, LineString, and Polygon features, used by dead elimination to detect geometry-type mismatches.
     \item[\textbf{Feature ID presence}] whether any feature carries a non-zero feature ID, used by the advisory to decide whether to strip the ID column.
@@ -1346,8 +1423,10 @@ For each source layer, the phase collects the following statistics:
 \end{description}
 
 We allow collecting statistics at a configurable \emph{sample rate}.
-A sample rate of~1.0 (full census) is required for irreversible decisions such as dead layer elimination or property interning. Lower sample rates are sufficient for selectivity estimation and reordering.
-A sample-rate guard in the optimizer enforces this distinction. Passes that permanently remove data check that the sample rate is~1.0 before applying.
+A sample rate of~1.0 (full census) is required for irreversible decisions such as dead layer elimination or property interning.
+Lower sample rates are sufficient for selectivity estimation and reordering.
+A sample-rate guard in the optimizer enforces this distinction.
+Passes that permanently remove data check that the sample rate is~1.0 before applying.
 
 \subsection{Preprocessing Cost Model}\label{sub:preprocessing_cost_model}
 
@@ -1382,11 +1461,13 @@ These styles are evaluated using static analysis only (style size, complexity me
 \subsection{Tile Data and Caching}\label{sub:tile_data}
 
 We source tile data from \ac{OSM} via Planetiler or the German government.
-We consume both sources through the standard Web Mercator XYZ tiling scheme used by MapLibre, so all zoom-level reasoning in the thesis assumes this grid. We access BasemapDE through its XYZ-compatible endpoint rather than its native \acs{WMTS}~\cite{masoOpenGISWebMap2010} grid, ensuring that the optimizer's tile indexing is uniform across the corpus.
+We consume both sources through the standard Web Mercator XYZ tiling scheme used by MapLibre, so all zoom-level reasoning in the thesis assumes this grid.
+We access BasemapDE through its XYZ-compatible endpoint rather than its native \acs{WMTS}~\cite{masoOpenGISWebMap2010} grid, ensuring that the optimizer's tile indexing is uniform across the corpus.
 Only for \ac{OSM} is the underlying data fully available, so only for this source can we collect tile statistics at a sample rate of~1.0.
 To ensure reproducibility across benchmark runs, we route all tile requests through a local caching proxy that stores tiles on first access and replays them on subsequent runs with the latency and download speed of a 4G internet connection according to Rusan et al.~\cite{rusanAssessmentPacketLatency2015} ($\frac{\text{size}}{30\,\mathrm{MiB/s}} + 25ms$).
 This eliminates network variability and guarantees that every ablation step operates on identical tile data (after an initial, discarded run).
-The model does not simulate packet loss, HTTP/2 multiplexing, TCP slow-start, or HTTP/3 (QUIC) with its 0-RTT connection resumption and absence of head-of-line blocking. All of these would amplify the benefit of smaller tiles, so the measured load-time improvements from tile shaving are a conservative lower bound on what a real deployment would observe.
+The model does not simulate packet loss, HTTP/2 multiplexing, TCP slow-start, or HTTP/3 (QUIC) with its 0-RTT connection resumption and absence of head-of-line blocking.
+All of these would amplify the benefit of smaller tiles, so the measured load-time improvements from tile shaving are a conservative lower bound on what a real deployment would observe.
 This ensures that we measure tile-fetch improvements (e.g.\ smaller tiles due to shaving) under conditions representative of a \ac{CDN}-served deployment while remaining deterministic across runs.
 The same network model also feeds the per-style \ac{CDN} break-even analysis in \cref{sub:mlt_discussion}, which extends this single-client setup to a multi-style cache.
 
@@ -1413,14 +1494,17 @@ we do not claim it is unbiased across all real-world usage patterns, but we clai
 \section{Evaluation}\label{sec:evaluation}
 
 Since many of the investigated optimizations techniques have not previously been studied in the context of map rendering pipelines, we must evaluate their effectiveness empirically.
-We carry out this empirical evaluation in \cref{ch:experiments}. The rest of this section defines the methodology that chapter applies.
+We carry out this empirical evaluation in \cref{ch:experiments}.
+The rest of this section defines the methodology that chapter applies.
 Our evaluation reports the deployment metrics framed in \cref{sec:problem_statement} along several axes: data savings (which feed the load-time axis), rendering performance, optimization cost (the $C_\text{total}$ breakdown of \cref{sub:preprocessing_cost_model}), and qualitative efficiency.
 
 \begin{description}
     \item[\textbf{Data savings}] reduction in style size (raw, gzip, and Brotli) and tile transfer volume.
     \item[\textbf{Rendering performance}] client-side metrics including load time, frames per second, frame time percentiles (p50, p95, p99), jank count, style parse time, time to first tile, and time to first frame.
-    \item[\textbf{Optimization cost}] preprocessing time introduced by each pass, measured as wall-clock time on the optimizer's host machine. This is an offline cost amortised over all subsequent tile deliveries.
-    \item[\textbf{Efficiency}] \emph{qualitative} discussion of the energy implications of reduced data transfer and fewer rendering operations.  We perform no direct power or energy measurement (\ac{RAPL}, battery delta), because the benchmark harness runs on a desktop workstation rather than a thermaly and battery-constrained mobile device. Any quantitative energy claim would require a different hardware platform and we defer it to future work.
+    \item[\textbf{Optimization cost}] preprocessing time introduced by each pass, measured as wall-clock time on the optimizer's host machine.
+This is an offline cost amortised over all subsequent tile deliveries.
+    \item[\textbf{Efficiency}] \emph{qualitative} discussion of the energy implications of reduced data transfer and fewer rendering operations.  We perform no direct power or energy measurement (\ac{RAPL}, battery delta), because the benchmark harness runs on a desktop workstation rather than a thermaly and battery-constrained mobile device.
+Any quantitative energy claim would require a different hardware platform and we defer it to future work.
 \end{description}
 
 \subsection{Metrics}\label{sub:metrics}
@@ -1453,7 +1537,8 @@ The ablation comprises 19~cumulative steps (a baseline with no optimizations fol
 \cref{sub:combined_ablation,tab:marginal_contribution} present the step-by-step results.
 
 We execute each scenario/style combination for 15~runs.
-We report the median and standard deviation of each metric. We prefer the median over the mean because rendering performance distributions are right-skewed (occasional long frames inflate the mean).
+We report the median and standard deviation of each metric.
+We prefer the median over the mean because rendering performance distributions are right-skewed (occasional long frames inflate the mean).
 To reduce measurement noise, the benchmark harness pins rendering to real \ac{GPU} hardware via ANGLE\footnote{\url{https://github.com/google/angle}, last accessed 2026-05-23}/Vulkan\footnote{\url{https://www.vulkan.org/}, last accessed 2026-05-23} rather than the software rasteriser used for pixel-exact render tests.
 This ensures that we measure \ac{GPU}-bound workloads (fragment shading, texture sampling, blend operations) realistically.
 

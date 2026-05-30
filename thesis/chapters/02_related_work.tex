@@ -24,7 +24,8 @@ It also only shaves on a zoom-property-unaware row-column approach.
 
 Mapbox also offers \emph{style-optimized vector tiles} as a proprietary server-side feature~\cite{StyleoptimizedVectorTiles}.
 When a tile request includes style metadata, the server analyses the style's sources, filters, and zoom ranges, then strips all data not visible for that style.
-This is the closest commercial precedent for style-data co-optimizations, but it is opaque, closed-source, and \ac{API}-only. It cannot be extended, audited, or deployed independently.
+This is the closest commercial precedent for style-data co-optimizations, but it is opaque, closed-source, and \ac{API}-only.
+It cannot be extended, audited, or deployed independently.
 The exact set of optimizations is not disclosed and given that MapBox does not have a open research stance (their terms of service explicitly forbid this), reverse-engineering would likely be illegal\footnote{\url{https://media.ccc.de/v/36c3-11089-reflections_on_the_new_reverse_engineering_law}, last accessed 2026-05-21}.
 
 Vilardaga built \texttt{vt-optimizer}\footnote{\url{https://github.com/ibesora/vt-optimizer}, last accessed 2025-10-20}, which drops invisible or unused layers and fields in both the style and data.
@@ -37,7 +38,8 @@ It implements several data-level optimizations heuristics: feature dropping base
 The line simplification algorithms used throughout the geospatial toolchain (Douglas-Peucker~\cite{douglasALGORITHMSREDUCTIONNUMBER1973} for its computational simplicity and Visvalingam-Whyatt~\cite{visvalingamLineGeneralisationRepeated1993} for its area-based perceptual fidelity) are instances of \emph{cartographic generalization}, the principled reduction of map detail to match the target scale.
 Tile data at different zoom levels is, in effect, a discrete multi-scale generalization hierarchy.
 However, this thesis does not contribute to new generalization algorithms.
-These heuristics are effective but purely data-driven. Tippecanoe has no knowledge of which style will render the tiles and therefore cannot tailor its decisions to the rendering workload.
+These heuristics are effective but purely data-driven.
+Tippecanoe has no knowledge of which style will render the tiles and therefore cannot tailor its decisions to the rendering workload.
 
 From a cartographic perspective, we understand style-driven tile shaving as a form of \emph{model generalization}~\cite{mcmasterGeneralizationDigitalCartography1992}.
 The rendering style serves as the generalization specification, and the pruning advisory selects which data survives the reduction, analogous to how a target scale determines which features are retained in traditional multi-scale generalization.
@@ -66,7 +68,8 @@ Tremmel~\&~Zink.~\cite{tremmelMapLibreTileNext2025b} introduced the MapLibre Til
 At the archive layer, Tremmel~\cite{tremmelCOMTILESCASESTUDY2023} proposed COMTiles, a cloud-optimized tile archive format that complements the per-tile encoding of \ac{MLT} by addressing the container and delivery layer for planet-scale tilesets.
 However, their work does not consider styles.
 The encoding strategy is chosen without knowledge which properties the renderer will actually access, leaving potential for further size reduction through style-aware pruning before encoding.
-Removing properties and features changes column cardinalities and value distributions. For instance, pruning rare road classes can convert a high-cardinality string column into one amenable to dictionary or run-length encoding, so the optimal encoding strategy for the shaved tile differs from the original.
+Removing properties and features changes column cardinalities and value distributions.
+For instance, pruning rare road classes can convert a high-cardinality string column into one amenable to dictionary or run-length encoding, so the optimal encoding strategy for the shaved tile differs from the original.
 
 The encoding techniques used in \ac{MLT} draw on a rich literature in columnar database compression.
 Lemire and Boytsov~\cite{lemireDecodingBillionsIntegers2015} introduced \ac{SIMD}-vectorised integer compression \ac{FastPFOR} achieving billions of integers per second in decompression throughput.
@@ -76,7 +79,8 @@ The general finding that no single encoding is universally optimal, and that dat
 
 The problem of automatic encoding selection in columnar databases has a substantial lineage.
 Abadi et~al.~\cite{abadiIntegratingCompressionExecution2006} introduced decision rules for choosing among \ac{RLE}, dictionary, and bit-packing based on column properties (cardinality, sort order, run lengths) in the C-Store system.
-Damme et~al.~\cite{dammeComprehensiveExperimentalSurvey2019} evaluated dozens of lightweight integer encodings and developed a cost-based selection strategy. Boissier~\cite{ganBaguaScalingDistributed2021} formulated encoding selection as a budget-constrained optimization problem.
+Damme et~al.~\cite{dammeComprehensiveExperimentalSurvey2019} evaluated dozens of lightweight integer encodings and developed a cost-based selection strategy.
+Boissier~\cite{ganBaguaScalingDistributed2021} formulated encoding selection as a budget-constrained optimization problem.
 And Zeng et~al.~\cite{zengEmpiricalEvaluationColumnar2023} empirically evaluated Parquet and ORC internals, confirming that dictionary encoding should be a default candidate and that decompression speed matters more than compression ratio for integer encodings.
 
 Our encoding competition differs from these systems by operating at tile granularity (\qtyrange{10}{100}{\kilo\byte}) rather than on large analytical datasets.
@@ -86,7 +90,8 @@ Alternative approaches to encoding selection include Fehér et~al.'s~\cite{feher
 Our trial-based competition is closest in spirit to the instance-optimized approach, but substitutes exhaustive evaluation over a bounded candidate space for the learned or heuristic strategies used in database systems.
 
 Gaffuri~\cite{gaffuriWebMappingVector2012} presented one of the earliest academic treatments of vector tile architecture for web maps, proposing a framework integrating tiling, spatial indexing, and generalization for multi-scale data.
-His work established the architectural vocabulary that \ac{MVT} and \ac{MLT} build on, but predates the shift to columnar encoding and does not consider style-awareness as a dimension of the encoding problem. That is precisely the dimension we add to the tile encoding pipeline.
+His work established the architectural vocabulary that \ac{MVT} and \ac{MLT} build on, but predates the shift to columnar encoding and does not consider style-awareness as a dimension of the encoding problem.
+That is precisely the dimension we add to the tile encoding pipeline.
 
 GeoParquet uses the same per-page encoding competition (dictionary, \ac{RLE}, delta, bit-packing) that \ac{MLT} applies per stream, and at first glance it is the obvious off-the-shelf target for vector tile delivery.
 The reason it is not, in practice, is granularity.
@@ -137,7 +142,8 @@ Rechsteiner~\cite{rechsteinerPerformancevergleichOpenSourceVectorTilesServerloes
 Since the systems under test offer different feature sets, the evaluation partly compares incomparable aspects and does not address client-side rendering optimizations or style-level improvements.
 \end{sloppypar}
 
-Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} and Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} established the methodological foundations for statistically rigorous performance evaluation. The specific techniques drawn from their work (bootstrap confidence intervals, warm-up handling, and metric separation) are introduced in \cref{sec:benchmarking}.
+Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} and Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} established the methodological foundations for statistically rigorous performance evaluation.
+The specific techniques drawn from their work (bootstrap confidence intervals, warm-up handling, and metric separation) are introduced in \cref{sec:benchmarking}.
 
 These benchmarking studies establish the measurement landscape but focus on comparing \emph{systems} rather than evaluating the impact of \emph{optimizations passes} applied to a fixed system.
 We complement them by introducing a cumulative ablation methodology that isolates the contribution of each optimizations pass within a single renderer (MapLibre GL~JS).
@@ -147,7 +153,8 @@ We complement them by introducing a cumulative ablation methodology that isolate
 Each strand of this literature solves part of the problem in isolation.
 The data-side tools (\texttt{vtshaver}, \texttt{vt-optimizer}, Tippecanoe) prune tile content but never read or rewrite the style document that drives the renderer.
 Mapbox's closed-source \enquote{style-optimized tiles} service is the only precedent that genuinely couples style and data, and its terms of service explicitly preclude the independent evaluation needed to confirm what it actually does.
-The style-side work is sparser still. Stamen's default-stripping utility and a handful of validators cover individual optimizations, but no published tool composes multiple passes, and the closest academic analogue (\ac{CSS} minification) lives in a different domain altogether.
+The style-side work is sparser still.
+Stamen's default-stripping utility and a handful of validators cover individual optimizations, but no published tool composes multiple passes, and the closest academic analogue (\ac{CSS} minification) lives in a different domain altogether.
 Tremmel and Zink's \ac{MLT} format advances the encoding layer but picks strategies without consulting the style.
 The benchmarking literature is in better shape, and we adopt its statistical methodology rather than extending it.
 

@@ -307,7 +307,9 @@ for (const {feature, id, index, sourceLayerIndex} of features) {
 				}
 			\end{tikzpicture}%
 		}
-		\caption{\textbf{Spiral.} Camera orbits its target while pointing at it. This isolates render cost from tile-load cost via a stable tile set.}
+		\caption{
+\textbf{Spiral.} Camera orbits its target while pointing at it.
+This isolates render cost from tile-load cost via a stable tile set.}
 		\label{fig:app_anim_spiral}
 	\end{subfigure}
 	\hfill
@@ -484,11 +486,16 @@ for (const {feature, id, index, sourceLayerIndex} of features) {
 			bearingspin  & --         & --         & \checkmark & $60^{\circ}$ &  8 \\
 			\bottomrule
 		\end{tblr}
-		\caption{\acs{DOF} matrix, pitch~$\phi$, and keyframe count showing which the most important differientiating factors}
+		\caption{
+\acs{DOF} matrix, pitch~$\phi$, and keyframe count showing which the most important differientiating factors}
 		\label{fig:app_anim_dofs}
 	\end{subfigure}
 
-	\caption{Synthetic camera animation patterns (\cref{sub:scenarios}). Each panel shows a top-down pan trajectory (hollow circle = first keyframe, filled square = last) with zoom~($z$, scale 1--24) and bearing~($\theta$, clockwise from north) strips. Panel~\subref{fig:app_anim_dofs} tabulates the exercised \acp{DOF}.}
+	\caption{
+Synthetic camera animation patterns (\cref{sub:scenarios}).
+Each panel shows a top-down pan trajectory (hollow circle = first keyframe, filled square = last) with zoom~($z$, scale 1--24) and bearing~($\theta$, clockwise from north) strips.
+Panel~\subref{fig:app_anim_dofs} tabulates the exercised \acp{DOF}.
+}
 	\label{fig:app_animation_patterns}
 \end{figure}
 \clearpage
@@ -542,7 +549,8 @@ Other styles would produce slightly different shaving results depending on their
  \fmtbytes{\mvtBytes} & \fmtbytes{\mltJavaBytes} &
  \fmtbytes{\mltRustBytes} & \fmtbytes{\mltShavedBytes} &
  \fmtdelta{\deltaPct}}%
-\caption{Per-zoom tile size (gzip) for the Germany OpenMapTiles
+\caption{
+Per-zoom tile size (gzip) for the Germany OpenMapTiles
 tileset across four encoding configurations.  The $\Delta$\% column
 shows the reduction of the full pipeline (style optimizations + tile
 shaving + \ac{MLT} encoding) relative to the \ac{MVT} baseline}
@@ -578,14 +586,18 @@ Stadia Outdoors      & 110 &     \num{43208} &     \num{41837} &  \num{-3.2} &  
 Versatiles Colorful  & 309 &    \num{151692} &    \num{114549} & \num{-24.5} &  \num{-0.7} \\
 \bottomrule
 \end{tabular}
-\caption{Complete Maputnik generalization corpus with per-style size metrics. Two catalog entries were unavailable at the time of measurement and are excluded. All remaining styles were optimized with static passes only (no tile statistics).}
+\caption{
+Complete Maputnik generalization corpus with per-style size metrics.
+Two catalog entries were unavailable at the time of measurement and are excluded.
+All remaining styles were optimized with static passes only (no tile statistics).}
 \label{tab:maputnik_full}
 \end{table}
 
 \clearpage
 \section{Benchmark Environment}\label{app:bench_env}
 
-All measurements in \cref{ch:experiments} were collected on a single workstation. Preprocessing (\ac{MVT} pruning, \ac{MLT} encoding) and browser-based rendering used the same host.
+All measurements in \cref{ch:experiments} were collected on a single workstation.
+Preprocessing (\ac{MVT} pruning, \ac{MLT} encoding) and browser-based rendering used the same host.
 The tables below document the hardware, operating system, language toolchains, key library versions, and the headless browser harness used for the rendering scenarios.
 
 \subsection{Hardware}\label{app:bench_hw}
@@ -604,7 +616,8 @@ Storage       & Corsair Force MP600 1\,TB NVMe M.2 SSD (PCIe Gen~4 x4, 931.5\,Gi
 Form factor   & Desktop workstation \\
 \bottomrule
 \end{tabular}
-\caption{Workstation hardware specifications}
+\caption{
+Workstation hardware specifications}
 \label{tab:bench_hardware}
 \end{table}
 
@@ -624,7 +637,8 @@ Vulkan loader   & \ac{API} \texttt{1.4.325}, conformance \texttt{1.4.3.0}, drive
 ANGLE backend   & Vulkan (see \cref{app:bench_browser}) \\
 \bottomrule
 \end{tabular}
-\caption{Host operating system, kernel, and graphics driver stack.}
+\caption{
+Host operating system, kernel, and graphics driver stack.}
 \label{tab:bench_os}
 \end{table}
 
@@ -648,7 +662,8 @@ npm                    & \texttt{11.12.1} \\
 Python                 & \texttt{3.13.2} \\
 \bottomrule
 \end{tabular}
-\caption{Language toolchains used to build and run the encoder, optimiser, harness, and analysis scripts.}
+\caption{
+Language toolchains used to build and run the encoder, optimiser, harness, and analysis scripts.}
 \label{tab:bench_toolchains}
 \end{table}
 
@@ -685,7 +700,10 @@ Used chrome launch flags are \texttt{--enable-gpu},\allowbreak\texttt{--ignore-g
 		Device pixel ratio           & \texttt{1.0} (\cref{sec:visual_correctness}) \\
 		\bottomrule
 	\end{tabular}
-	\caption{Headless browser harness driving the rendering scenarios. The bench harness produces the timings reported in \cref{ch:experiments}. The separate visual-check harness is used offline for \texttt{pixelmatch}-based correctness validation.}
+	\caption{
+Headless browser harness driving the rendering scenarios.
+The bench harness produces the timings reported in \cref{ch:experiments}.
+The separate visual-check harness is used offline for \texttt{pixelmatch}-based correctness validation.}
 	\label{tab:bench_browser}
 \end{table}
 
@@ -723,18 +741,23 @@ Optimiser                    & \texttt{mlt-core}                & \texttt{0.9} \
                                        & \texttt{jmh-core}                & \texttt{1.37} \\
 \bottomrule
 \end{tabular}
-\caption{Pinned versions of the most load-bearing dependencies, grouped by codebase.}
+\caption{
+Pinned versions of the most load-bearing dependencies, grouped by codebase.}
 \label{tab:bench_libs}
 \end{table}
 
 \clearpage
 \section{Shared-Dictionary Threshold Sweep}\label{app:minhash_sweep}
 
-\Cref{fig:minhash_sweep} accompanies the discussion of MinHash-based shared-dictionary grouping in \cref{sub:cardinality}. The chosen threshold of 0.075 captures the majority of the achievable size reduction and the marginal improvement from finer thresholds is modest.
+\Cref{fig:minhash_sweep} accompanies the discussion of MinHash-based shared-dictionary grouping in \cref{sub:cardinality}.
+The chosen threshold of 0.075 captures the majority of the achievable size reduction and the marginal improvement from finer thresholds is modest.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\linewidth]{figures/minhash_sweep.pdf}
-    \caption{Total encoded mbtiles size of the Germany OpenMapTiles tileset under different MinHash similarity modes and Jaccard thresholds.  Lower is better.  The hybrid mode (teal) produces the smallest output at every threshold. All modes increase monotonically with threshold as fewer column pairs qualify for shared-dictionary grouping. The y-axis is zoomed to the data range to make the differences visible: the full range spans approximately \qty{6}{\mega\byte} out of \qty{3.14}{\giga\byte} total}
+    \caption{
+Total encoded mbtiles size of the Germany OpenMapTiles tileset under different MinHash similarity modes and Jaccard thresholds.  Lower is better.  The hybrid mode (teal) produces the smallest output at every threshold.
+All modes increase monotonically with threshold as fewer column pairs qualify for shared-dictionary grouping.
+The y-axis is zoomed to the data range to make the differences visible: the full range spans approximately \qty{6}{\mega\byte} out of \qty{3.14}{\giga\byte} total}
     \label{fig:minhash_sweep}
 \end{figure}

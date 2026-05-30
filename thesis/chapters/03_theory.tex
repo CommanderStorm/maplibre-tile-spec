@@ -71,7 +71,10 @@ These low-level graphics building blocks are linked to map data through sprites,
 		
 		\draw[arrow] (datasource.north) -- node[label] {convert to serving-friendly representation} (server.south);
 	\end{tikzpicture}
-	\caption{Basic building blocks of a map rendering stack. Data is taken from a data source, converted into a simplified format (for example a spatial index), and served to a client. The visual appearance is defined by a style and supported by fonts and sprites for text and icons.}
+	\caption{
+Basic building blocks of a map rendering stack.
+Data is taken from a data source, converted into a simplified format (for example a spatial index), and served to a client.
+The visual appearance is defined by a style and supported by fonts and sprites for text and icons.}
 	\label{fig:basic-arch}
 \end{figure}
 
@@ -147,11 +150,12 @@ Lower zoom levels cover large geographic areas with simplified geometry with hig
 The client requests only the tiles intersecting the current viewport, and as the user pans or zooms, new tiles are fetched while old ones are discarded or cached.
 When a client requests a tile at a zoom level beyond the source's maximum, the renderer \emph{overzooms}: it upscales the nearest available tile from the source's highest available zoom to fill the viewport.
 
-The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched. A layer's effective visibility at a given camera zoom is therefore a function of both the layer's filter and the source's \mlprop{maxzoom}, not the layer bounds alone.
+The \emph{layers} sourced from that tile remain rendered at the overzoomed level even though no new tile is fetched.
+A layer's effective visibility at a given camera zoom is therefore a function of both the layer's filter and the source's \mlprop{maxzoom}, not the layer bounds alone.
 This observation has direct consequences for any optimizer that rewrites zoom bounds.
 Removing a layer at zoom~14, for example, will suppress its rendering at zoom~15 and beyond if the source's \mlprop{maxzoom} is~14, because the renderer continues to display overzoomed tiles from the highest available source zoom.
 We turn this into the asymmetric \mlprop{minzoom}/ \mlprop{maxzoom} tightening rule in \cref{sub:structural_optimizations}.
-\Cref{lst:overzoom} shows the two operations the slicer performs to synthesise a target tile from the source's \mlprop{maxzoom} tile.
+\Cref{lst:overzoom} shows the two operations the slicer performs to synthezise a target tile from the source's \mlprop{maxzoom} tile.
 \stepcirc{1}~Rescale each coordinate by $2^{\Delta z}$ relative to the target-tile offset ($offsetX \notin \{null,0\} \lor offsetY \notin \{null,0\} \Rightarrow x = x * scale - offsetX$). \stepcirc{2}~Clip to the target extent with a 128-unit overdraw buffer for continuous edge geometry.
 Both operations consume the source's \mlprop{maxzoom} tile as input, which is what makes \mlprop{maxzoom} tightening risky in a way that \mlprop{minzoom} tightening is not.
 
@@ -245,7 +249,8 @@ Three architectural approaches to map styling have been established:
     This offers maximum flexibility but makes static analysis and automatic optimizations impossible, since the styling logic is opaque to the rendering engine.
 \end{description}
 
-We focus on client-side declarative styles, specifically the MapLibre style specification. It is the most widely adopted approach in open-source map rendering, and its declarative nature makes it amenable to static analysis and automatic optimizations.
+We focus on client-side declarative styles, specifically the MapLibre style specification.
+It is the most widely adopted approach in open-source map rendering, and its declarative nature makes it amenable to static analysis and automatic optimizations.
 
 The MapLibre style specification\footnote{\url{https://www.maplibre.org/maplibre-style-spec/}, last accessed 2025-10-24} defines a map's appearance as a \ac{JSON} document with the following key components:
 
@@ -284,7 +289,8 @@ isHidden(zoom: number = this.minzoom, roundMinZoom: boolean = false) {
 \end{description}
 
 Filters and properties can be specified as literal constants, as \emph{zoom-dependent} expressions (varying with the camera zoom level via \mlop{interpolate} or \mlop{step} ramps), as \emph{data-driven} expressions (varying per feature based on property values via \mlop{match}, \mlop{case}, or \mlop{get} operators), or as a combination of both.
-The resulting expression trees can be deeply nested and may contain redundant or unreachable branches. These characteristics make them amenable to the same kinds of simplification and optimizations techniques used in compilers and database query planners.
+The resulting expression trees can be deeply nested and may contain redundant or unreachable branches.
+These characteristics make them amenable to the same kinds of simplification and optimizations techniques used in compilers and database query planners.
 
 \Cref{lst:worker_pipeline} shows the worker's tile-parse pipeline as five named steps, marked inline as \stepcirc{1} to \stepcirc{5}.
 
@@ -381,7 +387,8 @@ In a style context, a comparison such as \texttt{[\mlop{"=="},~\mlval{2},~\mlval
 \emph{Constant propagation} extends this idea by tracking the known values of variables through the program's control flow and substituting them at their use sites.
 If a variable is assigned a constant, all subsequent references to that variable can be replaced by the constant, potentially enabling further constant folding at the use sites.
 
-A more powerful variant, \acf{SCCP}, combines constant propagation with dead branch analysis in a single pass. It simultaneously determines which values are constant \emph{and} which branches are reachable, enabling the discovery of constants that are only visible when unreachable code is ignored~\cite{wegmanConstantPropagationConditional1991}.
+A more powerful variant, \acf{SCCP}, combines constant propagation with dead branch analysis in a single pass.
+It simultaneously determines which values are constant \emph{and} which branches are reachable, enabling the discovery of constants that are only visible when unreachable code is ignored~\cite{wegmanConstantPropagationConditional1991}.
 
 \subsection{Dead Code Elimination}
 
@@ -446,7 +453,8 @@ A filter \texttt{[\mlop{"all"}, \mlval{true}, x]} is simplified to~\texttt{x} by
 
 \subsection{Fixpoint Iteration}\label{sub:fixpoint}
 
-Individual peephole rules may expose further opportunities. Constant folding a subexpression may create a new constant parent that enables dead branch elimination, so a single traversal is generally insufficient.
+Individual peephole rules may expose further opportunities.
+Constant folding a subexpression may create a new constant parent that enables dead branch elimination, so a single traversal is generally insufficient.
 
 The remedy is to apply the entire rule set repeatedly until no rule fires.
 A term to which no rule applies is a \emph{fixpoint} of the rewrite function, equivalently a \emph{normal form} of the underlying rewrite system.
@@ -454,7 +462,7 @@ We treat our expression-level optimizer formally as a \ac{TRS}~\cite{baaderTermR
 \Cref{sub:expression_optimizations} gives a lexicographic measure on which most rules strictly decrease, together with the two rules (De~Morgan and distributive factoring) that can temporarily increase it, so a Knaster-Tarski-style convergence theorem~\cite{tarskiLatticetheoreticalFixpointTheorem1955} does not apply.
 
 In practice the loop reaches a normal form within a handful of iterations and we cap it at eight as a safety bound.
-Newcomb et~al.~\cite{newcombVerifyingImprovingHalides2020} reported similar confluence and termination concerns for Halide's hand-written rewrite optimizer and used synthesis-based techniques to verify correctness and discover missing rules.
+Newcomb et~al.~\cite{newcombVerifyingImprovingHalides2020} reported similar confluence and termination concerns for Halide's hand-written rewrite optimizer and used synthezis-based techniques to verify correctness and discover missing rules.
 
 \section{Query Optimization}\label{sec:query_optimizations}
 
@@ -466,7 +474,8 @@ Techniques from relational query optimizations therefore apply directly.
 
 A \emph{cost-based query optimizer} selects among semantically equivalent query execution plans by estimating the cost of each plan and choosing the cheapest~\cite{selingerAccessPathSelection1979}.
 
-The key insight is that the \emph{order} in which predicates are evaluated affects performance even when the final result is identical. Under short-circuit semantics, a conjunction $p_1 \land p_2 \land \cdots \land p_n$ is fastest when the most-likely-\mlval{false} predicate comes first, and a disjunction $p_1 \lor p_2 \lor \cdots \lor p_n$ places the most-likely-\mlval{true} predicate first.
+The key insight is that the \emph{order} in which predicates are evaluated affects performance even when the final result is identical.
+Under short-circuit semantics, a conjunction $p_1 \land p_2 \land \cdots \land p_n$ is fastest when the most-likely-\mlval{false} predicate comes first, and a disjunction $p_1 \lor p_2 \lor \cdots \lor p_n$ places the most-likely-\mlval{true} predicate first.
 
 \subsection{Selectivity Estimation}
 
@@ -607,7 +616,9 @@ Morton codes are fast to compute via bit-interleaving instructions, but the Z-or
 
 The \textbf{Hilbert curve} traces a continuous path through the grid without the inter-quadrant jumps of the Z-order curve, achieving better locality preservation at the cost of a more complex index computation~\cite{moonAnalysisClusteringProperties2001}.
 The Hilbert curve has also been used as the basis for spatial index structures: the Hilbert R-tree~\cite{kamelHilbertRtreeImproved1994} orders rectangles along the Hilbert curve to achieve tighter node packing than conventional R-trees, and FlatGeobuf\footnote{\url{http://flatgeobuf.org/}, last accessed 2026-05-11} uses a packed Hilbert R-tree for spatial indexing of its features.
-The Hilbert index is computed recursively. The unit square is divided into four quadrants, each mapped to a sub-range of the curve. The quadrant containing the point determines the high-order bits of the index, and the process recurses on the sub-quadrant.
+The Hilbert index is computed recursively.
+The unit square is divided into four quadrants, each mapped to a sub-range of the curve.
+The quadrant containing the point determines the high-order bits of the index, and the process recurses on the sub-quadrant.
 
 For tile data, we assign each feature a curve index based on its first vertex coordinate, and our encoding competition described in \cref{ch:methods} selects the feature ordering that produces the smallest encoded output (across Morton, Hilbert, and non-spatial orderings).
 
@@ -620,7 +631,11 @@ Identifying which columns share sufficient overlap is a set similarity problem.
 \begin{equation}\label{eq:jaccard}
     J(A, B) = \frac{|A \cap B|}{|A \cup B|}
 \end{equation}
-MinHash yields no asymptotic improvement over the exact computation. Constructing a signature requires examining every element of $A$ and $B$, so the time complexity remains $\mathcal{O}(|A|+|B|)$, and the input sets must be retained throughout construction. The reduction is a constant factor and applies to the persistent representation. Whereas the exact computation stores all $\mathcal{O}(|A|+|B|)$ elements, MinHash stores only $k$ hash values per set. For fixed $k$, the saving in persistent storage grows without bound as $|A|$ and $|B|$ increase.
+MinHash yields no asymptotic improvement over the exact computation.
+Constructing a signature requires examining every element of $A$ and $B$, so the time complexity remains $\mathcal{O}(|A|+|B|)$, and the input sets must be retained throughout construction.
+The reduction is a constant factor and applies to the persistent representation.
+Whereas the exact computation stores all $\mathcal{O}(|A|+|B|)$ elements, MinHash stores only $k$ hash values per set.
+For fixed $k$, the saving in persistent storage grows without bound as $|A|$ and $|B|$ increase.
 For each of $k$ independent hash functions $h_1, \ldots, h_k$, the minimum hash value over all elements is recorded: $\mathit{sig}_i(A) = \min_{a \in A} h_i(a)$.
 The Jaccard similarity is then estimated as:
 \begin{equation}\label{eq:minhash}
@@ -636,9 +651,11 @@ Benchmarking refers to the systematic measurement of system performance using co
 The purpose of benchmarking is to evaluate system behavior, compare alternative implementations, and quantify the effects of optimizations.
 
 According to Jain~\cite{jainArtComputerSystems1991}, a good evaluation must start with selecting relevant metrics.
-Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that naive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent \ac{JVM}/engine invocations. That principle informs the bootstrap CI methodology we use.
+Georges et~al.~\cite{georgesStatisticallyRigorousJava2007} later demonstrated that naive averaging of execution times on managed runtimes (such as JavaScript engines) leads to unreliable conclusions, advocating instead for confidence intervals computed over multiple independent \ac{JVM}/engine invocations.
+That principle informs the bootstrap CI methodology we use.
 The bootstrap itself, a resampling method for constructing confidence intervals without distributional assumptions, was formalised by Efron and Tibshirani~\cite{efronIntroductionBootstrap1998} and is the specific statistical technique we apply throughout our evaluation (\cref{ch:experiments}).
-Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} codified twelve common pitfalls in reporting performance results. Our evaluation in \cref{ch:experiments} follows their guidelines by reporting per-metric confidence intervals and separating throughput from latency measurements.
+Hoefler and Belli~\cite{hoeflerScientificBenchmarkingParallel2015} codified twelve common pitfalls in reporting performance results.
+Our evaluation in \cref{ch:experiments} follows their guidelines by reporting per-metric confidence intervals and separating throughput from latency measurements.
 In the context of web maps, the candidate metrics span a range from deployment-critical on battery-constrained targets to directly user-visible ones on the desktop:
 
 \begin{description}
@@ -647,15 +664,20 @@ In the context of web maps, the candidate metrics span a range from deployment-c
     \item[\textbf{Throughput,}] typically measured in \acp{FPS} or frame time, describing how many frames can be rendered per second.
     \item[\textbf{Frame stability,}] which captures variations in frame time and identifies dropped frames or rendering stutters.
     \item[\textbf{Network utilisation,}] including transferred bytes, tile request rates, and bandwidth consumption.
-    \item[\textbf{Power consumption}] in Watts, which is relevant for mobile devices and battery-powered systems.  We do not measure power consumption. We use no \ac{RAPL} counters, battery deltas, or external power meters, as our benchmark host is a desktop workstation rather than a battery-constrained mobile device.  We list power here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets. Cellular radio energy is proportional to data volume, and \ac{GPU} active time scales with draw-call count.
+    \item[\textbf{Power consumption}] in Watts, which is relevant for mobile devices and battery-powered systems.  We do not measure power consumption.
+We use no \ac{RAPL} counters, battery deltas, or external power meters, as our benchmark host is a desktop workstation rather than a battery-constrained mobile device.  We list power here as a candidate metric because transfer-size reductions and reduced draw-call counts are established proxies for energy savings on mobile targets.
+Cellular radio energy is proportional to data volume, and \ac{GPU} active time scales with draw-call count.
 \end{description}
 
 These can be benchmarked at different workload levels~\cite{jainArtComputerSystems1991}:
 
 \begin{description}
-    \item[\textbf{Micro-benchmarks}] isolate a single operation (e.g.\ decoding a single tile, evaluating a single filter expression) and measure its cost in isolation. They are useful for identifying bottlenecks but may not reflect real-world performance due to caching and concurrency effects.
-    \item[\textbf{Macro-benchmarks}] measure the performance of a complete subsystem (e.g.\ loading a full style and rendering a fixed camera path) under controlled conditions. They capture interactions between components but require careful setup to ensure reproducibility.
-    \item[\textbf{Application-level benchmarks}] measure end-to-end user-perceived performance (e.g.\ time from page load to interactive map) in a realistic deployment. They are the most representative but also the noisiest due to network variability, browser behavior, and hardware differences.
+    \item[\textbf{Micro-benchmarks}] isolate a single operation (e.g.\ decoding a single tile, evaluating a single filter expression) and measure its cost in isolation.
+They are useful for identifying bottlenecks but may not reflect real-world performance due to caching and concurrency effects.
+    \item[\textbf{Macro-benchmarks}] measure the performance of a complete subsystem (e.g.\ loading a full style and rendering a fixed camera path) under controlled conditions.
+They capture interactions between components but require careful setup to ensure reproducibility.
+    \item[\textbf{Application-level benchmarks}] measure end-to-end user-perceived performance (e.g.\ time from page load to interactive map) in a realistic deployment.
+They are the most representative but also the noisiest due to network variability, browser behavior, and hardware differences.
 \end{description}
 
 \noindent We primarily use macro-benchmarks: we load a full style, fetch and decode tiles, and exercise the renderer with a scripted camera animation.
@@ -665,7 +687,8 @@ Our benchmark harness controls for network variability (via a caching proxy) and
 Three theoretical traditions map onto the three levels of the pipeline.
 \textbf{Compiler optimization} (peephole rewriting, constant folding, fixpoint iteration) drives the expression-level passes that simplify each style's \ac{JSON} expressions without schema knowledge.
 \textbf{Query optimization} (projection pushdown, selectivity estimation) shapes the structural passes and the pruning advisory that bridges style and data.
-The \textbf{encoding techniques} surveyed last feed the data-level passes that re-encode shaved tiles with automatic strategy selection. These cover columnar storage, the logical encodings (zigzag, delta, \ac{RLE}, dictionary) and physical techniques (VarInt, FastPFOR, \ac{FSST}) they hand off to, and space-filling curves.
+The \textbf{encoding techniques} surveyed last feed the data-level passes that re-encode shaved tiles with automatic strategy selection.
+These cover columnar storage, the logical encodings (zigzag, delta, \ac{RLE}, dictionary) and physical techniques (VarInt, FastPFOR, \ac{FSST}) they hand off to, and space-filling curves.
 We adopt the benchmarking literature's statistical methodology (bootstrap confidence intervals, warm-up handling, metric separation) rather than extending it.
 
 The following chapter formalises the joint optimization problem (\cref{sec:problem_statement,sec:scope}) and turns these foundations into concrete passes (\cref{sec:approach,sec:building_optimizations}) and an evaluation methodology (\cref{sec:gathering_sample,sec:evaluation}).
