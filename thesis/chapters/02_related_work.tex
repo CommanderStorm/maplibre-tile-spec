@@ -25,7 +25,7 @@ It also only shaves on a zoom-property-unaware row-column approach.
 Mapbox also offers \emph{style-optimized vector tiles} as a proprietary server-side feature~\cite{StyleoptimizedVectorTiles}.
 When a tile request includes style metadata, the server analyses the style's sources, filters, and zoom ranges, then strips all data not visible for that style.
 This is the closest commercial precedent for style-data co-optimizations, but it is opaque, closed-source, and \ac{API}-only. It cannot be extended, audited, or deployed independently.
-The exact set of optimizations is not disclosed and given that MapBox does not have a open research stance (their terms of service explicitly forbid this), reverse-engineering would likely be illegal\footnote{\url{https://media.ccc.de/v/36c3-11089-reflections_on_the_new_reverse_engineering_law}}.
+The exact set of optimizations is not disclosed and given that MapBox does not have a open research stance (their terms of service explicitly forbid this), reverse-engineering would likely be illegal\footnote{\url{https://media.ccc.de/v/36c3-11089-reflections_on_the_new_reverse_engineering_law}, last accessed 2026-05-21}.
 
 Vilardaga built \texttt{vt-optimizer}\footnote{\url{https://github.com/ibesora/vt-optimizer}, last accessed 2025-10-20}, which drops invisible or unused layers and fields in both the style and data.
 The tool also provides an inspection mode that checks conformance to Mapbox's recommended tile size limits (\qty{50}{\kilo\byte} average, \qty{500}{\kilo\byte} maximum)\footnote{\url{https://docs.mapbox.com/mapbox-tiling-service/guides/frequentlyaskedquestions/}, last accessed 2026-05-23}.
