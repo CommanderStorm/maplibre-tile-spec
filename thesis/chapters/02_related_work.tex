@@ -53,7 +53,7 @@ Our optimizations operate downstream, on the data and style that emerge from suc
 A rendering style is a declarative specification over a tabular feature set, which puts style-driven tile pruning in the same shape as the column- and predicate-skipping problems that database query optimizers have long attacked.
 Rule-based query rewriting was established as a distinct optimization phase by Pirahesh et~al.'s Starburst system~\cite{piraheshExtensibleRuleBased1992}, and projection and predicate pushdown~\cite{graefeQueryEvaluationTechniques1993} are the canonical mechanisms by which modern engines such as Spark SQL~\cite{armbrustSparkSQLRelational2015} avoid materialising columns the query never reads.
 Columnar storage systems built on Parquet (whose nested representation originates in Dremel's record shredding and assembly~\cite{melnikDremelInteractiveAnalysis}) or ORC depend on this pushdown, and Abadi et~al.~\cite{abadiMaterializationStrategiesColumnOriented2007} characterised the early versus late materialisation trade-off it implies.
-\Cref{ch:methods} develops the style-driven tile pipeline in this vocabulary.
+The style-driven tile pipeline \Cref{sub:tile_shaving}.
 
 \section{Tile Encoding and Format Innovation}\label{sec:rw_tile_encoding}
 
