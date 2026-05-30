@@ -114,7 +114,7 @@ This ecosystem tooling demonstrates that individual style optimizations are reco
 
 The closest academic analogue lies outside the map domain entirely.
 Hague et al.~\cite{hagueCSSMinificationConstraint2019} formalise \ac{CSS} rule merging as a Max-SAT problem over a node-weighted bipartite graph of rules and properties with ordering constraints from the cascade, and their SatCSS tool beats six production \ac{CSS} minifiers on real benchmarks.
-Our layer-merging pass (\cref{sub:structural_optimizations}) attacks the same declarative-rule-merging-under-ordering-constraints problem, but heuristically, since the per-tileset build budget rules don't need a SAT solver.
+Our layer-merging pass (\cref{sub:structural_optimizations}) attacks the same declarative-rule-merging-under-ordering-constraints problem, but heuristically.
 
 More broadly, rule-based optimization is a well-studied paradigm in databases and compilers, and a rule-based style rewriter sits between two architectural reference points.
 Pirahesh et~al.~\cite{piraheshExtensibleRuleBased1992} established \emph{rule-based query rewriting} as a distinct optimization phase in the Starburst system, in which declarative transformation rules are applied in priority order before cost-based plan selection.
