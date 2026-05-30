@@ -58,7 +58,7 @@ Columnar storage systems built on Parquet (whose nested representation originate
 \section{Tile Encoding and Format Innovation}\label{sec:rw_tile_encoding}
 
 The dominant wire format for vector tiles is \ac{MVT}\footnote{\url{https://github.com/mapbox/vector-tile-spec/tree/master/2.1}, last accessed 2026-04-21}, which uses Protocol Buffers\footnote{\url{https://protobuf.dev/}, last accessed 2026-04-21} to encode features in a row-oriented layout.
-\ac{MVT} has since been adopted as a conformance class in the \ac{OGC} API-Tiles standard~\cite{OGCAPITiles}, making it the baseline format for any standards-compliant tile delivery.
+\ac{MVT} has been adopted as a conformance class in the \ac{OGC} API-Tiles standard~\cite{OGCAPITiles}, making it the baseline format for any standards-compliant tile delivery.
 Its row orientation means that accessing a single property column requires scanning the entire feature table, and its protobuf encoding does not exploit the statistical properties of individual columns.
 
 Tremmel et al.~\cite{tremmelMapLibreTileNext2025b} introduced the MapLibre Tile (MLT) format, a columnar alternative that achieves up to $3\times$ tile size reduction on encoded tilesets and up to $6\times$ on certain large tiles relative to \ac{MVT}.
