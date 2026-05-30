@@ -275,7 +275,7 @@ When tile statistics are available, the optimizer extends constant folding with 
 These rules receive tile statistics for the relevant source layer and fold expressions that are statically indeterminate but data-determinate:
 
 \begin{description}
-    \item[\textbf{Property presence folding}] if a property is present in every feature, \texttt{[\mlop{"has"},~\mlval{"p"}]} folds to \mlval{true}. If present in no feature, it folds to \mlval{false}.
+    \item[\textbf{Property presence folding}] if a property is present in every feature, \texttt{[\mlop{"has"},~\mlval{"p"}]} folds to \mlval{true}. If present in none, it folds to \mlval{false}.
     \item[\textbf{Single-value folding}] if a property has cardinality~1 and is present in all features, \texttt{[\mlop{"get"},~\mlval{"p"}]} folds to the single known value.
     \item[\textbf{Geometry-type folding}] if a source layer contains only one geometry type, comparisons against \mlop{geometry-type} fold to a boolean.
     \item[\textbf{Range folding}] numeric comparisons against a property with known data range $[\mathrm{min},\, \mathrm{max}]$ are folded when the predicate is trivially satisfied or violated.
