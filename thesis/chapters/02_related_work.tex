@@ -36,7 +36,7 @@ Tippecanoe\footnote{\url{https://github.com/felt/tippecanoe}, last accessed 2026
 It implements several data-level optimizations heuristics: feature dropping based on density budgets (\texttt{--drop-densest-as-needed}), polygon coalescing at low zoom levels, Visvalingam line simplification~\cite{visvalingamLineGeneralisationRepeated1993}, and attribute exclusion.
 The line simplification algorithms used throughout the geospatial toolchain (Douglas-Peucker~\cite{douglasALGORITHMSREDUCTIONNUMBER1973} for its computational simplicity and Visvalingam-Whyatt~\cite{visvalingamLineGeneralisationRepeated1993} for its area-based perceptual fidelity) are instances of \emph{cartographic generalization}, the principled reduction of map detail to match the target scale.
 Tile data at different zoom levels is, in effect, a discrete multi-scale generalization hierarchy.
-However, this thesis does not contribute new generalization algorithms.
+However, this thesis does not contribute to new generalization algorithms.
 These heuristics are effective but purely data-driven. Tippecanoe has no knowledge of which style will render the tiles and therefore cannot tailor its decisions to the rendering workload.
 
 From a cartographic perspective, we understand style-driven tile shaving as a form of \emph{model generalization}~\cite{mcmasterGeneralizationDigitalCartography1992}.
