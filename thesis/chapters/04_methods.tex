@@ -63,7 +63,7 @@ The following concerns are deliberately out of scope:
 \begin{description}
     \item[\emph{Energy measurement}] Energy effects are discussed only qualitatively. We report no \ac{RAPL} or battery deltas because the benchmark host is a desktop workstation rather than a mobile device (\cref{sub:metrics}).
     \item[\emph{Lossy geometry transformations}] Coordinate-precision reduction, Visvalingam-Whyatt, Douglas-Peucker, and polygon coalescing would violate the pixel-identity contract of \cref{eq:visual_equivalence}.
-    Writing a visually non-lossy gepgraphic simplification is deferred to future work. 
+    Writing a visually non-lossy gepgraphic simplification is deferred to future work.
     We therefore quantify the size reductions achievable \emph{without} touching geometry, understating that there is headroom that composition with an geographic simplifier could reach at the cost of changing the style output.
     \item[\emph{Symbol-layer merging}] MapLibre evaluates symbol placement per layer through a tile-wide\newline
     \noindent\texttt{CollisionIndex}, so merging symbol layers would alter label suppression order. The detailed argument is given along the structural passes (\cref{sub:structural_optimizations}).
@@ -270,7 +270,7 @@ Range tightening detects overlapping range predicates on the same property and r
 Predicate subsumption generalizes this to remove predicates that are logically implied by a sibling.
 Pure operator evaluation computes the result of any operator whose arguments are all literals, covering mathematical functions, string operations, and color constructors.
 
-\paragraph{Stats-Driven Constant Folding}
+\paragraph{Statistics-Driven Constant Folding}
 When tile statistics are available, the optimizer extends constant folding with nine rules that exploit knowledge of the actual data.
 These rules receive tile statistics for the relevant source layer and fold expressions that are statically indeterminate but data-determinate:
 
@@ -396,13 +396,13 @@ To illustrate how expression passes compose, \cref{fig:expr_before_after} shows 
 
 \begin{figure}[ht]
 	\centering
-	
+
 	% =========================================================
 	% A
 	% =========================================================
 	\begin{subfigure}[t]{\linewidth}
 		\centering
-		
+
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			\begin{lstlisting}[
@@ -450,19 +450,19 @@ To illustrate how expression passes compose, \cref{fig:expr_before_after} shows 
 ]
 			\end{lstlisting}
 		\end{minipage}
-		
+
 		\caption{Expression rewriting via distributive factoring and \mlop{any}$\to$\mlop{in} promotion.}
 		\label{fig:expr_a}
 	\end{subfigure}
-	
+
 	\vspace{4mm}
-	
+
 	% =========================================================
 	% B
 	% =========================================================
 	\begin{subfigure}[t]{\linewidth}
 		\centering
-		
+
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			\begin{lstlisting}[
@@ -504,19 +504,19 @@ paint:
 	fill-color: "#333"
 			\end{lstlisting}
 		\end{minipage}
-		
+
 		\caption{Filter to Property Constant Propagation simplifying data-driven to constant.}
 		\label{fig:expr_b}
 	\end{subfigure}
-	
+
 	\vspace{4mm}
-	
+
 	% =========================================================
 	% C
 	% =========================================================
 	\begin{subfigure}[t]{\linewidth}
 		\centering
-		
+
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			\begin{lstlisting}[
@@ -552,19 +552,19 @@ paint:
 ["==", ["get", "class"], "road"]
 			\end{lstlisting}
 		\end{minipage}
-		
+
 		\caption{Duplicate predicate elimination via subsumption.}
 		\label{fig:expr_c}
 	\end{subfigure}
-	
+
 	\vspace{4mm}
-	
+
 	% =========================================================
 	% D
 	% =========================================================
 	\begin{subfigure}[t]{\linewidth}
 		\centering
-		
+
 		\begin{minipage}[c]{0.42\linewidth}
 			\centering
 			\begin{lstlisting}[
@@ -603,11 +603,11 @@ paint:
 ]
 			\end{lstlisting}
 		\end{minipage}
-		
+
 		\caption{Negation pushdown and operator normalization.}
 		\label{fig:expr_d}
 	\end{subfigure}
-	
+
 	\caption{Examples of expression-level transformations applied to representative style inputs. Each panel shows a before/after \ac{JSON} example pair demonstrating how these optimisations interact.}
 	\label{fig:expr_before_after}
 \end{figure}
