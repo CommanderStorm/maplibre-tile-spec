@@ -705,7 +705,7 @@ Cleanup runs after metadata refinement because refinement may render filters tri
 
 \paragraph{Layer Merging}
 Layer merging identifies adjacent layers of the same type with identical paint and layout properties (modulo filter differences) and merges them into a single layer.
-The motivation is that fewer layers mean fewer rendering passes. The renderer processes layers sequentially, and each layer incurs setup costs (binding textures, configuring blend state, submitting draw calls).
+The motivation is that fewer layers means fewer rendering passes. The renderer processes layers sequentially, and each layer incurs setup costs (binding textures, configuring blend state, submitting draw calls).
 \Cref{lst:painter_loop} shows the two render-pass loops the painter runs over \texttt{layerIds}: the opaque pass walks them top-to-bottom (\texttt{currentLayer} from \texttt{layerIds.length - 1} down to \texttt{0}), the translucent pass walks them bottom-to-top, and each iteration of either loop dispatches one \texttt{this.renderLayer(...)} call.
 Each layer eliminated by the merge therefore shortens \texttt{layerIds} by one entry and removes exactly one \texttt{renderLayer} dispatch from each pass.
 
@@ -714,7 +714,10 @@ Symbols from earlier layers are fully placed before later layers begin, so layer
 
 With both renderer-side loops accounted for, we can describe the algorithm itself. The merging pass proceeds in three phases, illustrated in \cref{fig:layer_merge_example}.
 \emph{Phase}~\stepcirc{1} (candidate identification) scans the layer list for contiguous runs of layers that share the same type, source, and source-layer, and whose differing properties are all mergeable.
-A property is mergeable if, according to the MIR field metadata, it supports feature-driven expressions (i.e.\ its \texttt{expression.feature} flag is \mlval{true}, meaning it can vary per feature within a layer) and is not a zoom ramp (\mlop{interpolate} or \mlop{step} over \texttt{[\mlop{"zoom"}]}), which must remain at the top level of a property expression and cannot be nested inside a \mlop{case}/ \mlop{match} wrapper.
+A property is mergeable if, according to the MIR field metadata, 
+  it supports feature-driven expressions (i.e.\ its \texttt{expression.feature} flag is \mlval{true}, meaning it can vary per feature within a layer) and
+  it is not a zoom ramp (\mlop{interpolate} or \mlop{step} over \texttt{[\mlop{"zoom"}]}).
+  Both of these must remain at the top level of a property expression and cannot be nested inside a \mlop{case}/ \mlop{match} wrapper.
 Camera-only properties (such as \texttt{\mlprop{line-dasharray}} or \texttt{\mlprop{*-translate}}) must be uniform across all layers in a merge group, since they cannot be conditioned on feature attributes.
 Layer types that support sort keys (\texttt{\mlval{fill}}, \texttt{\mlval{line}}, \texttt{\mlval{circle}}, \texttt{\mlval{fill-extrusion}}) are candidates. The \texttt{\mlval{symbol}} type is excluded for the placement-scope reason given above.
 
