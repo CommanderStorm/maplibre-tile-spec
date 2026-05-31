@@ -1,6 +1,0 @@
-metric,label,min,p25,median,p75,max
-raw,Raw size reduction (%),3.1730,22.3350,31.4087,38.1965,67.7431
-gzip,Gzip size reduction (%),3.9439,5.9566,11.3924,12.2203,22.3649
-brotli,Brotli size reduction (%),0.6622,3.0874,9.8425,11.9317,16.9964
-layers,Layer count reduction (%),0.0000,0.8499,4.7619,7.0312,27.0270
-ast,AST node reduction (%),-269.2308,-102.8881,-47.8648,0.0000,62.1913
