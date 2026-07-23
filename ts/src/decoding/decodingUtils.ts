@@ -98,52 +98,18 @@ export function decodeDoublesLE(
     return fb;
 }
 
-export function decodeUint32sLE(
-    encodedValues: Uint8Array,
-    pos: IntWrapper,
-    numValues: number,
-    byteLength = numValues * Uint32Array.BYTES_PER_ELEMENT,
-): Uint32Array {
-    const expectedByteLength = numValues * Uint32Array.BYTES_PER_ELEMENT;
-    if (byteLength !== expectedByteLength) {
-        throw new Error(`Invalid byteLength ${byteLength} for ${numValues} uint32 values.`);
-    }
-
+export function decodeUint32sLE(encodedValues: Uint8Array, pos: IntWrapper, numValues: number): Uint32Array {
     const currentPos = pos.get();
-    const newOffset = currentPos + byteLength;
-
-    if (newOffset > encodedValues.length) {
-        throw new Error(
-            `Byte stream is shorter (${encodedValues.length - currentPos} bytes left) than the declared uint32 payload (${byteLength} bytes).`,
-        );
-    }
-
+    const newOffset = currentPos + numValues * Uint32Array.BYTES_PER_ELEMENT;
     const newBuf = new Uint8Array(encodedValues.subarray(currentPos, newOffset)).buffer;
     const values = new Uint32Array(newBuf);
     pos.set(newOffset);
     return values;
 }
 
-export function decodeUint64sLE(
-    encodedValues: Uint8Array,
-    pos: IntWrapper,
-    numValues: number,
-    byteLength = numValues * BigUint64Array.BYTES_PER_ELEMENT,
-): BigUint64Array {
-    const expectedByteLength = numValues * BigUint64Array.BYTES_PER_ELEMENT;
-    if (byteLength !== expectedByteLength) {
-        throw new Error(`Invalid byteLength ${byteLength} for ${numValues} uint64 values.`);
-    }
-
+export function decodeUint64sLE(encodedValues: Uint8Array, pos: IntWrapper, numValues: number): BigUint64Array {
     const currentPos = pos.get();
-    const newOffset = currentPos + byteLength;
-
-    if (newOffset > encodedValues.length) {
-        throw new Error(
-            `Byte stream is shorter (${encodedValues.length - currentPos} bytes left) than the declared uint64 payload (${byteLength} bytes).`,
-        );
-    }
-
+    const newOffset = currentPos + numValues * BigUint64Array.BYTES_PER_ELEMENT;
     const newBuf = new Uint8Array(encodedValues.subarray(currentPos, newOffset)).buffer;
     const values = new BigUint64Array(newBuf);
     pos.set(newOffset);

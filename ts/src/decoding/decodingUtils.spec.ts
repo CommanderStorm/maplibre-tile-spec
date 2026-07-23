@@ -4,8 +4,6 @@ import {
     encodeByteRle,
     encodeDoubleLE,
     encodeFloatsLE,
-    encodeUint32sLE,
-    encodeUint64sLE,
     encodeStrings,
 } from "../encoding/encodingUtils";
 import BitVector from "../vector/flat/bitVector";
@@ -49,7 +47,7 @@ describe("decodingUtils", () => {
     describe("decodeUint32sLE", () => {
         it("round-trips uint32 values through little-endian bytes", () => {
             const data = new Uint32Array([0x12345678, 1]);
-            const encoded = encodeUint32sLE(data);
+            const encoded = new Uint8Array(data.slice().buffer);
             const offset = new IntWrapper(0);
 
             const result = decodeUint32sLE(encoded, offset, 2);
@@ -72,7 +70,7 @@ describe("decodingUtils", () => {
     describe("decodeUint64sLE", () => {
         it("round-trips uint64 values through little-endian bytes", () => {
             const data = new BigUint64Array([1n, 0x1122334455667788n]);
-            const encoded = encodeUint64sLE(data);
+            const encoded = new Uint8Array(data.slice().buffer);
             const offset = new IntWrapper(0);
 
             const result = decodeUint64sLE(encoded, offset, 2);

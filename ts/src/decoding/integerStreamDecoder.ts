@@ -90,7 +90,7 @@ function decodePhysicalLevelTechniqueInt32(
         case PhysicalLevelTechnique.VARINT:
             return decodeVarintInt32(data, offset, streamMetadata.numValues);
         case PhysicalLevelTechnique.NONE:
-            return decodeUint32sLE(data, offset, streamMetadata.numValues, streamMetadata.byteLength);
+            return decodeUint32sLE(data, offset, streamMetadata.numValues);
         default:
             throw new Error(`Specified physicalLevelTechnique ${physicalLevelTechnique} is not supported (yet).`);
     }
@@ -106,7 +106,7 @@ function decodePhysicalLevelTechniqueInt64(
         case PhysicalLevelTechnique.VARINT:
             return decodeVarintInt64(data, offset, streamMetadata.numValues);
         case PhysicalLevelTechnique.NONE:
-            return decodeUint64sLE(data, offset, streamMetadata.numValues, streamMetadata.byteLength);
+            return decodeUint64sLE(data, offset, streamMetadata.numValues);
         default:
             throw new Error(`Specified physicalLevelTechnique ${physicalLevelTechnique} is not supported (yet).`);
     }
@@ -535,8 +535,7 @@ export function getVectorType(
         return streamMetadata.numValues === 1 ? VectorType.CONST : VectorType.FLAT;
     }
 
-    const decoded = decodeUint32sLE(data, offset, 4);
-    const values = new Int32Array(decoded.buffer, decoded.byteOffset, decoded.length);
+    const values = new Int32Array(decodeUint32sLE(data, offset, 4));
     offset.set(savedOffset);
     // Check if both deltas are encoded 1
     const zigZagOne = 2;
