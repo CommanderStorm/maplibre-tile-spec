@@ -22,16 +22,29 @@ async function shot(name, url, prepare) {
 // C, real tile, a data blob selected: inspector pane with blob info and decoded values.
 await shot("c_real_selected", `${BASE}/?variant=C&fixture=real/omt_z14_8298_10748`, async (page) => {
   await page.evaluate(() => {
-    const at = [...document.querySelectorAll(".list li")].find((li) => li.className.includes("dataBlob"));
-    at?.click();
+    document.querySelector(".treebar button")?.click(); // expand
   });
   await new Promise((r) => setTimeout(r, 200));
+  await page.evaluate(() => {
+    const at = [...document.querySelectorAll(".node.dataBlob")].find((n) => n.textContent.includes("B"));
+    at?.click();
+  });
+  await new Promise((r) => setTimeout(r, 300));
 });
 
 // C, a bit-packed byte selected: the bit breakdown against the real byte.
 await shot("c_bits", `${BASE}/?variant=C&fixture=0x02/mvalues_f64_alp`, async (page) => {
   await page.evaluate(() => {
-    const at = [...document.querySelectorAll(".list li")].find((li) => li.textContent.trim() === "layout");
+    const at = [...document.querySelectorAll(".node")].find((n) => n.textContent.trim().startsWith("layout"));
+    at?.click();
+  });
+  await new Promise((r) => setTimeout(r, 200));
+});
+
+// C, a container selected: its whole span lights up in the map.
+await shot("c_container", `${BASE}/?variant=C&fixture=0x02/mvalues_15props_7cols`, async (page) => {
+  await page.evaluate(() => {
+    const at = [...document.querySelectorAll(".node.container")].find((n) => n.textContent.includes("columns"));
     at?.click();
   });
   await new Promise((r) => setTimeout(r, 200));

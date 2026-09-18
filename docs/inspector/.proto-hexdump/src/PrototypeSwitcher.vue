@@ -34,7 +34,7 @@ onUnmounted(() => window.removeEventListener("keydown", onKey));
 <style scoped>
 .switcher {
   position: fixed;
-  bottom: 0.9rem;
+  bottom: 2.4rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;

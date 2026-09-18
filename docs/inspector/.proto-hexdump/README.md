@@ -22,6 +22,12 @@ npm run dev         # http://localhost:5175/?variant=A
 Each variant places the Source picker and the render controls itself, because where
 those sit is one of the questions.
 
+**C won** (2026-09-18), and has had a cleanup pass the others have not: a collapsible
+region tree instead of a flat list, a left rule at every region start, a container
+lighting its whole span, `max blob` and `data` fading blob tails in the map rather than
+doing nothing, `↑`/`↓` walking the leaves, a `fit width` that fills the pane instead of
+honouring a terminal's 80 columns, and the fixture picker as a grouped `<select>`.
+
 ## URL parameters
 
 `variant`, `fixture` (a path from `public/fixtures/index.json`), `width`, `maxBlob`,

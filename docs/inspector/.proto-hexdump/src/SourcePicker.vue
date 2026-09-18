@@ -11,7 +11,8 @@ export interface FixtureEntry {
 const props = defineProps<{
   index: Record<string, FixtureEntry[]> | null;
   current: string | null;
-  layout: "bar" | "panel";
+  /** `compact` is a grouped select, which is what 350+ fixtures will need. */
+  layout: "bar" | "panel" | "compact";
 }>();
 
 const emit = defineEmits<{
@@ -45,8 +46,20 @@ function onFile(e: Event) {
       <input type="file" accept=".mlt" @change="onFile" />
       <span>{{ dragging ? "drop to load" : "upload .mlt" }}</span>
     </label>
-    <span class="hint">or drag a tile anywhere</span>
-    <template v-for="(entries, group) in props.index ?? {}" :key="group">
+    <span v-if="layout !== 'compact'" class="hint">or drag a tile anywhere</span>
+
+    <select
+      v-if="layout === 'compact'"
+      :value="props.current ?? ''"
+      @change="emit('pickFixture', ($event.target as HTMLSelectElement).value)"
+    >
+      <option value="" disabled>choose a fixture…</option>
+      <optgroup v-for="(entries, group) in props.index ?? {}" :key="group" :label="String(group)">
+        <option v-for="f in entries" :key="f.path" :value="f.path">{{ f.name }}</option>
+      </optgroup>
+    </select>
+
+    <template v-for="(entries, group) in layout === 'compact' ? {} : (props.index ?? {})" :key="group">
       <fieldset>
         <legend>{{ group }}</legend>
         <button
@@ -117,5 +130,15 @@ button.on {
   background: #2d4;
   color: #062;
   border-color: #2d4;
+}
+select {
+  background: #18202b;
+  color: #cde;
+  border: 1px solid #2a3340;
+  border-radius: 3px;
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.1rem 0.2rem;
+  max-width: 17rem;
 }
 </style>

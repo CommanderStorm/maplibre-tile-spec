@@ -57,10 +57,19 @@ for (const c of cases) {
 // Interaction checks on the small v2 fixture: hover link, collapse, layer filter.
 const page = await browser.newPage();
 await page.goto(`${BASE}/?variant=C&fixture=0x02/mvalues_f64_alp`, { waitUntil: "networkidle0" });
-await page.hover(".map .row:nth-child(3) .cell:nth-child(5)");
-const hovered = await page.$eval("aside h2", (el) => el.textContent.trim());
+await page.hover(".map .hexrow:nth-child(2) .cell:nth-child(6)");
+const hovered = await page.$eval("aside h2", (el) => el.textContent.trim().split("\n")[0]);
 const litCells = await page.$$eval(".cell.on", (els) => els.length);
 console.log(`C hover: byte -> region "${hovered}", ${litCells} bytes lit`);
+
+// A container lights its whole span, and ↑/↓ walk the leaves.
+await page.evaluate(() => {
+  [...document.querySelectorAll(".node.container")].find((n) => n.textContent.includes("geometry"))?.click();
+});
+const span = await page.$$eval(".cell.on", (els) => els.length);
+await page.keyboard.press("ArrowDown");
+const afterKey = await page.$eval("aside h2", (el) => el.textContent.trim().split("\n")[0]);
+console.log(`C container span: ${span} bytes lit · ArrowDown -> "${afterKey}"`);
 
 await page.goto(`${BASE}/?variant=B&fixture=0x02/nested_map_str`, { waitUntil: "networkidle0" });
 const before = await page.$$eval(".node", (e) => e.length);
