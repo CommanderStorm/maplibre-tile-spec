@@ -1,0 +1,19 @@
+{
+  "name": "inspector-hexdump-prototype",
+  "private": true,
+  "type": "module",
+  "description": "THROWAWAY prototype for wayfinder ticket #15. Do not merge.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "fixtures": "./gen-fixtures.sh"
+  },
+  "dependencies": {
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "typescript": "6.0.3",
+    "vite": "8.3.0"
+  }
+}
