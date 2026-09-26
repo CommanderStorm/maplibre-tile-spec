@@ -285,6 +285,24 @@ One 4-bit nibble each would be simpler, but cannot hold $e = 18$.
 Two 5-bit fields would not fit a byte, while the $190$ valid pairs up to $(e, f) = (18, 18)$ do.
 A `scale` above $189$ MUST be rejected.
 
+To decode, $e$ is the largest integer with $\frac{e(e+1)}{2} \le \mathit{scale}$, and $f$ is what remains:
+
+$$
+e = \left\lfloor \frac{\sqrt{8 \cdot \mathit{scale} + 1} - 1}{2} \right\rfloor
+\qquad
+f = \mathit{scale} - \frac{e(e+1)}{2}
+$$
+
+The square root is exact enough in double precision for every valid `scale`.
+A loop over $e = 0 \dots 18$ or a 190-entry table works as well.
+
+| `scale` | $e$ | $f$ |
+|---:|---:|---:|
+| $0$ | $0$ | $0$ |
+| $1$, $2$ | $1$ | $0$, $1$ |
+| $3$, $4$, $5$ | $2$ | $0$, $1$, $2$ |
+| $171 \dots 189$ | $18$ | $0 \dots 18$ |
+
 The payload holds unsigned offsets from `base`, so the smallest is `0` and every value is non-negative.
 The offsets are an ordinary unsigned integer stream and carry their own physical encoding.
 Its words are 64-bit, except under FastPFOR, which only has 32-bit words.
