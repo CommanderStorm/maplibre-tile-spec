@@ -294,14 +294,17 @@ f = \mathit{scale} - \frac{e(e+1)}{2}
 $$
 
 The square root is exact enough in double precision for every valid `scale`.
-A loop over $e = 0 \dots 18$ or a 190-entry table works as well.
 
 | `scale` | $e$ | $f$ |
 |---:|---:|---:|
 | $0$ | $0$ | $0$ |
-| $1$, $2$ | $1$ | $0$, $1$ |
-| $3$, $4$, $5$ | $2$ | $0$, $1$, $2$ |
-| $171 \dots 189$ | $18$ | $0 \dots 18$ |
+| $1$ | $1$ | $0$ |
+| $2$ | $1$ | $1$ |
+| $3$ | $2$ | $0$ |
+| $4$ | $2$ | $1$ |
+| $5$ | $2$ | $2$ |
+| $\vdots$ | $\vdots$ | $\vdots$ |
+| $189$ | $18$ | $18$ |
 
 The payload holds unsigned offsets from `base`, so the smallest is `0` and every value is non-negative.
 The offsets are an ordinary unsigned integer stream and carry their own physical encoding.
