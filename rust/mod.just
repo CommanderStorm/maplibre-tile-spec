@@ -64,8 +64,20 @@ coverage-env file: (just 'cargo-install' 'cargo-llvm-cov')
     if ! rustup component list --installed | grep -q llvm-tools; then
         rustup component add llvm-tools-preview
     fi
-    cargo llvm-cov clean --workspace
+    {{just}} rust::_coverage-clean
     cargo llvm-cov show-env | sed "s/'//g" >> {{quote(file)}}
+
+# Remove the profiles and every executable an earlier build left in `target`
+# `coverage-report` merges every executable it finds there, and a restored cache holds test binaries of older commits
+_coverage-clean:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cargo llvm-cov clean --workspace
+    for dir in target/debug target/release; do
+        if [ -d "$dir" ]; then
+            find "$dir" -type f -perm -u+x ! -name '*.so' ! -name '*.dylib' ! -path '*/build/*' -delete
+        fi
+    done
 
 # Write the coverage recorded since `coverage-env` to `target/lcov-<suite>.info`
 # Pass `--release` for a suite that ran against release artifacts, or it finds no objects
@@ -227,7 +239,7 @@ coverage *args='--open': (just 'cargo-install' 'cargo-llvm-cov')
     #!/usr/bin/env bash
     set -euo pipefail
     source <(cargo llvm-cov show-env --sh)
-    cargo llvm-cov clean --workspace
+    {{just}} rust::_coverage-clean
     {{just}} rust::test
     cargo llvm-cov report --include-build-script {{args}}
 
