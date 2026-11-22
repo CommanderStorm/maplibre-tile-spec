@@ -148,3 +148,44 @@ for ax, labels, name in zip(axes, [(0, 1, 2), (0, 2, 1), (0, 1, 2)], ["tile 1", 
         ax.text(x, y + 0.13, str(l), ha="center", fontsize=12, weight="bold", color=col)
     ax.set_title(name, fontsize=10, color=EDGE)
 save(fig, "fuzz-flip")
+
+
+CORNER = ["#64748b", "#2f6fdf", "#f59e0b", "#16a34a"]
+
+
+def renumber(name, pos, faces, orders, titles):
+    """pos: corner id -> xy; faces: triangles by corner id; orders: per panel, the stored vertex list as corner ids."""
+    n = len(orders)
+    fig, axes = plt.subplots(1, n, figsize=(2.5 * n, 3.1), dpi=110)
+    fig.patch.set_facecolor("white")
+    for k, (ax, order, title) in enumerate(zip(axes, orders, titles)):
+        ax.set_xlim(-0.35, 1.35); ax.set_ylim(-0.95, 1.3); ax.set_aspect("equal"); ax.axis("off")
+        ax.set_title(title, fontsize=11, color=EDGE)
+        for i, f in enumerate(faces):
+            ax.add_patch(plt.Polygon([pos[c] for c in f], closed=True, fc=FILL[i % 2], ec=EDGE, lw=1.2, alpha=0.6))
+        index = {c: i for i, c in enumerate(order)}
+        changed = {i for i, c in enumerate(order) if k > 0 and orders[k - 1][i] != c}
+        for c, (x, y) in pos.items():
+            ax.plot(x, y, "o", ms=20, color=CORNER[c], zorder=5)
+            ax.text(x, y, str(index[c]), ha="center", va="center", fontsize=12, color="white", weight="bold", zorder=6)
+        w = 1.3 / len(order)
+        for i, c in enumerate(order):
+            x0 = -0.15 + i * w
+            ax.add_patch(plt.Rectangle((x0, -0.75), w * 0.9, 0.42, fc=CORNER[c],
+                                       ec=BACK if i in changed else "white", lw=3 if i in changed else 1))
+            ax.text(x0 + w * 0.45, -0.54, str(i), ha="center", va="center", fontsize=12, color="white", weight="bold")
+        if k == 0:
+            ax.text(0.5, -0.9, "stored vertex list", ha="center", va="center", fontsize=9, color=EDGE)
+        if k < n - 1:
+            ax.annotate("", xy=(1.62, 0.5), xytext=(1.28, 0.5), xycoords="data",
+                        arrowprops=dict(arrowstyle="-|>", color=EDGE, lw=2, mutation_scale=16), annotation_clip=False)
+    save(fig, name)
+
+
+QUAD = {0: (0, 0), 1: (1, 0), 2: (0, 1), 3: (1, 1)}
+renumber("renumber-quad", QUAD, [(0, 1, 2), (2, 1, 3)],
+         [[0, 1, 2, 3], [0, 1, 3, 2]], ["encode 1", "encode 2"])
+
+TRI = {0: (0, 0), 1: (1, 0), 2: (0.5, 0.95)}
+renumber("renumber-fuzz", TRI, [(0, 1, 2)],
+         [[0, 1, 2], [0, 2, 1], [0, 1, 2]], ["encode 1", "encode 2", "encode 3"])
